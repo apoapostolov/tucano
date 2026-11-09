@@ -283,6 +283,7 @@ export function Sidebar(): ReactNode {
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
   const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const asks = useStore((s) => s.inbox.questions.length)
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
   const channels = conversations.filter((c) => c.kind === 'channel')
   const dms = conversations.filter((c) => c.kind === 'dm' && agentOf(c.name)?.kind !== 'tuca')
@@ -474,11 +475,17 @@ export function Sidebar(): ReactNode {
             <TucaItem />
           </TopRow>
         )}
+        {(shows('asks') || back('asks')) && (
+          <TopRow item="asks" back={back('asks')} onMenu={menuAt}>
+            <NavItem view={{ kind: 'asks' }} icon="ask" label={topLabel('asks', team)} badge={asks} />
+          </TopRow>
+        )}
         {(shows('approvals') || back('approvals')) && (
           <TopRow item="approvals" back={back('approvals')} onMenu={menuAt}>
             <NavItem view={{ kind: 'approvals' }} icon="shield" label={topLabel('approvals', team)} badge={pending} />
           </TopRow>
         )}
+
         {shows('board') && (
           <TopRow item="board" onMenu={menuAt}>
             <NavItem view={{ kind: 'board' }} icon="board" label={topLabel('board', team)} fresh={fresh('board')} />
