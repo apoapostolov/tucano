@@ -380,10 +380,10 @@ describe('the sidebar and the missions', () => {
   const menuItems = (): string[] => [...document.querySelectorAll('[role="menu"] .menu__item')].map((x) => x.textContent ?? '')
   const tabs = (): string[] => [...document.querySelectorAll('.hub__tab')].map((x) => x.textContent ?? '')
 
-  it('starts short on a new install: the Tuca, what waits on you, the channel, the agent, the missions; Conectores and the settings at the foot', async () => {
+  it('starts short on a new install: the Tuca, the questions, what waits on you, the channel, the agent, the missions; Conectores and the settings at the foot', async () => {
     fake = state({ agents: [lia], conversations: [geral], settings: { onboarding: { done: true, fresh: true } } })
     await render(<Sidebar />)
-    expect(labels()).toEqual(['Tuca', 'Aprovações', 'geral', 'Lia'])
+    expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'geral', 'Lia'])
     expect(text()).toContain('Missões')
     expect(text()).toContain('Próxima: fale com Lia')
     expect(document.querySelector('.sidebar__tools .sidebar__tool')?.textContent).toBe('Conectores')
