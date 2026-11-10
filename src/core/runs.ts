@@ -24,6 +24,7 @@ import { accountDir } from './engines/detect'
 import { outOfQuota } from './engines/cli'
 import { ALWAYS_LOAD, textResult, type Gateway, type Session, type ToolDef } from './gateway'
 import { Followups, replyKey } from './followups'
+import { EQUIPE, equipeCall } from './roster'
 import { carriedText, TEAM_UP_GUESTS, TEAM_UP_MESSAGES, TEAM_UP_REUSE_MS, teamUpName, teamUpTask, teamUpTopic } from './team-up'
 import { sessionConfig, Sessions, type SessionPlan, type Shown } from './sessions'
 import { formatAnswers, MAX_DESCRIPTION_LENGTH, MAX_LABEL_LENGTH, MAX_OPTIONS, MAX_QUESTION_LENGTH, MAX_QUESTIONS, MIN_OPTIONS, parseQuestions, questionHeadline, questionsAsText, questionsOf, type Answer, type Decision } from '../shared/questions'
@@ -1085,6 +1086,9 @@ export class Runner {
     // A page held for one person (see Wiki.inherit) is read only in their own DM: anywhere else the reply reaches others.
     const wikiShown = this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conv, db.ownerId())))
     const wiki = this.deps.gateway && wikiShown && wikiAccess(agent) !== 'none' && wikiShown.count() > 0 ? wikiShown : undefined
+    // The team, to look at: the prompt names only the agents of this conversation, so a DM's agent has
+    // no way to know who else there is (nor their handles) without asking.
+    const roster = !!this.deps.gateway && isTeam(agent)
 
     const control: Control = { ctl: new AbortController(), msg }
     this.controllers.set(msg.id, control)
@@ -1254,7 +1258,8 @@ ${note}`,
       ...(apps ? appTools(agent) : []),
       ...(routines ? [AGENDAR, CANCELAR] : []),
       ...(skills ? [...(mySkills.length ? [LER_SKILL] : []), PROPOR_SKILL] : []),
-      ...(wiki ? WIKI_TOOLS : [])
+      ...(wiki ? WIKI_TOOLS : []),
+      ...(roster ? [EQUIPE] : [])
     ]
     // The connector tools it called lately, by the steps of its replies ("Linear · list_issues").
     const byStep = new Map([...exposed].map(([name, { connector, tool }]) => [`${connector.name} · ${tool.name}`, name]))
@@ -1524,6 +1529,12 @@ ${note}`,
           msg.run = { ...msg.run!, memoryIds: [...memoryIds] }
           addSteps({ id: randomUUID(), label: r.label!, detail: r.memory.text, status: 'done' })
           return textResult(r.reply)
+        }
+
+        if (name === EQUIPE.name && roster) {
+          const r = equipeCall({ agents: db.agents(), me: agent.id, here: conv.members, busca: typeof args['busca'] === 'string' ? args['busca'] : undefined })
+          addSteps({ id: randomUUID(), label: L('Olhou o time', 'Looked at the team'), detail: r.count === 1 ? L('1 agente', '1 agent') : L(`${r.count} agentes`, `${r.count} agents`), status: 'done' })
+          return textResult(r.text)
         }
 
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
@@ -2057,6 +2068,7 @@ ${note}`,
       routines: routines?.forAgent(agent.id).filter((r) => visible(r.conversationId)),
       skills: skills && mySkills,
       wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds() } : undefined,
+      roster,
       connectors: exposed.size > 0,
       github,
       people,
