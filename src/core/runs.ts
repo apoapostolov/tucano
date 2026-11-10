@@ -231,6 +231,7 @@ export interface RunnerDeps {
   workDir: string // per-agent empty directories live here
   dataDir?: string // the app's data: images I attach are kept in its artifact store; without it, they're dropped
   gateway?: Gateway // without it, agents get no tools at all
+  gatewayReady?: Promise<unknown> // listening; a reply that starts earlier gets a URL with no port (see the run)
   connectors?: Connectors
   memory?: Memories // without it, agents get no memory and see the last HISTORY_LIMIT messages
   computers?: Pick<Computers, 'call'> & Partial<Pick<Computers, 'mac' | 'unavailable'>> // without it, no agent has a computer
@@ -2106,6 +2107,10 @@ ${note}`,
     const writing = history.some((m) => m.author.kind === 'agent' && m.run?.status === 'working')
     let plan = engines[engineId].sessions && !writing ? this.sessions.begin(sessionKey, { config, shown, live, restart: !!opts.existing, task: !!task }) : undefined
     let lost: SessionPlan | undefined // given up on in the middle (the reserve took the reply)
+    // The gateway listens on a port it only learns once it's up: a reply that starts before that (a message
+    // at boot, a routine fired on opening, a test) would hand its tools a URL with no port, and every call
+    // would come back as "no internet". Waiting here costs nothing once it's up.
+    if (this.deps.gateway && this.deps.gatewayReady) await this.deps.gatewayReady
     const session = this.deps.gateway?.open(tools, plan?.token)
     const whole = { prompt: withFiles.join('\n\n'), blocks: withFiles, images }
     // Resumed: the live context if it changed, the new messages' blocks, then the task's, with their images.
