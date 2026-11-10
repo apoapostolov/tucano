@@ -1,4 +1,4 @@
-import type { CodexQuota, Effort, EngineId, Quota } from '../../shared/types'
+import type { CodexQuota, Effort, EngineId, Quota, SandboxConfig } from '../../shared/types'
 
 export interface Turn {
   model: string
@@ -9,6 +9,7 @@ export interface Turn {
   images?: TurnImage[] // images attached to messages of the conversation, the newest ones
   cwd: string // an empty per-agent directory; the CLI gets no project files
   agentKey?: string // stable per-agent identity: an engine that keeps per-agent state (Hermes) names its files with it
+  sandbox?: SandboxConfig // explicit execution boundary for locally executed agents
   signal: AbortSignal
   mcpUrl?: string // the app's gateway for this turn: the only tools the CLI gets, besides the web ones
   web?: boolean // the CLI's own web search and page reading
