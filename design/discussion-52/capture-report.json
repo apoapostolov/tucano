@@ -1,0 +1,81 @@
+[
+  {
+    "name": "a-focused-thread",
+    "bodyWidth": 1440,
+    "viewport": 1440,
+    "horizontalOverflow": [],
+    "scrollRegions": [
+      {
+        "cls": "messages",
+        "client": 529,
+        "scroll": 554
+      }
+    ]
+  },
+  {
+    "name": "b-inline-thread",
+    "bodyWidth": 1440,
+    "viewport": 1440,
+    "horizontalOverflow": [],
+    "scrollRegions": [
+      {
+        "cls": "messages",
+        "client": 681,
+        "scroll": 726
+      }
+    ]
+  },
+  {
+    "name": "workspace-switcher",
+    "bodyWidth": 860,
+    "viewport": 860,
+    "horizontalOverflow": [],
+    "scrollRegions": []
+  },
+  {
+    "name": "channel-context",
+    "bodyWidth": 1440,
+    "viewport": 1440,
+    "horizontalOverflow": [],
+    "scrollRegions": [
+      {
+        "cls": "sheetcontent",
+        "client": 801,
+        "scroll": 801
+      }
+    ]
+  },
+  {
+    "name": "reply-intent",
+    "bodyWidth": 1000,
+    "viewport": 1000,
+    "horizontalOverflow": [],
+    "scrollRegions": []
+  },
+  {
+    "name": "a-mobile",
+    "bodyWidth": 390,
+    "viewport": 390,
+    "horizontalOverflow": [],
+    "scrollRegions": [
+      {
+        "cls": "messages",
+        "client": 509,
+        "scroll": 637
+      }
+    ]
+  },
+  {
+    "name": "a-dark",
+    "bodyWidth": 1440,
+    "viewport": 1440,
+    "horizontalOverflow": [],
+    "scrollRegions": [
+      {
+        "cls": "messages",
+        "client": 529,
+        "scroll": 554
+      }
+    ]
+  }
+]
