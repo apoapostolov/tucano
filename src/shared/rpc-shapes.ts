@@ -132,6 +132,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   openBackups: {},
   report: { week: 'n?' },
   usage: {},
+  quotas: {},
   removeRoutine: { id: 's' },
   runRoutine: { id: 's' },
   wiki: {},
