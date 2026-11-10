@@ -1156,7 +1156,7 @@ function useNow(on: boolean): number {
 
 // One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click.
-function RunSteps({ message }: { message: Message }): ReactNode {
+export function RunSteps({ message }: { message: Message }): ReactNode {
   const run = message.run!
   // Open while the agent works, so its steps read as they go, unless the person closes it; closed after.
   const [toggled, setOpen] = useState<boolean | null>(null)
@@ -1165,6 +1165,14 @@ function RunSteps({ message }: { message: Message }): ReactNode {
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
+  // The line beside the steps is a handle. In a long run the toggle is scrolled away above, and the
+  // line is where the eye already is, so a double-click on it folds the steps from there. Then the
+  // block, now one line, is brought into view: otherwise folding looks like the steps vanishing.
+  const box = useRef<HTMLDivElement>(null)
+  const fold = (): void => {
+    setOpen(false)
+    requestAnimationFrame(() => box.current?.scrollIntoView({ block: 'nearest' }))
+  }
 
   if (run.steps.length === 0 && !working) return null
   const total = run.steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
@@ -1172,7 +1180,7 @@ function RunSteps({ message }: { message: Message }): ReactNode {
   const current = [...run.steps].reverse().find((st) => st.status === 'running')
 
   return (
-    <div className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''}`}>
+    <div ref={box} className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''}`}>
       <button className="steps__toggle" onClick={() => setOpen(!open)}>
         {working ? (
           <span className="steps__pulse" />
@@ -1218,11 +1226,25 @@ function RunSteps({ message }: { message: Message }): ReactNode {
         )}
       </button>
       {open && (
-        <ol className="steps__list">
-          {run.steps.map((st) => (
-            <StepRow key={st.id} step={st} />
-          ))}
-        </ol>
+        <div className="steps__body">
+          <button
+            type="button"
+            className="steps__rail"
+            aria-label={L('Minimizar os passos', 'Fold the steps')}
+            title={L('Clique duas vezes para minimizar os passos', 'Double-click to fold the steps')}
+            // A double-click, as asked: one click on the line does nothing, so dragging past it never folds a run.
+            onDoubleClick={fold}
+            // A keyboard has no double-click: Enter or Space on the handle folds it, and reports detail 0.
+            onClick={(e) => {
+              if (e.detail === 0) fold()
+            }}
+          />
+          <ol className="steps__list">
+            {run.steps.map((st) => (
+              <StepRow key={st.id} step={st} />
+            ))}
+          </ol>
+        </div>
       )}
     </div>
   )
