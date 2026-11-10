@@ -52,6 +52,7 @@ import { checkJevKey, JEV_MODEL, JEV_SECRET } from './jev'
 import { report } from './report'
 import { usage } from './usage'
 import { Skills } from './skills'
+import { AgentData } from './agent-data'
 import { cleanTitle, pageKey, Wiki, type WikiView } from './wiki'
 import { COPY_SUFFIX, WikiGit } from './wiki-git'
 import { settingsPatchError } from './settings-patch'
@@ -955,6 +956,8 @@ const runner = new Runner({
   skills,
   wiki,
   wikiCurator: curator,
+  // Each agent's own tables, one file per agent: a short path, since Windows still caps a path at 260.
+  data: new AgentData(join(dataDir, 'data')),
   models: () => availableModels(settings(), listed),
   // Approvals and questions reach the phone with their buttons, through toPhone; a finished reply stays on the Mac.
   notify: (title, body, conversationId, kind, threadId, to) => {
