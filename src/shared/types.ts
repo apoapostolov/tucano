@@ -462,6 +462,9 @@ export interface Settings {
   }
   folded?: string[] // the ids of what I folded in the sidebar
   sounds?: boolean // the toucan's chirp on a notification; unset: on
+  // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
+  // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
+  showThinking?: boolean
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
   accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
 }
