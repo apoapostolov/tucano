@@ -63,7 +63,7 @@ const waitWorking = async (win, want = true) => {
 const pillLook = (win) =>
   win.evaluate(() => {
     const steps = [...document.querySelectorAll('.steps')].filter((s) => s.querySelector('.steps__toggle')).pop()
-    const pill = steps?.querySelector('.steps__steer-pill')
+    const pill = steps?.querySelector('.steps__ask-pill')
     const list = steps?.querySelector('.steps__list')
     if (!steps || !pill) return { pill: false }
     const p = pill.getBoundingClientRect()
@@ -88,7 +88,7 @@ const pillLook = (win) =>
 
 const fieldLook = (win) =>
   win.evaluate(() => {
-    const note = document.querySelector('.steps__steer-note')
+    const note = document.querySelector('.steps__ask-note')
     if (!note) return { open: false }
     const ta = note.querySelector('textarea')
     const send = [...note.querySelectorAll('button')].find((b) => b.className.includes('btn--primary'))
@@ -121,7 +121,7 @@ const chainLook = (win) =>
       rows: rows.length,
       steerAt: steer,
       labels: rows.map((r) => r.querySelector('.step__label')?.textContent ?? ''),
-      steerText: row?.querySelector('.step__steer')?.textContent ?? null,
+      steerText: row?.querySelector('.step__said')?.textContent ?? null,
       steerLabel: row?.querySelector('.step__label')?.textContent ?? null,
       iconBg: row ? getComputedStyle(row.querySelector('.step__icon')).backgroundColor : null,
       stepsAfterSteer: steer >= 0 ? rows.length - steer - 1 : 0,
@@ -152,18 +152,18 @@ console.log('while it works, the pill:', JSON.stringify(await pillLook(win)))
 await win.screenshot({ path: `${out}/01-the-pill-under-the-chain.png` })
 
 // Opening it: a field, nothing sent, the send asleep while it's empty.
-await win.locator('.steps__steer-pill').click()
+await win.locator('.steps__ask-pill').click()
 await win.waitForTimeout(200)
 console.log('the field it opens:', JSON.stringify(await fieldLook(win)))
 await win.screenshot({ path: `${out}/02-the-field-it-opens.png` })
 
 // What the person writes, and sending it.
-await win.locator('.steps__steer-note textarea').fill('Skip the history and only look at the two last commits')
+await win.locator('.steps__ask-note textarea').fill('Skip the history and only look at the two last commits')
 await win.waitForTimeout(150)
 console.log('typed:', JSON.stringify(await fieldLook(win)))
 await win.screenshot({ path: `${out}/03-what-they-write.png` })
 const repliesBefore = await replies(win)
-await win.locator('.steps__steer-note button.btn--primary').click()
+await win.locator('.steps__ask-note button.btn--primary').click()
 await win.waitForTimeout(400)
 console.log('after sending, the field is', JSON.stringify(await fieldLook(win)))
 
@@ -177,7 +177,7 @@ console.log('the steer in the chain:', JSON.stringify(await chainLook(win)))
 await win.screenshot({ path: `${out}/04-the-steer-in-the-chain.png` })
 
 await waitWorking(win, false)
-console.log('when it is done:', JSON.stringify({ ...(await chainLook(win)), pillsLeft: await win.evaluate(() => document.querySelectorAll('.steps__steer-pill').length) }))
+console.log('when it is done:', JSON.stringify({ ...(await chainLook(win)), pillsLeft: await win.evaluate(() => document.querySelectorAll('.steps__ask-pill').length) }))
 console.log('the reply it kept:', JSON.stringify({ before: repliesBefore, after: await replies(win), text: await lastReply(win) }))
 await win.screenshot({ path: `${out}/05-done-after-the-steer.png` })
 
@@ -186,7 +186,7 @@ await win.setViewportSize({ width: 420, height: 880 })
 await win.waitForTimeout(400)
 await ask(win, "Lia, sem pressa com a skill `steer-demo`: leia e faça o trabalho")
 await win.waitForTimeout(1200)
-await win.locator('.steps__steer-pill').last().click()
+await win.locator('.steps__ask-pill').last().click()
 await win.waitForTimeout(300)
 console.log('at 420, the pill and the field:', JSON.stringify({ pill: await pillLook(win), field: await fieldLook(win) }))
 await win.screenshot({ path: `${out}/06-at-420.png` })
