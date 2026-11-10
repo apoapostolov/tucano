@@ -86,6 +86,16 @@ describe('the tables', () => {
     expect(r.truncated).toBe(true)
   })
 
+  it("the agent's page sees the newest rows first, and the whole table as CSV, oldest first", () => {
+    const data = new AgentData(dir)
+    data.execute('a1', 'CREATE TABLE precos (trecho TEXT, preco REAL, nota TEXT)')
+    data.execute('a1', 'INSERT INTO precos VALUES (?, ?, ?), (?, ?, ?)', ['GRU-EZE', 1016, null, 'GIG-EZE', 820, 'direto, "barato"'])
+    expect(data.rows('a1', 'precos')).toEqual({ columns: ['trecho', 'preco', 'nota'], rows: [['GIG-EZE', 820, 'direto, "barato"'], ['GRU-EZE', 1016, null]], total: 2 })
+    expect(data.rows('a1', 'precos', 1).rows).toEqual([['GIG-EZE', 820, 'direto, "barato"']])
+    expect(data.csv('a1', 'precos')).toBe('trecho,preco,nota\r\nGRU-EZE,1016,\r\nGIG-EZE,820,"direto, ""barato"""\r\n')
+    expect(() => data.rows('a1', 'nao_existe')).toThrow('Não há tabela nao_existe.')
+  })
+
   it('refuses an id that could leave its folder', () => {
     const data = new AgentData(dir)
     expect(() => data.file('../tucano')).toThrow()
@@ -105,7 +115,7 @@ describe('in a reply', () => {
     const dir = mkdtempSync(join(tmpdir(), 'ad-data-run-'))
     db = new Db(join(dir, 'test.db'))
     data = new AgentData(join(dir, 'data'))
-    settings = { workspaceName: 'Edu', context: '', engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready }, routerModel: 'haiku', memoryModel: 'haiku', memoryLearning: 'approve', defaultLimit: 1000, approvalTtlHours: 24, theme: 'system', language: 'pt', autonomy: 'careful' }
+    settings = { workspaceName: 'Edu', context: '', engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready, hermes: ready }, routerModel: 'haiku', memoryModel: 'haiku', memoryLearning: 'approve', defaultLimit: 1000, approvalTtlHours: 24, theme: 'system', language: 'pt', autonomy: 'careful' }
     replies = []
     gateway = new Gateway()
     await gateway.start()
@@ -133,7 +143,7 @@ describe('in a reply', () => {
         yield { type: 'done', text: 'feito', usage: { inputTokens: 10, cacheReadTokens: 0, outputTokens: 1 } }
       }
     }
-    const engines: Record<EngineId, Engine> = { claude, codex: fakeEngine('codex'), opencode: fakeEngine('opencode'), pi: fakeEngine('pi'), antigravity: fakeEngine('antigravity'), cursor: fakeEngine('cursor'), grok: fakeEngine('grok'), cline: fakeEngine('cline') }
+    const engines: Record<EngineId, Engine> = { claude, codex: fakeEngine('codex'), opencode: fakeEngine('opencode'), pi: fakeEngine('pi'), antigravity: fakeEngine('antigravity'), cursor: fakeEngine('cursor'), grok: fakeEngine('grok'), cline: fakeEngine('cline'), hermes: fakeEngine('hermes') }
     return new Runner({ db, engines, settings: async () => settings, emit: () => {}, workDir: mkdtempSync(join(tmpdir(), 'ad-w-')), gateway, data })
   }
   const steps = (): string[] => db.messages().find((m) => m.author.kind === 'agent')!.run!.steps.map((s) => `${s.label}: ${s.detail}`)
@@ -152,7 +162,7 @@ describe('in a reply', () => {
     expect(JSON.parse(replies[2]!)).toEqual([{ minimo: 1016 }])
     expect(replies[3]).toBe('- precos: trecho TEXT, preco REAL · 1 linha')
     expect(db.approvals()).toEqual([])
-    expect(steps()).toEqual(expect.arrayContaining(['Alterou os dados: INSERT INTO precos VALUES (?, ?) · 1 linha afetada', 'Viu as tabelas: 1 tabela']))
+    expect(steps()).toEqual(expect.arrayContaining(['Gravou: INSERT INTO precos VALUES (?, ?) · 1 linha afetada', 'Viu as tabelas: 1 tabela']))
   })
 
   it('a SQL error comes back to the agent as an error, nothing more', async () => {
@@ -190,6 +200,20 @@ describe('in a reply', () => {
     await r.idle()
     expect(db.approval(ap.id)).toMatchObject({ state: 'refused', outcome: 'Nada foi apagado.' })
     expect(data.tables('a1').map((t) => t.name)).toEqual(['precos'])
+  })
+
+  it('on the default level (Normal), destroying data asks too, while plain writes run', async () => {
+    settings = { ...settings, autonomy: undefined }
+    data.execute('a1', 'CREATE TABLE precos (trecho TEXT)')
+    const r = runner([
+      ['dados_alterar', { sql: "INSERT INTO precos VALUES ('GRU-EZE')" }],
+      ['dados_alterar', { sql: 'DELETE FROM precos' }]
+    ])
+    await r.send('d1', 'grava e limpa')
+    await r.idle()
+    expect(replies[0]).toBe('Feito: 1 linha afetada.')
+    expect(db.approvals()).toHaveLength(1)
+    expect(data.query('a1', 'SELECT COUNT(*) AS n FROM precos').rows).toEqual([{ n: 1 }])
   })
 
   it('with deleting set to run on its own, destroying data runs right away', async () => {
