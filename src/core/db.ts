@@ -17,6 +17,7 @@ import {
   type ArtifactKind,
   type Author,
   type Connector,
+  type ApprovalResult,
   type ConnectorAuth,
   type ConnectorTool,
   type Conversation,
@@ -513,7 +514,9 @@ const COLUMNS: [string, string, string][] = [
   ['person_keys', 'push', 'TEXT'],
   // A routine on a date ("2026-11-17", once) or on a day of every month (1–31).
   ['routines', 'date', 'TEXT'],
-  ['routines', 'month_day', 'INTEGER']
+  ['routines', 'month_day', 'INTEGER'],
+  // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
+  ['approvals', 'result', 'TEXT']
 ]
 
 
@@ -1371,6 +1374,7 @@ export class Db {
       state: str(r['state']) as ApprovalState,
       reason: r['reason'] ? str(r['reason']) : undefined,
       outcome: r['outcome'] ? str(r['outcome']) : undefined,
+      ...(r['result'] ? { result: str(r['result']) as ApprovalResult } : {}),
       createdAt: Number(r['created_at']),
       expiresAt: Number(r['expires_at']),
       decidedAt: r['decided_at'] ? Number(r['decided_at']) : undefined,
@@ -1421,6 +1425,12 @@ export class Db {
       .prepare("UPDATE approvals SET state = ?, reason = ?, decided_at = ?, decided_by = ? WHERE id = ? AND state = 'pending'")
       .run(state, reason ?? null, Date.now(), by ?? null, id)
     return Number(r.changes) === 1
+  }
+
+  // What became of the call, once it's over: it ran, it ran and failed, or nothing ran. Written
+  // apart from the state so a card can show "approved, waiting for the result" in between.
+  setApprovalResult(id: string, result: ApprovalResult): void {
+    this.db.prepare('UPDATE approvals SET result = ? WHERE id = ?').run(result, id)
   }
 
   setApprovalOutcome(id: string, outcome: string): void {
