@@ -461,6 +461,7 @@ export interface Settings {
     guest?: { by?: string } // someone just invited: their own short welcome first (who invited them)
   }
   folded?: string[] // the ids of what I folded in the sidebar
+  lastImageFolder?: string // the folder the last picture was saved to, so the next one goes there in one click
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
   accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
