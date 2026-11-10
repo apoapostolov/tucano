@@ -2108,7 +2108,8 @@ ${note}`,
           const withSteers = (r: CallToolResult): CallToolResult => {
             const handed = control.steer?.splice(0) ?? []
             if (!handed.length) return r
-            addSteps({ id: randomUUID(), label: L('Recebeu o que você escreveu', 'Took in what you wrote'), detail: handed.join(' · ').replace(/\s+/g, ' ').slice(0, 160), status: 'done' })
+            // `kind: 'steer'`: in the chain it reads as the person's words, not as a tool call.
+            addSteps({ id: randomUUID(), kind: 'steer', label: L('Recebeu o que você escreveu', 'Took in what you wrote'), detail: handed.join(' · ').replace(/\s+/g, ' ').slice(0, 160), status: 'done' })
             return { ...r, content: [...r.content, { type: 'text', text: handed.join('\n\n') }] }
           }
           const r = withSteers(await runTool(name, args))
