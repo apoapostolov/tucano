@@ -571,9 +571,9 @@ const COLUMNS: [string, string, string][] = [
   // What a connector's server says can't be loosened here (META_FLOOR, META_HIGH_RISK in shared/classify.ts):
   // the class a tool can't go below, and that it's high risk. A node says both for the person's computer.
   ['connector_tools', 'cls_floor', 'TEXT'],
-  ['connector_tools', 'remote_high_risk', 'INTEGER NOT NULL DEFAULT 0']
-]
-
+  ['connector_tools', 'remote_high_risk', 'INTEGER NOT NULL DEFAULT 0'],
+  // A channel's mention mode, per member: in the room, answering only when mentioned.
+  ['members', 'mention_only', 'INTEGER NOT NULL DEFAULT 0']]
 
 type Row = Record<string, unknown>
 
@@ -927,17 +927,22 @@ export class Db {
          ORDER BY c.created_at`
       )
       .all(personId) as Row[]
-    const members = this.db.prepare('SELECT conversation_id, agent_id FROM members').all() as { conversation_id: string; agent_id: string }[]
-    return rows.map((r) => this.toConversation(r, members.filter((m) => m.conversation_id === r['id']).map((m) => m.agent_id)))
+    const members = this.db.prepare('SELECT conversation_id, agent_id, mention_only FROM members').all() as { conversation_id: string; agent_id: string; mention_only: number }[]
+    return rows.map((r) => {
+      const mine = members.filter((m) => m.conversation_id === r['id'])
+      return this.toConversation(r, mine.map((m) => m.agent_id), mine.filter((m) => m.mention_only === 1).map((m) => m.agent_id))
+    })
   }
 
-  private toConversation(r: Row, members: string[]): Conversation {
+  // `mentionOnly`: the agents of a channel that answer only when mentioned (left out when none is).
+  private toConversation(r: Row, members: string[], mentionOnly: string[] = []): Conversation {
     return {
       id: str(r['id']),
       kind: str(r['kind']) as Conversation['kind'],
       name: str(r['name']),
       topic: r['topic'] ? str(r['topic']) : undefined,
       members,
+      ...(mentionOnly.length ? { mentionOnly } : {}),
       summary: r['summary'] ? str(r['summary']) : undefined,
       summaryUntil: r['summary_until'] ? Number(r['summary_until']) : undefined,
       summaryAt: r['summary_at'] ? Number(r['summary_at']) : undefined,
@@ -964,8 +969,8 @@ export class Db {
       )
       .get(personId, id) as Row | undefined
     if (!r) return undefined
-    const members = (this.db.prepare('SELECT agent_id FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as { agent_id: string }[]).map((m) => m.agent_id)
-    return this.toConversation(r, members)
+    const mine = this.db.prepare('SELECT agent_id, mention_only FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as { agent_id: string; mention_only: number }[]
+    return this.toConversation(r, mine.map((m) => m.agent_id), mine.filter((m) => m.mention_only === 1).map((m) => m.agent_id))
   }
 
   // Only whose a conversation is, for checks on every event (no counts, no members).
@@ -1009,11 +1014,14 @@ export class Db {
     this.db.prepare('UPDATE conversations SET topic = ? WHERE id = ?').run(topic ?? null, id)
   }
 
-  // Exactly these agents in the conversation.
-  setMembers(id: string, agentIds: string[]): void {
+  // Exactly these agents in the conversation. `mentionOnly`: which of them answer only when
+  // mentioned (a channel's mention mode); left out, each agent keeps the mode it had.
+  setMembers(id: string, agentIds: string[], mentionOnly?: string[]): void {
+    const agents = [...new Set(agentIds)]
+    const quiet = new Set(mentionOnly === undefined ? this.conversation(id)?.mentionOnly ?? [] : mentionOnly)
     this.tx(() => {
       this.db.prepare('DELETE FROM members WHERE conversation_id = ?').run(id)
-      for (const a of new Set(agentIds)) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(id, a)
+      for (const a of agents) this.db.prepare('INSERT INTO members (conversation_id, agent_id, mention_only) VALUES (?, ?, ?)').run(id, a, quiet.has(a) ? 1 : 0)
     })
   }
 
