@@ -1459,7 +1459,9 @@ const api: Handlers = {
     clean.actionRules = cleanRules(clean.actionRules)
     if (!isAutonomy(clean.autonomy)) delete clean.autonomy
     if (typeof clean.outsideGuard !== 'boolean') delete clean.outsideGuard
-    if (typeof clean.smartRouting !== 'boolean') delete clean.smartRouting
+    // On, off, or inherit (absent): anything else, a cleared switch included, goes back to following the
+    // global one instead of turning into an off that reads as a choice.
+    if (clean.smartRouting !== true && clean.smartRouting !== false) delete clean.smartRouting
     const linux = (a?: Agent): boolean => !!a?.computer && a.computerKind !== 'mac'
     const mac = (a?: Agent): boolean => !!a?.computer && a.computerKind === 'mac'
     db.saveAgent(clean)
