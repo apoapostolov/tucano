@@ -2247,7 +2247,9 @@ ${note}`,
     const config = sessionConfig({ engine: engineId, model: modelName, effort: agent.effort, account: account?.id ?? '', web: agent.web !== false, system, tools: toolDefs.map(({ _meta: _m, ...t }) => t), gateway: !!this.deps.gateway })
     const shown: Shown[] = [...blockOf].map(([id, i]) => ({ id, block: blocks[i]! }))
     const writing = history.some((m) => m.author.kind === 'agent' && m.run?.status === 'working')
-    let plan = engines[engineId].sessions && !writing ? this.sessions.begin(sessionKey, { config, shown, live, restart: !!opts.existing, task: !!task }) : undefined
+    // A persistent CLI process cannot be retrofitted into a selected sandbox. Use one-shot
+    // launches until every session engine supports sandbox-aware process creation.
+    let plan = engines[engineId].sessions && (!agent.sandbox || agent.sandbox.provider === 'none') && !writing ? this.sessions.begin(sessionKey, { config, shown, live, restart: !!opts.existing, task: !!task }) : undefined
     let lost: SessionPlan | undefined // given up on in the middle (the reserve took the reply)
     // An engine whose daemon holds the MCP connection between turns keeps the URL it was given
     // (Hermes): its token is the agent's, not the turn's. Every other engine gets a fresh one, or

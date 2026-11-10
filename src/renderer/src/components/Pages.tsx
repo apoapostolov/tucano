@@ -2,6 +2,7 @@ import { L, locale, type Lang } from '../../../shared/lang'
 import { hasMonthlyLimit, safeLimit } from '../../../shared/limits'
 import { instructionLengthNote } from '../../../shared/instructions'
 import { skillGroup, skillOrigin } from '../../../shared/skill-groups'
+import type { SandboxConfig } from '../../../shared/types'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   agentById,
@@ -644,6 +645,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           )}
 
           {!isNew && pane('ferramentas') && (
+            <>
             <ComputerCard
               agentId={draft.id}
               kind={draft.computer ? (draft.computerKind ?? 'linux') : 'none'}
@@ -653,6 +655,12 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                 patchAgent(draft.id, patch)
               }}
             />
+            <SandboxCard
+              sandbox={draft.sandbox}
+              enabled={draft.computer && draft.computerKind === 'mac'}
+              onChange={(sandbox) => (isNew ? patch({ sandbox }) : (setDraft((d) => ({ ...d, sandbox })), patchAgent(draft.id, { sandbox })))}
+            />
+            </>
           )}
 
           {pane('memoria') && (
@@ -984,6 +992,34 @@ function ComputerCard({ agentId, kind, onChange }: { agentId: string; kind: Comp
           </div>}
         </>
       )}
+    </Card>
+  )
+}
+
+function SandboxCard({ sandbox, enabled, onChange }: { sandbox?: SandboxConfig; enabled: boolean; onChange: (sandbox: SandboxConfig) => void }): ReactNode {
+  const provider = sandbox?.provider ?? 'none'
+  return (
+    <Card
+      title={L('Sandbox do computador', 'Computer sandbox')}
+      lead={L(
+        'Limita o agente quando ele roda diretamente neste computador. Escolha um provider instalado; se ele não estiver disponível, a execução falha e não cai para acesso sem sandbox.',
+        'Limits the agent when it runs directly on this computer. Choose an installed provider; if it is unavailable, execution fails instead of falling back to unsandboxed access.'
+      )}
+    >
+      <div className="segmented segmented--wide" role="radiogroup" aria-label={L('Sandbox', 'Sandbox')}>
+        <button type="button" role="radio" aria-checked={provider === 'none'} className={provider === 'none' ? 'is-active' : ''} disabled={!enabled} onClick={() => onChange({ provider: 'none' })}>
+          {L('Nenhum', 'None')}
+        </button>
+        <button type="button" role="radio" aria-checked={provider === 'ai-jail'} className={provider === 'ai-jail' ? 'is-active' : ''} disabled={!enabled} onClick={() => onChange({ ...sandbox, provider: 'ai-jail' })}>
+          ai-jail
+        </button>
+      </div>
+      {provider === 'ai-jail' && enabled && (
+        <p className="muted small">
+          {L('O ai-jail usa a rede para o CLI falar com o provedor. Compartilhamento de arquivos e variáveis de ambiente será configurado em uma etapa posterior.', 'ai-jail uses the network so the CLI can reach its provider. File and environment sharing will be configured in a later step.')}
+        </p>
+      )}
+      {!enabled && <p className="muted small">{L('Disponível quando “Este computador” estiver selecionado.', 'Available when “This computer” is selected.')}</p>}
     </Card>
   )
 }
