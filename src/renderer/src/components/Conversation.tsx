@@ -1317,6 +1317,7 @@ function useNow(on: boolean): number {
 }
 
 // One quiet line: what the agent is doing now (and for how long), or how many
+// One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click — unless the person asked for
 // one line only, or for just the latest few (Settings › General, or one agent's own).
 export function RunSteps({ message }: { message: Message }): ReactNode {
@@ -1341,6 +1342,14 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
     if (!open || mode !== 'latest') return
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: 'smooth' })
   }, [open, mode, shown.length])
+  // The line beside the steps is a handle. In a long run the toggle is scrolled away above, and the
+  // line is where the eye already is, so a double-click on it folds the steps from there. Then the
+  // block, now one line, is brought into view: otherwise folding looks like the steps vanishing.
+  const box = useRef<HTMLDivElement>(null)
+  const fold = (): void => {
+    setOpen(false)
+    requestAnimationFrame(() => box.current?.scrollIntoView({ block: 'nearest' }))
+  }
 
   if (run.steps.length === 0 && !working) return null
   const total = run.steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
@@ -1399,7 +1408,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   )
 
   return (
-    <div className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''} steps--${mode}`}>
+    <div ref={box} className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''} steps--${mode}`}>
       {opens ? (
         <button className="steps__toggle" onClick={() => setOpen(!open)}>
           {line}
@@ -1410,37 +1419,32 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
         </div>
       )}
       {open && (
-        <ol ref={list} className="steps__list">
-          {hidden > 0 && (
-            <li className="steps__earlier">
-              {L(`${hidden} ${hidden === 1 ? 'passo' : 'passos'} antes destes`, `${hidden} earlier ${hidden === 1 ? 'step' : 'steps'}`)}
-            </li>
-          )}
-          {shown.map((st, i) => (
-            <StepRow key={st.id} step={st} dim={i < fade ? 0.2 + (0.8 * i) / fade : 0} />
-          ))}
-        </ol>
+        <div className="steps__body">
+          <button
+            type="button"
+            className="steps__rail"
+            aria-label={L('Minimizar os passos', 'Fold the steps')}
+            title={L('Clique duas vezes para minimizar os passos', 'Double-click to fold the steps')}
+            // A double-click, as asked: one click on the line does nothing, so dragging past it never folds a run.
+            onDoubleClick={fold}
+            // A keyboard has no double-click: Enter or Space on the handle folds it, and reports detail 0.
+            onClick={(e) => {
+              if (e.detail === 0) fold()
+            }}
+          />
+          <ol ref={list} className="steps__list">
+            {hidden > 0 && (
+              <li className="steps__earlier">
+                {L(`${hidden} ${hidden === 1 ? 'passo' : 'passos'} antes destes`, `${hidden} earlier ${hidden === 1 ? 'step' : 'steps'}`)}
+              </li>
+            )}
+            {shown.map((st, i) => (
+              <StepRow key={st.id} step={st} dim={i < fade ? 0.2 + (0.8 * i) / fade : 0} />
+            ))}
+          </ol>
+        </div>
       )}
       <Thought message={message} working={working} />
-    </div>
-  )
-}
-
-// What the model is thinking, dim and small, as it arrives: not what it said, and not a step.
-// It stays after the reply ends (the window keeps it in memory) so it can be read back. Off unless
-// the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
-export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
-  const on = useStore((s) => s.settings.showThinking === true)
-  const thought = useLiveThought(message.id, STREAM_MS)
-  const box = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (working) box.current?.scrollTo({ top: box.current.scrollHeight })
-  }, [thought, working])
-  if (!on || !thought) return null
-  return (
-    <div ref={box} className="thought" aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
-      <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
-      <div className="thought__text">{thought}</div>
     </div>
   )
 }
