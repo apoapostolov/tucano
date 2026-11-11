@@ -3,6 +3,7 @@
 // zero" (Intro.tsx), the same form from a template, which hands the agent back to the introduction.
 import { L } from '../../../shared/lang'
 import { instructionLengthNote } from '../../../shared/instructions'
+import type { SandboxConfig } from '../../../shared/types'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ENGINES,
@@ -30,7 +31,7 @@ import {
   type View
 } from '../store'
 import { ModelPicker, usableEngines } from './Harness'
-import { ColorPicker, LookPicker, Toggle } from './Pages'
+import { ColorPicker, LookPicker, SandboxCard, Toggle } from './Pages'
 import { Composer, MessageList } from './Conversation'
 import { draftAgent, UseDraft } from './Tuca'
 import { AutonomyPick } from './AutonomyPick'
@@ -167,6 +168,7 @@ export function Onboarding({ build = false, from, manual }: { build?: boolean; f
   // From the introduction it starts on Normal, as the introduction's own agent does; the builder follows Settings.
   const [agent, setAgent] = useState<Agent>(() => ({ ...fromTemplate(newAgentDraft(), TEMPLATES()[0]!, readyModels(settings.engines)), ...(manual ? { autonomy: storedAutonomy(FIRST_AUTONOMY, settings.autonomy) } : {}) }))
   const [computer, setComputer] = useState<Computer>('none')
+  const [sandbox, setSandbox] = useState<SandboxConfig | undefined>()
   const [task, setTask] = useState(() => TEMPLATES()[0]!.tasks[0]!)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('') // why the agent wasn't created (a person's name, a taken @)
@@ -244,7 +246,7 @@ export function Onboarding({ build = false, from, manual }: { build?: boolean; f
     setBusy(true)
     setError('')
     try {
-      const a: Agent = { ...agent, name: agent.name.trim(), role: agent.role.trim(), handle, computer: computer !== 'none', computerKind: computer === 'mac' ? 'mac' : 'linux', grants: Object.fromEntries(connectors.map((c) => [c.id, grants[c.id] ?? 'read'])) }
+      const a: Agent = { ...agent, name: agent.name.trim(), role: agent.role.trim(), handle, computer: computer !== 'none', computerKind: computer === 'mac' ? 'mac' : 'linux', sandbox: computer === 'mac' ? sandbox : undefined, grants: Object.fromEntries(connectors.map((c) => [c.id, grants[c.id] ?? 'read'])) }
       // From the introduction: it makes #geral and leaves the first message there, unsent.
       if (manual) return await manual.onCreate(a, task.trim())
       // From the builder screen: the agent, then a DM with it and its first task.
@@ -282,7 +284,7 @@ export function Onboarding({ build = false, from, manual }: { build?: boolean; f
             ) : (
               <MeetTuca conv={tucaConv} onUse={useDraft} onManual={() => setManual(true)} />
             ))}
-          {step === 'powers' && <Powers agent={agent} handle={handle} patch={patch} computer={computer} setComputer={setComputer} grants={grants} setGrants={setGrants} onBack={back} onNext={next} />}
+          {step === 'powers' && <Powers agent={agent} handle={handle} patch={patch} computer={computer} setComputer={setComputer} sandbox={sandbox} setSandbox={setSandbox} grants={grants} setGrants={setGrants} onBack={back} onNext={next} />}
           {step === 'first' && <FirstTask agent={agent} handle={handle} computer={computer} manual={!!manual} tasks={tasks} task={task} setTask={setTask} busy={busy} error={error} onBack={back} onFinish={() => void finish()} />}
         </div>
       </div>
@@ -566,6 +568,8 @@ function Powers(p: {
   patch: (a: Partial<Agent>) => void
   computer: Computer
   setComputer: (c: Computer) => void
+  sandbox?: SandboxConfig
+  setSandbox: (sandbox: SandboxConfig) => void
   grants: Record<string, GrantLevel>
   setGrants: (g: Record<string, GrantLevel>) => void
   onBack: () => void
@@ -636,6 +640,7 @@ function Powers(p: {
             </div>
           </div>
         </div>
+        {computer === 'mac' && <SandboxCard sandbox={p.sandbox} enabled onChange={p.setSandbox} />}
         {connectors.length > 0 && (
           <div className="onb-powers onb-powers--tools">
             {connectors.map((c) => {
