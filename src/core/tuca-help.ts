@@ -4,6 +4,8 @@
 // He sees settings, statuses and error messages, never what was said in a conversation.
 import { L } from '../shared/lang'
 import { channelName, dateAt, ENGINES, modelInfo, nextRun, skillApplies, validTime, type Schedule, type Agent, type AgentChanges, type Approval, type Connector, type Conversation, type Effort, type GrantLevel, type Routine, type Settings, type Proposal, type AgentDraft, type Skill, proposalsOf } from '../shared/types'
+import { usedShare } from '../shared/limits'
+import { channelName, dateAt, ENGINES, modelInfo, nextRun, validTime, type Schedule, type Agent, type AgentChanges, type Approval, type Connector, type Conversation, type Effort, type GrantLevel, type Routine, type Settings, type Proposal, type AgentDraft, proposalsOf } from '../shared/types'
 import type { ToolDef } from './gateway'
 import { dateArg } from './routines'
 import { assignSkills, EVERYONE, skillList, skillsOf } from './skills'
@@ -100,7 +102,9 @@ export function workspaceState(area: unknown, x: StateInput, busca?: unknown): s
     const lines = x.agents.map((a) => {
       const m = modelInfo(a.modelId)
       const grants = Object.entries(a.grants).map(([id, g]) => `${x.connectors.find((c) => c.id === id)?.name ?? id} (${g === 'read_write' ? L('escrita', 'write') : g === 'read' ? L('leitura', 'read') : g})`)
-      const pct = a.limit ? Math.round((a.used / a.limit) * 100) : 0
+      // With no monthly limit (0) there is no month to be a percentage of: say so, rather than "0%".
+      const share = usedShare(a.used, a.limit)
+      const pct = share === undefined ? undefined : Math.round(share * 100)
       const pending = x.approvals.filter((p) => p.agentId === a.id && p.state === 'pending').length
       // The skills it follows: how many, and by name the ones that are just its own (the rest is the
       // same list every agent gets, which the skills area has).
@@ -108,6 +112,7 @@ export function workspaceState(area: unknown, x: StateInput, busca?: unknown): s
       const own = x.skills ? mine.filter((n) => (x.skills!.find((k) => k.name === n)?.agents.length ?? 0) > 0) : []
       const skills = x.skills ? L(` · ${mine.length} skill(s)${own.length ? `, só dele: ${own.slice(0, 8).join(', ')}${own.length > 8 ? ` +${own.length - 8}` : ''}` : ''}`, ` · ${mine.length} skill(s)${own.length ? `, its own: ${own.slice(0, 8).join(', ')}${own.length > 8 ? ` +${own.length - 8}` : ''}` : ''}`) : ''
       return `- ${a.name} (@${a.handle}${a.role ? `, ${a.role}` : ''})${a.archived ? L(' · ARQUIVADO', ' · ARCHIVED') : ''}: ${m ? `${ENGINES[m.engine].label} · ${m.label}` : a.modelId} · ${L('esforço', 'effort')} ${a.effort} · ${L(`${pct}% do limite do mês`, `${pct}% of the month's limit`)}${pct >= 100 ? L(' (ESGOTADO)', ' (USED UP)') : ''} · ${grants.length ? grants.join(', ') : L('sem conectores', 'no connectors')} · ${a.web !== false ? 'web' : L('sem web', 'no web')}${a.computer ? ` · ${a.computerKind === 'mac' ? L('este computador', 'this computer') : 'Docker'}` : ''}${a.browser ? L(' · navegador', ' · browser') : ''}${pending ? L(` · ${pending} aprovação(ões) esperando`, ` · ${pending} approval(s) waiting`) : ''}${skills}`
+      return `- ${a.name} (@${a.handle}${a.role ? `, ${a.role}` : ''})${a.archived ? L(' · ARQUIVADO', ' · ARCHIVED') : ''}: ${m ? `${ENGINES[m.engine].label} · ${m.label}` : a.modelId} · ${L('esforço', 'effort')} ${a.effort} · ${pct === undefined ? L('sem limite do mês', 'no monthly limit') : L(`${pct}% do limite do mês`, `${pct}% of the month's limit`)}${pct !== undefined && pct >= 100 ? L(' (ESGOTADO)', ' (USED UP)') : ''} · ${grants.length ? grants.join(', ') : L('sem conectores', 'no connectors')} · ${a.web !== false ? 'web' : L('sem web', 'no web')}${a.computer ? ` · ${a.computerKind === 'mac' ? L('este computador', 'this computer') : 'Docker'}` : ''}${a.browser ? L(' · navegador', ' · browser') : ''}${pending ? L(` · ${pending} aprovação(ões) esperando`, ` · ${pending} approval(s) waiting`) : ''}`
     })
     out.push(`## ${L('Agentes', 'Agents')}\n${lines.join('\n') || L('nenhum ainda', 'none yet')}`)
   }
