@@ -13,6 +13,7 @@ import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories }
 import { decideRoute, readPrompt, unavailableTrace } from './model-routing'
 import { POOLS, targetId, type RouteTarget, type RouteTrace, type RoutingConfig } from '../shared/routing'
 import { WIKI_TOOL_NAMES, WIKI_TOOLS, wikiCall, type Wiki } from './wiki'
+import { WIKI_TOOL_NAMES, WIKI_WRITE_TOOL_NAMES, wikiCall, wikiToolsFor, wikiWrite, type Wiki } from './wiki'
 import { BROWSER_TOOL_NAMES, browserStep, browserTools, NAVEGADOR, type Browser } from './browser'
 import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './apps'
 import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, stepFor, type Computers } from './computer'
@@ -315,7 +316,7 @@ export interface RunnerDeps {
   onQuota?: (q: Quota) => void // the subscription's windows, as the CLI reports them
   skills?: Pick<Skills, 'forAgent' | 'read' | 'propose'> // without it, agents have no skills
   models?: () => { id: string; label: string }[] // what the Tuca may propose; without it, the plans' listed models
-  wiki?: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'kinds' | 'view' | 'heldTitles'> // without it, agents have no wiki
+  wiki?: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'kinds' | 'view' | 'heldTitles' | 'save' | 'readOnly'> // without it, agents have no wiki
   wikiCurator?: { afterReply(conversationId: string): void } // reads the conversation after a reply, to keep what lasts
   timers?: { wait(ms: number, signal?: AbortSignal): Promise<void>; now(): number } // how the app waits on a pending result; tests pass a fake clock
 }
@@ -1553,13 +1554,19 @@ export class Runner {
     const routines = this.deps.gateway ? this.deps.routines : undefined
     const skills = this.deps.gateway ? this.deps.skills : undefined
     const mySkills = skills?.forAgent(agent.id) ?? []
-    // The wiki: for agents that may read it, once it has a page.
-    // A page held for one person (see Wiki.inherit) is read only in their own DM: anywhere else the reply reaches others.
+    // The wiki: for agents that may read it, once it has a page (an agent that may write it gets the tools
+    // even with no page yet: the first one is theirs). A page held for one person (see Wiki.inherit) is read
+    // and written only in their own DM: anywhere else the reply reaches others.
+    const wikiLevel = wikiAccess(agent)
     const wikiShown = this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conv, db.ownerId())))
     const wiki = this.deps.gateway && wikiShown && wikiAccess(agent) !== 'none' && wikiShown.count() > 0 ? wikiShown : undefined
     // The team, to look at: the prompt names only the agents of this conversation, so a DM's agent has
     // no way to know who else there is (nor their handles) without asking.
     const roster = !!this.deps.gateway && isTeam(agent)
+    const wikiWritable = this.deps.gateway && wikiLevel === 'read_write' ? this.deps.wiki : undefined
+    const wiki = this.deps.gateway && wikiShown && wikiLevel !== 'none' && (wikiShown.count() > 0 || !!wikiWritable) ? wikiShown : undefined
+    // What this conversation may read, for a write that must not touch a page held from it.
+    const wikiSees = (title: string): boolean => !!wikiShown?.page(title)
 
     const control: Control = { ctl: new AbortController(), msg }
     this.controllers.set(msg.id, control)
@@ -1736,6 +1743,7 @@ ${note}`,
       ...(skills ? [...(mySkills.length ? [LER_SKILL] : []), PROPOR_SKILL] : []),
       ...(wiki ? WIKI_TOOLS : []),
       ...(roster ? [EQUIPE] : [])
+      ...(wiki ? wikiToolsFor(wikiLevel) : [])
     ]
     // The connector tools it called lately, by the steps of its replies ("Linear · list_issues").
     const byStep = new Map([...exposed].map(([name, { connector, tool }]) => [`${connector.name} · ${tool.name}`, name]))
@@ -2050,6 +2058,14 @@ ${note}`,
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
           const r = wikiCall(wiki, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: 'done' })
+          return textResult(r.text, r.error)
+        }
+
+        if (wikiWritable && WIKI_WRITE_TOOL_NAMES.has(name)) {
+          // Its level may have changed mid-turn: read again before a page is touched.
+          if (wikiAccess(db.agent(agent.id) ?? agent) !== 'read_write') return textResult(L('Você só lê a wiki agora.', 'You only read the wiki now.'), true)
+          const r = wikiWrite(wikiWritable, { id: agent.id, name: agent.name }, name, args, wikiSees)
+          addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)
         }
 
@@ -2587,6 +2603,7 @@ ${note}`,
       skills: skills && mySkills,
       wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds() } : undefined,
       roster,
+      wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds(), ...(wikiWritable ? { write: true } : {}) } : undefined,
       connectors: exposed.size > 0,
       github,
       people,
