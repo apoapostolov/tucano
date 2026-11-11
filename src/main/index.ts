@@ -20,7 +20,9 @@ import { suggestWorkspaceCopyName, workspaceParts, type Workspace, type Workspac
 import { autostartEntry, autostartFile, electronPasswordStore, onPath } from '../core/platform'
 import { proxyFromPac } from '../core/network'
 
-const NAME = 'Tucano'
+// Its own name, not the released app's: this is what Electron derives the data folder and the
+// single-instance lock from, so TucanoNext opens beside Tucano instead of waking it up.
+const NAME = 'TucanoNext'
 app.setName(NAME)
 // Set here and not in the menu entry, so it holds when an update restarts the app. Someone who
 // chose a store with --password-store keeps it.

@@ -73,7 +73,11 @@ export function useHoldReorder({ onDrop, onNudge }: { onDrop: (id: string, befor
       onPointerUp: () => {
         const to = target.current
         const id2 = carrying.current
-        if (id2 && to && to !== id2) onDrop(id2, to)
+        const dropped = !!(id2 && to && to !== id2)
+        if (dropped) onDrop(id2!, to!)
+        // A row held long enough to be picked up and then let go where it was is still a click: it
+        // opens, exactly like a quick one. Only a drop eats the click that follows it.
+        swallow.current = dropped
         cancel()
       },
       onPointerCancel: () => cancel(),
