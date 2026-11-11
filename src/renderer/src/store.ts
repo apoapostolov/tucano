@@ -939,7 +939,8 @@ export const archiveAgent = (id: string, archived: boolean): Promise<void> => ca
 export const setTopic = (id: string, topic: string): Promise<void> => call('setTopic', { id, topic })
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
-export const setChannelMembers = (id: string, agentIds: string[]): Promise<void> => call('setChannelMembers', { id, agentIds })
+// `mentionOnly`: the agents in the channel that answer only when mentioned.
+export const setChannelMembers = (id: string, agentIds: string[], mentionOnly?: string[]): Promise<void> => call('setChannelMembers', { id, agentIds, ...(mentionOnly ? { mentionOnly } : {}) })
 export const deleteConversation = (id: string): Promise<void> => call('deleteConversation', { id })
 // The history out of sight, the conversation kept where it is: same DM, same channel, empty screen.
 export const clearHistory = (id: string): Promise<void> => call('clearConversation', { id })

@@ -53,6 +53,7 @@ export interface Api {
   // A conversation's history, without deleting the conversation: the screen starts empty and the
   // next turns stop reading what came before, while the rows and the costs stay.
   clearConversation(p: { id: string }): void
+  setChannelMembers(p: { id: string; agentIds: string[]; mentionOnly?: string[] }): void // mentionOnly: those answering only when mentioned
   deleteConversation(p: { id: string }): void // a channel or a DM, with its messages and routines
   openDm(p: { agentId: string }): string
   ensureTuca(p: { modelId?: string; fresh?: boolean }): { agentId: string; conversationId: string } // the agent behind the builder screen, with this person's conversation with him, as it was; fresh starts a new one ("Nova conversa")
