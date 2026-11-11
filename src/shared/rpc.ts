@@ -6,6 +6,7 @@ import type { Os, AskEntry, Account, AccountEngine, ActivityEntry, Device, Inbox
 import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, SendMode, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
 import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, ProviderQuota, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
 import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, LocalSkillFolder, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
+import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, Effort, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
 
 export interface Snapshot {
   webhookPort?: number
@@ -45,7 +46,7 @@ export interface Api {
   stopRun(p: { messageId: string }): void
   retryRun(p: { messageId: string }): void
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
-  setAgentModels(p: { agentIds: string[]; modelId: string }): number
+  setAgentModels(p: { agentIds: string[]; modelId?: string; effort?: Effort }): number // modelId, effort or both: the agents changed, 0 when they already were
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string
   renameChannel(p: { id: string; name: string }): void // throws a message when the name is taken
