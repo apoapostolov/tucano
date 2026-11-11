@@ -644,7 +644,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
             </Card>
           )}
 
-          {!isNew && pane('ferramentas') && (
+          {pane('ferramentas') && (
             <>
             <ComputerCard
               agentId={draft.id}
