@@ -19,6 +19,7 @@ import { ACCOUNT_ENGINES, applyOrder, proposalsOf, type Proposal, type Proposals
 import { agentOwner, channelEditError, cleanName, dmOwner, Hub, MAX_NAME, mayEditChannel, nameLongError, nameTakenError, People, routineDetail, stripInvisible, type Purged } from './people'
 import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-people'
 import { cleanRules, isAutonomy } from '../shared/actions'
+import { isStepsMode } from '../shared/steps'
 import { listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
 import { Db, MIGRATIONS } from './db'
@@ -1525,6 +1526,8 @@ const api: Handlers = {
     clean.actionRules = cleanRules(clean.actionRules)
     if (!isAutonomy(clean.autonomy)) delete clean.autonomy
     if (typeof clean.outsideGuard !== 'boolean') delete clean.outsideGuard
+    // How its replies show their steps: one of the three, or nothing (the workspace's, which is every step).
+    if (!isStepsMode(clean.steps)) delete clean.steps
     const linux = (a?: Agent): boolean => !!a?.computer && a.computerKind !== 'mac'
     const mac = (a?: Agent): boolean => !!a?.computer && a.computerKind === 'mac'
     db.saveAgent(clean)
