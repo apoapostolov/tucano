@@ -525,6 +525,8 @@ const COLUMNS: [string, string, string][] = [
   ['members', 'listen', 'INTEGER NOT NULL DEFAULT 0'],
   // A channel an agent opened to work with agents called in from another conversation.
   ['conversations', 'team_up', 'TEXT']
+  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
+  ['messages', 'send_mode', 'TEXT']
 ]
 
 
