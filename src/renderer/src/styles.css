@@ -2630,7 +2630,16 @@ h3 {
   background: none;
   border: 0;
   border-bottom: 1px solid var(--border);
+  align-items: center;
   cursor: pointer;
+}
+/* Each column keeps its own height and sits on the row's middle line: a wrapping date made the row
+   three lines tall, which read as a table whose cells were not lined up. */
+.ask-row__head > * {
+  flex: 0 0 auto;
+}
+.ask-row__when {
+  white-space: nowrap;
 }
 .ask-row__text {
   flex: 1 1 auto;

@@ -1517,7 +1517,7 @@ export function AskedRow({
           {line}
         </span>
         <span className={`tag ${q.state === 'answered' ? 'tag--ok' : ''}`}>{ended}</span>
-        <span className="muted small">{time(q.answeredAt ?? q.createdAt)}</span>
+        <span className="muted small ask-row__when">{time(q.answeredAt ?? q.createdAt)}</span>
         <span className={`ask-row__chev ${open ? 'is-open' : ''}`}>
           <Icon name="chevron" size={12} />
         </span>

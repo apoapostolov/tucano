@@ -72,6 +72,8 @@ describe('a row of the asks history', () => {
     expect(html).not.toContain('<ul>')
     expect(html).not.toContain('Sim, publico')
     expect(html).toContain('aria-expanded="false"')
+    // The date keeps its own line: wrapped, it made the row three lines tall (styles.css ask-row__when).
+    expect(html).toContain('muted small ask-row__when')
   })
 
   it('opens into a bullet per question and a bullet per option under it', () => {
