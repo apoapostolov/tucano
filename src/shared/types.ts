@@ -1140,6 +1140,20 @@ export interface LocalSkill {
   origin: string // "Claude Code", "Plugin <name>", "Codex", "Pi", "Hermes", "Added"
   files: string[] // its other text files, relative to its folder
   scripts: boolean // it has scripts: an agent needs a computer to run them
+  category?: string // the folder it sits in, when the library is organised in categories (a Hermes one)
+  version?: string // from the frontmatter: a Hermes library keeps one; a plain skill may under metadata
+  tags?: string[] // metadata.hermes.tags, facets included (family:*, tool:*, risk:*…)
+}
+
+// A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
+// Codex, Pi, Hermes, OpenCode…), or one the person added. All the ones that are on mix into the
+// same list (src/core/local-skills.ts).
+export interface LocalSkillFolder {
+  path: string // where it is on this computer
+  source: string // who keeps it: "Claude Code", "Pi", "Hermes"…, or "Added"
+  detected: boolean // found on this computer, not added by hand
+  on: boolean // read; off: kept in the list, not read
+  count: number // skills in it right now
 }
 
 // A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
