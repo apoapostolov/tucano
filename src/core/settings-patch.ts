@@ -17,6 +17,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   agentOrder: { kind: 'array', max: 100_000, nullable: true },
   browserJev: { kind: 'boolean', max: 10, nullable: true },
   memoryLearning: { kind: ['approve', 'auto', 'off'], max: 20 },
+  sendMode: { kind: ['parallel', 'queue', 'steer', 'interrupt'], max: 20, nullable: true },
   wikiCapture: { kind: 'boolean', max: 10, nullable: true },
   wikiEdits: { kind: ['approve', 'auto'], max: 20, nullable: true },
   wikiReview: { kind: ['weekly', 'off'], max: 20, nullable: true },
