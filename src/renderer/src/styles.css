@@ -987,8 +987,8 @@ h3 {
   overflow: hidden;
   user-select: none;
 }
-/* Held, the light fills the button in 1.5s (linear: it's a clock) and the approval
-   goes on transitionend; let go and it drains back. */
+/* Held, the light fills the button in 1.5s (linear: it's a clock) and the component
+   approves when that same 1.5 s run out; let go and it drains back. */
 .btn--hold::before {
   content: '';
   position: absolute;
@@ -5252,6 +5252,38 @@ kbd {
 }
 .composer__image:hover .composer__image-x {
   opacity: 1;
+}
+.composer__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  height: 32px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.composer__file-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.composer__file-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--text-2);
+}
+.composer__file-x:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 .composer__hint--warn {
   color: var(--warn);
@@ -10881,3 +10913,60 @@ button.agent-card__now:hover {
 .agent-models__identity { display: flex; align-items: center; gap: 10px; flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
 .agent-models__choice { display: grid; gap: 6px; flex: 2 1 300px; min-width: 0; }
 .agent-models [role="status"]:not(:empty) { margin-top: 12px; }
+
+/* The intro of a Tucano on a server: a computer's backup brought in from the first screen. */
+.intro-restore { margin-top: 18px; max-width: 520px; }
+/* The filter over a long skill list: the library is a few hundred recipes, and the agent's tab
+   had them all in one column with no way to narrow it. */
+.skill-filter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 2px 0 8px;
+}
+.skill-filter__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-3);
+}
+.skill-filter__search input {
+  flex: 1;
+  border: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+.skill-filter__search input:focus {
+  outline: none;
+  box-shadow: none;
+}
+.check--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.skill-filter__meta {
+  padding: 6px 0 10px;
+  gap: 12px;
+}
+.skill-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+.skill-groups .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
