@@ -95,6 +95,7 @@ import { AccountPicker, AccountsCard, HarnessList, HarnessMcps, ModelPicker, onG
 import { AppsCard } from './Apps'
 import { AgentModelsPanel } from './AgentModelsPanel'
 import { ConnectorGrid, IconPicker, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
+import { ConnectorGrid, ConnectorIconPicker, ConnectorTile, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
 import { entryOf } from '../../../shared/connector-catalog'
 import { perCallTool } from '../../../shared/composio'
 import { ApprovalCard, QuestionCard, questionDrafts, toolWords } from './Conversation'
@@ -531,7 +532,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                   return (
                     <div key={c.id} className="grant">
                       <div className="grant__name">
-                        <Icon name={c.kind === 'stdio' ? 'terminal' : 'globe'} />
+                        <ConnectorTile c={c} size={18} />
                         <div>
                           <strong>
                             {c.name} {grantSaved === c.id && <span className="saved">{L('Salvo', 'Saved')}</span>}
@@ -1702,7 +1703,7 @@ export function ConnectorsPage(): ReactNode {
           <div className="table">
             {connectors.map((c) => (
               <div key={c.id} className="table__row">
-                <Icon name="plug" size={15} />
+                <ConnectorTile c={c} size={20} />
                 <span className="grow">
                   <strong>{c.name}</strong> <span className="muted small">· {L(`${c.tools.filter((t) => t.enabled).length} ferramentas`, `${c.tools.filter((t) => t.enabled).length} tools`)}</span>
                 </span>
@@ -1778,6 +1779,7 @@ function ConnectorDetails({ c, onClose }: { c: Connector; onClose: () => void })
           <span className="muted small mono truncate grow">{address(c)}</span>
         </div>
         <ConnectorIconRow c={c} />
+        <ConnectorIconPicker c={c} />
         <p className="muted small">
           {users.length ? (
             <>

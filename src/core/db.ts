@@ -532,12 +532,11 @@ const COLUMNS: [string, string, string][] = [
   // A channel's listen mode, per member: in the room, and Jev says when a message is for them.
   ['members', 'listen', 'INTEGER NOT NULL DEFAULT 0'],
   // A channel an agent opened to work with agents called in from another conversation.
-  ['conversations', 'team_up', 'TEXT']
-  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
-  ['messages', 'send_mode', 'TEXT']
+  ['conversations', 'team_up', 'TEXT'],
   // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
-  ['approvals', 'result', 'TEXT']
+  ['approvals', 'result', 'TEXT'],
   // The image a connector wears in the grid: a data: URI (small, downscaled by the screen) or an https URL.
+  // Empty: the store's mark, or the icon of its kind.
   ['connectors', 'icon', 'TEXT']
 ]
 
@@ -1362,11 +1361,17 @@ export class Db {
       envKeys: JSON.parse(str(r['env_keys']) || '[]') as string[],
       ...(r['icon'] ? { icon: str(r['icon']) } : {}),
       auth: str(r['auth']) as ConnectorAuth,
+      icon: r['icon'] ? str(r['icon']) : undefined,
       tools: this.tools(id).map(({ inputSchema: _, ...t }) => t)
     }
   }
 
-  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth; icon?: string }): void {
+  // The picture a connector wears; null goes back to the store's mark (or the icon of its kind).
+  setConnectorIcon(id: string, icon: string | null): void {
+    this.db.prepare('UPDATE connectors SET icon = ? WHERE id = ?').run(icon, id)
+  }
+
+  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth }): void {
     this.db
       .prepare(
         `INSERT INTO connectors (id, name, kind, url, command, args, env_keys, auth, icon, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

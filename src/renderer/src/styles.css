@@ -9082,39 +9082,26 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   background: var(--bg);
   color: var(--text-2);
 }
-/* An image the person gave the connector: it fills the square, its own colours and shape kept. */
-.catalog__logo--img {
-  padding: 0;
+/* A connector's own picture: shown whole, whatever its shape, on the tile's own surface. */
+.catalog__logo--pic {
   overflow: hidden;
   background: var(--panel);
 }
-.catalog__logo--img img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-.iconpick {
-  display: grid;
-  gap: 8px;
-}
-.iconpick .catalog__logo {
-  border-radius: 8px;
-}
-.iconpick__preview {
-  width: 34px;
-  height: 34px;
-}
-.iconpick__preview img {
+.catalog__logo--pic img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+/* The picture and the two buttons that change it, under the connector's state and address. */
 .connector-modal__icon {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+/* The same tile in the steps that pick a connector: it brings its own surface, so the circle goes. */
+.onb-power-row__icon--tile {
+  width: auto;
+  height: auto;
+  background: none;
 }
 .catalog__state {
   display: flex;

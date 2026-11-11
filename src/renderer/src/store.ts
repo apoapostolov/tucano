@@ -934,6 +934,7 @@ export const removeConnector = (id: string): void => void fire(L('Não consegui 
 export const reconnectConnector = (id: string): void => void fire(L('Não consegui reconectar.', "I couldn't reconnect."), 'reconnectConnector', { id })
 export const setConnectorToken = (id: string, token: string): Promise<void> => call('setConnectorToken', { id, token })
 export const setConnectorIcon = (id: string, icon?: string): Promise<void> => call('setConnectorIcon', { id, icon })
+export const setConnectorIcon = (id: string, icon: string): Promise<void> => call('setConnectorIcon', { id, icon })
 export const ownApp = (provider: AppProvider): Promise<{ clientId?: string; redirectUrl: string }> => call('ownApp', { provider })
 export const setOwnApp = (provider: AppProvider, clientId: string, clientSecret: string): Promise<void> => call('setOwnApp', { provider, clientId, clientSecret })
 // On a server the authorization page comes back to be opened here, then pasted back.

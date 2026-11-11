@@ -2,11 +2,12 @@
 // in through the browser (or needs no sign-in); a service that asks a few things first (its address,
 // a token) asks them in a window; anything else goes in by hand, with "Adicionar personalizado".
 // Google's and Slack's sign in with an app the person makes once, which the first Connect walks them through.
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
 import { catalogInput, CATEGORIES, entryOf, ownAppGuide, searchCatalog, type AppProvider, type CatalogEntry } from '../../../shared/connector-catalog'
 import { LOGOS } from '../connector-logos'
-import { addConnector, authorizeConnector, openExternal, ownApp, setOwnApp, useStore, type Connector } from '../store'
+import { iconFromFile } from '../connector-icon'
+import { addConnector, authorizeConnector, openExternal, ownApp, setConnectorIcon, setOwnApp, toast, useStore, type Connector } from '../store'
 import { Modal } from './Modal'
 import { Icon } from './ui'
 
@@ -36,118 +37,65 @@ export function CatalogLogo({ entry, size = 36 }: { entry: CatalogEntry; size?: 
   )
 }
 
-// The tile a connector wears: the image the person gave it, else the catalog's mark for that server,
-// else the terminal (a local server) or the globe (a remote one). A link that doesn't load shows the
-// mark it would have had, so a broken image never leaves an empty square.
-export function ConnectorIcon({ connector: c, size = 36 }: { connector: Connector; size?: number }): ReactNode {
-  const [broken, setBroken] = useState(false)
-  const fallback = (): ReactNode => {
-    const entry = entryOf(c)
-    return entry ? (
-      <CatalogLogo entry={entry} size={size} />
-    ) : (
-      <span className="catalog__logo catalog__logo--own" style={{ width: size, height: size }} aria-hidden>
-        <Icon name={c.kind === 'stdio' ? 'terminal' : 'globe'} size={size * 0.5} />
+// The tile a connector wears: the picture set on it, else the store's mark when it is a service the
+// store knows, else the icon of its kind — a terminal for a server that runs here, a globe for one on
+// the network. That last one is what a server added by hand wore before it could have a picture.
+export function ConnectorTile({ c, size = 36 }: { c: Pick<Connector, 'kind' | 'url' | 'command' | 'args' | 'icon'>; size?: number }): ReactNode {
+  if (c.icon) {
+    return (
+      <span className="catalog__logo catalog__logo--pic" style={{ width: size, height: size }} aria-hidden>
+        <img src={c.icon} alt="" width={size} height={size} />
       </span>
     )
   }
-  if (!c.icon || broken) return fallback()
+  const entry = entryOf(c)
+  if (entry) return <CatalogLogo entry={entry} size={size} />
   return (
-    <span className="catalog__logo catalog__logo--img" style={{ width: size, height: size }} aria-hidden>
-      <img src={c.icon} alt="" width={size} height={size} onError={() => setBroken(true)} />
+    <span className="catalog__logo catalog__logo--own" style={{ width: size, height: size }} aria-hidden>
+      <Icon name={c.kind === 'stdio' ? 'terminal' : 'globe'} size={Math.round(size * 0.5)} />
     </span>
   )
 }
 
-// A square of 128 px, the whole image with its own shape kept (a wide logo is not cut): the same size
-// an agent's picture has, in the format browsers and the database both take whole.
-async function iconFrom(file: File): Promise<string> {
-  const image = await createImageBitmap(file)
-  const scale = Math.min(128 / image.width, 128 / image.height, 1)
-  const w = Math.max(1, Math.round(image.width * scale))
-  const h = Math.max(1, Math.round(image.height * scale))
-  const canvas = document.createElement('canvas')
-  canvas.width = canvas.height = 128
-  canvas.getContext('2d')!.drawImage(image, Math.round((128 - w) / 2), Math.round((128 - h) / 2), w, h)
-  image.close()
-  return canvas.toDataURL('image/webp', 0.9)
-}
-
-// The image a connector wears, given here in either shape: a file of the person's, scaled down to 128 px
-// before it's saved so it rides small in every snapshot, or the https address of an image, kept as it is.
-// Without one, the catalog's mark (or the terminal) stays.
-export function IconPicker({ value, onChange, busy = false, error }: { value?: string; onChange: (icon?: string) => void; busy?: boolean; error?: string | null }): ReactNode {
-  const [bad, setBad] = useState('')
-  const [link, setLink] = useState(value && !value.startsWith('data:') ? value : '')
-  const failed = (): void => setBad(L('Essa imagem não abriu. Tente outra, em PNG, JPG ou WebP.', "That image didn't open. Try another one, in PNG, JPG or WebP."))
-  // The address is checked here so the person sees why, before it travels; the core checks it again.
-  const useLink = (): void => {
-    const url = link.trim()
-    if (!/^https:\/\//i.test(url)) return setBad(L('O endereço da imagem precisa começar em https://.', 'The image address must start with https://.'))
-    setBad('')
-    onChange(url)
+// The picture a connector wears, changed where the connector is: pick an image from this computer, see
+// it on the tile, or take it away and go back to the store's mark. The image is shrunk to 128 px and
+// kept in the database, so a backup carries it.
+export function ConnectorIconPicker({ c }: { c: Connector }): ReactNode {
+  const [busy, setBusy] = useState(false)
+  const file = useRef<HTMLInputElement>(null)
+  const save = async (value: Promise<string> | string): Promise<void> => {
+    setBusy(true)
+    try {
+      await setConnectorIcon(c.id, await value)
+    } catch (e) {
+      toast(e instanceof Error && e.message ? e.message : L('Não consegui usar essa imagem.', "I couldn't use that image."))
+    } finally {
+      setBusy(false)
+    }
   }
-  const isLink = !!value && !value.startsWith('data:')
   return (
-    <div className="iconpick">
-      <div className="row row--center">
-        {value ? (
-          <span className="catalog__logo catalog__logo--img iconpick__preview" aria-hidden>
-            <img src={value} alt="" onError={() => setBad(L('Essa imagem não abriu. Confira o endereço, ou use um arquivo.', "That image didn't open. Check the address, or use a file."))} />
-          </span>
-        ) : (
-          <span className="catalog__logo catalog__logo--own iconpick__preview" aria-hidden>
-            <Icon name="image" size={18} />
-          </span>
-        )}
-        <span className="small muted grow">{value ? L('É essa imagem que aparece no lugar do ícone.', 'This is the image shown in place of the icon.') : L('Sem imagem: fica a marca do serviço, ou o ícone de terminal.', "No image: the service's mark stays, or the terminal icon.")}</span>
-        <label className={`btn btn--sm ${busy ? 'is-disabled' : ''}`}>
-          {value ? L('Trocar imagem', 'Change image') : L('Escolher imagem', 'Choose image')}
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            hidden
-            disabled={busy}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              e.target.value = ''
-              if (!file) return
-              if (file.size > 8_000_000) return setBad(L('Essa imagem é grande demais (até 8 MB).', 'That image is too big (8 MB at most).'))
-              setLink('')
-              iconFrom(file).then((icon) => (setBad(''), onChange(icon)), failed)
-            }}
-          />
-        </label>
-        {value && (
-          <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={() => (setBad(''), setLink(''), onChange(undefined))}>
-            {L('Remover', 'Remove')}
-          </button>
-        )}
-      </div>
-      <div className="row row--center">
-        <input
-          className="grow mono"
-          value={link}
-          placeholder="https://exemplo.com/logo.png"
-          spellCheck={false}
-          disabled={busy}
-          onChange={(e) => (setBad(''), setLink(e.target.value))}
-          onKeyDown={(e) => {
-            if (e.key !== 'Enter') return
-            e.preventDefault()
-            useLink()
-          }}
-        />
-        <button type="button" className="btn btn--sm" disabled={busy || !link.trim()} onClick={useLink}>
-          {L('Usar endereço', 'Use address')}
+    <div className="row connector-modal__icon">
+      <ConnectorTile c={c} size={30} />
+      <input
+        ref={file}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+        hidden
+        onChange={(e) => {
+          const picked = e.target.files?.[0]
+          e.target.value = '' // the same file again still counts as a choice
+          if (picked) void save(iconFromFile(picked))
+        }}
+      />
+      <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => file.current?.click()}>
+        {L('Escolher imagem', 'Choose image')}
+      </button>
+      {c.icon && (
+        <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => void save('')}>
+          {L('Usar o padrão', 'Use the default')}
         </button>
-      </div>
-      <span className="small muted">
-        {isLink
-          ? L('Um endereço: a imagem é buscada na rede toda vez que a grade abre.', 'An address: the image is fetched from the network each time the grid opens.')
-          : L('Um arquivo vira uma cópia pequena guardada com o conector; um endereço https fica como está.', 'A file becomes a small copy kept with the connector; an https address stays as it is.')}
-      </span>
-      {(bad || error) && <span className="field__error">{bad || error}</span>}
+      )}
+      <span className="muted small grow">{L('PNG, JPEG, WebP, GIF ou SVG. O ícone aparece na lista de conectores.', 'PNG, JPEG, WebP, GIF or SVG. The icon shows in the connector list.')}</span>
     </div>
   )
 }
@@ -197,12 +145,11 @@ export function ConnectorGrid({ status, onManage, query: initial = '' }: { statu
           </h3>
           <div className="catalog__grid">
             {mine.map((c) => {
-              const entry = entryOf(c)
               const using = users.filter((a) => (a.grants[c.id] ?? 'none') !== 'none').length
               const fresh = c.tools.filter((t) => t.isNew).length
               return (
                 <div key={c.id} className="catalog__card is-mine" role="button" tabIndex={0} onClick={() => onManage(c.id)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onManage(c.id))}>
-                  <ConnectorIcon connector={c} />
+                  <ConnectorTile c={c} />
                   <span className="catalog__text">
                     <strong>{c.name}</strong>
                     <span className="small catalog__state">
