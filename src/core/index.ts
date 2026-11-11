@@ -50,6 +50,7 @@ import { createServer } from 'node:http'
 import { checkJevKey, JEV_MODEL, JEV_SECRET } from './jev'
 import { LISTEN_STUB_KEY, listenStub } from './jev-fake'
 import { report } from './report'
+import { readQuotas, fixtureRequest } from './quotas'
 import { usage } from './usage'
 import { Skills } from './skills'
 import { cleanTitle, pageKey, Wiki, type WikiView } from './wiki'
@@ -1817,6 +1818,12 @@ const api: Handlers = {
   },
   report: ({ week }) => report(db, Date.now(), week),
   usage: () => usage(db),
+  // What each provider says is left, read from the logins already on this computer.
+  quotas: () =>
+    readQuotas({
+      home: process.env['TUCANO_QUOTA_HOME'] || homedir(),
+      ...(process.env['TUCANO_QUOTA_FIXTURES'] ? { get: fixtureRequest(process.env['TUCANO_QUOTA_FIXTURES']) } : {})
+    }),
   unpairTelegram: () => void (telegram && bg(telegram.unpair(), 'unpairTelegram')),
 
   // Checked with TypeSafe before it's saved; null removes it.

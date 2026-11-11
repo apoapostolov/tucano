@@ -4,6 +4,7 @@ import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTes
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
 import type { Os, AskEntry, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
 import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, SendMode, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
+import type { Os, Account, AccountEngine, ActivityEntry, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, ProviderQuota, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult } from './types'
 
 export interface Snapshot {
   webhookPort?: number
@@ -153,6 +154,7 @@ export interface Api {
   openBackups(): void
   report(p: { week?: number }): Report // the calendar week starting at `week` (a Monday); this one by default
   usage(): UsageReport
+  quotas(): Promise<ProviderQuota[]> // what each provider Tucano is signed in to reports left: session, week, month
   removeRoutine(p: { id: string }): void
   runRoutine(p: { id: string }): void
   // The wiki: pages in a folder of Markdown, linked, searched and kept with their history.
