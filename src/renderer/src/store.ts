@@ -934,7 +934,6 @@ export const removeConnector = (id: string): void => void fire(L('Não consegui 
 export const reconnectConnector = (id: string): void => void fire(L('Não consegui reconectar.', "I couldn't reconnect."), 'reconnectConnector', { id })
 export const setConnectorToken = (id: string, token: string): Promise<void> => call('setConnectorToken', { id, token })
 export const setConnectorIcon = (id: string, icon?: string): Promise<void> => call('setConnectorIcon', { id, icon })
-export const setConnectorIcon = (id: string, icon: string): Promise<void> => call('setConnectorIcon', { id, icon })
 export const ownApp = (provider: AppProvider): Promise<{ clientId?: string; redirectUrl: string }> => call('ownApp', { provider })
 export const setOwnApp = (provider: AppProvider, clientId: string, clientSecret: string): Promise<void> => call('setOwnApp', { provider, clientId, clientSecret })
 // On a server the authorization page comes back to be opened here, then pasted back.
@@ -952,8 +951,6 @@ export const archiveAgent = (id: string, archived: boolean): Promise<void> => ca
 export const setTopic = (id: string, topic: string): Promise<void> => call('setTopic', { id, topic })
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
-// `mentionOnly`: the agents in the channel that answer only when mentioned.
-export const setChannelMembers = (id: string, agentIds: string[], mentionOnly?: string[]): Promise<void> => call('setChannelMembers', { id, agentIds, ...(mentionOnly ? { mentionOnly } : {}) })
 // `mentionOnly`: the agents in the channel that answer only when mentioned. `listen`: those Jev
 // brings in when the message is about what they do.
 export const setChannelMembers = (id: string, agentIds: string[], mentionOnly?: string[], listen?: string[]): Promise<void> =>

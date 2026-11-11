@@ -399,13 +399,6 @@ export class ConnectorManager {
     return id
   }
 
-  // The tile's image: set, replaced or taken off. No reconnect: nothing of the connection changes.
-  setIcon(id: string, icon: string | undefined | null): void {
-    if (!this.deps.db.connector(id)) throw new Error(L('Esse conector não existe mais.', 'That connector no longer exists.'))
-    this.deps.db.setConnectorIcon(id, connectorIcon(icon))
-    this.emitConnector(id)
-  }
-
   // The person's app for a provider, and the address its sign-in comes back to (Slack's app registers it).
   async ownApp(provider: AppProvider): Promise<{ clientId?: string; redirectUrl: string }> {
     const app = await this.deps.secrets.getJson<OwnApp>(appKey(provider))
@@ -441,15 +434,15 @@ export class ConnectorManager {
   // The picture a connector wears instead of the store's mark (or the icon of its kind). Empty: back
   // to those. It is a data URL because it lives in the database: a backup, an export and a restore of
   // the computer carry it, and there is no folder of loose pictures to keep in step.
-  async setIcon(id: string, icon: string): Promise<void> {
+  async setIcon(id: string, icon?: string): Promise<void> {
     const c = this.deps.db.connector(id)
     if (!c) throw new Error(L('Esse conector não existe mais.', 'That connector no longer exists.'))
-    const value = icon.trim()
+    const value = (icon ?? '').trim()
     if (value && !ICON_DATA_URL.test(value))
       throw new Error(L('Isso não é uma imagem (PNG, JPEG, WebP, GIF ou SVG).', 'That is not an image (PNG, JPEG, WebP, GIF or SVG).'))
     if (value.length > ICON_MAX_CHARS)
       throw new Error(L('A imagem é grande demais para um ícone. Escolha uma menor.', 'That image is too big for an icon. Pick a smaller one.'))
-    this.deps.db.setConnectorIcon(id, value || null)
+    this.deps.db.setConnectorIcon(id, value || undefined)
     this.emitConnector(id)
   }
 

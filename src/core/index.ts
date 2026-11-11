@@ -3,13 +3,12 @@
 // over a MessagePort handed out by the main process.
 import { voiceRefusal } from '../shared/voice'
 import { ModelDownload, Transcriber, VOICE_MODELS, voiceStatus, warmUp } from './transcribe'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { execFile, spawn } from 'node:child_process'
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, userInfo } from 'node:os'
 import { isLimited, localUrl, resolveLocal, type LocalReach } from './local-paths'
 import { basename, join, resolve, sep } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import type { MessagePortMain } from 'electron'
 import { L, langOf, locale, setLang, type Lang } from '../shared/lang'
 import { errorFor } from '../shared/errors'
@@ -25,7 +24,7 @@ import { listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
 import { Db, MIGRATIONS } from './db'
 import { claudeEngine, userProvider } from './engines/claude'
-import { codexEngine, userCodexProvider } from './engines/codex'
+import { codexEngine, userCodexProvider, asdfEnv, codexEnv } from './engines/codex'
 import { opencodeEngine } from './engines/opencode'
 import { piEngine } from './engines/pi'
 import { antigravityAppDir, antigravityEngine } from './engines/antigravity'
@@ -36,7 +35,6 @@ import { hermesAppDir, hermesEngine } from './engines/hermes'
 import { accountDir, accountStatus, adoptLoginShellPath, detectEngines } from './engines/detect'
 import { detectEngine, EngineCheck, type EngineFindings } from './engine-check'
 import { EngineSetup, SETUP_ENGINES, type SetupEngine, type SetupState } from './engine-setup'
-import { asdfEnv, codexEnv } from './engines/codex'
 import { CATALOG, CATEGORIES, catalogInput, catalogView, entryOf, ownAppGuide } from '../shared/connector-catalog'
 import { LoginTerminal, type LoginKey } from './login-terminal'
 import { Push, pushUrl } from './push'
@@ -1983,7 +1981,6 @@ const api: Handlers = {
   },
   setConnectorToken: ({ id, token }) => connectors.setToken(id, token),
   setConnectorIcon: ({ id, icon }, ctx) => (record(ctx, 'connector.updated', id, { icon: icon ? 'set' : 'removed' }), connectors.setIcon(id, icon)),
-  setConnectorIcon: ({ id, icon }) => connectors.setIcon(id, icon),
   // The store for a screen without the catalog's file (the iPhone app): its entries as data, in the
   // person's language; a connector added by its entry and the values asked, filled in here.
   connectorCatalog: () => ({ categories: CATEGORIES(), entries: catalogView(), added: connectors.list().map((c) => entryOf(c)?.id).filter((id): id is string => !!id) }),

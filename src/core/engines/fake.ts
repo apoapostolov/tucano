@@ -1,7 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { L, locale } from '../../shared/lang'
-import { L } from '../../shared/lang'
 import { SILENT } from '../../shared/silent'
 import { memorySystem } from '../memory'
 import { curatorSystem } from '../wiki-curator'

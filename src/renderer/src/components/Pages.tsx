@@ -95,8 +95,7 @@ import { useVoice, VOICE_CHOICES, VoiceSetup } from './VoiceSetup'
 import { AccountPicker, AccountsCard, HarnessList, HarnessMcps, ModelPicker, onGateway, OutsideGateway, usableEngines } from './Harness'
 import { AppsCard } from './Apps'
 import { AgentModelsPanel } from './AgentModelsPanel'
-import { ConnectorGrid, IconPicker, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
-import { ConnectorGrid, ConnectorIconPicker, ConnectorTile, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
+import { ConnectorGrid, OwnAppSetup, ThirdPartyWarning, ConnectorIconPicker, ConnectorTile } from './ConnectorStore'
 import { entryOf } from '../../../shared/connector-catalog'
 import { perCallTool } from '../../../shared/composio'
 import { ApprovalCard, QuestionCard, questionDrafts, toolWords } from './Conversation'
@@ -1766,20 +1765,11 @@ export function ConnectorsPage(): ReactNode {
 }
 
 // The image the connector wears, changed from its own window: saved at once, no reconnect, since
-// nothing of the connection changes.
+// nothing of the connection changes (see ConnectorIconPicker).
 function ConnectorIconRow({ c }: { c: Connector }): ReactNode {
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const save = (icon?: string): void => {
-    setBusy(true)
-    setError(null)
-    setConnectorIcon(c.id, icon)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message.replace(/^Error invoking.*?: /, '').replace(/^Error: /, '') : String(e)))
-      .finally(() => setBusy(false))
-  }
   return (
     <div className="connector-modal__icon">
-      <IconPicker value={c.icon} onChange={save} busy={busy} error={error} />
+      <ConnectorIconPicker c={c} />
     </div>
   )
 }
@@ -1916,7 +1906,6 @@ function AddConnector({ onDone }: { onDone: (id?: string) => void }): ReactNode 
   const [command, setCommand] = useState('')
   const [args, setArgs] = useState('')
   const [env, setEnv] = useState('')
-  const [icon, setIcon] = useState<string | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -1932,7 +1921,7 @@ function AddConnector({ onDone }: { onDone: (id?: string) => void }): ReactNode 
           .map((l) => [l.slice(0, l.indexOf('=')).trim(), l.slice(l.indexOf('=') + 1).trim()])
       )
       const id = await addConnector(
-        kind === 'remote' ? { kind, name, url, auth, token: auth === 'token' ? token : undefined, icon } : { kind, name, command, args: splitArgs(args), env: envMap, icon }
+        kind === 'remote' ? { kind, name, url, auth, token: auth === 'token' ? token : undefined } : { kind, name, command, args: splitArgs(args), env: envMap }
       )
       onDone(id)
     } catch (e) {
@@ -1954,9 +1943,6 @@ function AddConnector({ onDone }: { onDone: (id?: string) => void }): ReactNode 
       </div>
       <Field label={L('Nome', 'Name')}>
         <input value={name} placeholder={kind === 'remote' ? L('Ex.: Linear', 'E.g. Linear') : L('Ex.: Postgres', 'E.g. Postgres')} onChange={(e) => setName(e.target.value)} />
-      </Field>
-      <Field label={L('Ícone (opcional)', 'Icon (optional)')} hint={L('A imagem que ele veste na grade de conectores, no lugar do ícone de terminal.', 'The image it wears in the connectors grid, in place of the terminal icon.')}>
-        <IconPicker value={icon} onChange={setIcon} />
       </Field>
       {kind === 'remote' ? (
         <>
@@ -2994,6 +2980,7 @@ export function SettingsPage(): ReactNode {
                 <p className="muted small">{L(team ? 'A entrada Pra você sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação ou pergunta. Desligado, ela fica sempre lá.' : 'A entrada Aprovações sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação. Desligado, ela fica sempre lá.', team ? 'The For you entry leaves the sidebar while nothing waits on you, and comes back with the first approval or question. Off, it is always there.' : 'The Approvals entry leaves the sidebar while nothing waits on you, and comes back with the first approval. Off, it is always there.')}</p>
               </div>
               <Toggle on={settings.hideEmptyApprovals === true} onChange={(v) => updateSettings({ hideEmptyApprovals: v })} />
+            </div>
             {/* The same field, one line down: what a reply's steps look like. Both are about how a
                 reply reads, and nobody turns one on without the other being right there. */}
             <div className="key-row">

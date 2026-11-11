@@ -54,18 +54,11 @@
     "yaml": "^2.9.1"
   },
   "build": {
-    "appId": "dev.tucano.app",
-    "productName": "Tucano",
+    "appId": "dev.tucano.next",
+    "productName": "TucanoNext",
     "toolsets": {
       "appimage": "1.0.3"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "eduwxyz",
-        "repo": "tucano"
-      }
-    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -94,12 +87,13 @@
         "nsis"
       ],
       "icon": "build/icon.png",
-      "artifactName": "tucano-win-${arch}.${ext}"
+      "artifactName": "tucanonext-win-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "shortcutName": "Tucano"
+      "shortcutName": "TucanoNext",
+      "artifactName": "tucanonext-setup-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -155,7 +149,7 @@
     ],
     "protocols": [
       {
-        "name": "Tucano",
+        "name": "TucanoNext",
         "schemes": [
           "tucano"
         ]

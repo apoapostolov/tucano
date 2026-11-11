@@ -241,7 +241,6 @@ export function skillsIn(dir: string, origin: string): LocalSkill[] {
 }
 
 const countIn = (dir: string): number =>
-  existsSync(join(dir, 'SKILL.md')) ? 1 : dirs(dir).filter((d) => existsSync(join(d, 'SKILL.md'))).length
   existsSync(join(dir, 'SKILL.md'))
     ? 1
     : dirs(dir).reduce((n, d) => n + (existsSync(join(d, 'SKILL.md')) ? 1 : dirs(d).filter((x) => existsSync(join(x, 'SKILL.md'))).length), 0)

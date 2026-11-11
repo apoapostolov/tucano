@@ -4,8 +4,7 @@
 // the channel's recent messages to TypeSafe, so it's off unless chosen.
 import { randomUUID } from 'node:crypto'
 import { L } from '../shared/lang'
-import type { Decision } from '../shared/questions'
-import { MAX_STEPS, type Decision } from '../shared/questions'
+import { Decision, MAX_STEPS } from '../shared/questions'
 import type { Agent, Connector, Message, Person } from '../shared/types'
 import type { ThreadDigest } from './memory'
 import { describeAgent, MAX_ROUTED, REPLY_JSON, ROUTER_HISTORY, routerPrompt } from './router'

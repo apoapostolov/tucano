@@ -33,7 +33,6 @@ export type PromptOpts = {
   builder?: string // the Tuca's view of the workspace: models, connectors, the team (live)
   builderGuide?: string // how to propose agents, teams, routines and channels, and the Tuca's guide (stable)
   roster?: boolean // it has the equipe tool: the team, and the handles it can call in (a DM's prompt names only itself)
-  wiki?: { pages: number; kinds: string[] } // the wiki it may read
   wiki?: { pages: number; kinds: string[]; write?: boolean } // the wiki it may read, and whether it may write it
   connectors?: boolean // it has connector tools (Slack, Databricks…)
   people?: Person[] // the Tucano's people; with more than one, the agent is told who they are

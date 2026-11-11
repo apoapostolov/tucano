@@ -96,7 +96,6 @@ import { PanelResize } from './SidebarResize'
 import { canRecord, NoSound, record, type Recording } from '../voice'
 import { useVoice, VoicePopover } from './VoiceSetup'
 import { ArtifactCard, ArtifactGallery, BrowserCard, ServiceCard, SidePanel } from './Panel'
-import { ArtifactCard, BrowserCard, ServiceCard, SidePanel } from './Panel'
 import { onComposerImages } from '../composer-attach'
 import { when } from './Routines'
 import { Proposals } from './Tuca'
@@ -683,6 +682,9 @@ export function PromptJump({ id }: { id: string }): ReactNode {
     >
       <Icon name="up" size={12} />
     </button>
+  )
+}
+
 // A reply that stopped — by the person, by the app closing, by a failure — has two ways back:
 // "Try again" repeats what was asked, and "Try with instructions" repeats it in a new direction.
 // The direction is written under the buttons and goes into the prompt, not into a new message, so
@@ -1333,12 +1335,9 @@ function useNow(on: boolean): number {
 // The steps of a conversation, folded or not, are remembered under the conversation: leaving it or
 // restarting the app and coming back finds them as they were left.
 const stepsMemory = (conversationId: string): string => `steps:${conversationId}`
-const stepsMemory = (conversationId: string): string => `steps:${conversationId}`
-
 // One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click — unless the person asked for
 // one line only, or for just the latest few (Settings › General, or one agent's own).
-// steps it took. The steps themselves open on a click.
 export function RunSteps({ message }: { message: Message }): ReactNode {
   const run = message.run!
   // Every step (what the app has always done), the latest few, or one line with the count: the
@@ -1351,13 +1350,12 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   const remembered = useStore((s) => (s.settings.folded ?? []).includes(memory))
   const [toggled, setOpen] = useState<boolean | null>(null)
   const working = run.status === 'working'
-  // One line is the whole point of 'one-line': there is nothing to open.
-  const opens = mode !== 'one-line'
-  const open = opens && (toggled ?? (working && !remembered))
   // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
   // the reply itself has no text at all.
   const silent = run.silent === true
-  const open = toggled ?? (working && !silent)
+  // One line is the whole point of 'one-line': there is nothing to open.
+  const opens = mode !== 'one-line'
+  const open = opens && (toggled ?? (working && !silent && !remembered))
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
@@ -1417,9 +1415,15 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
         </span>
       ) : (
         <span className="steps__summary">
-          {run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
-          {count}
-          {total > 0 && ` · ${duration(total)}`}
+          {/* A routine that had nothing to report says so here, and nowhere else. */}
+          {silent && `${L('Nada a informar', 'Nothing to report')}${run.steps.length ? ' · ' : ''}`}
+          {!silent && run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
+          {run.steps.length > 0 && (
+            <>
+              {count}
+              {total > 0 && ` · ${duration(total)}`}
+            </>
+          )}
         </span>
       )}
       {failed > 0 && <span className="steps__failed">{failed} {L('com falha', 'failed')}</span>}
@@ -1460,26 +1464,6 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
             // A double-click, as asked: one click on the line does nothing, so dragging past it never folds a run.
             onDoubleClick={fold}
             // A keyboard has no double-click: Enter or Space on the handle folds it, and reports detail 0.
-          </span>
-        ) : (
-          <span className="steps__summary">
-            {/* A routine that had nothing to report says so here, and nowhere else. */}
-            {silent && `${L('Nada a informar', 'Nothing to report')}${run.steps.length ? ' · ' : ''}`}
-            {!silent && run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
-            {run.steps.length > 0 && (
-              <>
-                {run.steps.length} {L(`passo${run.steps.length === 1 ? '' : 's'}`, `step${run.steps.length === 1 ? '' : 's'}`)}
-                {total > 0 && ` · ${duration(total)}`}
-              </>
-            )}
-          </span>
-        )}
-        {failed > 0 && <span className="steps__failed">{failed} {L('com falha', 'failed')}</span>}
-        {working && <span className="steps__elapsed">{duration(Math.max(0, now - message.at))}</span>}
-        {working && (
-          <span
-            className="btn btn--xs btn--ghost steps__stop"
-            role="button"
             onClick={(e) => {
               if (e.detail === 0) fold()
             }}
@@ -1497,9 +1481,6 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
         </div>
       )}
       <Thought message={message} working={working} />
-      {/* At the bottom of the chain while it runs: a steer, for the reply doing the work. Once the reply
-          has ended the same pill is Follow Up, and that one belongs under the answer, not above it. */}
-      {working && <SteerPill message={message} />}
     </div>
   )
 }

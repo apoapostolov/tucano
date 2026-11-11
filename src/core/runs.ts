@@ -6,13 +6,11 @@ import { monthlyCeiling } from '../shared/limits'
 import { friendly, toolLabel } from '../shared/errors'
 import type { CoreEvent } from '../shared/rpc'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type SendMode, type Settings, type Step, delegating, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type Settings, type Step, delegating, isTeam, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
+import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type SendMode, type Settings, type Step, delegating, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isTeam } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { decideRoute, readPrompt, unavailableTrace } from './model-routing'
 import { POOLS, targetId, type RouteTarget, type RouteTrace, type RoutingConfig } from '../shared/routing'
-import { WIKI_TOOL_NAMES, WIKI_TOOLS, wikiCall, type Wiki } from './wiki'
 import { WIKI_TOOL_NAMES, WIKI_WRITE_TOOL_NAMES, wikiCall, wikiToolsFor, wikiWrite, type Wiki } from './wiki'
 import { BROWSER_TOOL_NAMES, browserStep, browserTools, NAVEGADOR, type Browser } from './browser'
 import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './apps'
@@ -32,12 +30,8 @@ import { Followups, replyKey } from './followups'
 import { EQUIPE, equipeCall } from './roster'
 import { carriedText, TEAM_UP_GUESTS, TEAM_UP_MESSAGES, TEAM_UP_REUSE_MS, teamUpName, teamUpTask, teamUpTopic } from './team-up'
 import { sessionConfig, Sessions, type SessionPlan, type Shown } from './sessions'
-import { formatAnswers, MAX_DESCRIPTION_LENGTH, MAX_LABEL_LENGTH, MAX_OPTIONS, MAX_QUESTION_LENGTH, MAX_QUESTIONS, MIN_OPTIONS, parseQuestions, questionHeadline, questionsAsText, questionsOf, type Answer, type Decision } from '../shared/questions'
-import { JEV_MODEL, listenJev, routeJev } from './jev'
-import { JEV_MODEL, recommendOptions, routeJev } from './jev'
-import { formatAnswers, MAX_DESCRIPTION_LENGTH, MAX_LABEL_LENGTH, MAX_OPTIONS, MAX_QUESTION_LENGTH, MAX_QUESTIONS, MAX_STEPS, MIN_OPTIONS, parseNextSteps, parseQuestions, questionHeadline, questionsAsText, questionsOf, startsTicked, type Answer, type Decision } from '../shared/questions'
-import { JEV_MODEL, recommendOptions, routeJev, stepsWorthDoing } from './jev'
-import { JEV_MODEL, routeJev } from './jev'
+import { formatAnswers, MAX_DESCRIPTION_LENGTH, MAX_LABEL_LENGTH, MAX_OPTIONS, MAX_QUESTION_LENGTH, MAX_QUESTIONS, MIN_OPTIONS, parseQuestions, questionHeadline, questionsAsText, questionsOf, type Answer, type Decision, MAX_STEPS, parseNextSteps, startsTicked } from '../shared/questions'
+import { JEV_MODEL, listenJev, routeJev, recommendOptions, stepsWorthDoing } from './jev'
 import { silentOf } from '../shared/silent'
 import { ROUTER_HISTORY, route, routerTurn, screenHandoff } from './router'
 import { allowed, approvalHash, callClass, canonical, permits, runnerAllowed, runnerRules } from './policy'
@@ -408,9 +402,6 @@ const RETRY_NOTE = (): string =>
     'Ao pedir para você tentar de novo, a pessoa escreveu esta direção para a nova tentativa. Siga-a, mesmo onde ela muda o rumo do que foi pedido antes:',
     'When asking you to try again, the person wrote this direction for the new attempt. Follow it, even where it changes the course of what was asked before:'
   )
-type ReplyOpts = { depth: number; existing?: Message; task?: string; work?: string; routine?: boolean; threadId?: string; trigger?: string; replyTo?: string }
-
-type Control = { ctl: AbortController; msg: Message; reason?: 'stopped' | 'limit' | 'budget' | 'loop' | 'errors' | 'stall' | 'computer' | 'sleeping' }
 
 // A routed reply's transcript: what came before its message, the replies since to what was before
 // it (what was already said, its own earlier one too), and its message last.
@@ -1565,7 +1556,6 @@ export class Runner {
     // and written only in their own DM: anywhere else the reply reaches others.
     const wikiLevel = wikiAccess(agent)
     const wikiShown = this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conv, db.ownerId())))
-    const wiki = this.deps.gateway && wikiShown && wikiAccess(agent) !== 'none' && wikiShown.count() > 0 ? wikiShown : undefined
     // The team, to look at: the prompt names only the agents of this conversation, so a DM's agent has
     // no way to know who else there is (nor their handles) without asking.
     const roster = !!this.deps.gateway && isTeam(agent)
@@ -1747,8 +1737,7 @@ ${note}`,
       ...(apps ? appTools(agent) : []),
       ...(routines ? [AGENDAR, CANCELAR] : []),
       ...(skills ? [...(mySkills.length ? [LER_SKILL] : []), PROPOR_SKILL] : []),
-      ...(wiki ? WIKI_TOOLS : []),
-      ...(roster ? [EQUIPE] : [])
+      ...(roster ? [EQUIPE] : []),
       ...(wiki ? wikiToolsFor(wikiLevel) : [])
     ]
     // The connector tools it called lately, by the steps of its replies ("Linear · list_issues").
@@ -2607,7 +2596,6 @@ ${note}`,
       web: agent.web !== false,
       routines: routines?.forAgent(agent.id).filter((r) => visible(r.conversationId)),
       skills: skills && mySkills,
-      wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds() } : undefined,
       roster,
       wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds(), ...(wikiWritable ? { write: true } : {}) } : undefined,
       connectors: exposed.size > 0,
@@ -2651,7 +2639,6 @@ ${note}`,
     // at boot, a routine fired on opening, a test) would hand its tools a URL with no port, and every call
     // would come back as "no internet". Waiting here costs nothing once it's up.
     if (this.deps.gateway && this.deps.gatewayReady) await this.deps.gatewayReady
-    const session = this.deps.gateway?.open(tools, plan?.token)
     // An engine whose daemon holds the MCP connection between turns keeps the URL it was given
     // (Hermes): its token is the agent's, not the turn's. Every other engine gets a fresh one, or
     // the token of the session it keeps.
@@ -2848,8 +2835,6 @@ ${note}`,
       // The run already made itself unread while it was working: a reply with nothing to say takes that back.
       if (silent) db.forgetActivity(msg.id)
       save({
-        text: kept(msg.text.trim() ? msg.text.trim() : result.text.trim() ? result.text : (narration ?? '')), // said it all before its last tool
-        run: { ...base, status: questions ? 'waiting_input' : waiting ? 'waiting_approval' : 'done', steps: closeThinking('done', L('Respondeu', 'Replied')) }
         text: quiet.text,
         run: { ...base, status: questions ? 'waiting_input' : waiting ? 'waiting_approval' : 'done', steps: closeThinking('done', L('Respondeu', 'Replied')), ...(silent ? { silent: true as const } : {}) }
       })

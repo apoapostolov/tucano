@@ -5,7 +5,6 @@
 import { L } from '../shared/lang'
 import { channelName, dateAt, ENGINES, modelInfo, nextRun, skillApplies, validTime, type Schedule, type Agent, type AgentChanges, type Approval, type Connector, type Conversation, type Effort, type GrantLevel, type Routine, type Settings, type Proposal, type AgentDraft, type Skill, proposalsOf } from '../shared/types'
 import { usedShare } from '../shared/limits'
-import { channelName, dateAt, ENGINES, modelInfo, nextRun, validTime, type Schedule, type Agent, type AgentChanges, type Approval, type Connector, type Conversation, type Effort, type GrantLevel, type Routine, type Settings, type Proposal, type AgentDraft, proposalsOf } from '../shared/types'
 import type { ToolDef } from './gateway'
 import { dateArg } from './routines'
 import { assignSkills, EVERYONE, skillList, skillsOf } from './skills'
@@ -57,7 +56,6 @@ export interface StateInput {
   approvals: Approval[]
   failures: { agentId: string; conversationId: string; at: number; status: string; error?: string }[]
   skills?: Skill[] // every skill, for who follows what (a skill with an empty `agents` is everyone's)
-  lastRun: (r: Routine) => { status?: string; error?: string } | undefined // the routine's last reply, how it ended
   lastRun: (r: Routine) => { status?: string; error?: string; silent?: boolean } | undefined // the routine's last reply, how it ended
   now: number
 }
@@ -112,8 +110,7 @@ export function workspaceState(area: unknown, x: StateInput, busca?: unknown): s
       const mine = x.skills ? skillsOf(x.skills, a.id) : []
       const own = x.skills ? mine.filter((n) => (x.skills!.find((k) => k.name === n)?.agents.length ?? 0) > 0) : []
       const skills = x.skills ? L(` · ${mine.length} skill(s)${own.length ? `, só dele: ${own.slice(0, 8).join(', ')}${own.length > 8 ? ` +${own.length - 8}` : ''}` : ''}`, ` · ${mine.length} skill(s)${own.length ? `, its own: ${own.slice(0, 8).join(', ')}${own.length > 8 ? ` +${own.length - 8}` : ''}` : ''}`) : ''
-      return `- ${a.name} (@${a.handle}${a.role ? `, ${a.role}` : ''})${a.archived ? L(' · ARQUIVADO', ' · ARCHIVED') : ''}: ${m ? `${ENGINES[m.engine].label} · ${m.label}` : a.modelId} · ${L('esforço', 'effort')} ${a.effort} · ${L(`${pct}% do limite do mês`, `${pct}% of the month's limit`)}${pct >= 100 ? L(' (ESGOTADO)', ' (USED UP)') : ''} · ${grants.length ? grants.join(', ') : L('sem conectores', 'no connectors')} · ${a.web !== false ? 'web' : L('sem web', 'no web')}${a.computer ? ` · ${a.computerKind === 'mac' ? L('este computador', 'this computer') : 'Docker'}` : ''}${a.browser ? L(' · navegador', ' · browser') : ''}${pending ? L(` · ${pending} aprovação(ões) esperando`, ` · ${pending} approval(s) waiting`) : ''}${skills}`
-      return `- ${a.name} (@${a.handle}${a.role ? `, ${a.role}` : ''})${a.archived ? L(' · ARQUIVADO', ' · ARCHIVED') : ''}: ${m ? `${ENGINES[m.engine].label} · ${m.label}` : a.modelId} · ${L('esforço', 'effort')} ${a.effort} · ${pct === undefined ? L('sem limite do mês', 'no monthly limit') : L(`${pct}% do limite do mês`, `${pct}% of the month's limit`)}${pct !== undefined && pct >= 100 ? L(' (ESGOTADO)', ' (USED UP)') : ''} · ${grants.length ? grants.join(', ') : L('sem conectores', 'no connectors')} · ${a.web !== false ? 'web' : L('sem web', 'no web')}${a.computer ? ` · ${a.computerKind === 'mac' ? L('este computador', 'this computer') : 'Docker'}` : ''}${a.browser ? L(' · navegador', ' · browser') : ''}${pending ? L(` · ${pending} aprovação(ões) esperando`, ` · ${pending} approval(s) waiting`) : ''}`
+      return `- ${a.name} (@${a.handle}${a.role ? `, ${a.role}` : ''})${a.archived ? L(' · ARQUIVADO', ' · ARCHIVED') : ''}: ${m ? `${ENGINES[m.engine].label} · ${m.label}` : a.modelId} · ${L('esforço', 'effort')} ${a.effort} · ${pct === undefined ? L('sem limite do mês', 'no monthly limit') : L(`${pct}% do limite do mês`, `${pct}% of the month's limit`)}${pct !== undefined && pct >= 100 ? L(' (ESGOTADO)', ' (USED UP)') : ''} · ${grants.length ? grants.join(', ') : L('sem conectores', 'no connectors')} · ${a.web !== false ? 'web' : L('sem web', 'no web')}${a.computer ? ` · ${a.computerKind === 'mac' ? L('este computador', 'this computer') : 'Docker'}` : ''}${a.browser ? L(' · navegador', ' · browser') : ''}${pending ? L(` · ${pending} aprovação(ões) esperando`, ` · ${pending} approval(s) waiting`) : ''}${skills}`
     })
     out.push(`## ${L('Agentes', 'Agents')}\n${lines.join('\n') || L('nenhum ainda', 'none yet')}`)
   }

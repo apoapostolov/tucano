@@ -47,12 +47,6 @@ function result(r?: SkillReport): string {
   )
 }
 
-const from = (k: Skill): string => {
-  const origin = skillOrigin(k.source)
-  if (!origin) return L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`)
-  const who = origin === 'codex' ? 'Codex' : origin === 'claude' ? 'Claude Code' : 'Hermes'
-  return L(`do seu ${who}`, `from your ${who}`)
-}
 // Which harness a linked skill came from, by the folder it lives in: a path is the only thing a
 // linked skill keeps (src/core/local-skills.ts finds them all, each with its own origin).
 const HARNESS_FOLDERS: [string, string][] = [

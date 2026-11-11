@@ -4,6 +4,7 @@
 // feed: latest-mac.yml next to the .zip (scripts/release.sh), latest-linux*.yml and
 // latest.yml, for Windows, from the workflows that build those installers.
 import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { app } from 'electron'
 import electronUpdater from 'electron-updater'
 import { offline } from '../shared/errors'
@@ -26,7 +27,11 @@ export class Updates {
   constructor(private readonly onChange: (s: UpdateState) => void) {
     // A test points the app at a local server instead of GitHub.
     const feed = process.env['TUCANO_UPDATE_URL']
-    this.state = { version: app.getVersion(), status: app.isPackaged || feed ? 'idle' : 'off' }
+    // A build with no feed of its own never updates itself: installed beside the released app, it
+    // carries no app-update.yml, and electron-updater has nothing to read (and must not go looking
+    // for the released app's feed, which would replace this build with that one).
+    const configured = !!feed || (app.isPackaged && existsSync(join(process.resourcesPath, 'app-update.yml')))
+    this.state = { version: app.getVersion(), status: configured ? 'idle' : 'off' }
     if (this.state.status === 'off') return
     if (feed) this.updater.setFeedURL({ provider: 'generic', url: feed })
     this.updater.logger = null
