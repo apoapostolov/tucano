@@ -221,6 +221,7 @@ export interface Run {
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
   proposal?: Proposal // what an agent proposed, from before a reply could hold several (read both with proposalsOf)
   proposals?: Proposal[] // what an agent proposed in this reply (changes to agents, routines, channels, teams), shown as a group of cards
+  silent?: true // a routine's run that had nothing to report ([SILENT]): an empty reply, no notification, no unread
 }
 
 // An agent the Tuca proposes. Nothing exists until the person creates it.
