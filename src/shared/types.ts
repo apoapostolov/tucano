@@ -132,6 +132,7 @@ export interface Conversation {
   members: string[] // agent ids
   mentionOnly?: string[] // agents of a channel in mention mode: they read it, and answer only when mentioned
   teamUp?: TeamUp // set on a channel an agent opened to work with agents called in from elsewhere
+  listen?: string[] // agents of a channel in listen mode: they read it, and Jev says when the message is for them
   summary?: string // what the conversation covered before its recent messages
   summaryUntil?: number // `at` of the last message the summary covers
   summaryAt?: number
