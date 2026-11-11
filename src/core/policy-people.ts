@@ -15,6 +15,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 // Each person's own (kept on them, see People.settingsFor); the owner's are the settings themselves.
 export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'showThinking', 'channelLayout', 'folded', 'language', 'seenVersion', 'onboarding', 'dmOrder', 'agentOrder']
 export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'showThinking', 'steps', 'stepsLatest', 'channelLayout', 'folded', 'language', 'seenVersion', 'onboarding']
+export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'channelLayout', 'folded', 'language', 'seenVersion', 'onboarding', 'lastImageFolder']
 export const isPersonalSetting = (k: string): boolean => (PERSONAL_SETTINGS as readonly string[]).includes(k)
 
 export type Action =

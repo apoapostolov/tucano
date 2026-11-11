@@ -541,6 +541,7 @@ export interface Settings {
   hideEmptyApprovals?: boolean
   skillFolders?: string[] // folders to read skills from, on top of the ones the harnesses keep
   skillFoldersOff?: string[] // folders found on this computer that aren't read
+  lastImageFolder?: string // the folder the last picture was saved to, so the next one goes there in one click
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
