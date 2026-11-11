@@ -82,3 +82,7 @@ The 43 open upstream PRs are already merged into `next`. Duplicates were closed 
 by `#353`), stacks merge in order (`#261` → `#332` → `#338`, `#258` → `#259`, `#327` → `#329`), and the
 written triage lives in `C:/git/_notes/tucanonext-pr-triage.md`. Read that before rebasing or
 reopening any PR branch.
+
+`next` also moves on its own: a daily job merges new upstream releases into it and resolves the
+conflicts by the union rules, so pull before starting work and expect the merge commit on top. If it
+reports a hard conflict, `next` is untouched and the two options in its brief are the decision.
