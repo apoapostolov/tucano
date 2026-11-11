@@ -56,8 +56,10 @@ const fire = (node: HTMLElement, type: string, extra: Record<string, unknown> = 
   return ev
 }
 
+const rowOf = (id: string): HTMLElement => container.querySelector<HTMLElement>(`[data-order-id="${id}"]`)!
+
 const press = (id: string, type: 'pointerdown' | 'pointerup' | 'pointermove'): void => {
-  const row = container.querySelector<HTMLElement>(`[data-order-id="${id}"]`)!
+  const row = rowOf(id)
   fire(row.querySelector('button') ?? row, type)
 }
 
@@ -92,6 +94,22 @@ describe('picking a row up to move it', () => {
     press('b', 'pointerup')
     click('b')
     expect(store.clicks).toEqual(['b'])
+  })
+
+  it('captures the pointer only once the row is picked up, never on the press', async () => {
+    const calls: string[] = []
+    Object.assign(rowOf('a'), { setPointerCapture: () => calls.push('capture') })
+    press('a', 'pointerdown')
+    // A press that opens the row must leave the click where the browser sends it: on the button.
+    expect(calls).toEqual([])
+    press('a', 'pointerup')
+    await act(async () => new Promise((ok) => setTimeout(ok, 20)))
+    expect(calls).toEqual([])
+
+    press('a', 'pointerdown')
+    await act(async () => new Promise((ok) => setTimeout(ok, 420)))
+    expect(calls).toEqual(['capture']) // carried from here on
+    press('a', 'pointerup')
   })
 
   it('moves the row when it is let go over another one, and eats the click that follows', async () => {

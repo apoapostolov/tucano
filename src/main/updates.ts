@@ -33,7 +33,9 @@ export class Updates {
   constructor(private readonly onChange: (s: UpdateState) => void) {
     // A test points the app at a local server instead of GitHub.
     const feed = process.env['TUCANO_UPDATE_URL']
-    this.checking = !!feed || !app.isPackaged || process.resourcesPath === undefined || existsSync(join(process.resourcesPath, 'app-update.yml'))
+    // This build never updates itself: it is installed beside the released app and rebuilt from its
+    // own branch. The released app keeps the feed it has always had.
+    this.checking = !!feed || (app.getName() !== 'TucanoNext' && (!app.isPackaged || process.resourcesPath === undefined || existsSync(join(process.resourcesPath, 'app-update.yml'))))
     this.state = { version: app.getVersion(), status: this.checking ? 'idle' : 'off' }
     if (feed) this.updater.setFeedURL({ provider: 'generic', url: feed })
     this.updater.logger = null
