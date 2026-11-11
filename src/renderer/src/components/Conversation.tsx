@@ -1158,17 +1158,20 @@ function useNow(on: boolean): number {
 
 // One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click.
-function RunSteps({ message }: { message: Message }): ReactNode {
+export function RunSteps({ message }: { message: Message }): ReactNode {
   const run = message.run!
   // Open while the agent works, so its steps read as they go, unless the person closes it; closed after.
   const [toggled, setOpen] = useState<boolean | null>(null)
   const working = run.status === 'working'
-  const open = toggled ?? working
+  // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
+  // the reply itself has no text at all.
+  const silent = run.silent === true
+  const open = toggled ?? (working && !silent)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
 
-  if (run.steps.length === 0 && !working) return null
+  if (run.steps.length === 0 && !working && !silent) return null
   const total = run.steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
   const failed = run.steps.filter((st) => st.status === 'error').length
   const current = [...run.steps].reverse().find((st) => st.status === 'running')
@@ -1199,9 +1202,15 @@ function RunSteps({ message }: { message: Message }): ReactNode {
           </span>
         ) : (
           <span className="steps__summary">
-            {run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
-            {run.steps.length} {L(`passo${run.steps.length === 1 ? '' : 's'}`, `step${run.steps.length === 1 ? '' : 's'}`)}
-            {total > 0 && ` · ${duration(total)}`}
+            {/* A routine that had nothing to report says so here, and nowhere else. */}
+            {silent && `${L('Nada a informar', 'Nothing to report')}${run.steps.length ? ' · ' : ''}`}
+            {!silent && run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
+            {run.steps.length > 0 && (
+              <>
+                {run.steps.length} {L(`passo${run.steps.length === 1 ? '' : 's'}`, `step${run.steps.length === 1 ? '' : 's'}`)}
+                {total > 0 && ` · ${duration(total)}`}
+              </>
+            )}
           </span>
         )}
         {failed > 0 && <span className="steps__failed">{failed} {L('com falha', 'failed')}</span>}
