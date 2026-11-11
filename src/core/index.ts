@@ -20,6 +20,7 @@ import { agentOwner, channelEditError, cleanName, dmOwner, Hub, MAX_NAME, mayEdi
 import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-people'
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { isStepsMode } from '../shared/steps'
+import { defaultRouting, validateRouting } from '../shared/routing'
 import { listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
 import { Db, MIGRATIONS } from './db'
@@ -1528,6 +1529,9 @@ const api: Handlers = {
     if (typeof clean.outsideGuard !== 'boolean') delete clean.outsideGuard
     // How its replies show their steps: one of the three, or nothing (the workspace's, which is every step).
     if (!isStepsMode(clean.steps)) delete clean.steps
+    // On, off, or inherit (absent): anything else, a cleared switch included, goes back to following the
+    // global one instead of turning into an off that reads as a choice.
+    if (clean.smartRouting !== true && clean.smartRouting !== false) delete clean.smartRouting
     const linux = (a?: Agent): boolean => !!a?.computer && a.computerKind !== 'mac'
     const mac = (a?: Agent): boolean => !!a?.computer && a.computerKind === 'mac'
     db.saveAgent(clean)
@@ -1932,6 +1936,23 @@ const api: Handlers = {
     const why = voiceRefusal(patch.voice)
     if (why) throw new Error(why)
     if (patch.actionRules) patch.actionRules = cleanRules(patch.actionRules)
+    // A routing setup is judged, not cleaned: an entry this build can't run (a harness it doesn't have,
+    // a thinking level it doesn't support) is refused with where it is, so nothing is quietly turned
+    // into something else. Reading an old or hand-edited setup stays tolerant, inside normalizeRouting.
+    if (patch.routing !== undefined) {
+      if (patch.routing === null) patch.routing = defaultRouting()
+      else {
+        const checked = validateRouting(patch.routing)
+        if (!checked.ok) {
+          const where = checked.problems
+            .slice(0, 4)
+            .map((p) => `${p.path || 'routing'}: ${p.message}`)
+            .join(' · ')
+          throw new Error(L(`Rotas não salvas — ${where}`, `Routing not saved — ${where}`))
+        }
+        patch.routing = checked.value
+      }
+    }
     db.setSettings(patch)
     // The settings' name is the owner's: what the agents call them.
     if (patch.workspaceName && cleanName(patch.workspaceName)) {
