@@ -4,7 +4,7 @@ import { getState, navigate, openDialog, setNav, useStore } from './store'
 import { Sidebar } from './components/Sidebar'
 import { ConversationView } from './components/Conversation'
 import { Lightbox } from './components/Lightbox'
-import { AgentPage, ApprovalsPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { AgentPage, ApprovalsPage, AsksPage, ConnectorsPage, SettingsPage } from './components/Pages'
 import { UsagePage } from './components/Usage'
 import { MemoryPage } from './components/Memory'
 import { WikiView } from './components/Wiki'
@@ -101,6 +101,7 @@ export function App(): ReactNode {
         {view.kind === 'conversation' && <ConversationView key={view.id} id={view.id} />}
         {view.kind === 'agent' && <AgentPage key={view.id} id={view.id} />}
         {view.kind === 'new-agent' && <AgentPage key={view.fromMessage ?? 'new'} draft={view.draft} fromMessage={view.fromMessage} />}
+        {view.kind === 'asks' && <AsksPage />}
         {view.kind === 'approvals' && <ApprovalsPage />}
         {view.kind === 'usage' && <UsagePage />}
         {view.kind === 'connectors' && <ConnectorsPage />}
