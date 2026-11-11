@@ -521,6 +521,8 @@ const COLUMNS: [string, string, string][] = [
   ['messages', 'send_mode', 'TEXT']
   // A channel's mention mode, per member: in the room, answering only when mentioned.
   ['members', 'mention_only', 'INTEGER NOT NULL DEFAULT 0']
+  // A channel an agent opened to work with agents called in from another conversation.
+  ['conversations', 'team_up', 'TEXT']
 ]
 
 
@@ -876,6 +878,7 @@ export class Db {
       ...(r['wiki_capture'] === 0 ? { wikiCapture: false } : {}),
       ...(r['threads'] === 1 ? { threads: true } : {}),
       ...(r['cleared_at'] ? { clearedAt: Number(r['cleared_at']) } : {}),
+      ...(r['team_up'] ? { teamUp: JSON.parse(str(r['team_up'])) as Conversation['teamUp'] } : {}),
       ...(r['owner'] ? { owner: str(r['owner']) } : {}),
       ...(r['created_by'] ? { createdBy: str(r['created_by']) } : {}),
       unread: Number(r['unread'])
@@ -941,7 +944,9 @@ export class Db {
       const owner = c.kind === 'dm' ? (c.owner ?? this.ownerId()) : null
       // A channel is whoever made it (the owner when the code doesn't say).
       const by = c.kind === 'channel' ? (c.createdBy ?? this.ownerId()) : null
-      this.db.prepare('INSERT INTO conversations (id, kind, name, topic, threads, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, owner, by, Date.now())
+      this.db
+        .prepare('INSERT INTO conversations (id, kind, name, topic, threads, team_up, wiki_capture, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, c.teamUp ? JSON.stringify(c.teamUp) : null, c.wikiCapture === false ? 0 : null, owner, by, Date.now())
       for (const m of c.members) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(c.id, m)
     })
   }
