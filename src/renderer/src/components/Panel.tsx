@@ -10,6 +10,7 @@ import { agentById, amAdmin, getState, openLightbox, artifactUrl, browserAction,
 import { galleryLayout } from '../gallery'
 import { call } from '../rpc'
 import { Icon, ownColor, type IconName } from './ui'
+import { PanelResize } from './SidebarResize'
 
 const KIND_LABEL = (): Record<Artifact['kind'], string> => ({
   image: L('Imagem', 'Image'),
@@ -435,6 +436,7 @@ export function SidePanel(): ReactNode {
   const title = artifact?.title ?? service?.name ?? (panel.kind === 'browser' ? L(`Navegador de ${browserName ?? 'agente'}`, `${browserName ?? 'Agent'}'s browser`) : '')
   return (
     <aside className={`side-panel side-panel--${panel.kind}`}>
+      <PanelResize />
       <header className="side-panel__head">
         <Icon name={panel.kind === 'service' || panel.kind === 'browser' ? 'globe' : 'edit'} size={14} />
         <strong className="side-panel__title">{title}</strong>

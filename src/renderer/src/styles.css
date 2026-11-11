@@ -268,10 +268,44 @@ h3 {
 
 /* ---------- layout ---------- */
 .app {
+  position: relative;
   display: grid;
-  grid-template-columns: 248px 1fr;
+  /* --sidebar-w: the width the person dragged the sidebar to (SidebarResize). */
+  grid-template-columns: var(--sidebar-w, 248px) 1fr;
   grid-template-rows: minmax(0, 1fr);
   height: 100%;
+}
+/* The edge between the sidebar and the page, to drag. It's out of the grid, over the gap. */
+.sidebar-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--sidebar-w, 248px) - 5px);
+  width: 9px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+  -webkit-app-region: no-drag;
+}
+.sidebar-resize::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-enter) var(--ease-out);
+}
+.sidebar-resize:hover::after,
+.sidebar-resize:focus-visible::after,
+.sidebar-resize.is-dragging::after {
+  opacity: 0.55;
+}
+.sidebar-resize:focus-visible {
+  outline: none;
 }
 .main {
   min-width: 0;
@@ -1478,15 +1512,41 @@ h3 {
 .step--fading {
   transition: opacity var(--dur-base) var(--ease-out);
 }
-/* The steer pill, at the bottom of the chain while the agent works: small, dim, and out of the
-   way until it's wanted. It lines up with the steps' own rail above it. */
-.steps__steer {
+/* The pill under the chain: a steer while the agent works, a follow up once the reply has ended.
+   Small, dim, out of the way until it's wanted, and lined up with the steps' own rail above it. */
+.steps__ask {
   display: grid;
   gap: 8px;
   margin: 2px 0 4px 3px;
   padding-left: 14px;
 }
-.steps__steer-pill {
+/* The follow up pill rides the reply's own footer — the line that fades in under a finished answer,
+   first in it, before the receipt. So it comes in with that line: a reply that has ended shows its
+   answer, not a button, and a hover (or a tab to it) brings the way to go on with the numbers. */
+.msg__meta .steps__ask--reply {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.msg:hover .msg__meta .steps__ask--reply,
+.msg__meta .steps__ask--reply:focus-within,
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  opacity: 1;
+}
+/* Open, the field needs the row: the pill keeps its place and the receipt goes under it. */
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  flex: 1 1 100%;
+}
+/* Nothing to hover with: no fade to depend on, so it is simply there. */
+@media (hover: none) {
+  .msg__meta .steps__ask--reply {
+    opacity: 1;
+  }
+}
+.steps__ask-pill {
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -1499,37 +1559,40 @@ h3 {
   font-size: 11.5px;
   transition: var(--transition-ui);
 }
-.steps__steer-pill:hover {
+.steps__ask-pill:hover {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--hover);
 }
-.steps__steer-note {
+.steps__ask-note {
   display: grid;
   gap: 8px;
   max-width: 520px;
 }
-.steps__steer-note textarea {
+.steps__ask-note textarea {
   width: 100%;
   min-height: 54px;
   resize: vertical;
 }
-.steps__steer-row {
+.steps__ask-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
-/* What the person steered, in the chain: not a tool call, so it doesn't wear a tool's colours. */
-.step--steer {
+/* What the person steered, or asked it to go on with, in the chain: not a tool call, so it doesn't
+   wear a tool's colours. */
+.step--steer,
+.step--followup {
   flex-wrap: wrap;
   row-gap: 2px;
 }
-.step--steer .step__icon {
+.step--steer .step__icon,
+.step--followup .step__icon {
   background: var(--accent-soft);
   color: var(--accent);
 }
-.step__steer {
+.step__said {
   flex-basis: 100%;
   padding-left: 26px; /* under the label, past the icon */
   color: var(--text-3);
@@ -3308,7 +3371,9 @@ h3 {
   --rise: 0;
   --rise-x: 16px;
   animation: rise var(--dur-enter) var(--ease-out) backwards;
-  width: min(48%, 760px);
+  position: relative;
+  /* --panel-w: the width the person dragged the panel to (PanelResize). */
+  width: var(--panel-w, min(48%, 760px));
   min-width: 360px;
   display: flex;
   flex-direction: column;
@@ -3512,11 +3577,52 @@ h3 {
 }
 /* the agent's browser, live */
 .side-panel--browser {
-  width: min(56%, 920px);
+  width: var(--panel-w, min(56%, 920px));
 }
 /* a thread: the message that started it, set apart, then its replies */
 .side-panel--thread {
-  width: min(42%, 560px);
+  width: var(--panel-w, min(42%, 560px));
+}
+/* While an edge is dragged: the cursor stays, nothing gets selected, and a page inside a panel
+   doesn't take the pointer. */
+body.is-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+body.is-resizing iframe,
+body.is-resizing webview {
+  pointer-events: none;
+}
+/* The panel's left edge, to drag: over its border. */
+.panel-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 9px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+.panel-resize::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 3px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--dur-enter) var(--ease-out);
+}
+.panel-resize:hover::after,
+.panel-resize:focus-visible::after,
+.panel-resize.is-dragging::after {
+  opacity: 0.55;
+}
+.panel-resize:focus-visible {
+  outline: none;
 }
 .side-panel__where {
   font-size: 12.5px;
@@ -3621,8 +3727,9 @@ h3 {
 .msg__meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   column-gap: 14px;
+  row-gap: 6px;
   margin-top: 4px;
 }
 .msg__meta .receipt,
@@ -8051,6 +8158,11 @@ kbd {
   .app {
     grid-template-columns: minmax(0, 1fr);
     height: 100dvh;
+  }
+  /* On a phone the sidebar is a drawer of its own width, and a panel takes the whole screen. */
+  .sidebar-resize,
+  .panel-resize {
+    display: none;
   }
   .sidebar {
     position: fixed;

@@ -35,7 +35,7 @@ vi.mock('../src/renderer/src/store', async (original) => {
 })
 
 const { createRoot } = await import('react-dom/client')
-const { RunSteps } = await import('../src/renderer/src/components/Conversation')
+const { RunSteps, FollowUpPill } = await import('../src/renderer/src/components/Conversation')
 
 const step = (id: string, extra: Partial<Step> = {}): Step => ({ id, label: `read ${id}.ts`, status: 'done', ms: 120, ...extra })
 
@@ -55,12 +55,22 @@ beforeEach(() => {
 })
 afterEach(() => act(() => root.unmount()))
 
+// The reply the way the app draws it: the chain, then the answer, then the pill that goes on from it —
+// which is a follow up once the reply has ended, under the answer rather than inside the chain.
 const draw = async (message: Message): Promise<void> => {
-  await act(async () => root.render(<RunSteps message={message} />))
+  await act(async () =>
+    root.render(
+      <div className="msg__body">
+        <RunSteps message={message} />
+        <div className="md">{message.text}</div>
+        <FollowUpPill message={message} />
+      </div>
+    )
+  )
 }
-const pill = (): HTMLElement | null => document.querySelector('.steps__steer-pill')
-const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__steer-note textarea')
-const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__steer-row button')] as HTMLElement[]
+const pill = (): HTMLElement | null => document.querySelector('.steps__ask-pill')
+const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__ask-note textarea')
+const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__ask-row button')] as HTMLElement[]
 // Typing as React sees it: the value set past React's own tracker, then the input event.
 const type = async (text: string): Promise<void> => {
   const ta = field()!
@@ -84,15 +94,20 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 }
 
 describe('the steer pill', () => {
-  it('sits at the bottom of the chain while the agent works, and is gone once it is done', async () => {
+  it('sits at the bottom of the chain while the agent works, and gives way once it is done', async () => {
     await draw(reply('working'))
     expect(pill()?.textContent?.trim()).toBe('Orientar')
     expect(document.querySelector('.steps__list')).not.toBeNull()
     // Under the steps, not above them: it is the last thing in the block.
     const block = document.querySelector('.steps')!
-    expect(block.lastElementChild?.className).toBe('steps__steer')
+    expect(block.lastElementChild?.className).toBe('steps__ask steps__ask--pointer')
+    // Done, the chain carries no pill at all: steering is for a reply that's running. The same pill is
+    // the follow up from there on, and it sits under the answer, not in the chain
+    // (test/steer-followup.test.tsx).
     await draw(reply('done'))
-    expect(pill()).toBeNull()
+    expect(document.querySelector('.steps .steps__ask')).toBeNull()
+    expect(pill()?.textContent?.trim()).toBe('Seguir')
+    expect(document.querySelector('.msg__body')!.lastElementChild).toBe(pill()!.closest('.steps__ask'))
   })
 
   it('opens a field, and sends nothing until something is written', async () => {

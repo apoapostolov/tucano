@@ -1483,6 +1483,8 @@ const api: Handlers = {
 
   retryRun: ({ messageId, note }, ctx) => (reachMessage(ctx, messageId), runner.retry(messageId, note ?? undefined)),
 
+  followUpRun: ({ messageId, text }, ctx) => (reachMessage(ctx, messageId), runner.followUp(messageId, text)),
+
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), bg(runner.continue(messageId), 'continueRun')),
 
   setAgentModels: ({ agentIds, modelId, effort }, ctx) => {

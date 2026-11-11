@@ -4,6 +4,20 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.2.27] - 2026-11-10
+
+> **Em português:**
+> - **Novo:** a barra lateral e o painel da direita têm largura ajustável. Arraste a borda entre a barra lateral e a página, ou a borda esquerda do painel (thread, imagem, documento, página, navegador do agente), pra alargar ou estreitar; dois cliques na borda voltam ao padrão. A largura fica guardada no computador.
+> - **Correção:** o navegador de um agente tem 90 segundos pra abrir na primeira vez, não 30: numa máquina lenta ou ocupada ele abria, mas o Tucano já tinha desistido.
+
+### Added
+
+- **Drag the sidebar and the right-hand panel to the width you want.** The sidebar was 248 px wide and a panel on the right took a fixed share of the window, so long channel and agent names were cut and a document or an agent's browser couldn't be given more room. The edge between the sidebar and the page, and the left edge of a panel (a thread, an image, a document, a page, an agent's browser), can now be dragged; a double click goes back to the default, and with the edge focused the arrow keys change it and Home resets it. The sidebar goes from 200 to 480 px and never past half the window; a panel keeps at least 360 px and leaves at least 320 px for the conversation. Each width is remembered on that computer (one for the sidebar, one for every kind of panel). A drag goes on while a reply streams into the thread and over a page inside a panel. On a phone nothing changes: the sidebar is a drawer and a panel takes the screen.
+
+### Fixed
+
+- **An agent's Chrome gets 90 seconds to open the first time.** A cold Chrome with a new profile took more than 30 seconds on a slow or busy machine (a small server, CI), and the app called it failed while it was still starting; the next open on the same machine took a few seconds. Thanks, apoapostolov! (#316)
+
 ## [0.2.26] - 2026-11-10
 
 > **Em português:**
@@ -591,6 +605,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - Receipts and a monthly token limit per agent, reviewed memory, skills, routines on a calendar, and a computer and browser of its own for each agent.
 - The app in Portuguese and English.
 
+[0.2.27]: https://github.com/eduwxyz/tucano/compare/v0.2.26...v0.2.27
 [0.2.26]: https://github.com/eduwxyz/tucano/compare/v0.2.25...v0.2.26
 [0.2.25]: https://github.com/eduwxyz/tucano/compare/v0.2.24...v0.2.25
 [0.2.24]: https://github.com/eduwxyz/tucano/compare/v0.2.23...v0.2.24
