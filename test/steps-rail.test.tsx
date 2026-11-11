@@ -101,7 +101,7 @@ describe('the line beside the steps', () => {
     await openSteps()
     await mouse(el('.steps__rail')!, 'dblclick')
     await act(async () => new Promise((ok) => setTimeout(ok, 5)))
-    expect(scrolled).toContain('steps')
+    expect(scrolled.some((c) => c.split(' ').includes('steps'))).toBe(true) // the block, whatever else it carries
   })
 
   it('ignores one click: dragging past the line never folds a run', async () => {

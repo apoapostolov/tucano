@@ -1343,11 +1343,11 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // Every step (what the app has always done), the latest few, or one line with the count: the
   // agent's own setting over the workspace's (src/shared/steps.ts).
   const mode = useStore((s) => stepsModeFor(s.settings, message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
-  const keep = useStore((s) => s.settings.stepsLatest)
+  const keep = useStore((s) => s.settings?.stepsLatest)
   // Open while the agent works, so its steps read as they go, unless the person closes it; closed after.
   // A conversation that was left folded stays folded, and a run that starts in it opens folded too.
   const memory = stepsMemory(message.conversationId)
-  const remembered = useStore((s) => (s.settings.folded ?? []).includes(memory))
+  const remembered = useStore((s) => (s.settings?.folded ?? []).includes(memory))
   const [toggled, setOpen] = useState<boolean | null>(null)
   const working = run.status === 'working'
   // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
@@ -1480,6 +1480,8 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
           </ol>
         </div>
       )}
+      {/* At the bottom of the chain: what the person writes while it works, handed over at its next tool call. */}
+      {working && <SteerPill message={message} />}
       <Thought message={message} working={working} />
     </div>
   )
@@ -1574,7 +1576,7 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
 // It stays after the reply ends (the window keeps it in memory) so it can be read back. Off unless
 // the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
 export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
-  const on = useStore((s) => s.settings.showThinking === true)
+  const on = useStore((s) => s.settings?.showThinking === true)
   const thought = useLiveThought(message.id, STREAM_MS)
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {

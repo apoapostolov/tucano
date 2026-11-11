@@ -2835,7 +2835,8 @@ ${note}`,
       // The run already made itself unread while it was working: a reply with nothing to say takes that back.
       if (silent) db.forgetActivity(msg.id)
       save({
-        text: quiet.text,
+        // A routine's reply is the text without the marker; a reply that goes on keeps what it said.
+        text: opts.routine ? quiet.text : kept(msg.text.trim() ? msg.text.trim() : result.text.trim() ? result.text : (narration ?? '')),
         run: { ...base, status: questions ? 'waiting_input' : waiting ? 'waiting_approval' : 'done', steps: closeThinking('done', L('Respondeu', 'Replied')), ...(silent ? { silent: true as const } : {}) }
       })
       if (silent) {

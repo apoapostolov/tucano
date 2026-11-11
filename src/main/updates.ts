@@ -24,15 +24,17 @@ export class Updates {
     return electronUpdater.autoUpdater
   }
 
+  // A build with a feed of its own looks for a newer version; one installed beside the released app
+  // carries no app-update.yml of its own, and must not go looking in that one's feed (it would
+  // replace this build with the released app). Without the resources folder to look in (tests), the
+  // feed is assumed, as it always was.
+  private readonly checking: boolean
+
   constructor(private readonly onChange: (s: UpdateState) => void) {
     // A test points the app at a local server instead of GitHub.
     const feed = process.env['TUCANO_UPDATE_URL']
-    // A build with no feed of its own never updates itself: installed beside the released app, it
-    // carries no app-update.yml, and electron-updater has nothing to read (and must not go looking
-    // for the released app's feed, which would replace this build with that one).
-    const configured = !!feed || (app.isPackaged && existsSync(join(process.resourcesPath, 'app-update.yml')))
-    this.state = { version: app.getVersion(), status: configured ? 'idle' : 'off' }
-    if (this.state.status === 'off') return
+    this.checking = !!feed || !app.isPackaged || process.resourcesPath === undefined || existsSync(join(process.resourcesPath, 'app-update.yml'))
+    this.state = { version: app.getVersion(), status: this.checking ? 'idle' : 'off' }
     if (feed) this.updater.setFeedURL({ provider: 'generic', url: feed })
     this.updater.logger = null
     this.updater.autoDownload = true
@@ -64,7 +66,7 @@ export class Updates {
   }
 
   start(): void {
-    if (this.state.status === 'off') return
+    if (!this.checking || this.state.status === 'off') return
     setTimeout(() => this.check(), FIRST_CHECK_MS).unref()
     this.timer = setInterval(() => this.check(), EVERY_MS)
     this.timer.unref()

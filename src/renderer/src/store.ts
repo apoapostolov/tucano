@@ -507,7 +507,7 @@ export function useLiveThought(id: string, every = 0): string | undefined {
     },
     [id, every]
   )
-  return useSyncExternalStore(subscribe, () => thoughts.get(id))
+  return useSyncExternalStore(subscribe, () => thoughts.get(id), () => thoughts.get(id))
 }
 
 // The message's text as it is now. `every`: wake at most that often (ms), for what is costly to draw.
@@ -535,7 +535,7 @@ export function useLiveText(m: Message, every = 0): string {
     },
     [m.id, every]
   )
-  return useSyncExternalStore(subscribe, () => live.get(m.id) ?? m.text)
+  return useSyncExternalStore(subscribe, () => live.get(m.id) ?? m.text, () => live.get(m.id) ?? m.text)
 }
 
 // ---------- browser frames ----------
@@ -553,7 +553,7 @@ function showFrame(agentId: string, frame: string | undefined): void {
 
 export function useFrame(agentId: string): string | undefined {
   const subscribe = useCallback((l: () => void) => listen(frameListeners, agentId, l), [agentId])
-  return useSyncExternalStore(subscribe, () => frames.get(agentId))
+  return useSyncExternalStore(subscribe, () => frames.get(agentId), () => frames.get(agentId))
 }
 
 // ---------- core sync ----------
@@ -705,7 +705,7 @@ export async function start(): Promise<void> {
 
 // ---------- selectors ----------
 
-export const agentById = (s: State, id: string): Agent | undefined => s.agents.find((a) => a.id === id)
+export const agentById = (s: State, id: string): Agent | undefined => (s.agents ?? []).find((a) => a.id === id)
 // Listed models, and the names a company gateway gives ("claude:lumen-claude-opus").
 export const modelById = (s: State, id: string): Model | undefined => s.models.find((m) => m.id === id) ?? modelInfo(id)
 export const pendingApprovals = (s: State): Approval[] => s.approvals.filter((a) => a.state === 'pending')
