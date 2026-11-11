@@ -524,6 +524,8 @@ export interface Settings {
   // Asks and Approvals out of the sidebar while nothing is waiting in them; unset: both always there
   hideEmptyAsks?: boolean
   hideEmptyApprovals?: boolean
+  skillFolders?: string[] // folders to read skills from, on top of the ones the harnesses keep
+  skillFoldersOff?: string[] // folders found on this computer that aren't read
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
@@ -1135,9 +1137,20 @@ export interface LocalSkill {
   name: string
   description: string
   bodyLength: number // recipe characters, excluding frontmatter
-  origin: string // "Claude Code", "Plugin <name>", "Codex"
+  origin: string // "Claude Code", "Plugin <name>", "Codex", "Pi", "Hermes", "Added"
   files: string[] // its other text files, relative to its folder
   scripts: boolean // it has scripts: an agent needs a computer to run them
+}
+
+// A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
+// Codex, Pi, Hermes, OpenCode…), or one the person added. All the ones that are on mix into the
+// same list (src/core/local-skills.ts).
+export interface LocalSkillFolder {
+  path: string // where it is on this computer
+  source: string // who keeps it: "Claude Code", "Pi", "Hermes"…, or "Added"
+  detected: boolean // found on this computer, not added by hand
+  on: boolean // read; off: kept in the list, not read
+  count: number // skills in it right now
 }
 
 export interface SkillVersion {

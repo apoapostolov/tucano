@@ -46,6 +46,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   folded: { kind: 'array', max: 200_000, nullable: true },
   hideEmptyAsks: { kind: 'boolean', max: 10, nullable: true },
   hideEmptyApprovals: { kind: 'boolean', max: 10, nullable: true },
+  skillFolders: { kind: 'array', max: 40_000, nullable: true },
+  skillFoldersOff: { kind: 'array', max: 40_000, nullable: true },
   sounds: { kind: 'boolean', max: 10, nullable: true },
   showThinking: { kind: 'boolean', max: 10, nullable: true },
   seenVersion: { kind: 'string', max: 100, nullable: true }
