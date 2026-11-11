@@ -478,6 +478,7 @@ export interface Settings {
   agentOrder?: string[] // the person's order for the agents, by agent id
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
   jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset
+  jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset
   memoryModel: string // summarizes conversations and extracts memories
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
   sendMode?: SendMode // what Enter does while a reply is running: alongside it (the default), after it, into it, or stopping it
