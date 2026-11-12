@@ -83,6 +83,10 @@ export const GUIDE_EN: Record<string, { title: string; summary: string }> = {
     title: 'Slack',
     summary: "Connecting Slack: the internal app the person creates from a link, the 2 steps, the admin's approval and what to check when it doesn't connect."
   },
+  organograma: {
+    title: 'Team (who answers to whom)',
+    summary: 'An agent hands work to those below it and receives their answers: setting up the chart, requests, questions, cancellation, deadlines and limits.'
+  },
   time: {
     title: 'Team (several people in one Tucano)',
     summary: 'Using the same Tucano with other people: inviting, roles, what belongs to whom, For you, calling a person, who covers for me, routines, Activity, removing someone and the first invite.'
