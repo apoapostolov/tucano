@@ -1,7 +1,8 @@
 # Working on this checkout
 
-This is Apo's fork of `eduwxyz/tucano`. Branch `next` carries every merged upstream PR (44 of them)
-plus the second-instance work, and it is what the installed **TucanoNext** is built from.
+This is Apo's fork of `eduwxyz/tucano`. Branch `next` integrates Apo's feature PRs and the
+second-instance work, and it is what the installed **TucanoNext** is built from. Check the live
+inventory before assuming every current PR head or feature is included.
 
 The released app (`Tucano`) and this build (`TucanoNext`) live side by side and never share code,
 data or ports. A change that blurs the two is a bug, not a convenience.
@@ -78,10 +79,21 @@ run the installer, which starts the app itself. In the window:
 
 ## Pull requests
 
-The 43 open upstream PRs are already merged into `next`. Duplicates were closed (`#352` is superseded
-by `#353`), stacks merge in order (`#261` → `#332` → `#338`, `#258` → `#259`, `#327` → `#329`), and the
+Duplicates were closed (`#352` is superseded by `#353`), stacks merge in order
+(`#261` → `#332` → `#338`, `#355` → `#258` → `#259`, `#327` → `#329`), and the
 written triage lives in `C:/git/_notes/tucanonext-pr-triage.md`. Read that before rebasing or
 reopening any PR branch.
+
+Generate the current inventory with `node scripts/audit-prs.mjs --fetch --patches --report docs/pr-inventory.md`. The reports,
+patch cache and per-head review records live in `.tucano-local/audit/`; see `docs/fork-audit.md`.
+A clean merge or commit containment does not establish that a feature survived integration.
+
+Open focused PRs against `eduwxyz/tucano:main`, never against the fork. Reproduce new upstream
+bugs on upstream `main` in an isolated worktree; keep repairs to unmerged features with their
+existing PRs. Include fresh screenshots for visible changes and document stack dependencies.
+`next` is personal-use and QA context. Do not mention it as a source of truth, its importance,
+or the personal integration workflow in upstream issues, PR descriptions or review comments.
+Use upstream `main`, the relevant feature branch and reproducible evidence in public reports.
 
 `next` also moves on its own: a daily job merges new upstream releases into it and resolves the
 conflicts by the union rules, so pull before starting work and expect the merge commit on top. If it
