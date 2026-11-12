@@ -177,6 +177,7 @@ export const NEEDS: Record<Method, Need> = {
   wikiRunReview: 'admin',
   wikiDismissFinding: 'admin',
   wikiResolveFinding: 'admin', // the resolver works on the whole wiki, as the review does
+  wikiAsk: 'anyone', // the agent that writes is the one with wiki write access; this only asks it
   wikiImport: 'admin',
   wikiImportZip: 'admin',
   setWikiDir: 'admin',

@@ -190,6 +190,7 @@ export interface Api {
   wikiRunReview(): void // reviews now, in the background; a 'wiki' event when done
   wikiDismissFinding(p: { id: string }): void // and refuses its fix
   wikiResolveFinding(p: { id: string }): Promise<{ resolved: boolean; note?: string; gone?: boolean }> // the resolver reads the whole pages: a fix waiting, or what it couldn't settle
+  wikiAsk(p: { id: string; agentId: string }): string // hands a finding to an agent: its DM's id, with the request sent
   wikiImport(p: { dir: string }): WikiImport // an Obsidian vault copied in, as it is
   wikiImportZip(p: { path: string }): WikiImport // the same, from a .zip sent to a server (src/server's /upload)
   setWikiCapture(p: { conversationId: string; on: boolean }): void
