@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-12T10:42:13.718Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-12T10:47:43.443Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 58 total: 38 open, 12 merged, 8 closed.
 
-Upstream main: `73b724bec8a576d316a5dd5f46a07e3bf83cbe75`. Daily driver next: `28eddc4587446a6db96e6b3c05e3a9bad9269965`. Upstream main is contained: yes.
+Upstream main: `73b724bec8a576d316a5dd5f46a07e3bf83cbe75`. Daily driver next: `f19f715bfbe607ac286da09fb19034a20824df2e`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -25,7 +25,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#261](https://github.com/eduwxyz/tucano/pull/261) | OPEN | A new prompt in a thread: parallel, queued, steer or interrupt, on a setting and on the keys | yes | 1 | 4 | not reviewed |
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | yes | 10 | 3 | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | yes | 2 | 6 | not reviewed |
-| [#274](https://github.com/eduwxyz/tucano/pull/274) | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | no: inspect patch equivalence | 4 | 6 | not reviewed |
+| [#274](https://github.com/eduwxyz/tucano/pull/274) | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | yes | 4 | 6 | not reviewed |
 | [#275](https://github.com/eduwxyz/tucano/pull/275) | OPEN | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | yes | 8 | 5 | not reviewed |
 | [#279](https://github.com/eduwxyz/tucano/pull/279) | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | yes | 13 | 10 | not reviewed |
 | [#282](https://github.com/eduwxyz/tucano/pull/282) | CLOSED | A drawer above the field: the sessions running right now, and the prompts still queued | object unavailable | 2 | 6 | not reviewed |
@@ -39,7 +39,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#299](https://github.com/eduwxyz/tucano/pull/299) | CLOSED | docs: a review bot on every pull request, so security and bug review happens during development | object unavailable | 0 | 0 | not reviewed |
 | [#301](https://github.com/eduwxyz/tucano/pull/301) | CLOSED | Run agents on Hermes, brought forward from #8 | yes | 53 | 1 | not reviewed |
 | [#303](https://github.com/eduwxyz/tucano/pull/303) | OPEN | Draw a reply's pictures as one album: one large and the rest beside it | yes | 2 | 7 | not reviewed |
-| [#305](https://github.com/eduwxyz/tucano/pull/305) | OPEN | Show each provider's quota in Usage and limits, and the ones a session's bots run on in its header | no: inspect patch equivalence | 4 | 2 | not reviewed |
+| [#305](https://github.com/eduwxyz/tucano/pull/305) | OPEN | Show each provider's quota in Usage and limits, and the ones a session's bots run on in its header | yes | 4 | 2 | not reviewed |
 | [#308](https://github.com/eduwxyz/tucano/pull/308) | OPEN | Read skills from every harness's folder, and let the person add or turn off folders | yes | 3 | 6 | not reviewed |
 | [#310](https://github.com/eduwxyz/tucano/pull/310) | OPEN | Stop teaching a model Portuguese in an English workspace: language-free screen ids, the guide index, and a test that notices | yes | 2 | 0 | not reviewed |
 | [#311](https://github.com/eduwxyz/tucano/pull/311) | OPEN | Read a Hermes skill library as it is: categories one level down, versions, and the facets it is navigated by | yes | 4 | 4 | not reviewed |

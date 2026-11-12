@@ -140,13 +140,13 @@ The cohort stays stable for progress measurement; record changed upstream dispos
 - [x] Add rendered navigation checks, screenshots, traces, renderer-error and focus guards.
 - [x] Validate both the built source and the installed 0.2.28 executable.
 - [x] Open upstream-main-based QA PR #372; 1,700 passed, 64 skipped, no failures.
-- [ ] Review and integrate revised #274 head `d2e21ed` and #305 head `06cecbf`.
+- [x] Review and integrate revised #274 head `d2e21ed` and #305 head `06cecbf`; final tree unchanged from the tested delivery.
 - [ ] Recheck in-flight wiki permission/provenance changes in #355 before expanding wiki workflows.
 - [ ] Expand UI checks to keyboard access, narrow layouts and large histories per feature.
 
-Latest inventory: 58 authored PRs, 38 open / 12 merged / 8 closed. Current #274 and #305
-heads are not ancestors of the integration; their older behavior is present, but revisions
-remain pending. #372 is independently integrated with the application-specific identity/port
+Latest inventory: 58 authored PRs, 38 open / 12 merged / 8 closed. Current #274 and #305 heads are integrated after comparing their behavior with the tested
+tree. The final source tree is identical to `c50fe6c` (tree `74d7452`); merge-generated
+duplicate gateway waits, quota types and provider panels were removed before delivery. #372 is independently integrated with the application-specific identity/port
 adaptation. Neither ancestry nor these six smoke screens establishes a complete feature audit.
 
 The maintainability gate remains blocked by edited large existing modules. The new background
