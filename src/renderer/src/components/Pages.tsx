@@ -10,6 +10,7 @@ import { instructionLengthNote } from '../../../shared/instructions'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   agentById,
+  decideMemory,
   dismissQuestion,
   navigate,
   questionsHistory,
@@ -107,6 +108,7 @@ import { directReports, possibleBosses } from '../../../shared/org'
 import { perCallTool } from '../../../shared/composio'
 import { ApprovalCard, QuestionCard, questionDrafts, toolWords } from './Conversation'
 import { ProposalCard } from './Tuca'
+import { ChangeCard } from './Wiki'
 import { confirmDialog } from './Dialogs'
 import { Modal } from './Modal'
 import { AgentAvatar, AVATARS, Icon, NumberInput, SleepingToucan, time, tokens, UsageBar } from './ui'
@@ -1378,6 +1380,14 @@ export function AsksPage(): ReactNode {
   const [opened, setOpened] = useState<string | null>(null)
   const [past, setPast] = useState<AskEntry[]>([])
   const questions = inbox.questions
+  // The other three kinds of "Waiting for you", in the same place the questions are: a card a
+  // member sent the admins to apply, a memory the agents want to keep, and a change the curator
+  // wants to make to a page. Each was only where it was made (For you, Memory, the wiki tab).
+  const people = useStore((s) => s.people)
+  const proposals = inbox.proposals ?? []
+  const memories = useStore((s) => s.memories).filter((m) => m.state === 'pending')
+  const changes = useStore((s) => s.wikiWaiting)
+  const nothing = questions.length + proposals.length + memories.length + changes.length === 0
   // What left the list: answered and closed asks, newest first. Reloaded when the open ones change,
   // which is exactly when one of them moved down here.
   const open = questions.length
@@ -1402,13 +1412,13 @@ export function AsksPage(): ReactNode {
   return (
     <Page
       title={L('Perguntas', 'Asks')}
-      subtitle={L('O que os agentes perguntaram a você e ainda espera resposta, de todos eles, num lugar só.', 'What the agents asked you and is still waiting for an answer, from all of them, in one place.')}
+      subtitle={L('Tudo o que espera você fora das conversas: as perguntas dos agentes, os cartões para aplicar, as memórias para guardar e o que o curador quer mudar nas páginas.', 'Everything waiting on you outside the conversations: the agents’ questions, the cards to apply, the memories to keep and what the curator wants to change in pages.')}
     >
-      {questions.length === 0 ? (
+      {nothing ? (
         <div className="empty empty--rest">
           <SleepingToucan />
-          <p>{L('Nenhuma pergunta esperando.', 'No questions waiting.')}</p>
-          <p className="muted">{L('Quando um agente precisar de uma decisão sua, a pergunta aparece aqui e na conversa.', 'When an agent needs a decision from you, the question shows up here and in the conversation.')}</p>
+          <p>{L('Nada esperando você.', 'Nothing waiting on you.')}</p>
+          <p className="muted">{L('Uma pergunta de um agente, um cartão para aplicar, uma memória para guardar ou uma mudança no wiki aparecem aqui.', 'A question from an agent, a card to apply, a memory to keep or a wiki change shows up here.')}</p>
         </div>
       ) : (
         <div className="stack-list">
@@ -1453,6 +1463,68 @@ export function AsksPage(): ReactNode {
             </div>
           ))}
         </div>
+      )}
+      {proposals.length > 0 && (
+        <>
+          <h3 className="section-title">{L('Cartões esperando um admin aplicar', 'Cards waiting for an admin to apply')}</h3>
+          <div className="stack-list">
+            {proposals.map((p) => (
+              <div key={`${p.id}:${p.index ?? 0}`}>
+                <div className="row row--between small muted list-meta">
+                  <span>
+                    {L(`${people.find((x) => x.id === p.by)?.name ?? 'Alguém'} pediu`, `${people.find((x) => x.id === p.by)?.name ?? 'Someone'} asked`)} · {time(p.at)}
+                  </span>
+                </div>
+                <ProposalCard message={{ id: p.id, conversationId: '', author: { kind: 'agent', id: p.agentId }, text: '', at: p.at, run: { status: 'done' } } as Message} index={p.index ?? 0} proposal={p.proposal} />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {memories.length > 0 && (
+        <>
+          <h3 className="section-title">{L('Memórias esperando você', 'Memories waiting for you')}</h3>
+          <div className="stack-list">
+            {memories.map((m) => (
+              <div className="read-line is-shown" key={m.id}>
+                <p>{m.text}</p>
+                <div className="read-line__meta">
+                  <span className="read-line__meta-text">
+                    {(m.agentId ? agents.find((a) => a.id === m.agentId)?.name : undefined) ? L(`${agents.find((a) => a.id === m.agentId)!.name} quer guardar`, `${agents.find((a) => a.id === m.agentId)!.name} wants to keep this`) : m.origin === 'extraction' ? L('Aprendida', 'Learned') : L('Você escreveu', 'You wrote this')} · {time(m.createdAt)}
+                  </span>
+                  <span className="grow" />
+                  <button className="text-btn" onClick={() => navigate({ kind: 'memory' })}>
+                    {L('Ver na memória', 'See in Memory')}
+                  </button>
+                  <button className="text-btn text-btn--strong" onClick={() => decideMemory(m.id, true)}>
+                    {L('Guardar', 'Keep')}
+                  </button>
+                  <button className="text-btn" onClick={() => decideMemory(m.id, false)}>
+                    {L('Descartar', 'Discard')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {changes.length > 0 && (
+        <>
+          <h3 className="section-title">{L('Mudanças no wiki esperando você', 'Wiki changes waiting for you')}</h3>
+          <div className="stack-list">
+            {changes.map((c) => (
+              <div key={c.id}>
+                <div className="row row--between small muted list-meta">
+                  <span>{c.ops.length === 1 ? L('1 mudança em página', '1 page change') : L(`${c.ops.length} mudanças em páginas`, `${c.ops.length} page changes`)}</span>
+                  <button className="link" onClick={() => navigate({ kind: 'wiki', tab: 'pending' })}>
+                    {L('Ver no wiki', 'See in the wiki')}
+                  </button>
+                </div>
+                <ChangeCard change={c} />
+              </div>
+            ))}
+          </div>
+        </>
       )}
       {past.length > 0 && (
         <>

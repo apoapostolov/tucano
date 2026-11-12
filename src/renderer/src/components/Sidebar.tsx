@@ -32,7 +32,8 @@ import {
   youPerson,
   type Agent,
   type State,
-  type View
+  type View,
+  waitingOnYou,
 } from '../store'
 import type { SidebarPart } from '../../../shared/onboarding'
 import { addGroup, arrange, moveChannel, moveChannelTo, nudgeChannel, removeGroup, renameGroup, type ChannelLayout } from '../../../shared/channel-layout'
@@ -163,7 +164,7 @@ export function Sidebar(): ReactNode {
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
   const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
-  const asks = useStore((s) => s.inbox.questions.length)
+  const asks = useStore(waitingOnYou)
   // Out of the sidebar while nothing waits in them, when that's asked for; the one I'm looking at stays,
   // so ticking the setting never takes away the page under my feet.
   const onAsks = useStore((s) => s.view?.kind === 'asks')

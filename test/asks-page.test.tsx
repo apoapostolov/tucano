@@ -51,7 +51,7 @@ beforeEach(() => {
 describe('the Asks page', () => {
   it('is a rest screen when nothing is waiting', () => {
     const html = page([])
-    expect(html).toContain('Nenhuma pergunta esperando')
+    expect(html).toContain('Nada esperando você')
   })
 
   it("gathers questions asked in different conversations, which is the point", () => {

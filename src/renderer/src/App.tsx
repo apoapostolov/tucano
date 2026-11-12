@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { L } from '../../shared/lang'
-import { getState, navigate, openDialog, setNav, useStore } from './store'
+import { getState, loadWikiWaiting, navigate, openDialog, setNav, useStore } from './store'
 import { Sidebar } from './components/Sidebar'
 import { SidebarResize } from './components/SidebarResize'
 import { ConversationView } from './components/Conversation'
@@ -33,6 +33,14 @@ export function App(): ReactNode {
   const guest = useStore(guestWelcome)
   const mac = useStore((s) => s.platform === 'mac')
   const navOpen = useStore((s) => s.navOpen)
+  const ready = useStore((s) => s.ready)
+
+  // The curator's changes to pages are the one "Waiting for you" kind the snapshot doesn't carry:
+  // read here so the Asks entry counts them too, and read again when the wiki changes.
+  const wikiRev = useStore((s) => s.wikiRev)
+  useEffect(() => {
+    if (ready) loadWikiWaiting()
+  }, [wikiRev, ready])
 
   useEffect(() => {
     document.documentElement.lang = language === 'en' ? 'en' : 'pt-BR'

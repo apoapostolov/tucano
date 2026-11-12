@@ -32,6 +32,7 @@ import {
   type Memory,
   type MemoryScope,
   type Message,
+  type WikiChange,
   type Model,
   type Person,
   type Delegation,
@@ -117,6 +118,7 @@ export interface State {
   routines: Routine[]
   skills: Skill[]
   wikiRev: number // goes up when a wiki page changes: the wiki screens read again
+  wikiWaiting: WikiChange[] // the curator's changes to pages, waiting on the person
   voiceRev: number // goes up when dictation's model changes (downloading, done, removed)
   platform: Os
   packaged: boolean
@@ -164,6 +166,7 @@ let state: State = {
   ready: false,
   threadSeen: loadSeen(),
   wikiRev: 0,
+  wikiWaiting: [],
   voiceRev: 0,
   navOpen: false,
   view: null,
@@ -762,6 +765,9 @@ export const pendingApprovals = (s: State): Approval[] => s.approvals.filter((a)
 export const computerOf = (s: State, agentId: string): ComputerInfo | undefined => s.computers.find((c) => c.agentId === agentId)
 export const browserOf = (s: State, agentId: string): BrowserView | undefined => s.browsers.find((b) => b.agentId === agentId)
 export const pendingMemories = (s: State): Memory[] => s.memories.filter((m) => m.state === 'pending')
+// Everything waiting on the person outside the conversations, which is what the Asks entry counts:
+// the agents' questions, the cards an admin has to apply, the memories to keep, the curator's changes.
+export const waitingOnYou = (s: State): number => s.inbox.questions.length + (s.inbox.proposals?.length ?? 0) + pendingMemories(s).length + s.wikiWaiting.length
 // A message of this window's person (one from before people has no id to compare, and was the owner's: theirs too).
 export const isMine = (s: Pick<State, 'you'>, a: Message['author']): boolean => a.kind === 'person' && (!s.you || a.id === s.you)
 // Another person's name, as the conversation shows it.
@@ -1173,6 +1179,15 @@ export const loadActivity = (f: { personId?: string; kind?: string; before?: num
 export const answerQuestion = (id: string, text: string): Promise<void> => call('answerQuestion', { id, text })
 // The Asks page's History: answered and closed questions, newest first.
 export const questionsHistory = (limit?: number): Promise<AskEntry[]> => call('questionsHistory', limit ? { limit } : {})
+// What the curator wants to change in pages that already exist, waiting on the person. It is the
+// one "Waiting for you" kind the snapshot doesn't carry (memory suggestions and cards to apply do),
+// so it is read from the core: once at the start, and again whenever the wiki changes.
+export const loadWikiWaiting = (): void => {
+  void Promise.all([call('wikiChanges', { state: 'pending' }), call('wikiChanges', { state: 'conflict' })]).then(
+    ([pending, moved]) => set((s) => ({ ...s, wikiWaiting: [...pending, ...moved].filter((c) => c.by !== 'review') })),
+    () => {}
+  )
+}
 export const confirmQuestion = (id: string, ok: boolean): void => void fire(L('Não consegui responder.', "I couldn't answer."), 'confirmQuestion', { id, ok })
 // Leaving an ask unanswered on purpose: it closes, and the reply goes on instead of waiting for good.
 export const dismissQuestion = (id: string): void => void fire(L('Não consegui dispensar a pergunta.', "I couldn't dismiss the question."), 'dismissQuestion', { id })
