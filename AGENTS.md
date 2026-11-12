@@ -282,6 +282,26 @@ and installation alone are incomplete.
    fails, the user stops automation, or a check cannot run without unapproved takeover, report
    the incomplete step. Do not describe delivery as fully verified.
 
+### Rebuilding and reinstalling itself: the helper, not a hand-made recipe
+
+An agent asked to rebuild and reinstall this app runs `node scripts/self-build.mjs install` and
+nothing else. It typechecks, builds, packages, checks the package, closes the app, installs,
+launches, and requires a window; a failure exits with the stage's own code and `--json` gives one
+line a caller can parse.
+
+- **Never pack while `node_modules` is being rewritten.** `npm ci` in one shell and
+  `electron-builder` in another ships a package holding the direct dependencies and none of their
+  dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
+  and the processes left behind hold the single-instance lock, so every later launch, including the
+  taskbar shortcut, does nothing at all. Run `npm ci` alone and wait for it to finish.
+- **`node scripts/self-build.mjs doctor` after any launch that shows no window.** It names a
+  package that cannot load and instances that run without a window; `doctor --fix` closes those
+  instances so the next launch can start.
+- **The installed `app.asar` is compared to the built one by hash.** An installer that copied
+  nothing, or an older build, is a failure, not a success.
+- Do not copy `dist/win-unpacked` over the installed folder and do not edit the installed package
+  in place: both leave a build no installer knows about, and the next install silently reverts it.
+
 ## Integrate and report completion
 
 Commit only task-related source and evidence. Bring the tested candidate into local `next` by

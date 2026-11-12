@@ -27,7 +27,7 @@ const { app, updater, NAMED } = vi.hoisted(() => {
 })
 
 vi.mock('electron', () => ({ app }))
-vi.mock('electron-updater', () => ({ default: { autoUpdater: updater } }))
+vi.mock('../src/main/updater-module', () => ({ updaterModule: { autoUpdater: updater } }))
 
 import { Updates } from '../src/main/updates'
 
