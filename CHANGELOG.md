@@ -4,6 +4,11 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Added
+
+- **A reply that was cut with work behind it offers Continue, before Try again.** A reply killed by an app restart, a crash or a stop, having already read files, written, edited or run commands, offered one way back: **Try again**, which starts the whole thing over. **Continue** now comes first: it opens a new reply in the same thread carrying a proceed message, with what it was asked, how it was cut, every step it took (what it read, what it wrote, what it ran, what failed) and the instruction to go on from where it stopped without redoing what is already done. **Try again** stays a full start from the beginning of the session. A reply killed before any tool call came back has nothing to go on with and keeps **Try again** alone. Once it is continued, the killed reply stops offering either button: the session carries on in the new reply under it. (#390)
+- **How much of the reasoning shows is yours to set.** Settings › The conversation gains a size under the switch that turns the reasoning on: **Small** (6 lines), **Medium** (12, the default) and **Large** (18), counted in lines so they mean the same thing at any font size; past that the preview scrolls, as it always did. It is each person's own setting, like the switch.
+
 ### Fixed
 
 - **The taskbar shows the toucan.** Windows draws a window's taskbar and Alt-Tab icon for the app id the installer registered, and the app asked for a different one (`dev.tucano.app` against the installer's `dev.tucano.next`), so the button came up under the framework's icon while the exe, the tray and the notifications carried the toucan. The id now lives in one place, `APP_ID` in `src/shared/app-identity.ts`, and the window also hands its icon to the window itself, so a copy run off the code looks like the app. `test/app-identity.test.ts` fails if the id and `package.json › build › appId` drift apart again.

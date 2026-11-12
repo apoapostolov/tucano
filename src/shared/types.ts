@@ -595,6 +595,7 @@ export interface Settings {
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
   showThinking?: boolean
+  thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
   // How a reply's steps read: every one, the latest few, or a single line with the count
   // (src/shared/steps.ts). Unset: every one, which is what the app has always done.
   steps?: StepsMode

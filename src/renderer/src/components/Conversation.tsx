@@ -10,6 +10,7 @@ import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
 import { saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
+import { canContinue } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -671,6 +672,14 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
               {L('Continuar', 'Continue')}
             </button>
           </>
+        )}
+        {/* A reply the app cut with work behind it goes on before it starts over: what it read,
+            wrote and ran is still true, and starting again would throw it away. With nothing but the
+            thinking step there is nothing to go on with, and only "Try again" is offered. */}
+        {message.run && message.run.status !== 'paused' && canContinue(message.run) && (
+          <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
+            {L('Continuar', 'Continue')}
+          </button>
         )}
         {/* At the limit, trying again only helps once the limit went up: until then, the way out is raising it.
             With no monthly limit set, nothing is ever over it: the reply is just to be tried again. */}
@@ -1693,6 +1702,9 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
 // the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
 export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
   const on = useStore((s) => s.settings?.showThinking === true)
+  // How much of it shows before it scrolls: a line or two when it is only a hint, most of the
+  // window when the reasoning is the thing being read.
+  const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
   const thought = useLiveThought(message.id, STREAM_MS)
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -1700,7 +1712,7 @@ export function Thought({ message, working }: { message: Message; working: boole
   }, [thought, working])
   if (!on || !thought) return null
   return (
-    <div ref={box} className="thought" aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
+    <div ref={box} className={`thought thought--${size}`} aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
       <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
       <div className="thought__text">{thought}</div>
     </div>

@@ -43,7 +43,7 @@ export interface Api {
   stopRun(p: { messageId: string }): void
   retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
   followUpRun(p: { messageId: string; text: string }): void // a finished reply goes on from where it stopped, in the same row
-  continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
+  continueRun(p: { messageId: string }): void // a reply that was cut goes on, with what it already did
   setAgentModels(p: { agentIds: string[]; modelId?: string; effort?: Effort }): number // modelId, effort or both: the agents changed, 0 when they already were
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string

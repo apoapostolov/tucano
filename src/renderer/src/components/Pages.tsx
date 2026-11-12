@@ -273,6 +273,12 @@ const MEMORY_MODES = (): { value: MemoryMode; label: string; hint: string }[] =>
   { value: 'approve', label: L('Pede aprovação', 'Asks for approval'), hint: L('Cada memória nova espera você guardar.', 'Each new memory waits for you to keep it.') },
   { value: 'read', label: L('Só lê', 'Read only'), hint: L('Usa as memórias, mas não guarda novas.', 'Uses memories but doesn’t keep new ones.') }
 ]
+// How tall the reasoning preview is before it scrolls, chosen in Settings › The conversation.
+const THINKING_SIZES: { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] = [
+  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines, the rest scrolling.') },
+  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines, the rest scrolling.') },
+  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines, the rest scrolling.') }
+]
 // How a reply's steps read, in the order they go from "everything" to "nothing": the labels carry
 // the number the person chose, since that is what "the latest few" means on this computer.
 const STEPS_CHOICES = (keep: number): { value: StepsMode; label: string; hint: string }[] => [
@@ -3366,6 +3372,33 @@ export function SettingsPage(): ReactNode {
                 </p>
               </div>
               <Toggle on={settings.showThinking === true} onChange={(v) => updateSettings({ showThinking: v })} />
+            </div>
+            <div className="key-row">
+              <Icon name="steps" />
+              <div className="grow">
+                <strong>{L('O tamanho do raciocínio', 'How much of the reasoning shows')}</strong>
+                <p className="muted small">
+                  {L(
+                    'Quanto do raciocínio aparece antes de começar a rolar: umas duas linhas quando ele é só um aviso, ou quase a janela toda quando é ele que você está lendo.',
+                    'How much of the reasoning shows before it starts scrolling: a couple of lines when it is only a hint, or most of the window when the reasoning is what you are reading.'
+                  )}
+                </p>
+              </div>
+              <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', 'How much reasoning shows')}>
+                {THINKING_SIZES.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={(settings.thinkingSize ?? 'md') === c.value}
+                    className={(settings.thinkingSize ?? 'md') === c.value ? 'is-active' : ''}
+                    title={c.hint}
+                    onClick={() => updateSettings({ thinkingSize: c.value })}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </Card>
         )}

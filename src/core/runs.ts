@@ -46,6 +46,7 @@ import { commandStep, execSummary, keyArg, maskSecrets, resultSummary } from './
 import { askMessage, askTask, byCode, wantsDm, inPlace, placeOf, CANCELAR_PEDIDO, channelNamed, codeOf, DELEGATION_TOOL_NAMES, DELEGATION_TOOLS, MAX_DELEGATIONS_PER_REPLY, MAX_OPEN_DELEGATIONS, parseAsk, PEDIR, questionMessage, RESPONDER_PEDIDO, resultMessage, returnTask, soFarMessage, teamMember, teamSection, type Returned } from './delegations'
 import { channelsOf, MAX_CHAIN, peersOf, reachOf } from '../shared/org'
 import type { Delegation, DelegationRef } from '../shared/types'
+import { canContinue, WORKLESS_LABELS } from '../shared/run-progress'
 
 const refOf = (d: Delegation): DelegationRef => ({ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId })
 
@@ -73,6 +74,16 @@ const DELTA_FLUSH_MS = 40
 // How much thinking is worth one wake-up of the window: it is read, not parsed.
 const THOUGHT_FLUSH = 240
 const RETRYABLE: RunStatus[] = ['failed', 'stopped', 'interrupted', 'limit_reached']
+// How the reply was cut, in the words the next reply reads: the app closing is not the same news as
+// a failure, and neither is the same as the person stopping it.
+const cutOf = (status: RunStatus): string =>
+  status === 'interrupted'
+    ? L('quando o app fechou', 'when the app closed')
+    : status === 'failed'
+      ? L('por uma falha', 'by a failure')
+      : status === 'stopped'
+        ? L('quando foi parada', 'when it was stopped')
+        : L('antes de terminar', 'before it finished')
 // A reply that has ended and can go on: the person asks more of it, in the same place.
 const FOLLOWABLE: RunStatus[] = ['done']
 // In the chain, the instruction a finished reply goes on with: the person's words, in a row of their
@@ -906,28 +917,38 @@ export class Runner {
     void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg, followUp: instruction }, { urgent: true })
   }
 
-  // A reply paused at its budget goes on in a new reply that knows what it did:
-  // its text is in the transcript, and its steps go in the task.
+  // A reply that was cut goes on in a new reply that knows what it did: its text is in the
+  // transcript, and its steps go in the task. Cutting it two ways is one path: at its budget it
+  // always has somewhere to go on from; stopped, interrupted or failed, only when a step came back.
+  // A reply that never got a tool call back is not continued: the person tries again instead.
   async continue(messageId: string): Promise<void> {
     const { db } = this.deps
     const msg = db.message(messageId)
-    if (msg?.run?.status !== 'paused' || msg.author.kind !== 'agent') return
+    if (!msg?.run || msg.author.kind !== 'agent' || !canContinue(msg.run)) return
     if (this.paused) return // nobody starts working while paused
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)
     if (!agent || !conv) return
     const me = (await this.deps.settings()).workspaceName
+    // Read before the status changes: how it was cut is what the next reply is told.
+    const cut = msg.run.status
+    // Said before the new reply starts, so the cut one reads as answered rather than as an offer.
     this.update(msg, { run: { ...msg.run, status: 'done' } })
-    const steps = msg.run.steps
-      .filter((s) => s.status !== 'running' && !['Pensou', 'Pausou', 'Thought', 'Paused'].includes(s.label))
+    const steps = (msg.run.steps ?? [])
+      .filter((s) => s.status !== 'running' && !WORKLESS_LABELS.includes(s.label))
       .slice(-40)
       .map((s) => `- ${s.label}${s.detail ? `: ${s.detail.replace(/\s+/g, ' ').slice(0, 200)}` : ''}${s.status === 'error' ? L(' (deu erro)', ' (failed)') : ''}`)
     const task = [
       msg.run.task, // what it was asked: a trigger's event is only there
-      L(
-        `Você pausou a sua última resposta ao chegar no teto de gasto dela, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
-        `You paused your last reply when it reached its spending cap, and ${me} asked you to go on. What you wrote is in your last message above.`
-      ),
+      cut === 'paused'
+        ? L(
+            `Você pausou a sua última resposta ao chegar no teto de gasto dela, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
+            `You paused your last reply when it reached its spending cap, and ${me} asked you to go on. What you wrote is in your last message above.`
+          )
+        : L(
+            `A sua última resposta foi cortada ${cutOf(cut)}, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
+            `Your last reply was cut ${cutOf(cut)}, and ${me} asked you to go on. What you wrote is in your last message above.`
+          ),
       steps.length ? `${L('Os passos que você fez', 'The steps you took')}:\n${steps.join('\n')}` : '',
       L('Continue de onde parou, sem refazer o que já está feito, e termine com o resultado.', "Pick up where you left off, without redoing what's already done, and finish with the result.")
     ]

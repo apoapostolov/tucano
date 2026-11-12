@@ -17,6 +17,7 @@ export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'theme',
   'sounds',
   'showThinking',
+  'thinkingSize',
   'steps',
   'stepsLatest',
   'channelLayout',

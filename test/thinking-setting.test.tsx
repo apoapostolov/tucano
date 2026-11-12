@@ -36,7 +36,8 @@ describe("the model's thinking on screen", () => {
     expect(drawn()).toBe('')
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const html = drawn()
-    expect(html).toContain('class="thought"')
+    // The middle size unless the person chose another: the class carries which one it is.
+    expect(html).toContain('class="thought thought--md"')
     expect(html).toContain('Pensando')
     expect(html).toContain('o pedido tem duas partes')
   })
@@ -44,6 +45,16 @@ describe("the model's thinking on screen", () => {
   it('once the reply ends it is kept, said in the past', () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     expect(renderToStaticMarkup(<Thought message={message} working={false} />)).toContain('Pensou')
+  })
+
+  it('shows 6, 12 or 18 lines before it scrolls, and the middle one when nobody chose', () => {
+    fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
+    const thought = (): string => renderToStaticMarkup(<Thought message={message} working />)
+    expect(thought()).toContain('class="thought thought--md"')
+    for (const chosen of ['sm', 'md', 'lg'] as const) {
+      fake = { ...fake, settings: { ...fake.settings, showThinking: true, thinkingSize: chosen } }
+      expect(thought()).toContain(`class="thought thought--${chosen}"`)
+    }
   })
 
   it('is nothing at all while the model has thought nothing yet', () => {
@@ -60,6 +71,14 @@ describe('the switch that turns it on', () => {
     expect(settingsPatchError({ showThinking: null })).toBeUndefined()
     expect(settingsPatchError({ showThinking: 'sim' })).toBeTruthy()
     expect(settingsPatchError({ showThinking: 1 })).toBeTruthy()
+  })
+
+  it('takes the three sizes and nothing else', () => {
+    expect(settingsPatchError({ thinkingSize: 'sm' })).toBeUndefined()
+    expect(settingsPatchError({ thinkingSize: 'lg' })).toBeUndefined()
+    expect(settingsPatchError({ thinkingSize: 'xl' })).toBeTruthy()
+    expect(settingsPatchError({ thinkingSize: 12 })).toBeTruthy()
+    expect(PERSONAL_SETTINGS).toContain('thinkingSize')
   })
 
   it("is each person's own: a member does not inherit the owner's choice", () => {

@@ -25,6 +25,7 @@ export const GENERAL_SETTINGS = [
   'harnesses',
   'sounds',
   'voice',
+  'thinkingSize',
   'browserJev',
   'classifiers',
   'classifierJobs',
