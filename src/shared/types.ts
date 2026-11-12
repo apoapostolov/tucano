@@ -596,6 +596,7 @@ export interface Settings {
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
   showThinking?: boolean
   thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
+  clock?: '24' | '12' // Settings › The conversation: times as 15:05 or 3:05 PM; unset keeps the app's own reading
   // How a reply's steps read: every one, the latest few, or a single line with the count
   // (src/shared/steps.ts). Unset: every one, which is what the app has always done.
   steps?: StepsMode

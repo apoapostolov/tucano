@@ -5,6 +5,7 @@
 // goes in or waits for you, as the wiki's settings say. The conversation shows what was kept,
 // with Undo. A message can also be kept on purpose ("Keep in the wiki"), and "guarda isso"
 // said in the conversation makes the curator keep it.
+import { timeOpts } from '../shared/clock'
 import { L, locale } from '../shared/lang'
 import { asSaid, saidAt, type Agent, type Message, type Person, type Settings, type WikiChange, type WikiOp } from '../shared/types'
 import { cleanTitle, ftsQuery } from './wiki'
@@ -164,7 +165,7 @@ export class WikiCurator {
     return this.deps.db.agents().find((a) => a.id === agentId)?.name ?? L('Agente', 'Agent')
   }
   private excerpt(messages: Message[]): string {
-    return messages.map((m) => `**${this.name(m)}** (${new Date(saidAt(m)).toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}): ${m.text.trim()}`).join('\n\n')
+    return messages.map((m) => `**${this.name(m)}** (${new Date(saidAt(m)).toLocaleString(locale(), timeOpts({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))}): ${m.text.trim()}`).join('\n\n')
   }
 
   private async doRead(conversationId: string): Promise<void> {

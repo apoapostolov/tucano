@@ -5,6 +5,7 @@
 // A question left there goes up to the asker instead of to a person: it answers what it knows from
 // its own conversation, and takes the rest to the person itself. Nothing else changes: approvals,
 // limits and what each agent may do stay each agent's own.
+import { timeOpts } from '../shared/clock'
 import { L, locale } from '../shared/lang'
 import { channelsOf, directReports, peersOf, reportsOf } from '../shared/org'
 import type { Agent, Connector, Conversation, Delegation } from '../shared/types'
@@ -94,7 +95,7 @@ export const byCode = (list: Delegation[], code: unknown): Delegation | undefine
   return c.length >= 4 ? list.find((d) => d.id === c) ?? (list.filter((d) => d.id.startsWith(c)).length === 1 ? list.find((d) => d.id.startsWith(c)) : undefined) : undefined
 }
 
-const clock = (at: number): string => new Date(at).toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+const clock = (at: number): string => new Date(at).toLocaleString(locale(), timeOpts({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))
 
 // "Clara", "@clara", "clara" → the one of the team it names (a name two share names no one).
 export function teamMember(team: Agent[], who: unknown): Agent | undefined {

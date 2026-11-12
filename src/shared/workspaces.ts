@@ -26,6 +26,7 @@ export const GENERAL_SETTINGS = [
   'sounds',
   'voice',
   'thinkingSize',
+  'clock',
   'browserJev',
   'classifiers',
   'classifierJobs',
