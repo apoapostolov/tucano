@@ -59,6 +59,7 @@ import {
   type EngineId,
   type GrantLevel,
   type MemoryMode,
+  type SendMode,
   type Skill,
   type ToolClass,
   isTeam,
@@ -2737,6 +2738,25 @@ export function SettingsPage(): ReactNode {
                   max={MAX_CHAIN_DEPTH}
                   value={chainDepthCap(settings.chainDepth)}
                   onChange={(n) => updateSettings({ chainDepth: chainDepthCap(n) })}
+                />
+              </Field>
+              <Field
+                label={L('Um novo prompt com uma resposta em curso', 'A new prompt while a reply is running')}
+                hint={L(
+                  'O que o Enter faz quando o agente já está respondendo ali. Ctrl+Enter põe na fila, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe, seja qual for o ajuste. Shift+Enter continua quebrando a linha.',
+                  'What Enter does while the agent is already replying there. Ctrl+Enter queues, Alt+Enter hands it over mid-work, Shift+Alt+Enter interrupts, whatever the setting says. Shift+Enter still breaks the line.'
+                )}
+              >
+                <Select
+                  value={settings.sendMode ?? 'parallel'}
+                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                  options={[
+                    { value: 'parallel', label: L('Ao lado dela, em paralelo', 'Alongside it, in parallel') },
+                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queued, after the reply ends') },
+                    { value: 'steer', label: L('Entregue à resposta em curso', 'Handed to the running reply') },
+                    { value: 'interrupt', label: L('Interrompe e começa com esta', 'Interrupts and starts with this one') }
+                  ]}
+                  placeholder={L('Escolha', 'Pick')}
                 />
               </Field>
               <Field label={L('Expiração de aprovações', 'Approvals expire after')}>
