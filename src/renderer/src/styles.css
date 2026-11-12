@@ -11869,6 +11869,7 @@ button.agent-card__now:hover {
 }
 .orgb:has(.org-undo) .org-hint {
   visibility: hidden;
+}
 
 /* What the model is thinking, apart from what it said: dim, small, under the steps it belongs to
    and above anything the reply offers at its bottom. Open and scrolling itself while it arrives, so
