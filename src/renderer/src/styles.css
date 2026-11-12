@@ -6559,13 +6559,127 @@ kbd {
 .quota-strip:hover {
   background: var(--hover);
 }
+/* One column per provider: its name above the bar, dim and in small caps, so two bars are never
+   confused for one another. */
 .quota-strip__pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.quota-strip__name {
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.quota-strip__track {
   display: block;
-  width: 18px;
+  /* One length for every bar: two tracks of different lengths would read as different scales, while
+     a wider provider name says nothing about what is left. */
+  width: 28px;
   height: 4px;
   border-radius: 99px;
   background: var(--border);
   overflow: hidden;
+}
+
+/* Pointing at a bar opens the provider's own windows: one row each, drawn like the bars in Usage. */
+.quota-strip-wrap {
+  position: relative;
+  display: flex;
+}
+.quota-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 232px;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  animation: cal-pop var(--dur-enter) var(--ease-out);
+}
+.quota-card__provider + .quota-card__provider {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.quota-card__name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.quota-card__plan {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-3);
+}
+.quota-card__window {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 3px 10px;
+}
+.quota-card__window + .quota-card__window {
+  margin-top: 8px;
+}
+.quota-card__span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.quota-card__left {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-1);
+}
+.quota-card__track {
+  grid-column: 1 / -1;
+  display: block;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+.quota-card__track i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+}
+.quota-card__track.is-warn i {
+  background: var(--warn);
+}
+.quota-card__track.is-danger i {
+  background: var(--danger);
+}
+.quota-card__reset {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.quota-card__wallet,
+.quota-card__note {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.quota-card__note {
+  color: var(--text-3);
 }
 .quota-strip__pill i {
   display: block;
