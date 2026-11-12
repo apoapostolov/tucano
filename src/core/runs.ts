@@ -1093,8 +1093,6 @@ export class Runner {
     const wikiShown = wikiNow()
     const wikiWritable = this.deps.gateway && wikiLevel === 'read_write' ? this.deps.wiki : undefined
     const wiki = this.deps.gateway && wikiShown && wikiLevel !== 'none' && (wikiShown.count() > 0 || !!wikiWritable) ? wikiShown : undefined
-    // What this conversation may read, for a write that must not touch a page held from it.
-    const wikiSees = (title: string): boolean => !!wikiShown?.page(title)
 
     const control: Control = { ctl: new AbortController(), msg }
     this.controllers.set(msg.id, control)
@@ -1547,8 +1545,10 @@ ${note}`,
 
         if (wikiWritable && WIKI_WRITE_TOOL_NAMES.has(name)) {
           // Its level may have changed mid-turn: read again before a page is touched.
-          if (wikiAccess(db.agent(agent.id) ?? agent) !== 'read_write') return textResult(L('Você só lê a wiki agora.', 'You only read the wiki now.'), true)
-          const r = wikiWrite(wikiWritable, { id: agent.id, name: agent.name }, name, args, wikiSees, { conversationId: conv.id })
+          const current = db.agent(agent.id)
+          const view = wikiNow()
+          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', 'You cannot write to the wiki now.'), true)
+          const r = wikiWrite(wikiWritable, { id: current.id, name: current.name }, name, args, (title) => !!view.page(title), { conversationId: conv.id })
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)
         }
