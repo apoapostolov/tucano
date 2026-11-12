@@ -69,7 +69,7 @@ This builds `dist\tucano-win-x64.exe`, the same one-click per-user installer the
 | Signing in to a harness | Opens Terminal.app via `osascript` | Opens a console window running a small `login.cmd` in the data folder |
 | `apiKeyHelper` (Claude Code on a gateway) | Runs in the login shell (`$SHELL -lc`) | Runs in Git Bash, or `cmd.exe` |
 | Sounds | `afplay` | PowerShell's `Media.SoundPlayer` |
-| Notifications | Native | Native toasts (needs the app id `dev.tucano.app`, set at start) |
+| Notifications | Native | Native toasts (needs the app id `dev.tucano.next`, set at start) |
 | Menu | App menu (About, Services, Hide, Quit), Edit, View, Window | File (About, Exit), Edit, View, Window |
 | Shortcuts | ⌘K, ⌘N, ⌘1…9, ⌘, | Ctrl+K, Ctrl+N, Ctrl+1…9, Ctrl+, (and the labels say so) |
 | Install hints for missing harnesses | `curl … \| bash` in Terminal | `irm … \| iex` / `npm install -g …` in PowerShell |
@@ -123,7 +123,7 @@ The Linux computer works unchanged, including lending a Windows folder (`-v C:\U
 
 | Change | Why |
 |---|---|
-| `app.setAppUserModelId('dev.tucano.app')` on Windows | Windows shows toast notifications only for an app with an id; it matches the installer's `appId` |
+| `app.setAppUserModelId(APP_ID)` on Windows, `APP_ID` in `src/shared/app-identity.ts` | Windows shows toast notifications only for an app with an id, and draws a window's taskbar icon for the id the installer registered: `APP_ID` and `build.appId` have to be the same string, and `test/app-identity.test.ts` fails when they are not |
 | The agent-desk migration runs only on macOS | It calls `/usr/bin/security` and moves a macOS Keychain key; agent-desk never existed on Windows |
 | The sound `player` on Windows is PowerShell's `Media.SoundPlayer` | `afplay` is macOS-only; this needs nothing installed |
 

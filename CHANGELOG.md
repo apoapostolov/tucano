@@ -6,6 +6,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+- **The taskbar shows the toucan.** Windows draws a window's taskbar and Alt-Tab icon for the app id the installer registered, and the app asked for a different one (`dev.tucano.app` against the installer's `dev.tucano.next`), so the button came up under the framework's icon while the exe, the tray and the notifications carried the toucan. The id now lives in one place, `APP_ID` in `src/shared/app-identity.ts`, and the window also hands its icon to the window itself, so a copy run off the code looks like the app. `test/app-identity.test.ts` fails if the id and `package.json › build › appId` drift apart again.
 - **The wiki review stops reading a date as a page.** It took any two capitalised words in a row as a proper name, so a sentence that opens with a date offered "On Nov" as a page the wiki should have (26 hits across 24 pages) and "The Foundry" the same way; both had to be dismissed by hand, and the dismissal was carried forever to keep them quiet. A candidate is now dropped when its first word is a function word or when any word of it is a month, in either language, and a dismissed finding the review no longer finds goes with the pass that stops finding it. Thanks, apoapostolov! (#392)
 
 ## [0.2.28] - 2026-11-12

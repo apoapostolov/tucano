@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, renameSync, rmSync, statSync, writeFileSync } fr
 import { dirname, join, normalize, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { L, langOf, setLang, type Lang } from '../shared/lang'
+import { APP_ID } from '../shared/app-identity'
 import { chirpOf, type BrowserOp, type Settings } from '../shared/types'
 import { isAppPage, isOutsideLink } from '../shared/links'
 import { Browsers } from './browser'
@@ -42,8 +43,9 @@ if (passwordStore && !app.commandLine.hasSwitch('password-store')) app.commandLi
 // it. In a login shell with mise, that made `mise activate zsh` open the AppImage again, and the
 // shell never came back.
 delete process.env['ARGV0']
-// Windows shows notifications only for an app with an id, the same as the installer's.
-if (process.platform === 'win32') app.setAppUserModelId('dev.tucano.app')
+// Windows shows notifications only for an app with an id, and draws the taskbar's icon for the one
+// the installer registered: the two are the same string, from src/shared/app-identity.ts.
+if (process.platform === 'win32') app.setAppUserModelId(APP_ID)
 
 // Until the core says which language the person picked, the Mac's.
 const systemLocale = ((): string | undefined => {
@@ -768,7 +770,9 @@ function createWindow(): BrowserWindow {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     // Off a Mac the menu lives in the window: hidden until Alt, so the app looks the same.
     autoHideMenuBar: process.platform !== 'darwin',
-    ...(process.platform === 'linux' ? { icon: resource('icon.png') } : {}),
+    // Everywhere but a Mac: Windows takes the taskbar and Alt-Tab icon from here as well as from
+    // the exe, and asking for it is what makes a window launched off the code look like the app.
+    ...(process.platform !== 'darwin' ? { icon: resource('icon.png') } : {}),
     trafficLightPosition: { x: 16, y: 18 },
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#121110' : '#f3f0ea',
     webPreferences: {
