@@ -2736,13 +2736,8 @@ ${note}`,
     const unhold = engines[engineId].keepsMcp ? await this.holdAgent(agent.id) : undefined
     inFlight--
     sign()
-    // The gateway listens on a port it only learns once it's up: a reply that starts before that (a message
-    // at boot, a routine fired on opening, a test) would hand its tools a URL with no port, and every call
-    // would come back as "no internet". Waiting here costs nothing once it's up.
-    if (this.deps.gateway && this.deps.gatewayReady) await this.deps.gatewayReady
     const token = plan?.token ?? (engines[engineId].keepsMcp ? this.deps.gateway?.agentToken(agent.id) : undefined)
     const session = this.deps.gateway?.open(tools, token)
-
     const whole = { prompt: withFiles.join('\n\n'), blocks: withFiles, images }
     // Resumed: the live context if it changed, the new messages' blocks, then the task's, with their images.
     const since = (p: SessionPlan): typeof whole => {
