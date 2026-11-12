@@ -44,7 +44,7 @@ for (const change of ['unchanged', 'hold', 'revoke'] as const) for (const call o
         yield { type: 'done', text: 'Concluído.', usage: { inputTokens: 1, cacheReadTokens: 0, outputTokens: 1 } }
       }
     }
-    const ids: EngineId[] = ['claude', 'codex', 'opencode', 'pi', 'antigravity', 'cursor', 'grok', 'cline']
+    const ids: EngineId[] = ['claude', 'codex', 'opencode', 'pi', 'antigravity', 'cursor', 'grok', 'cline', 'hermes']
     const engines = Object.fromEntries(ids.map((id) => [id, id === 'claude' ? engine : fakeEngine(id)])) as Record<EngineId, Engine>
     const settings = { workspaceName: 'Ana', context: '', routerModel: 'haiku', memoryModel: 'haiku', engines: Object.fromEntries(ids.map((id) => [id, { installed: true, loggedIn: true }])) } as Settings
     const runner = new Runner({ db, wiki, gateway, engines, settings: async () => settings, emit: () => {}, workDir: join(root, 'work') })
