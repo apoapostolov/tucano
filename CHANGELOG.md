@@ -4,6 +4,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Fixed
+
+- **The wiki review stops reading a date as a page.** It took any two capitalised words in a row as a proper name, so a sentence that opens with a date offered "On Nov" as a page the wiki should have (26 hits across 24 pages) and "The Foundry" the same way; both had to be dismissed by hand, and the dismissal was carried forever to keep them quiet. A candidate is now dropped when its first word is a function word or when any word of it is a month, in either language, and a dismissed finding the review no longer finds goes with the pass that stops finding it. Thanks, apoapostolov! (#392)
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**
