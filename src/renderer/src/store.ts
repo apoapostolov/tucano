@@ -1182,9 +1182,13 @@ export const questionsHistory = (limit?: number): Promise<AskEntry[]> => call('q
 // What the curator wants to change in pages that already exist, waiting on the person. It is the
 // one "Waiting for you" kind the snapshot doesn't carry (memory suggestions and cards to apply do),
 // so it is read from the core: once at the start, and again whenever the wiki changes.
+let wikiWaitingRequest = 0
 export const loadWikiWaiting = (): void => {
+  const request = ++wikiWaitingRequest
   void Promise.all([call('wikiChanges', { state: 'pending' }), call('wikiChanges', { state: 'conflict' })]).then(
-    ([pending, moved]) => set((s) => ({ ...s, wikiWaiting: [...pending, ...moved].filter((c) => c.by !== 'review') })),
+    ([pending, moved]) => {
+      if (request === wikiWaitingRequest) set((s) => ({ ...s, wikiWaiting: [...pending, ...moved].filter((c) => c.by !== 'review') }))
+    },
     () => {}
   )
 }
