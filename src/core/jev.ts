@@ -272,18 +272,19 @@ export async function recommendOptions(opts: {
 }
 
 // ---------- the next steps an agent proposes ----------
-// A next-steps card starts with every box ticked, and that is the point: nothing the agent offered
-// gets lost. With this on, one small typed question per step says which of them are worth doing now,
-// and only those keep their tick; the rest wait in the card, a click away. Never all of them off: a
-// list with nothing ticked is not a suggestion, it's a chore.
-const STEP_TIMEOUT_MS = 8_000
+// A next-steps card opens with every box clear: the person ticks what they want done, like any other
+// choice. What changes that is a classifier assigned to this job in Settings › Classifiers: one small
+// typed question per step says which of them are worth doing now, and those — and only those — open
+// ticked, with the card's Recommended pill. A step that isn't picked stays in the card, a click away.
+// No classifier, or a failure: nothing is ticked, which is the card's own default.
+const STEPS_TIMEOUT_MS = 8_000
 const STEPS_CONTEXT_MAX = 1_200
 
 type Step = 'do' | 'later'
 
 // One step, one question: does the person do it now, or can it wait. The state carries the whole
 // list and then the step itself, so the answer is about that step and not about the list.
-async function worthDoing(opts: { key: string; target: ClassifierConfig; state: string; fetch?: Fetch }): Promise<Step | { error: string }> {
+async function worthDoing(opts: { target: ClassifierConfig; key: string; state: string; fetch?: Fetch }): Promise<Step | { error: string }> {
   const criteria: Record<string, string> = {
     do: L('Fazer agora: é o que o trabalho pede em seguida, o que destrava o resto, ou o de maior risco.', 'Do it now: it is what the work asks for next, what unblocks the rest, or the riskiest.'),
     later: L('Pode esperar: é opcional, um polimento, ou depende de algo que ainda não está feito.', 'Can wait: it is optional, a polish, or it depends on something not done yet.')
@@ -300,7 +301,7 @@ async function worthDoing(opts: { key: string; target: ClassifierConfig; state: 
         criteria
       }
     ],
-    timeoutMs: STEP_TIMEOUT_MS,
+    timeoutMs: STEPS_TIMEOUT_MS,
     fetch: opts.fetch
   })
   if (failed(answers)) return { error: answers.error }
@@ -308,14 +309,13 @@ async function worthDoing(opts: { key: string; target: ClassifierConfig; state: 
   return choice === 'do' || choice === 'later' ? choice : { error: badFormat(opts.target.provider) }
 }
 
-// Which steps keep their tick: indexes into the list, in order. A failure, or none of them picked,
-// leaves every step ticked: the card never hides what the agent offered.
-export async function stepsWorthDoing(opts: { key: string; target?: ClassifierConfig; decision: Decision; context?: string; fetch?: Fetch }): Promise<{ ticked: number[]; ms: number } | { error: string; ms: number }> {
+// Which steps open ticked: indexes into the list, in order. A failure, or none of them worth doing
+// now, is an empty list — the card then opens exactly as it does with no classifier at all.
+export async function stepsWorthDoing(opts: { target: ClassifierConfig; key: string; decision: Decision; context?: string; fetch?: Fetch }): Promise<{ ticked: number[]; ms: number } | { error: string; ms: number }> {
   const started = Date.now()
   const ms = (): number => Date.now() - started
   const steps = (opts.decision.options ?? []).slice(0, MAX_STEPS)
-  const all = steps.map((_, i) => i)
-  if (steps.length < 2) return { ticked: all, ms: ms() }
+  if (steps.length < 2) return { ticked: [], ms: ms() }
   const context = (opts.context ?? '').replace(/\s+/g, ' ').trim().slice(0, STEPS_CONTEXT_MAX)
   const list = steps.map((o, i) => `${i + 1}. ${o.label}${o.description ? ` — ${o.description}` : ''}`).join('\n')
   const answers = await Promise.all(
@@ -340,8 +340,7 @@ export async function stepsWorthDoing(opts: { key: string; target?: ClassifierCo
   )
   const problem = answers.find((a): a is { error: string } => typeof a === 'object')
   if (problem) return { error: problem.error, ms: ms() }
-  const ticked = answers.flatMap((a, i) => (a === 'do' ? [i] : []))
-  return { ticked: ticked.length ? ticked : all, ms: ms() }
+  return { ticked: answers.flatMap((a, i) => (a === 'do' ? [i] : [])), ms: ms() }
 }
 
 // ---------- the browser (spec §24) ----------

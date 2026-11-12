@@ -94,7 +94,7 @@ export const jobLabel = (job: ClassifierJob): { pt: string; en: string } =>
     routing: { pt: 'Quem responde no canal', en: 'Who replies in a channel' },
     listen: { pt: 'Quem escuta entra', en: 'Which listener joins' },
     recommend: { pt: 'A opção sugerida na pergunta', en: 'The option suggested on a question' },
-    nextSteps: { pt: 'Quais próximos passos fazer', en: 'Which next steps are worth doing' },
+    nextSteps: { pt: 'Quais próximos passos já vêm marcados', en: 'Which next steps start ticked' },
     smart: { pt: 'Qual modelo responde', en: 'Which model answers' },
     browser: { pt: 'O que o agente clica na página', en: 'What an agent clicks in a page' }
   })[job]
@@ -114,8 +114,8 @@ export const jobAbout = (job: ClassifierJob): { pt: string; en: string } =>
       en: 'Marks the best option on an agent’s question card. “None” is a real answer: the person’s taste is not a model’s call.'
     },
     nextSteps: {
-      pt: 'Os próximos passos de uma resposta começam todos marcados; esta pergunta decide quais ficam.',
-      en: 'A reply’s next steps all start ticked; this question decides which keep their tick.'
+      pt: 'Os próximos passos de uma resposta abrem com toda caixa desmarcada; esta pergunta decide quais já vêm marcadas.',
+      en: 'A reply’s next steps open with every box clear; this question decides which of them come ticked.'
     },
     smart: {
       pt: 'Lê o pedido e escolhe a cadeia de modelos do roteamento inteligente: o papel, o tamanho do trabalho e a capacidade que ele merece.',
