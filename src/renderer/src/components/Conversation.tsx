@@ -1360,15 +1360,14 @@ function useNow(on: boolean): number {
 // restarting the app and coming back finds them as they were left.
 const stepsMemory = (conversationId: string): string => `steps:${conversationId}`
 // One quiet line: what the agent is doing now (and for how long), or how many
-// steps it took. The steps themselves open on a click — unless the person asked for
-// one line only, or for just the latest few (Settings › General, or one agent's own).
+// steps it took. Every mode lets the person open the steps on a click.
 export function RunSteps({ message }: { message: Message }): ReactNode {
   const run = message.run!
-  // Every step (what the app has always done), the latest few, or one line with the count: the
+  // Every step (what the app has always done), the latest few, or one line of current activity: the
   // agent's own setting over the workspace's (src/shared/steps.ts).
   const mode = useStore((s) => stepsModeFor(s.settings, message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
   const keep = useStore((s) => s.settings?.stepsLatest)
-  // Open while the agent works, so its steps read as they go, unless the person closes it; closed after.
+  // A manual choice lasts through completion: finishing must not close what someone is reading.
   // A conversation that was left folded stays folded, and a run that starts in it opens folded too.
   const memory = stepsMemory(message.conversationId)
   const remembered = useStore((s) => (s.settings?.folded ?? []).includes(memory))
@@ -1377,9 +1376,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
   // the reply itself has no text at all.
   const silent = run.silent === true
-  // One line is the whole point of 'one-line': there is nothing to open.
-  const opens = mode !== 'one-line'
-  const open = opens && (toggled ?? (working && !silent && !remembered))
+  const open = toggled ?? (working && mode !== 'one-line' && !silent && !remembered)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
@@ -1398,7 +1395,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // the conversation agrees with this one; unfolding writes it too, or the next run would open folded.
   const show = (next: boolean): void => {
     setOpen(next)
-    if (opens) setFolded(memory, !next)
+    if (mode !== 'one-line') setFolded(memory, !next)
   }
   const fold = (): void => {
     show(false)
@@ -1409,33 +1406,30 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   const total = run.steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
   const failed = run.steps.filter((st) => st.status === 'error').length
   const current = [...run.steps].reverse().find((st) => st.status === 'running')
+  const currentTarget = working && !open ? (current?.detail || current?.input)?.split(/\r?\n/)[0]?.slice(0, 200) : undefined
   const count = `${run.steps.length} ${L(`passo${run.steps.length === 1 ? '' : 's'}`, `step${run.steps.length === 1 ? '' : 's'}`)}`
 
   const line = (
     <>
+      <span className="steps__chev">
+        <Icon name="chevron" size={12} />
+      </span>
       {working ? (
         <span className="steps__pulse" />
       ) : justDone ? (
         <span className="steps__done">
           <Icon name="check" size={12} />
         </span>
-      ) : (
-        <span className="steps__chev">
-          <Icon name="chevron" size={12} />
-        </span>
-      )}
+      ) : null}
       {working ? (
-        <span className="shimmer">
-          {/* One line: what it's doing is the count going up, not the label of the step. */}
-          {mode === 'one-line'
-            ? `${count}…`
-            : current
-              ? `${current.label}…`
-              : now - message.at > 60_000
-                ? L('Ainda trabalhando: tarefas longas demoram mesmo', 'Still working: long tasks do take a while')
-                : run.steps.length === 0
-                  ? L('Lendo o pedido…', 'Reading the request…')
-                  : L('Pensando…', 'Thinking…')}
+        <span className="shimmer steps__activity">
+          {current
+            ? `${current.label}…`
+            : now - message.at > 60_000
+              ? L('Ainda trabalhando: tarefas longas demoram mesmo', 'Still working: long tasks do take a while')
+              : run.steps.length === 0
+                ? L('Lendo o pedido…', 'Reading the request…')
+                : L('Pensando…', 'Thinking…')}
         </span>
       ) : (
         <span className="steps__summary">
@@ -1450,34 +1444,24 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
           )}
         </span>
       )}
+      {currentTarget && <code className="steps__now" title={currentTarget}>{currentTarget}</code>}
       {failed > 0 && <span className="steps__failed">{failed} {L('com falha', 'failed')}</span>}
       {working && <span className="steps__elapsed">{duration(Math.max(0, now - message.at))}</span>}
-      {working && (
-        <span
-          className="btn btn--xs btn--ghost steps__stop"
-          role="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            stopRun(message.id)
-          }}
-        >
-          <Icon name="stop" size={11} /> {L('Parar', 'Stop')}
-        </span>
-      )}
     </>
   )
 
   return (
     <div ref={box} className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''} steps--${mode}`}>
-      {opens ? (
-        <button className="steps__toggle" aria-expanded={open} onClick={() => show(!open)}>
+      <div className="steps__header">
+        <button type="button" className="steps__toggle" aria-expanded={open} onClick={() => show(!open)}>
           {line}
         </button>
-      ) : (
-        <div className="steps__toggle steps__toggle--line">
-          {line}
-        </div>
-      )}
+        {working && (
+          <button type="button" className="btn btn--xs btn--ghost steps__stop" onClick={() => stopRun(message.id)}>
+            <Icon name="stop" size={11} /> {L('Parar', 'Stop')}
+          </button>
+        )}
+      </div>
       {open && (
         <div className="steps__body">
           <button
