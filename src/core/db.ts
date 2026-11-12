@@ -568,7 +568,9 @@ const COLUMNS: [string, string, string][] = [
   // Empty: the store's mark, or the icon of its kind.
   ['connectors', 'icon', 'TEXT'],
   // The agent an agent answers to (src/shared/org.ts); empty: no one.
-  ['agents', 'reports_to', 'TEXT']
+  ['agents', 'reports_to', 'TEXT'],
+  // A channel an agent opened to work with agents called in from another conversation.
+  ['conversations', 'team_up', 'TEXT']
 ]
 
 
