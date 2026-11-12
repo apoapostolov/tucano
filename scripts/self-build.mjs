@@ -8,7 +8,8 @@
 //   node scripts/self-build.mjs doctor          say whether the installed package and instance are sane
 //   node scripts/self-build.mjs doctor --fix    also close instances that have no window
 //
-// Flags: --json (one JSON line as the result), --test (run the suite first), --no-typecheck.
+// Flags: --json (one JSON line as the result), --test (run the suite first), --no-typecheck,
+// --asar <file> (doctor: check that package instead of the installed one).
 // Exit codes name the stage that stopped it, so a caller never has to read prose:
 // 0 ok, 1 preflight, 2 typecheck, 3 build, 4 package, 5 package check, 6 close, 7 install,
 // 8 launch, 9 usage.
@@ -46,12 +47,14 @@ const builtAsar = () => join(ROOT, 'dist', 'win-unpacked', 'resources', 'app.asa
 const setupFile = () => join(ROOT, 'dist', `tucanonext-setup-${version()}.exe`)
 const sha256 = (file) => createHash('sha256').update(readFileSync(file)).digest('hex')
 
-function run(command, commandArgs, stage) {
-  log(`\n$ ${command} ${commandArgs.join(' ')}`)
-  const result = spawnSync(command, commandArgs, { cwd: ROOT, stdio: asJson ? 'pipe' : 'inherit', encoding: 'utf8', windowsHide: true, shell: WIN })
+// A whole command line, run through the shell: the tools here are npm shims (.cmd on Windows), and one
+// string keeps Node from warning about unescaped arguments.
+function run(line, stage) {
+  log(`\n$ ${line}`)
+  const result = spawnSync(line, { cwd: ROOT, shell: true, stdio: asJson ? 'pipe' : 'inherit', encoding: 'utf8', windowsHide: true })
   if (result.status !== 0) {
     const output = asJson ? `${result.stdout ?? ''}${result.stderr ?? ''}`.slice(-2000) : ''
-    throw stop(`${command} exited ${result.status ?? result.signal}${output ? `\n${output}` : ''}`, stage)
+    throw stop(`${line.split(' ')[0]} exited ${result.status ?? result.signal}${output ? `\n${output}` : ''}`, stage)
   }
   return result.stdout ?? ''
 }
@@ -172,17 +175,17 @@ function preflight() {
 }
 
 function typecheck() {
-  run('npx', ['tsc', '--noEmit', '-p', 'tsconfig.json'], 'typecheck')
-  if (flags.has('--test')) run('npx', ['vitest', 'run'], 'typecheck')
+  run('npx tsc --noEmit -p tsconfig.json', 'typecheck')
+  if (flags.has('--test')) run('npx vitest run', 'typecheck')
 }
 
 function build() {
-  run('npx', ['electron-vite', 'build'], 'build')
+  run('npx electron-vite build', 'build')
   if (!existsSync(join(ROOT, 'out', 'main', 'index.js'))) throw stop('out/main/index.js was not written', 'build')
 }
 
 function pack() {
-  run('npx', ['electron-builder', '--win', 'nsis', '--x64', '--publish', 'never'], 'package')
+  run('npx electron-builder --win nsis --x64 --publish never', 'package')
   const setup = setupFile()
   if (!existsSync(setup)) throw stop(`${setup} was not written`, 'package')
   if (statSync(setup).mtimeMs < statSync(join(ROOT, 'out', 'main', 'index.js')).mtimeMs) throw stop('the installer is older than this build', 'package')
