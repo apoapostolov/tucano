@@ -6564,7 +6564,7 @@ kbd {
 .quota-strip__pill {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 3px;
 }
 .quota-strip__name {
@@ -6578,9 +6578,8 @@ kbd {
 }
 .quota-strip__track {
   display: block;
-  /* One length for every bar: two tracks of different lengths would read as different scales, while
-     a wider provider name says nothing about what is left. */
-  width: 28px;
+  /* The bar is as wide as the name above it: the column reads as one unit, and the name sets the
+     width. */
   height: 4px;
   border-radius: 99px;
   background: var(--border);
