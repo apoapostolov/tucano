@@ -99,6 +99,7 @@ export interface Agent {
   archived: boolean
   kind?: 'tuca' // the agent that builds the others: it proposes, the person creates
   owner?: string // the person who gets its approvals: whoever created it (the Tucano's owner for older agents)
+  reportsTo?: string // the agent it answers to (src/shared/org.ts): that one, and whoever is above it, may hand it work in its own channel; unset: no one
 }
 
 // One of the person's apps given to an agent, by the name the system shows.
@@ -222,6 +223,43 @@ export interface Run {
   proposal?: Proposal // what an agent proposed, from before a reply could hold several (read both with proposalsOf)
   proposals?: Proposal[] // what an agent proposed in this reply (changes to agents, routines, channels, teams), shown as a group of cards
   silent?: true // a routine's run that had nothing to report ([SILENT]): an empty reply, no notification, no unread
+  delegation?: DelegationRef // on the message that opens a piece of handed work in its agent's channel, on an answer given there in the asker's name, and on what brings its answer or its question back
+  delegations?: DelegationRef[] // the work this reply handed to the agents below its author
+}
+
+// Where a piece of handed work lives, for a message to point at it: the thread `rootId` opened.
+export interface DelegationRef {
+  id: string
+  to: string // the agent doing it
+  conversationId: string
+  rootId: string
+  back?: 'result' // on the message that brought the answer back to where it was asked: shown folded there
+}
+
+// A piece of work an agent handed to one below it (src/shared/org.ts), in that one's channel: a thread
+// there, opened by `rootId`. What it ends with goes back to where it was asked from, and whoever asked
+// gets the turn again. `asking`: the one doing it left a question, which goes up to whoever asked.
+export interface Delegation {
+  id: string
+  from: string // the agent that asked
+  to: string // the agent asked
+  conversationId: string // where the work is done
+  rootId: string // the message that opened its thread there
+  originConversationId: string // where it was asked from
+  originThreadId?: string
+  originMessageId: string // the reply that asked
+  requestedBy: string // the person that reply was for
+  text: string // what to do
+  done?: string // what counts as finished
+  dueAt?: number
+  state: 'open' | 'done' | 'failed' | 'cancelled'
+  asking?: string // the message whose question waits for whoever asked
+  askingTold?: boolean // whoever asked has heard of that question
+  result?: string // the message it ended with
+  told?: boolean // whoever asked has heard how it ended
+  lateTold?: boolean // whoever asked has heard it's past its deadline
+  createdAt: number
+  endedAt?: number
 }
 
 // An agent the Tuca proposes. Nothing exists until the person creates it.
@@ -494,6 +532,7 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   dmOrder?: string[] // the person's order for the direct messages, by conversation id
   agentOrder?: string[] // the person's order for the agents, by agent id
+  orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
   jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset
   jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset

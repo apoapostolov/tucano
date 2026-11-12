@@ -3,17 +3,18 @@
 import { parseHTML } from 'linkedom'
 import { act } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import type { ProviderQuota } from '../src/shared/types'
+import type { CodexQuota, ProviderQuota } from '../src/shared/types'
 
 const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
 Object.assign(document, { oninput: null })
 
 let reply: ProviderQuota[] = []
+let codexReported: CodexQuota | undefined
 let reported: { fiveHour?: { utilization: number; resetsAt: number }; sevenDay?: { utilization: number; resetsAt: number }; at: number } | undefined
 const loadQuotas = vi.fn(async () => reply)
 vi.mock('../src/renderer/src/store', () => ({
-  useStore: (select: (s: unknown) => unknown) => select({ settings: { quota: reported } }),
+  useStore: (select: (s: unknown) => unknown) => select({ settings: { quota: reported, codexQuota: codexReported, engines: { codex: { route: 'plan' } } } }),
   amAdmin: () => true,
   loadQuotas: () => loadQuotas(),
   agentById: () => undefined,
@@ -49,6 +50,7 @@ const flush = async (): Promise<void> => {
 beforeEach(async () => {
   reply = []
   reported = undefined
+  codexReported = undefined
   loadQuotas.mockClear()
   root = createRoot(document.getElementById('root')!)
 })
@@ -118,6 +120,22 @@ it('says where it looks when there is no login at all', async () => {
   await render()
   expect(heads()).toHaveLength(0)
   expect(document.body.textContent).toMatch(/Nenhum login|No login/)
+})
+
+it('keeps other providers while the native Codex windows replace its generic column', async () => {
+  codexReported = { windows: [{ minutes: 300, utilization: 0.4, resetsAt: Date.now() + 3600000 }], at: Date.now() }
+  reply = [quota({}), quota({ id: 'zai', label: 'Z.AI', via: 'Pi' })]
+  await render()
+  expect(heads().map((h) => h.textContent)).toEqual(['Z.AIPi'])
+})
+
+it('does not report missing credentials when only the native Codex windows are present', async () => {
+  codexReported = { windows: [{ minutes: 10080, utilization: 0.4, resetsAt: Date.now() + 3600000 }], at: Date.now() }
+  reply = [quota({})]
+  await render()
+  expect(heads()).toHaveLength(0)
+  expect(document.body.textContent).toMatch(/aparecem abaixo|shown below/)
+  expect(document.body.textContent).not.toMatch(/Nenhum login|No login/)
 })
 
 it('reads again on demand', async () => {

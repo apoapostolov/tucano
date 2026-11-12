@@ -20,6 +20,7 @@ import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-p
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { isStepsMode } from '../shared/steps'
 import { defaultRouting, validateRouting } from '../shared/routing'
+import { possibleBosses } from '../shared/org'
 import { listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
 import { Db, MIGRATIONS } from './db'
@@ -1052,6 +1053,7 @@ void ready.then(async () => {
   setInterval(() => void memory.sweep().catch((e: unknown) => console.error('[memory]', e)), 60_000).unref()
   // A question to someone that waited past its deadline: its requester hears of it.
   setInterval(() => runner.sweepQuestions(), 60_000).unref()
+  setInterval(() => runner.sweepDelegations(), 60_000).unref()
   if (!fake) {
     // A port taken (another Tucano open, say) is logged and the rest goes on: a call there reaches
     // a server that doesn't know its token, never this workspace's data.
@@ -1547,6 +1549,9 @@ const api: Handlers = {
     // On, off, or inherit (absent): anything else, a cleared switch included, goes back to following the
     // global one instead of turning into an off that reads as a choice.
     if (clean.smartRouting !== true && clean.smartRouting !== false) delete clean.smartRouting
+    // Whom it answers to (src/shared/org.ts): another agent that isn't itself, below it, archived or the Tuca. Anything else: no one.
+    // One that already answered to the same agent keeps doing so: only a change is checked.
+    if (!clean.reportsTo || clean.kind === 'tuca' || (db.agent(clean.id)?.reportsTo !== clean.reportsTo && !possibleBosses(db.agents(), clean.id).some((a) => a.id === clean.reportsTo))) delete clean.reportsTo
     const linux = (a?: Agent): boolean => !!a?.computer && a.computerKind !== 'mac'
     const mac = (a?: Agent): boolean => !!a?.computer && a.computerKind === 'mac'
     db.saveAgent(clean)

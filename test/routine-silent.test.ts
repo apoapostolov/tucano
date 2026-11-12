@@ -46,6 +46,7 @@ describe('a routine with nothing to report', () => {
   let notes: { title: string; body: string }[]
   let said: string // what the engine answers
   let askFirst: boolean // …after asking something through the gateway
+  let delegateFirst: boolean
   let asked: string // the prompt of the last turn
 
   beforeEach(async () => {
@@ -56,6 +57,7 @@ describe('a routine with nothing to report', () => {
     notes = []
     asked = ''
     askFirst = false
+    delegateFirst = false
     said = 'Resposta de teste'
     const base = fakeEngine('claude', { delayMs: 1 })
     // The fake engine, answering with this test's text and, when asked to, a question through the gateway.
@@ -63,6 +65,10 @@ describe('a routine with nothing to report', () => {
       id: 'claude',
       async *run(turn: Turn) {
         asked = turn.prompt
+        if (delegateFirst && turn.mcpUrl) {
+          delegateFirst = false
+          await callTool(turn.mcpUrl, 'pedir', { para: 'theo', pedido: 'Confira os números.' })
+        }
         if (askFirst && turn.mcpUrl) await callTool(turn.mcpUrl, 'ask_user', { question: 'Pra quando você precisa disso?' })
         for await (const e of base.run(turn)) {
           if (e.type === 'done') yield { ...e, text: said }
@@ -141,6 +147,17 @@ describe('a routine with nothing to report', () => {
     expect(answer!.run?.silent).toBeUndefined()
     expect(answer!.text).toBe('Te mandei uma pergunta.')
     expect(notes).toHaveLength(1)
+  })
+
+  it('keeps a routine visible when it handed work to another agent', async () => {
+    db.saveAgent({ ...agent('a2', 'theo'), reportsTo: 'a1' })
+    delegateFirst = true
+    said = SILENT
+    await run()
+    const answer = messages().find((m) => m.author.kind === 'agent' && m.run?.delegations?.length)
+    expect(answer?.run?.delegations).toHaveLength(1)
+    expect(answer?.run?.silent).toBeUndefined()
+    expect(notes.length).toBeGreaterThan(0)
   })
 
   it('outside a routine the marker is kept as the text it is', async () => {

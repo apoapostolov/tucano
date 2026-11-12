@@ -54,6 +54,7 @@ export function UsagePage(): ReactNode {
   const [u, setU] = useState<UsageReport | null>(null)
   // Recomputed whenever a reply lands with its receipt.
   const count = useStore((s) => receipts(s).length)
+  const codex = useStore((s) => s.settings.engines.codex)
   // What the team spends is the admins' (a member can still land here from the search).
   const admin = useStore(amAdmin)
   useEffect(() => void (admin && loadUsage().then(setU)), [count, admin])
@@ -90,7 +91,7 @@ export function UsagePage(): ReactNode {
         <>
           <Quotas />
           <Month u={u} claude={billing.find((b) => b.id === 'claude')?.status} />
-          {billing.find((b) => b.id === 'codex')?.status.route === 'plan' && <CodexQuota />}
+          {codex?.route === 'plan' && <CodexQuota />}
           <Agents u={u} />
           <div className="usage-grid">
             <Models u={u} />
@@ -275,7 +276,7 @@ function withReported(list: ProviderQuota[], reported: Quota | undefined): Provi
 
 export function Quotas(): ReactNode {
   const reported = useStore((s) => s.settings.quota)
-  const codexReported = useStore((s) => s.settings.codexQuota)
+  const codexReported = useStore((s) => s.settings.engines?.codex?.route === 'plan' ? s.settings.codexQuota : undefined)
   // Whose logins these are: an admin's, like the rest of the page. A member's app never asks.
   const admin = useStore(amAdmin)
   const [list, setList] = useState<ProviderQuota[] | null>(null)
@@ -291,7 +292,7 @@ export function Quotas(): ReactNode {
   useEffect(() => {
     if (admin) load()
   }, [admin])
-  const cols = (list ?? []).filter((p) => p.id !== 'codex' || !codexReported?.windows.length)
+  const cols = (list ?? []).filter((p) => p.id !== 'openai-codex' || !codexReported?.windows.length)
   return (
     <section className="read-group usage-card">
       <h2>
@@ -311,7 +312,7 @@ export function Quotas(): ReactNode {
       </div>
       {cols.length === 0 ? (
         <p className="muted small">
-          {L(
+          {codexReported?.windows.length ? L('As janelas da assinatura do Codex aparecem abaixo.', 'The Codex subscription windows are shown below.') : L(
             'Nenhum login encontrado para pedir cota. Entre no Claude Code, no Codex ou no OpenCode, ou configure um provedor no Pi ou no Hermes, e ele aparece aqui.',
             'No login found to ask for a quota. Sign in to Claude Code, Codex or OpenCode, or set up a provider in Pi or Hermes, and it shows up here.'
           )}

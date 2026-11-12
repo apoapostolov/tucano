@@ -22,10 +22,10 @@ Merged or closed PRs still need a disposition and integration check; closure alo
 ## 1. Reconcile upstream before resuming the audit
 
 - [x] Create and maintain this checkbox plan and explicit progress measures.
-- [ ] Fetch current upstream main, fork next, PR states, reviews and discussions.
-- [ ] Inventory every upstream commit since the 0.2.27 baseline `b436f4a`.
-- [ ] Map accepted, rejected, superseded and changed features against Apo's PR cohort.
-- [ ] Review overlapping implementations and record the behavioral reason for each resolution.
+- [x] Fetch current upstream main, fork next, PR states, reviews and discussions.
+- [x] Inventory every upstream commit since the 0.2.27 baseline `b436f4a`.
+- [x] Map accepted, rejected, superseded and changed features against Apo's PR cohort.
+- [x] Review overlapping implementations and record the behavioral reason for each resolution.
 - [ ] Integrate upstream main while preserving TucanoNext identity and application isolation.
 - [ ] Run typecheck, full suite, build, installer and installed-app smoke checks.
 - [ ] Refresh the plan, inventory and progress counts before resuming feature work.
@@ -37,7 +37,7 @@ Merged or closed PRs still need a disposition and integration check; closure alo
 - [x] Record per-head reviews and mark changed heads stale.
 - [x] Establish focused upstream-main-based fixes and existing-feature PR updates.
 - [x] Keep personal next/QA context out of upstream descriptions and comments.
-- [ ] Commit and preserve the operating documents and current inventory in the fork.
+- [x] Commit and preserve the operating documents and current inventory in the fork.
 - [ ] Revalidate stacks and duplicates against the maintainer's new decisions.
 - [ ] Keep each public PR description, test report and screenshot aligned with its final diff.
 
@@ -94,7 +94,7 @@ The cohort stays stable for progress measurement; record changed upstream dispos
 
 - [x] Reproduce and fix shell-dependent, cross-workspace key-cleanup assertions in #367.
 - [x] Review locked dependencies and prepare focused runtime updates in #368.
-- [ ] Review the maintainer's disposition of #367 and #368 and reconcile the resulting code.
+- [x] Review the maintainer's disposition of #367 and #368 and reconcile the resulting code. Both merged.
 - [ ] Audit run scheduling, routing, queues, resource bounds and cancellation under load.
 - [ ] Audit permission changes during active runs, DM/wiki privacy and multi-user isolation.
 - [ ] Audit startup, shutdown, crash recovery, database migrations and backup/restore.
