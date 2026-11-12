@@ -26,6 +26,8 @@ export const GENERAL_SETTINGS = [
   'sounds',
   'voice',
   'browserJev',
+  'classifiers',
+  'classifierJobs',
   'wikiCapture',
   'wikiEdits',
   'wikiReview',
