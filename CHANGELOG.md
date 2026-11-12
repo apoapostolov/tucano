@@ -4,6 +4,22 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+> **Em português:**
+> - **Novo:** um prompt novo numa conversa que já está respondendo chega de quatro jeitos: junto da resposta que corre (o de sempre), na fila pra quando ela acabar, entregue no meio do trabalho dela, ou no lugar dela, parando-a. O Enter faz o que estiver em **Configurações › Agentes › Um novo prompt com uma resposta em curso**; Shift+Enter enfileira, Alt+Enter entrega, Shift+Alt+Enter interrompe, seja qual for o ajuste, e Ctrl+Enter quebra a linha.
+> - **Correção:** depois de uma vez em que o Enter entregou a mensagem na resposta em curso, todo prompt seguinte naquele canal ia junto com ela e ficava sem resposta: só voltava a abrir uma resposta própria entrando numa thread e marcando o agente. Agora a entrega vai só pra uma resposta que está correndo no mesmo lugar, nunca na de outra thread; uma mensagem com imagem ou arquivo e sem palavras nunca é entregue; e se a resposta terminar sem ler o que você escreveu, aquela mensagem ganha uma resposta dela. O campo de mensagem mostra o que o Enter faz enquanto uma resposta corre ali, com um clique pra voltar ao normal, e a mensagem entregue diz **Entregue à resposta acima** até ser respondida.
+
+### Added
+
+- **A new prompt meets a running reply four ways, and the keys pick.** A prompt written while an agent was answering used to go alongside, always: two replies on the same subject, or a correction nobody read. Now it can go in the queue, after that reply ends (kept, with a mark on the message, even across a restart); handed into the running reply, which reads it between two tool calls and says so in a step; or in place of it, stopping the reply and starting the new one. Enter does what **Settings › Agents › A new prompt while a reply is running** says; Shift+Enter queues, Alt+Enter hands it over, Shift+Alt+Enter interrupts, whatever the setting says, and Ctrl+Enter breaks the line (Shift+Enter no longer does). With nothing running there, all four are a prompt like any other. (#261)
+
+### Changed
+
+- **The message field says what Enter does while a reply is running there.** A send mode picked once for a moment became the default for every prompt, and nothing on screen said so: a message that went into a running reply looked unanswered. The composer now carries a small chip while Enter isn't the plain one (**Enter: into the reply**), one click back to sending alongside; a message handed into the reply says **Handed to the reply above** until it's answered; and a queued one says it's waiting for the reply above, as before.
+
+### Fixed
+
+- **A prompt written after a steer opens its own reply again.** With Enter handing a new prompt to the reply that was running (Settings, or once with Alt+Enter), that choice stayed on, invisibly, and every later prompt in the conversation was handed into whatever was running there: written in a channel while a reply ran inside a thread, it went into that thread's reply, never got one of its own, and the only way to get a reply was to open a thread and mention the agent. A steer now goes only to a reply running in the same place (the same thread of that conversation, never another one's); a message with an image or a file and no words is never handed over; and a reply that ends without taking a steer (it made no tool call after it) leaves that message a reply of its own, where it was written, instead of swallowing it.
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**
