@@ -130,6 +130,40 @@ The released app and `TucanoNext` remain independent:
 5. Maintain a checkbox plan for long audits. A merged PR, a repaired defect, and a fully audited
    feature are different states. Record completed work and remaining checks separately.
 
+## Worktrees, refs, and pushes
+
+Branches are cut in a worktree, and the hazards there destroy work or waste a cycle:
+
+- **A worktree does not get its own install unless you link one, and removing the worktree follows the
+  link.** `git worktree remove` treats the `node_modules` junction as a directory and deletes what it
+  points to, emptying the checkout's install; every later command then fails with `Cannot find
+  module`. Link it in (`cmd //c mklink /J` in Bash, `cmd /c mklink /J` in PowerShell, where Bash
+  needs the doubled slash to keep MSYS from rewriting the argument), and remove the link first:
+
+  ~~~bash
+  python -c "import os; p=r'C:\path\wt\node_modules'; os.path.isjunction(p) and os.rmdir(p)"
+  git worktree remove --force C:/path/wt
+  ~~~
+
+  Never remove a worktree whose `node_modules` is a real directory without confirming it is not the
+  shared one. A wiped install is recovered by `npm ci` alone, never beside a build.
+- **Pass native tools `C:/…` paths, never `/c/…`.** Git Bash rewrites a leading `/c/tmp/...` argument
+  into `C:\c\tmp\...` and builds a tree outside the one you meant, which is how a worktree ends up
+  somewhere nobody looks. `cd /c/tmp/x` is a shell builtin and stays correct; `git worktree add
+  /c/tmp/x`, `node /tmp/a.js` and `git -C /c/x` do not.
+- **`--force-with-lease` on a feature branch needs the branch and the SHA.** `origin` fetches only
+  `+refs/heads/main:refs/remotes/origin/main`, so a feature branch has no tracking ref to compare
+  against and the plain form fails with "stale info". Name the remote head you expect:
+  `git push --force-with-lease=feat/x:$(git ls-remote origin refs/heads/feat/x | cut -f1) origin
+  HEAD:feat/x`.
+- **A fetch by branch name can leave the remote-tracking ref stale.** After a push,
+  `git fetch origin <branch>` followed by `git rev-list origin/<branch>..<branch>` may still list
+  commits that are already published. Fetch the ref explicitly or read `git ls-remote` before
+  concluding a push failed.
+- **Verify a pushed branch from the pushed SHA, not from the worktree.** A fix left uncommitted in a
+  worktree has been delivered more than once. Extract the remote tip into a fresh worktree and run
+  the type check and that branch's tests there.
+
 ## Keep next current with upstream and the fork's main
 
 Reconcile upstream before continuing older feature work. New upstream commits may accept a PR,
@@ -165,7 +199,11 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
    Suggestions in a reply can change the intended behavior before code reaches the PR head.
 2. Fetch the exact current head, including from the contributor's fork when necessary. Record
    PR number and head SHA. Do not rely on a stale local branch or a merge commit subject.
-3. Compare with the previously integrated revision and current upstream main. Keep repairs to
+3. Compare with the previously integrated revision and current upstream main. A revision to an
+   unmerged feature belongs on that PR's own branch as a new commit, which updates the PR in place;
+   do not open a second PR for the same story. When the revision needs surface that only exists
+   higher up a stack (moving a switch into a section a later branch adds), put it on the branch that
+   has that surface, and say in both PRs where it went and why. Keep repairs to
    unmerged features on their existing PRs. Reproduce a new upstream bug in an isolated worktree
    based on current `upstream/main`, then open a focused fix against the original project.
 4. Review the full path: user action, renderer state, RPC contract, permissions, persistence,
@@ -219,6 +257,16 @@ Require no TypeScript errors and zero failed tests; report skipped tests separat
 failures instead of disabling assertions or increasing timeouts to get a green result.
 If the host lacks a required shell, correct the test process's PATH and record that setup.
 A focused rerun does not replace the full-suite result.
+
+A failure that looks like the host is proved instead of assumed:
+
+- `test/mac.test.ts` › *comes from a clean login shell* asserts the PATH contains `C:\Windows`. A
+  shell that spells the variable `C:\WINDOWS` fails it, because the comparison is case-sensitive.
+  `next` compares both sides in lowercase and the main branches do not. Launch the suite from a shell
+  whose spelling matches, or take that comparison from `next`, and do not count it as your
+  regression.
+- Confirm any other suspected environmental failure on a clean worktree of the base (`git worktree
+  add C:/tmp/base upstream/main`), not by stashing your own work: a stash mixes the two questions.
 
 **Run the app built from this source.** Exercise the changed behavior with throwaway data and
 fake engines where suitable, using the background testing policy above. Never put destructive
@@ -277,6 +325,9 @@ and installation alone are incomplete.
    - The changed feature works in the installed build. Use a scratch instance for synthetic
      runs or writes; close another instance if its ports would conflict.
    - No startup error, failed migration, broken navigation, or unexpected data reset occurs.
+   - The code running is the code built: the installed `app.asar` holds a string only this change adds.
+     A rebuilt window with a stale bundle looks identical until you look for it, so search the file
+     for a label, a class or a message the change introduced.
 6. Leave the regular installed app running on its normal workspace unless the user asks
    otherwise. Close scratch instances; never leave fake engines as the daily app. If a launch
    fails, the user stops automation, or a check cannot run without unapproved takeover, report
@@ -308,6 +359,16 @@ Commit only task-related source and evidence. Bring the tested candidate into lo
 ordinary merge or fast-forward, preserving intervening work. When authorized to update the fork,
 push to `origin/next` and verify the remote head. Preserve unrelated user files.
 
+A user-facing change carries a `## [Unreleased]` entry: a bold sentence naming the change in the
+person's terms, then what changed and what was wrong before it, with the issue number in parentheses.
+`### Added` sits above `### Fixed`, and a section that carries a Portuguese summary gets the same
+entry there. That section is also the release's notes, so write it for the person reading the update,
+not for a reviewer.
+
+The pre-commit hook lints staged Markdown and only warns. Voice-gate and Vale output on
+`CHANGELOG.md`, naming bold lead-ins or repeated phrasing, is expected in this file and does not
+block the commit; leave the entry's shape and fix only the lines the change touched.
+
 Report the integrated commit, upstream/PR heads included, checks and counts, installer used,
 installed-app launch and smoke result, and remaining limitations. Update audit and inventory
 records where relevant. A successful push establishes source delivery, not installation or
@@ -331,10 +392,38 @@ runtime health.
 - Capture pointers only after a gesture starts and release capture in its ending handler.
   Capture on `pointerdown` can send the next click to the capturing element and disable a child button.
 - Comments explain why a choice was made rather than restating code.
+- A new setting is five files and sometimes a wire. `src/shared/types.ts` carries the field with a
+  comment saying where it is set; `src/shared/workspaces.ts` lists it in `GENERAL_SETTINGS`, or
+  `PERSONAL_SETTINGS` in `src/core/policy-people.ts` when it is each person's own; the validation
+  entry goes in `src/core/settings-patch.ts`; the control goes in `Pages.tsx`. A value that both
+  processes must read at once, as the language does, also needs the setter called where settings
+  arrive (`src/core/index.ts`, `src/renderer/src/store.ts`, `src/main/index.ts`) and the field on the
+  `lang` message for the main process. Miss one and the setting saves and changes nothing.
+- A display decision that applies everywhere lands as one helper, with a test that every site goes
+  through it. Times were formatted in ten files and the shape came from the language, so one
+  conversation read `15:05` in one language and `3:05 PM` in the other; `src/shared/clock.ts` and
+  `test/clock-setting.test.ts` are the pattern to copy.
+- A classifier-driven feature is a job of Settings › Classifiers, never a card of its own. The list
+  is `CLASSIFIER_JOBS` in `src/shared/classifiers.ts`, with `jobLabel` and `jobAbout` beside it; a
+  switch that turns one of those jobs on is the last row of that card, and the surface it opens is a
+  button beside its switch while it is on.
+- A reply cut by a restart, a crash or a stop is continued, not restarted: `src/shared/run-progress.ts`
+  decides when there is work to go on with, and the core and the button both read that decision. Do
+  not fold it back into a single "try again", and do not continue a reply whose only step was
+  thinking.
+- Copy the harness in `test/no-monthly-limit.test.tsx` to render a settings surface: `linkedom`, a
+  mocked `useStore` over a `State` literal, `act` and a real `createRoot`. Assert on rendered text
+  and on the store actions a click reached, not on component internals.
 
 ## Public PRs and writing
 
-Open focused product PRs against `eduwxyz/tucano:main`, never against the fork. Reproduce new
+Open focused product PRs against `eduwxyz/tucano:main`, never against the fork, and cut the branch
+from `upstream/main`. A branch based on `origin/main` carries fork commits upstream does not have (it
+was 41 ahead at one point) and turns CONFLICTING as soon as the base moves; rebase onto
+`upstream/main`, re-run the checks there, and force-push with the lease named.
+
+Leave other contributors' PRs alone: no rebase, review, comment or close unless the user asks for that
+PR by number. Their conflicts are theirs, and a comment in their thread speaks for the maintainer. Reproduce new
 upstream defects on current upstream main and document stack dependencies and validation.
 `next` is private integration and QA context. Keep its importance and personal workflow out
 of upstream issues, PR descriptions, and review comments. Use upstream-main or feature-branch
