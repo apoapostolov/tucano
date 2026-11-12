@@ -64,21 +64,27 @@ function powershell(script) {
   return result.stdout.trim()
 }
 
-// One line per instance: pid | window title, empty for the windowless processes a failed load leaves.
-function instances() {
+// The app's own processes and any development instance of this checkout: a scratch Electron holding
+// the installed app.asar open makes the installer exit 2, so all of them have to be found and closed.
+function processes() {
   if (!WIN) return []
-  const out = powershell(`(Get-Process -Name '${NAME}' -ErrorAction SilentlyContinue | ForEach-Object { "$($_.Id)|$($_.MainWindowTitle)" }) -join ([char]10)`)
+  const out = powershell(
+    `$titles = @{}; Get-Process -ErrorAction SilentlyContinue | ForEach-Object { $titles[$_.Id] = $_.MainWindowTitle }; ` +
+      `(Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('${NAME}.exe','electron.exe') } | ForEach-Object { "$($_.ProcessId)|$($_.Name)|$($titles[[int]$_.ProcessId])|$($_.CommandLine)" }) -join ([char]10)`
+  )
   return out
     .split(/\r?\n/)
     .filter(Boolean)
     .map((line) => {
-      const [pid, title = ''] = line.split('|')
-      return { pid: Number(pid), title: title.trim() }
+      const [pid, name, title = '', ...rest] = line.split('|')
+      return { pid: Number(pid), name, title: title.trim(), command: rest.join('|') }
     })
+    .filter((process) => process.name === `${NAME}.exe` || process.command.includes(ROOT) || process.command.includes(installedDir()))
 }
 
-const withWindow = () => instances().filter((instance) => instance.title)
-const processCount = () => instances().length
+// A window belongs to the app, not to a development instance started from this checkout.
+const withWindow = () => processes().filter((process) => process.name === `${NAME}.exe` && process.title)
+const processCount = () => processes().length
 
 async function until(check, timeoutMs, everyMs = 500) {
   const deadline = Date.now() + timeoutMs
@@ -91,7 +97,7 @@ async function until(check, timeoutMs, everyMs = 500) {
 }
 
 function killAll() {
-  for (const { pid } of instances()) spawnSync('taskkill', ['/F', '/T', '/PID', String(pid)], { windowsHide: true, encoding: 'utf8' })
+  for (const { pid } of processes()) spawnSync('taskkill', ['/F', '/T', '/PID', String(pid)], { windowsHide: true, encoding: 'utf8' })
 }
 
 // ---------------------------------------------------------------- the package check
@@ -219,7 +225,9 @@ function install() {
 }
 
 async function launch() {
-  spawn(installedExe(), [], { detached: true, stdio: 'ignore', windowsHide: true }).unref()
+  // No windowsHide here: it sets STARTUPINFO's SW_HIDE, and Windows applies that to the app's first
+  // ShowWindow, so the window is created and never shown. A visible window is the whole point.
+  spawn(installedExe(), [], { detached: true, stdio: 'ignore' }).unref()
   const title = await until(() => withWindow()[0]?.title, 90_000)
   if (title) return title
   const count = processCount()
@@ -258,7 +266,7 @@ function doctor(fix) {
     log('  verdict: the package cannot load; "node scripts/self-build.mjs install" puts a checked one back')
   } else if (found.processes && !found.window) {
     found.verdict = 'dead-at-load'
-    log('  verdict: processes without a window, so the app died while loading and still holds the single-instance lock; nothing can start it')
+    log('  verdict: processes without a visible window; nothing can start the app while they hold the single-instance lock. If another tool launched it, close it and open it normally')
     if (fix) {
       killAll()
       found.fixed = true
