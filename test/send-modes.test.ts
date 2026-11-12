@@ -104,7 +104,7 @@ afterEach(async () => {
 })
 
 describe('a prompt that arrives while a reply is running', () => {
-  it('parallel, the default: the two replies run at the same time, as they always did', async () => {
+  it('parallel still waits for this agent in the same thread, preserving the upstream reply lock', async () => {
     db.saveAgent(agent())
     db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
     const rec: string[] = []
@@ -112,7 +112,7 @@ describe('a prompt that arrives while a reply is running', () => {
     await r.send('d1', 'comece, demore 1 s')
     await r.send('d1', 'e isto também')
     await r.idle()
-    expect(rec).toEqual(['start', 'start', 'end', 'end']) // the second started before the first ended
+    expect(rec).toEqual(['start', 'end', 'start', 'end'])
     expect(agentMessages()).toHaveLength(2)
   })
 

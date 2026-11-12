@@ -5,6 +5,7 @@ import { hasMonthlyLimit } from '../../../shared/limits'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { parseQuestionsText } from '../../../shared/questions'
+import { instructionLengthNote } from '../../../shared/instructions'
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   agentById,
@@ -501,6 +502,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                 onChange={(e) => patch({ instructions: e.target.value })}
               />
               <p className="hint">{L('O contexto do workspace já entra em toda conversa. Aqui vai só o que é deste agente.', 'The workspace context already goes into every conversation. Here goes only what’s specific to this agent.')}</p>
+              {instructionLengthNote(draft.instructions.length) && <p className="hint hint--warn">{instructionLengthNote(draft.instructions.length)}</p>}
             </Card>
           )}
 
@@ -3308,8 +3310,8 @@ export function SettingsPage(): ReactNode {
               <Field
                 label={L('Um novo prompt com uma resposta em curso', 'A new prompt while a reply is running')}
                 hint={L(
-                  'O que o Enter faz quando o agente já está respondendo ali. Shift+Enter enfileira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe, seja qual for o ajuste. Ctrl+Enter quebra a linha.',
-                  'What Enter does while the agent is already replying there. Shift+Enter queues, Alt+Enter hands it over mid-work, Shift+Alt+Enter interrupts, whatever the setting says. Ctrl+Enter breaks the line.'
+                  'Em paralelo, outros agentes e threads podem responder juntos; o mesmo agente termina a resposta atual naquela thread primeiro. Shift+Enter espera a conversa inteira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe. Ctrl+Enter quebra a linha.',
+                  'In parallel, other agents and threads can reply together; the same agent finishes its current reply in that thread first. Shift+Enter waits for the whole conversation, Alt+Enter hands it over mid-work, Shift+Alt+Enter interrupts. Ctrl+Enter breaks the line.'
                 )}
               >
                 <Select

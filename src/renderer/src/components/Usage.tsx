@@ -90,6 +90,7 @@ export function UsagePage(): ReactNode {
         <>
           <Quotas />
           <Month u={u} claude={billing.find((b) => b.id === 'claude')?.status} />
+          {billing.find((b) => b.id === 'codex')?.status.route === 'plan' && <CodexQuota />}
           <Agents u={u} />
           <div className="usage-grid">
             <Models u={u} />
@@ -274,6 +275,7 @@ function withReported(list: ProviderQuota[], reported: Quota | undefined): Provi
 
 export function Quotas(): ReactNode {
   const reported = useStore((s) => s.settings.quota)
+  const codexReported = useStore((s) => s.settings.codexQuota)
   // Whose logins these are: an admin's, like the rest of the page. A member's app never asks.
   const admin = useStore(amAdmin)
   const [list, setList] = useState<ProviderQuota[] | null>(null)
@@ -289,7 +291,7 @@ export function Quotas(): ReactNode {
   useEffect(() => {
     if (admin) load()
   }, [admin])
-  const cols = list ?? []
+  const cols = (list ?? []).filter((p) => p.id !== 'codex' || !codexReported?.windows.length)
   return (
     <section className="read-group usage-card">
       <h2>
@@ -354,6 +356,59 @@ function Cell({ id, row, w, error }: { id: string; row: Row; w?: QuotaWindow; er
         </span>
       )}
       <span className="muted small truncate">{w.resetsAt ? L(`zera ${until(w.resetsAt)}`, `resets ${until(w.resetsAt)}`) : w.unit === 'usd' ? L('saldo', 'balance') : ''}</span>
+    </div>
+  )
+}
+
+// ---------- the Codex subscription ----------
+
+// Its windows, as Codex told when this page asked: how many and how long depends on the plan.
+function CodexQuota(): ReactNode {
+  const q = useStore((s) => s.settings.codexQuota)
+  if (!q?.windows.length) return null
+  const at = new Date(q.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const plan = q.plan ? ` ${cap(q.plan)}` : ''
+  return (
+    <section className="read-group">
+      <h2>
+        {L(`Sua assinatura do Codex${plan}`, `Your Codex${plan} subscription`)}<span>{L(`segundo o Codex às ${at}`, `per Codex at ${at}`)}</span>
+      </h2>
+      <div className="usage-quota">
+        {q.windows.map((w) => (
+          <Ring key={w.minutes} label={windowLabel(w.minutes)} w={w} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+const windowLabel = (minutes: number): string =>
+  minutes === 10_080
+    ? L('Semana', 'Week')
+    : minutes === 1440
+      ? L('Dia', 'Day')
+      : minutes % 1440 === 0
+      ? L(`Janela de ${minutes / 1440} dias`, `${minutes / 1440}-day window`)
+      : minutes % 60 === 0
+        ? L(`Janela de ${minutes / 60} horas`, `${minutes / 60}-hour window`)
+        : L(`Janela de ${minutes} min`, `${minutes}-minute window`)
+
+function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt: number } }): ReactNode {
+  const pct = Math.min(1, Math.max(0, w.utilization))
+  const r = 22
+  const c = 2 * Math.PI * r
+  const tone = pct >= 0.9 ? 'is-danger' : pct >= 0.7 ? 'is-warn' : ''
+  return (
+    <div className={`usage-ring ${tone}`}>
+      <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden>
+        <circle cx="28" cy="28" r={r} className="usage-ring__track" />
+        <circle cx="28" cy="28" r={r} className="usage-ring__fill" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} />
+      </svg>
+      <div>
+        <span className="muted small">{label}</span>
+        <strong>{L(`${Math.round(pct * 100)}% usado`, `${Math.round(pct * 100)}% used`)}</strong>
+        <span className="muted small">{L('zera', 'resets')} {until(w.resetsAt)}</span>
+      </div>
     </div>
   )
 }
