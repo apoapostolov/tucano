@@ -4,14 +4,18 @@ Updated: 12 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
-Upstream reconciliation is the prerequisite for further feature auditing. Fetch the overnight
-changes immediately after creating this plan, review their behavior and PR discussions, and
-integrate the better implementation even when it replaces Apo's work.
+Upstream 0.2.28 through `73b724b` is integrated in `28eddc4`, including all 19 new commits
+from the 0.2.27 intake baseline. The installed 0.2.28 executable passes six isolated hidden UI
+checks, and its update state is `off`. Resume feature auditing with the privacy and concurrency
+leads below. Regular-workspace Settings navigation is verified; live DM selection remains
+unverified because duplicate accessibility names prevent a safe background click. Agent rows
+currently open profiles, with Open DM as a separate action; this differs from the older smoke
+check wording and was not silently changed.
 
 The original audit cohort contains 43 open feature/fix PRs. Four have received targeted repairs
 and browser or core checks: **4/43 (9.3%)**. None has yet passed every audit dimension below:
-**0/43 fully audited (0%)**. Two additional standalone upstream PRs, #367 and #368, were opened
-with upstream-based validation. These figures distinguish useful progress from a release signoff.
+**0/43 fully audited (0%)**. Three additional standalone upstream PRs, #367, #368 and #372, were opened
+with upstream-based validation. #367 and #368 are now merged. These figures distinguish useful progress from a release signoff.
 
 An item is fully audited only after its current implementation and upstream disposition are
 reviewed; correctness, permissions, persistence, concurrency and recovery are checked; applicable
@@ -26,9 +30,11 @@ Merged or closed PRs still need a disposition and integration check; closure alo
 - [x] Inventory every upstream commit since the 0.2.27 baseline `b436f4a`.
 - [x] Map accepted, rejected, superseded and changed features against Apo's PR cohort.
 - [x] Review overlapping implementations and record the behavioral reason for each resolution.
-- [ ] Integrate upstream main while preserving TucanoNext identity and application isolation.
-- [ ] Run typecheck, full suite, build, installer and installed-app smoke checks.
-- [ ] Refresh the plan, inventory and progress counts before resuming feature work.
+- [x] Integrate upstream main while preserving TucanoNext identity and application isolation.
+- [x] Pass typecheck, full suite (2,193 passed / 66 skipped), build and fresh installer.
+- [x] Verify installed executable identity, existing workspace and Settings, updater off, and six hidden scratch UI checks.
+- [ ] Complete live DM selection and reconcile the older agent-row smoke expectation; background accessibility refuses duplicate names.
+- [x] Refresh the plan, inventory and progress counts before resuming feature work.
 
 ## 2. Maintain the evidence and delivery workflow
 
@@ -126,3 +132,23 @@ The cohort stays stable for progress measurement; record changed upstream dispos
   them visible until investigated; isolated reruns are not proof of stability under heavy use.
 - The original large runner, wiki and wiki-Git test files fail the selected maintainability
   threshold. This prevents an overall production-readiness claim despite targeted passing checks.
+
+
+## 7. Background QA and current intake limits
+
+- [x] Add hidden, unfocusable QA startup with fresh data, fake engines and isolated ports.
+- [x] Add rendered navigation checks, screenshots, traces, renderer-error and focus guards.
+- [x] Validate both the built source and the installed 0.2.28 executable.
+- [x] Open upstream-main-based QA PR #372; 1,700 passed, 64 skipped, no failures.
+- [ ] Review and integrate revised #274 head `d2e21ed` and #305 head `06cecbf`.
+- [ ] Recheck in-flight wiki permission/provenance changes in #355 before expanding wiki workflows.
+- [ ] Expand UI checks to keyboard access, narrow layouts and large histories per feature.
+
+Latest inventory: 58 authored PRs, 38 open / 12 merged / 8 closed. Current #274 and #305
+heads are not ancestors of the integration; their older behavior is present, but revisions
+remain pending. #372 is independently integrated with the application-specific identity/port
+adaptation. Neither ancestry nor these six smoke screens establishes a complete feature audit.
+
+The maintainability gate remains blocked by edited large existing modules. The new background
+options and runner score 41.06 and 26.00 respectively (green); broad production readiness remains
+unclaimed. Metrics and test JSON are retained under the task's temporary audit directories.

@@ -61,10 +61,12 @@ than falsely claiming that no credentials exist.
 - [x] Resolve every textual conflict and pass typecheck on the combined 0.2.28 code.
 - [x] Check the real queued-reservation regression, send modes and delegated-work interactions.
 - [x] Check that a delegated routine is not silently hidden and Codex columns are not duplicated.
-- [ ] Pass the full suite after all resolutions.
-- [ ] Build and package the 0.2.28 installer.
-- [ ] Verify the installed app's identity, existing workspace navigation and disabled updater.
-- [ ] Fetch once more, integrate this result into next, and refresh the audit inventory.
+- [x] Pass the full suite: 2,193 passed, 66 skipped, zero failed.
+- [x] Build and package fresh `tucanonext-setup-0.2.28.exe` from source `28eddc4`.
+- [x] Verify installed path/version, existing workspace/Settings, and updater state `off`.
+- [x] Run all six hidden UI checks against the installed executable, with separate scratch data/ports.
+- [ ] Verify live DM selection: duplicate accessibility identities prevent safe background clicks. Agent rows open profiles; the scratch Open DM action passes.
+- [x] Fetch once more, integrate into next, and refresh inventory (58 total: 38 open, 12 merged, 8 closed).
 
-The original audit has not resumed while this reconciliation is incomplete. Full production
+Upstream source reconciliation is complete. Feature auditing can resume; the live-navigation limitation remains recorded above. Full production
 signoff, remaining platform checks and the existing maintainability gates are still separate work.
