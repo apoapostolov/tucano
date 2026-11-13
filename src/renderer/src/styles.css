@@ -3934,6 +3934,12 @@ body.is-resizing webview {
   color: var(--danger);
   background: var(--danger-soft);
 }
+/* On a reply with a thread, the corner belongs to the pinned thread button: the trash goes in that
+   same column, a row under the prompt jump, so the two never overlap and neither swallows a press. */
+.msg__anchor-pin .msg__delete {
+  top: 52px;
+  right: -24px;
+}
 .msg:hover .msg__delete,
 .msg__delete:focus-visible {
   opacity: 1;

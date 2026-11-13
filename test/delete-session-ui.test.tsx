@@ -39,7 +39,7 @@ const reply = (id: string, status: 'working' | 'done' = 'done'): Message => ({
 })
 
 let root: Root
-const render = async (messages: Message[]): Promise<void> => {
+const paint = async (messages: Message[], replies?: Map<string, Message[]>): Promise<void> => {
   fake = {
     ...getState(),
     ready: true,
@@ -48,8 +48,12 @@ const render = async (messages: Message[]): Promise<void> => {
     agents: [{ id: 'a1', name: 'Lia', handle: 'lia', role: '', color: 'sky', instructions: '', modelId: 'sonnet', effort: 'low', limit: 1_000_000, used: 0, grants: {}, archived: false } as Agent],
     messages: { dm: messages }
   } as State
-  await act(async () => root.render(<MessageList messages={messages} replies={new Map()} conversationId="dm" />))
+  await act(async () => root.render(<MessageList messages={messages} replies={replies} conversationId="dm" />))
 }
+// A timeline with threads: the thread button rides the top of the run.
+const render = (messages: Message[]): Promise<void> => paint(messages, new Map())
+// The same conversation where nothing is threaded, so nothing is pinned.
+const renderFlat = (messages: Message[]): Promise<void> => paint(messages, undefined)
 const trash = (): HTMLElement | null => document.querySelector('.msg__delete')
 
 beforeEach(() => {
@@ -104,5 +108,18 @@ describe('the trash that deletes a session', () => {
   it('a prompt of mine has none either: only a reply is a session', async () => {
     await render([said('m1', 'corrige o login')])
     expect(trash()).toBeNull()
+  })
+
+  it('rides the corner the thread button took, so a long reply never has one glyph over the other', async () => {
+    // In a timeline with threads the thread button is pinned to the top of the run, not left at the
+    // message's corner: the trash goes in that same pin, under it, or the two would share one 20px spot.
+    await render([said('m1', 'corrige o login'), reply('r1')])
+    const pin = trash()!.closest('.msg__anchor-pin')
+    expect(pin).toBeTruthy()
+    expect(pin!.querySelector('.msg__reply')).toBeTruthy() // the pinned thread button, above it
+    // Without threads nothing is pinned, and the trash stays at the message's own corner.
+    await renderFlat([said('m1', 'corrige o login'), reply('r1')])
+    expect(trash()!.closest('.msg__anchor-pin')).toBeNull()
+    expect(trash()!.closest('.msg')).toBeTruthy()
   })
 })

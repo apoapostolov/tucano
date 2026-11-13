@@ -597,6 +597,9 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             <div className="msg__anchor">
               <div className="msg__anchor-pin">
                 <ThreadButton message={message} />
+                {/* The corner the thread button just took: the trash rides with it, a row under the
+                    prompt jump, so a long reply's two controls never land on each other. */}
+                {agent && <DeleteSession message={message} />}
               </div>
               <RunSteps message={message} />
             </div>
@@ -696,7 +699,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         )}
         {away && message.run?.replyTo && <PromptJump id={message.run.replyTo} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
-        {agent && message.run && <DeleteSession message={message} />}
+        {agent && message.run && !replies && <DeleteSession message={message} />}
       </div>
     </article>
   )
