@@ -747,6 +747,22 @@ ipcMain.handle('image:read', async (event, arg: unknown) => {
   return { mime, data: bytes.toString('base64') }
 })
 
+// "Paste image": the picture sitting on the system clipboard, handed to the page so it can be shrunk
+// into the same 96 px icon a picked file becomes. Empty clipboard, or a clipboard holding text, is null.
+ipcMain.handle('image:fromClipboard', async (event) => {
+  if (!fromApp(event)) return null
+  const items = await clipboard.read().catch(() => [])
+  for (const item of items) {
+    const mime = item.types.find((t) => t.startsWith('image/'))
+    if (!mime) continue
+    // getType hands back a Blob for every MIME type but a bookmark, which an image is never.
+    const blob = await item.getType(mime)
+    if (!(blob instanceof Blob) || !blob.size) continue
+    return { mime, data: Buffer.from(await blob.arrayBuffer()).toString('base64') }
+  }
+  return null
+})
+
 ipcMain.handle('image:clipboard', async (event, arg: unknown) => {
   if (!fromApp(event)) return false
   const { url } = (arg ?? {}) as { url?: unknown }

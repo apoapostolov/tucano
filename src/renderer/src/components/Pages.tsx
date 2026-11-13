@@ -1919,16 +1919,6 @@ export function ConnectorsPage(): ReactNode {
   )
 }
 
-// The image the connector wears, changed from its own window: saved at once, no reconnect, since
-// nothing of the connection changes (see ConnectorIconPicker).
-function ConnectorIconRow({ c }: { c: Connector }): ReactNode {
-  return (
-    <div className="connector-modal__icon">
-      <ConnectorIconPicker c={c} />
-    </div>
-  )
-}
-
 // A connector's state, who uses it and its tools, in a window over the page.
 function ConnectorDetails({ c, onClose }: { c: Connector; onClose: () => void }): ReactNode {
   const users = useStore((s) => s.agents.filter((a) => (a.grants[c.id] ?? 'none') !== 'none'))
@@ -1942,7 +1932,6 @@ function ConnectorDetails({ c, onClose }: { c: Connector; onClose: () => void })
           <span className={`tag ${STATUS()[c.status].tone}`}>{STATUS()[c.status].label}</span>
           <span className="muted small mono truncate grow">{address(c)}</span>
         </div>
-        <ConnectorIconRow c={c} />
         <ConnectorIconPicker c={c} />
         <p className="muted small">
           {users.length ? (
