@@ -92,9 +92,12 @@ The released app and `TucanoNext` remain independent:
 5. **Keep one definition per surface.** Extend existing RPC methods, settings keys, types,
    database columns, and SQL statements. Duplicate declarations and parallel implementations
    of the same feature are integration defects.
-6. **Do not bump versions, move tags, publish releases, or enable self-update.** Releases belong
-   to the maintainer. Package with `--publish never`; do not run `scripts/release.sh` during
-   integration. An authorized source-branch push is separate from release publication.
+6. **The fork's release is ours; the maintainer's is not.** Upstream's versions, tags and releases
+   stay untouched, and an upstream version is inherited rather than bumped for fork work. The
+   TucanoNext release on `apoapostolov/tucano` is rebuilt when a major feature completes, which is the
+   one release an agent may publish, and it keeps the `next-v<version>` tag (see
+   [Rebuild the release](#rebuild-the-release-when-a-major-feature-completes)). Package with
+   `--publish never` and keep self-update off; do not run `scripts/release.sh` during integration.
 7. **Do not commit generated products.** `out/`, `dist/`, `node_modules/`, and `build/whisper/`
    stay ignored. If they appear in status, inspect the destination paths.
 
@@ -282,8 +285,11 @@ need a content and diff review; they do not require rebuilding or installing the
 
 ## Build, install, launch, and verify
 
-For an authorized TucanoNext code delivery, finish the entire sequence. Compilation, packaging,
-and installation alone are incomplete.
+A completed feature, or an integrated pull request, is built and installed on the live copy of
+TucanoNext by default, so the person can try it without asking for that step. Do not wait for an
+instruction to install and do not stop at a tested source tree: the installed app is where the work is
+tested. Finish the entire sequence below for every code delivery. Compilation, packaging, and
+installation alone are incomplete.
 
 1. Confirm identity and install destination. Complete type checking, the full suite, the build,
    and the changed-feature check against that built app.
@@ -355,6 +361,37 @@ line a caller can parse.
   nothing, or an older build, is a failure, not a success.
 - Do not copy `dist/win-unpacked` over the installed folder and do not edit the installed package
   in place: both leave a build no installer knows about, and the next install silently reverts it.
+
+### Rebuild the release when a major feature completes
+
+The live install is for trying a feature today; the fork's release is what other machines can install.
+A **major feature** is one the person would notice as a new capability, one that changes a released
+surface (settings, a schema column, the RPC contract, an installer asset), or one that a published
+build cannot be brought up to without it. A copy fix, a label, an internal refactor or a single bug is
+not major: install it and leave the release alone.
+
+For a major feature, after the install and the smoke check:
+
+1. Rebuild the same version. The package version stays what origin ships (currently inherited from the
+   maintainer); do not bump it because of a feature.
+2. Build the installer and its blockmap for `win x64` with `--publish never`, then replace both assets
+   on the fork's release at that version:
+
+   ~~~powershell
+   $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+   gh release upload "next-v$version" -R apoapostolov/tucano `
+     "dist/tucanonext-setup-$version.exe" `
+     "dist/tucanonext-setup-$version.exe.blockmap" --clobber
+   ~~~
+
+3. Keep the tag name `next-v<version>`. Upstream's own `v<version>` exists in the fork's tag
+   namespace, and a second tag with the same name makes every later `git fetch --tags` fail with
+   "would clobber existing tag", which breaks the daily backport.
+4. Verify what the server holds, not what `gh` printed: the asset size, its `sha256:` digest against
+   the local file, and a ranged GET that returns `206` with real bytes.
+5. Update the release notes for the build: what changed since the previous asset of that version,
+   the SmartScreen warning for an unsigned installer, and the fact that this build does not update
+   itself. Notes describe the delta, not the whole history.
 
 ## Integrate and report completion
 
