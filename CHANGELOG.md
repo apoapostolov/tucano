@@ -27,6 +27,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **The reasoning sizes read in the language the window speaks.** The three choices under **How much of the reasoning shows** said *Pequeno*, *Médio* and *Grande* in an English window, because the table that holds them was written once at startup, before the app knew which language it speaks.
 
+- **A routed reply finds its model again.** A pool entry is stored the way an agent's page stores a model, with the harness in front (`pi:opencode-go/deepseek-v4.1-flash`), and that name went to the engine exactly as stored: pi answered `Model "pi:opencode-go/deepseek-v4.1-flash" not found` and the reply died as soon as smart routing was on. The prefix now comes off where the engine is handed the name, so a chain built from the picker runs, and pools already written that way keep working.
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**
