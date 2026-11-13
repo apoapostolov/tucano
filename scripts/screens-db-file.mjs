@@ -14,7 +14,14 @@ const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_E
 const errors = []
 
 async function open() {
-  const app = await electron.launch({ args: ['.', `--user-data-dir=${join(data, 'electron')}`], env })
+  // TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, in the
+  // package Apo actually opens.
+  const installed = env.TUCANO_ELECTRON
+  const app = await electron.launch({
+    ...(installed ? { executablePath: installed } : {}),
+    args: [...(installed ? [] : ['.']), `--user-data-dir=${join(data, 'electron')}`],
+    env
+  })
   const win = await app.firstWindow()
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
