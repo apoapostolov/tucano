@@ -179,6 +179,8 @@ export interface Step {
   ms?: number
   // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran, between
   // two calls; `followup` is the instruction a finished reply goes on with (runs.ts, followUp).
+  // `steer`: what the person steered while it worked — a row of the chain like a call's, carrying
+  // their words in `input`. `followup`: the instruction a finished reply goes on with.
   kind?: 'steer' | 'followup'
 }
 
