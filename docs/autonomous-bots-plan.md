@@ -229,15 +229,24 @@ Result: commit `c95ee9d` on `feat/autonomous-initiative`. See
 
 ### 3. Advance commitments and delegate safely
 
-- [ ] Connect commitments to existing delegation, approval, question, and run events.
-- [ ] Enforce parent scope, execution lineage, shared allowance, fan-out and depth.
-- [ ] Persist waiting states; resume once when the relevant dependency changes.
-- [ ] Prevent recursive wakes, self-delegation loops, duplicate results, and repeated
-  reminders for unanswered questions. Detect bounded no-progress cycles.
-- [ ] Recheck permission revocation and private provenance across the entire chain.
+- [x] Connect commitments to existing delegation, approval, question, and run events.
+- [x] Enforce parent scope: a responsibility narrows what the person authorized, and is
+  narrowed again when a conversation leaves their reach.
+- [x] Keep execution lineage: a check-in's reply carries the wake it came from, and the
+  work it links to keeps its own record of where it was asked from.
+- [ ] Count what a check-in triggers against the person's own allowance: a delegation it
+  starts spends the specialist's limit, not the initiative budget yet.
+- [x] Reuse the existing fan-out and depth limits rather than adding a second set.
+- [x] Persist waiting states; resume once when the relevant dependency changes.
+- [x] Prevent recursive wakes, duplicate results, and repeated reminders for unanswered
+  questions. Detect bounded no-progress cycles.
+- [x] Recheck permission revocation and private provenance across the entire chain.
 
 Exit: the coordinator advances an authorized multi-step responsibility, receives
 a specialist result, asks only for an actual decision, and continues after the answer.
+
+Result: commit `0cec877` on `feat/autonomous-initiative`. See
+[the completion record](#slice-3-the-work-a-responsibility-rests-on).
 
 ### 4. Present controls and meaningful interventions
 
@@ -440,3 +449,45 @@ itself.
   a check-in resumes, are the runner's own rules and are not yet exercised from a
   check-in. The plan's exit also asks for an authorized tool action; this slice
   proves the check-in runs through the gated path, not that it called a connector.
+
+### Slice 3: the work a responsibility rests on
+
+Commit `0cec877` on `feat/autonomous-initiative`. Still inert until someone turns a
+coordinator on.
+
+- `src/core/initiative-links.ts` reads a link and nothing else: a delegation by its
+  own state and whether it is asking something, a question by whether the person
+  answered, an approval by whether it was decided, a reply by how it ended. Each
+  returns a version string of everything that moves when the work moves, and a short
+  clause for the request (`in progress: Nico, #engenharia`,
+  `waits for your answer`).
+- The state of a responsibility is derived, not stored twice: what waits on the
+  person outranks what waits elsewhere, a failure leaves it open with its own note,
+  a returned result opens it again. It is written at save and on every tick, so a
+  page shows the honest state from the first render.
+- `initiative_resumes` keeps the version last read per link. A moved version wakes
+  the coordinator once, and only after a check-in actually ran, so a pause, a
+  failure or the daily cap cannot swallow the news: the next tick still finds it.
+  A resumed check-in waits five minutes after the previous one, so nothing becomes
+  a hot loop, and the request says what changed.
+- Repetition is bounded mechanically, not by asking the model nicely. While a
+  question or approval of the bot's waits on the person, its wait is at least two
+  hours. A responsibility no check-in has moved across six is named as stalled,
+  with one instruction: take a concrete step, close it, or say what is blocking it.
+- What the person can no longer reach, nothing rests on: a scope that lost a
+  conversation is narrowed, evidence that cannot be read any more is dropped, and
+  one coordinator holds at most twelve open responsibilities.
+- Verification: `test/initiative-links.test.ts` (11 tests) covers the four link
+  kinds, the derived states, the note a failure leaves, narrowing, dropped evidence,
+  the stall counter resetting on a person's edit, and the twelfth-and-thirteenth
+  responsibility. `test/initiative-heartbeat.test.ts` adds three: a returned
+  delegation wakes the coordinator once and the request names the change, the same
+  version never wakes it twice, and an unanswered question holds the wait to two
+  hours. The upgraded-database test now also reads a responsibility saved on the
+  older schema.
+- A column added here lives in `COLUMNS` rather than in a migration, because a
+  database built by these tests rewinds its version and replays migrations over
+  tables that already have the column. Two tests caught exactly that.
+- Open in this slice: a delegation a check-in starts spends the specialist's own
+  limit, not the person's daily allowance. Sharing that budget needs an attribution
+  at delegation creation, which belongs to the delegation's lifecycle.
