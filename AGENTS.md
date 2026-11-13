@@ -354,6 +354,9 @@ line a caller can parse.
   dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
   and the processes left behind hold the single-instance lock, so every later launch, including the
   taskbar shortcut, does nothing at all. Run `npm ci` alone and wait for it to finish.
+- **Run it in the foreground.** A shell the runner moves to the background cannot answer the
+  installer's stdin: the run prints `stdin is not a tty` and ends without installing, leaving the
+  previous installer in `dist/` to be mistaken for a fresh one.
 - **`node scripts/self-build.mjs doctor` after any launch that shows no window.** It names a
   package that cannot load and instances that run without a window; `doctor --fix` closes those
   instances so the next launch can start.
