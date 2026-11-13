@@ -35,5 +35,23 @@ real engine authentication, operating-system dialogs, or physical input behavior
 focused DOM interactions and assertions to the runner as features are audited; retain
 unit and integration regressions for concurrency and persistence.
 
+## A feature's own flow
+
+`scripts/screens-initiative.mjs` plays a bot's initiative end to end in the built app: the
+way in from a DM with no coordinator, the setup, a check-in that reports and one that stays
+quiet and leaves the conversation untouched, the record of both, a 520 px window measured
+for overflow and folded columns, and the switch that stops it. The fake engine answers a
+check-in by the brief's own words, so a run is deterministic without touching a provider.
+
+```
+npm run build && node scripts/screens-initiative.mjs [output directory]
+TUCANO_ELECTRON=<installed TucanoNext.exe> node scripts/screens-initiative.mjs
+```
+
+It follows the same isolation, reporting and capture rules as the runner above: the same
+scratch data, reserved ports, hidden window, `report.json` with the source commit, and a
+failure screenshot with the page text left behind. Use the installed executable when what
+is being checked is the bundle a person has, not the checkout's build.
+
 The approach uses Electron's [hidden BrowserWindow support](https://www.electronjs.org/docs/latest/api/browser-window)
 and Playwright's [Electron automation](https://playwright.dev/docs/api/class-electron).
