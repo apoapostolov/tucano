@@ -72,6 +72,7 @@ import { Memories } from './memory'
 import { loginEnv } from './mac'
 import { findLocalSkills } from './local-skills'
 import { Routines } from './routines'
+import { Initiative } from './initiative'
 import { Runner } from './runs'
 import { agentFromDraft, availableModels, tucaAgent, tucaHello, tucaUpToDate } from './tuca'
 import { initializeWorkspace } from './seed'
@@ -138,6 +139,9 @@ const DEFAULTS: Omit<Settings, 'engines'> = {
 // a new install fills it in, and a name changed in the settings changes theirs.
 const people = new People(db)
 if (!db.owner().name) db.renamePerson(db.ownerId(), db.getSettings(DEFAULTS).workspaceName, false)
+// A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): stored and validated
+// here, admitted by the runner in the next slice. Nothing runs while no one has one.
+const initiative = new Initiative(db, people)
 
 const fakeStatus = (v: string): EngineStatus => ({ installed: true, loggedIn: true, path: 'fake', version: v, account: L('Motor de teste', 'Test engine'), route: 'plan' })
 // TUCANO_FAKE_NO_AI: a computer with nothing set up yet, until the introduction's setup "signs in" (no network).
@@ -2009,6 +2013,20 @@ const api: Handlers = {
     people.watch(ctx.person, id)
     db.watchRoutine(id, ctx.person.id, on)
     emit({ type: 'routine', routine: db.routine(id)! })
+  },
+  // A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): their own, and only
+  // ever the asking person's. It grants nothing Autonomy does not already allow. No review runs yet:
+  // these records and their checks are the whole of this slice.
+  initiative: (_, ctx) => initiative.view(ctx.person),
+  saveInitiative: ({ config, expectedRevision }, ctx) => {
+    const saved = initiative.save(ctx.person, config, expectedRevision)
+    record(ctx, 'initiative.saved', saved.agentId, { enabled: saved.enabled, revision: saved.revision })
+    return saved
+  },
+  saveCommitment: ({ commitment }, ctx) => {
+    const saved = initiative.saveCommitment(ctx.person, commitment)
+    record(ctx, 'commitment.saved', saved.id, { agent: saved.agentId, state: saved.state })
+    return saved
   },
   wiki: (_, ctx) => {
     const w = wikiFor(ctx)
