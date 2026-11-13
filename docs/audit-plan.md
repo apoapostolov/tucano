@@ -4,6 +4,17 @@ Updated: 12 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
+### English copy delivery, 13 November 2026
+
+- [x] Prepare the replacement proposal before implementation and measure two-line hint budgets with screenshots.
+- [x] Deliver upstream issue #409 and PR #410, and update copy on the six existing feature PRs rather than duplicate their stories.
+- [x] Integrate 376 English string revisions while retaining concurrent feature work; installed source is `7ba091c`.
+- [x] Pass typecheck, build and final full suite: 2,306 passed, 66 skipped, zero failed.
+- [x] Install 0.2.28 through the self-build helper, verify the installed package hash, and pass seven hidden installed-executable checks, including Wiki reset and two-line resolver text.
+- [ ] Complete normal-workspace navigation when background accessibility can reach the minimized window. The isolated installed instance passed navigation; no foreground input was used.
+
+See [the delivery record](english-copy-delivery.md) for exact heads, installer hashes, measurements and limitations. These copy checks do not change the feature cohort's full-audit counts below.
+
 Upstream 0.2.28 through `73b724b` is integrated in `28eddc4`, including all 19 new commits
 from the 0.2.27 intake baseline. The installed 0.2.28 executable passes six isolated hidden UI
 checks, and its update state is `off`. Resume feature auditing with the privacy and concurrency
