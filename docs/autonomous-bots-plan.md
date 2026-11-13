@@ -20,9 +20,10 @@ Both use the same execution, permissions, accounting, and delivery infrastructur
 
 ## Scope and decisions
 
-- Start with one explicitly enabled coordinator per person per workspace, using
-  that person's DM with an existing agent. Additional proactive agents and channel
-  homes are later work. Specialists remain available through existing delegation.
+- A person gives initiative to any bot of theirs, each with its own brief, scope and
+  allowance: one row per person per bot, keyed by both, so a second bot joins rather
+  than replaces the first. Each bot works from its own DM. Channel homes are later
+  work, and specialists remain available through existing delegation.
 - Keep initiative separate from `Autonomy` in `src/shared/actions.ts`. That type
   already controls action permissions. Enabling initiative grants no tool access,
   visibility, budget exemption, or approval exemption.
@@ -397,11 +398,12 @@ workspace, so the branch changes no shipped behavior on its own.
   `src/core/initiative.ts` holds the core's checks: the bot and its DM, every named
   conversation reachable by the person, the source message and each link present,
   and the revision the page read.
-- The migration in `src/core/db.ts` adds `initiative` (one row per person) and
-  `commitments`. No row means off, so a new workspace and one that upgrades into
+- The migration in `src/core/db.ts` adds `initiative` (one row per person per bot)
+  and `commitments`. No row means off, so a new workspace and one that upgrades into
   this build both start with nothing.
-- API: `initiative`, `saveInitiative`, `saveCommitment`, each reading or writing
-  only the asking person's records. Shapes are in `rpc-shapes.ts` and admissions in
+- API: `initiative` (every bot of the asking person), `saveInitiative`,
+  `saveCommitment`, `checkInNow` (one bot's), each reading or writing only the
+  asking person's records. Shapes are in `rpc-shapes.ts` and admissions in
   `NEEDS`, so the fuzz test covers them like every other method.
 - Provenance is the source conversation, its message and who wrote it. Evidence and
   links are ids to a message, a file an agent showed, a run, a delegation, a
