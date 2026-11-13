@@ -58,8 +58,14 @@ const until = (ms: number): string => {
   return L(`${h} h ${String(m % 60).padStart(2, '0')}`, `${h} h ${String(m % 60).padStart(2, '0')}`)
 }
 
-// How many tokens, in a person's words: "12 mil", "1,4 mi".
-const tokens = (n: number): string => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString(locale(), { maximumFractionDigits: 1 })} mi` : n >= 1_000 ? `${Math.round(n / 1_000)} mil` : String(n))
+// How many tokens, in a person's words: "12 mil" in Portuguese, "12k" in English, and the same for
+// millions. A number a person reads has to be in the language they chose.
+const tokens = (n: number): string =>
+  n >= 1_000_000
+    ? `${(n / 1_000_000).toLocaleString(locale(), { maximumFractionDigits: 1 })} ${L('mi', 'M')}`
+    : n >= 1_000
+      ? `${Math.round(n / 1_000)} ${L('mil', 'k')}`
+      : String(n)
 
 // ---------- the line in the DM ----------
 
@@ -69,12 +75,26 @@ export function InitiativeLine({ conversationId, agentId }: { conversationId?: s
   const config = view?.config
   const mine = !!config && config.conversationId === conversationId && config.agentId === agentId
   // It keeps itself current while the conversation is open: a person watching sees the countdown move.
+  // Every hook of this component sits above its returns, so a save that turns the line on cannot change
+  // how many of them this render has.
   useEffect(() => {
     if (!mine) return
     const t = setInterval(() => void refreshInitiative(), 60_000)
     return () => clearInterval(t)
   }, [mine])
-  if (!mine || !view) return null
+  if (!view) return null
+  // Nobody has a coordinator yet: this DM offers the way to set one up. Once it lives somewhere, it
+  // speaks only from where it lives, and the other DMs stay quiet.
+  if (!mine) {
+    if (config || !conversationId || !agentId) return null
+    const start = L('Ligar a iniciativa deste bot', "Turn on this bot's initiative")
+    return (
+      <button className="initiative-line is-off" title={start} aria-label={start} onClick={() => openDialog({ kind: 'initiative', agentId, conversationId })}>
+        <span className="initiative-line__dot" aria-hidden="true" />
+        <span className="initiative-line__text">{L('Iniciativa', 'Initiative')}</span>
+      </button>
+    )
+  }
   const st = view.status
   const running = !!view.wakes[0] && !view.wakes[0]!.endedAt
   const says = st.paused
@@ -90,7 +110,7 @@ export function InitiativeLine({ conversationId, agentId }: { conversationId?: s
             : L('ligada', 'on')
   const full = L(`Iniciativa do seu bot: ${says}.`, `Your bot's initiative: ${says}.`) + ` ${L(`${st.open} em aberto, ${st.waitingOnPerson} esperando você.`, `${st.open} open, ${st.waitingOnPerson} waiting on you.`)}`
   return (
-    <button className={`initiative-line ${config!.enabled ? 'is-on' : ''} ${st.waitingOnPerson > 0 ? 'is-waiting' : ''}`} title={full} aria-label={full} onClick={() => openDialog({ kind: 'initiative' })}>
+    <button className={`initiative-line ${config!.enabled ? 'is-on' : ''} ${st.waitingOnPerson > 0 ? 'is-waiting' : ''}`} title={full} aria-label={full} onClick={() => openDialog({ kind: 'initiative', ...(agentId ? { agentId } : {}), ...(conversationId ? { conversationId } : {}) })}>
       <span className={`initiative-line__dot ${running ? 'is-live' : ''}`} aria-hidden="true" />
       <span className="initiative-line__text">{says}</span>
       {st.open > 0 && <span className="initiative-line__count">{st.open}</span>}
@@ -131,7 +151,7 @@ const inputOf = (d: InitiativeInput): InitiativeInput => ({
   timezone: d.timezone
 })
 
-export function InitiativeDialog({ onClose }: { onClose: () => void }): ReactNode {
+export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: fromConversation }: { onClose: () => void; agentId?: string; conversationId?: string }): ReactNode {
   const view = useStore((s) => s.initiative)
   const agents = useStore((s) => s.agents)
   const conversations = useStore((s) => s.conversations)
@@ -143,8 +163,8 @@ export function InitiativeDialog({ onClose }: { onClose: () => void }): ReactNod
 
   // The agent whose coordinator this is: the configured one, or the first bot this person has a DM with.
   const dmOf = (id: string): string | undefined => conversations.find((c) => c.kind === 'dm' && c.members[0] === id)?.id
-  const agentId = config?.agentId ?? agents.find((a) => dmOf(a.id))?.id ?? ''
-  const conversationId = config?.conversationId ?? dmOf(agentId) ?? ''
+  const agentId = config?.agentId ?? fromAgent ?? agents.find((a) => dmOf(a.id))?.id ?? ''
+  const conversationId = config?.conversationId ?? fromConversation ?? dmOf(agentId) ?? ''
 
   useEffect(() => {
     if (view && !draft) setDraft(draftOf(view.config, agentId, conversationId))

@@ -145,7 +145,8 @@ export type Dialog =
   | { kind: 'members' | 'settings'; id: string }
   | { kind: 'archived' | 'new-channel' | 'search' }
   | { kind: 'workspaces'; create?: boolean }
-  | { kind: 'initiative' } // my own proactive coordinator: set up, watch, stop
+  // My own proactive coordinator: set up, watch, stop. The DM it was opened from, when there is one.
+  | { kind: 'initiative'; agentId?: string; conversationId?: string }
   | { kind: 'oauth'; id: string; url: string }
 
 // `thread`: the replies to a message (its id), next to the conversation.

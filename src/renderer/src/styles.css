@@ -13790,3 +13790,17 @@ button.agent-card__now:hover {
 .wk-settings .wk-setting--model > .wk-row { width: 100%; min-width: 0; }
 .wk-settings .wk-setting--model .model-picker { min-width: 0; }
 .wk-settings .wk-setting--model .model-picker > .select { flex: 1 1 180px; min-width: 0; }
+
+/* Nobody has a coordinator yet: the way in, quieter than the chip that reports. */
+.initiative-line.is-off {
+  color: var(--text-3);
+  border-style: dashed;
+}
+.initiative-line.is-off .initiative-line__dot {
+  background: var(--text-3);
+  opacity: 0.5;
+}
+.initiative-line.is-off:hover {
+  color: var(--text-2);
+  border-style: solid;
+}

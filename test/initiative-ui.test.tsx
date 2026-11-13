@@ -144,7 +144,7 @@ describe('the line in the DM', () => {
     await render(<InitiativeLine conversationId="dm-lia" agentId="lia" />)
     expect(text()).toMatch(/próxima em/)
     await click(document.querySelector('.initiative-line'))
-    expect(opened).toEqual([{ kind: 'initiative' }])
+    expect(opened).toEqual([{ kind: 'initiative', agentId: 'lia', conversationId: 'dm-lia' }])
   })
 
   it('says when it is waiting on the person, and stays away from a DM whose bot does not look after them', async () => {
@@ -153,6 +153,38 @@ describe('the line in the DM', () => {
     expect(text()).toContain('espera você')
     expect(document.querySelector('.initiative-line')?.className).toContain('is-waiting')
     // Another DM with another bot: no line at all, not an empty one.
+    await render(<InitiativeLine conversationId="dm-sol" agentId="sol" />)
+    expect(document.querySelector('.initiative-line')).toBeNull()
+  })
+
+  it('offers the way in from a DM whose bot has no coordinator yet', async () => {
+    // Nobody has one: this DM is where a person turns it on, and it opens on this bot and this DM.
+    fake.initiative = view({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
+    await render(<InitiativeLine conversationId="dm-sol" agentId="sol" />)
+    const line = document.querySelector('.initiative-line')
+    expect(line?.className).toContain('is-off')
+    expect(line?.textContent).toBe('Iniciativa')
+    await click(line)
+    expect(opened).toEqual([{ kind: 'initiative', agentId: 'sol', conversationId: 'dm-sol' }])
+  })
+
+  it('turns from the way in to the line itself when the person saves one', async () => {
+    // The same line, on the same page, before and after a save: the hooks it runs cannot depend on which.
+    fake.initiative = view({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
+    await render(<InitiativeLine conversationId="dm-lia" agentId="lia" />)
+    expect(document.querySelector('.initiative-line')?.className).toContain('is-off')
+    fake.initiative = view()
+    await render(<InitiativeLine conversationId="dm-lia" agentId="lia" />)
+    expect(document.querySelector('.initiative-line')?.className).toContain('is-on')
+    expect(text()).toMatch(/próxima em/)
+    // And back again, when it is turned off entirely.
+    fake.initiative = view({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
+    await render(<InitiativeLine conversationId="dm-lia" agentId="lia" />)
+    expect(document.querySelector('.initiative-line')?.className).toContain('is-off')
+  })
+
+  it('stays out of a DM that is not where the coordinator lives', async () => {
+    // One per person, in one DM: another bot's DM says nothing, not even that it is off.
     await render(<InitiativeLine conversationId="dm-sol" agentId="sol" />)
     expect(document.querySelector('.initiative-line')).toBeNull()
   })
@@ -186,6 +218,15 @@ describe('the window', () => {
     expect(saveInitiative).toHaveBeenCalledTimes(1)
     expect(saveInitiative.mock.calls[0]![1]).toBe(3)
     expect(saveInitiative.mock.calls[0]![0]).toMatchObject({ brief: 'Answer the client about the invoice.', enabled: true })
+  })
+
+  it('starts from the DM it was opened from when nobody has a coordinator yet', async () => {
+    fake.initiative = view({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
+    await render(<InitiativeDialog onClose={() => {}} agentId="sol" conversationId="dm-sol" />)
+    await click(button('Salvar')) // disabled, but the draft it would send is what matters
+    expect(saveInitiative).not.toHaveBeenCalled()
+    // The field for the bot's own conversation is not a choice: it is the DM this came from.
+    expect(text()).toContain('#clientes')
   })
 
   it('does not offer to save a brief with nothing in it, and offers the narrow defaults for a new one', async () => {
