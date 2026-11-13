@@ -3902,9 +3902,12 @@ body.is-resizing webview {
   height: 0;
   z-index: 1;
 }
+/* The pin starts at the top of the message body, which is 7 px inside the row's own padding, so the
+   glyphs subtract those 7 to land where a message's corner buttons sit: 4, 28 and 52 from the row's
+   top. 24 px apart, and the rail gives them the whole message to hold on to. */
 .msg__anchor-pin .msg__reply {
   position: absolute;
-  top: 4px;
+  top: -3px;
   right: -24px;
 }
 .msg:hover .msg__reply,
@@ -3918,15 +3921,15 @@ body.is-resizing webview {
 }
 /* In the pinned corner the glyphs share the pin's own origin: thread 4, trash 28, the way back 52. */
 .msg__anchor-pin .msg__reply--up {
-  top: 52px;
+  top: 45px;
 }
 /* Nothing threaded, so nothing takes the first place: the trash starts the column and the way back
    keeps its 24 px under it. */
 .msg__anchor-pin--alone .msg__delete {
-  top: 4px;
+  top: -3px;
 }
 .msg__anchor-pin--alone .msg__reply--up {
-  top: 28px;
+  top: 21px;
 }
 @media (hover: none) {
   .msg__reply {
@@ -3955,7 +3958,7 @@ body.is-resizing webview {
 /* On a reply with a thread, the corner belongs to the pinned thread button: the trash goes in that
    same column, 24 px under it as it sits on a short reply, and the prompt jump drops a row below. */
 .msg__anchor-pin .msg__delete {
-  top: 28px;
+  top: 21px;
   right: -24px;
 }
 /* The same trash in the thread's own header, beside the summary and close buttons: in the row, always
@@ -3963,6 +3966,12 @@ body.is-resizing webview {
 .msg__delete--head {
   position: static;
   opacity: 1;
+}
+/* A routine's post has no run to ride, so its trash takes the row's own corner, 24 px under the
+   reply-in-thread button that holds the first place there. */
+.msg__delete--post {
+  top: 28px;
+  right: 4px;
 }
 .msg:hover .msg__delete,
 .msg__delete:focus-visible {
