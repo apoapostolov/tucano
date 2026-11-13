@@ -3920,6 +3920,14 @@ body.is-resizing webview {
 .msg__anchor-pin .msg__reply--up {
   top: 52px;
 }
+/* Nothing threaded, so nothing takes the first place: the trash starts the column and the way back
+   keeps its 24 px under it. */
+.msg__anchor-pin--alone .msg__delete {
+  top: 4px;
+}
+.msg__anchor-pin--alone .msg__reply--up {
+  top: 28px;
+}
 @media (hover: none) {
   .msg__reply {
     opacity: 1;
