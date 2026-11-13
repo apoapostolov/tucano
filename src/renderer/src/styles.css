@@ -1552,6 +1552,11 @@ h3 {
   margin: 2px 0 4px 3px;
   padding-left: 14px;
 }
+/* Under the thinking block the pill is the last thing in the chain, so it keeps a gap from the box above
+   it instead of sitting on the box's border. */
+.thought + .steps__ask {
+  margin-top: 6px;
+}
 /* The follow up pill rides the reply's own footer — the line that fades in under a finished answer,
    first in it, before the receipt. So it comes in with that line: a reply that has ended shows its
    answer, not a button, and a hover (or a tab to it) brings the way to go on with the numbers. */

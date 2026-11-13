@@ -1606,9 +1606,10 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
           </ol>
         </div>
       )}
-      {/* At the bottom of the chain: what the person writes while it works, handed over at its next tool call. */}
-      {working && <SteerPill message={message} />}
+      {/* What it is thinking, and under it the pill: what the person writes while it works, handed over
+          at its next tool call. The pill goes last, under the thinking block, never above it. */}
       <Thought message={message} working={working} />
+      {working && <SteerPill message={message} />}
     </div>
   )
 }
