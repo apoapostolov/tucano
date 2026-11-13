@@ -129,6 +129,9 @@ The released app and `TucanoNext` remain independent:
    head SHA; a changed head makes the earlier review stale. Avoid fixed PR-count claims.
 5. Maintain a checkbox plan for long audits. A merged PR, a repaired defect, and a fully audited
    feature are different states. Record completed work and remaining checks separately.
+6. Before opening a PR for a change, find the feature in the table under
+   [Commit on the feature's own issue or PR](#commit-on-the-features-own-issue-or-pr): a change in the
+   domain of a feature that already has an open pair belongs on that PR, not on a new one.
 
 ## Worktrees, refs, and pushes
 
@@ -414,6 +417,89 @@ runtime health.
 - Copy the harness in `test/no-monthly-limit.test.tsx` to render a settings surface: `linkedom`, a
   mocked `useStore` over a `State` literal, `act` and a real `createRoot`. Assert on rendered text
   and on the store actions a click reached, not on component internals.
+
+## Commit on the feature's own issue or PR
+
+Every change to a feature is committed on origin, `eduwxyz/tucano`, as part of that feature's issue or
+pull request. A commit that exists only on `next`, or only on a local branch, is not delivery: `next` is
+integration and QA, so work that stops there cannot be reviewed, merged or found again by anyone but this
+machine.
+
+Look the feature up in the table below before opening anything:
+
+- a change in the domain of a feature that has an open pair, or any improvement to a still-open issue or
+  PR, is a **commit on that PR's branch**, pushed to the PR, with the body saying what changed since the
+  last review and a comment on the issue when the behaviour it describes has changed;
+- a new PR is for a feature with no pair, for genuinely new work, or for a branch that is someone else's
+  (another contributor's PR is theirs to change);
+- where a feature has a PR and no issue, the PR is the home; where it has an issue and no PR, the branch
+  that closes it is the home and the issue carries the decision.
+
+The pair is also where the reasoning lives: a follow-up commit with a one-line subject on the PR says more
+to a reviewer than a second PR that has to be read against the first.
+
+| Feature | Issue | PR |
+| --- | --- | --- |
+| Skills: filter and group an agent's tab | 228 | 244 |
+| Skills: read a Hermes library as it is | 102 | 311 |
+| Skills: every harness on the computer | 306 | |
+| Skills: the Tuca sets a bot's skills | 318 | 319 |
+| Thinking streamed as dim live text | 235 | 245 |
+| Model-facing language in an English workspace | 242 | 310 |
+| Settings › Models: thinking under the model | 312 | 313 |
+| Asks: one section above Approvals | 240 | 247 |
+| Asks: the open question stays next to the field | 241 | 248 |
+| Approval card: action, target, and what became of it | 252 | 334 |
+| Clear a conversation's history | 234 | 249 |
+| Reorder agents and DMs in the sidebar | 239 | 250 |
+| Send modes: parallel, queued, steer, interrupt | 260 | 261 |
+| Prompt sits above the session it started | 286 | 290 |
+| Work drawer above the field | 287 | 288 |
+| Follow up a finished reply | 337 | 338 |
+| Try again in a direction you write | 320 | 321 |
+| Continue a reply the app cut | 390 | 401 |
+| Kill and restart in the middle of a reply (check) | 390 | 402 |
+| Resume interrupted replies after a restart | 389 | 391 |
+| Steps: all, the latest few, or an expandable line | 314 | 322 |
+| Steps: fold them from the line beside them | 326 | 327 |
+| Steps: remember them folded | 328 | 329 |
+| Steer a working reply from the bottom of its steps | 331 | 332 |
+| Reply in thread stays in the corner while steps scroll | 270 | 275 |
+| Channels: mention mode | 269 | 272 |
+| Team-ups: an agent calls one outside the room | 273 | 274 |
+| Channels: Jev's listen mode | 278 | 279 |
+| Jev marks the option it would pick | 285 | 284 |
+| Route each reply by what Jev reads (pools and roles) | | 333 |
+| Classifiers section | 378 | 379 |
+| Classifiers on all six jobs | 378 | 383 |
+| Next steps card, all ticked | 297 | 298 |
+| Next steps: nothing ticked, and the job that picks them | 384 | 385 |
+| Wiki: hand a missing page to an agent | 255 | 258 |
+| Wiki: hand orphan pages to an agent | 256 | 259 |
+| Wiki: a resolver for findings the review can't settle | 267 | 268 |
+| Wiki: a tool card with a level that writes pages | 354 | 355 |
+| Wiki: recheck permissions during running replies | | 373 |
+| Wiki: a date that opens a sentence is not a page | | 392 |
+| Usage and limits: the quota each provider has left | 304, 309 | 305 |
+| Right-click a picture: save, copy, back in the prompt | 335 | 336 |
+| A reply's pictures as one album | 302 | 303 |
+| A connector wears the picture you give it | | 353 |
+| A routine with nothing to report says nothing | 365 | 366 |
+| Memory: the bot tabs stay inside the bar | 396 | 397 |
+| Times as a 12-hour or a 24-hour clock | 393 | 395 |
+| Isolated UI checks without taking focus | | 372 |
+| Emit fake sign-in output before resolving the exit | | 386 |
+
+Refresh the table from origin, not from memory:
+
+```bash
+gh pr list -R eduwxyz/tucano --state open --json number,title,body \
+  --jq '.[] | "\(.number)\t\(.title)"'
+gh issue list -R eduwxyz/tucano --state open --json number,title
+```
+
+Add the row when a feature gets its pair, and drop it when the PR merges: the rule above is only as good
+as this index, and a feature missing from it is one an agent will open a second PR for.
 
 ## Public PRs and writing
 
