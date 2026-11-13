@@ -8,6 +8,60 @@ beside the released **`Tucano`**. Preserve that combination throughout developme
 A successful build, an installer exit code, or a process left from an earlier installation
 does not establish that the new app launched or that the changed feature works.
 
+## Write and verify interface copy
+
+**New and changed interface strings must pass an editorial review and a rendered layout check
+before delivery.** This applies to every feature: Settings, Wiki, agent profiles, dialogs,
+buttons, menus, tooltips, empty states, errors and notifications. Do not reintroduce verbose
+wording when merging or resolving conflicts. Follow [the copy guide and tools](docs/interface-copy.md).
+
+- Write calm, professional, grammatical English. Name the action or setting directly; use
+  sentence case, active verbs and established product terms. Avoid chatty narration, rhetorical
+  questions, metaphors, filler, unexplained jargon and instructions about clicking when the
+  action itself can be named. Prefer “Use memory model” to “Use the memory's”.
+- Give labels and buttons one clear job. Aim for one line. Hints add only information the label
+  does not provide and must fit within two rendered lines at the supported narrow layout.
+  Do not add a hint merely because neighboring controls have one. Shorten without making text
+  cryptic or dropping scope, defaults, fallback behavior, privacy disclosures or consequences.
+- Keep one term for one concept. Match nearby approved strings and the guide's terminology.
+  Preserve interpolation, plural meaning, accessibility names and localization structure.
+  Do not change another language incidentally while polishing English.
+- Draft exact labels, hints and exceptional warnings before implementation. Review the whole
+  feature flow, including disabled, enabled, custom-model, error and empty states. For an
+  existing feature, review the changed strings beside their previous wording.
+- Measure the built UI at 900 and 1280 CSS pixels, and at a smaller supported width when the
+  feature permits it. Use `measureCopy` from `scripts/lib/copy-layout.mjs` in the feature's
+  isolated browser harness, or the CLI below for a directly reachable test page. Include
+  adjacent controls and realistic long values; a default collapsed state is insufficient.
+- Save a screenshot and JSON measurements with source SHA, viewport, font, available width,
+  character count, line count and overflow result. Character budgets are estimates, never
+  proof of fit. Verify the installed Electron renderer at the user's display scaling for
+  affected desktop surfaces: browser measurements previously missed an extra line there.
+- A label wrapping unexpectedly, a hint exceeding two lines, or clipped/overflowing text fails
+  the feature check. Rewrite first. If essential information still needs more room, use a
+  suitable layout or a separate explanation. Never shrink type, hide text, clamp/ellipsize a
+  warning, or remove meaningful information just to pass. Destructive/privacy warnings may
+  exceed two lines; record the specific reason and check that the full text remains visible.
+- Report the editorial review, layout evidence and any explicit exception in the feature PR.
+  Automated measurements cannot judge grammar or meaning. A green tool result alone is not
+  copy approval; review both the words and the screenshot before marking this work complete.
+
+~~~powershell
+# Existing full Settings/Wiki check; requires a fresh npm run build.
+node scripts/check-english-copy.mjs C:/tmp/tucano-copy-evidence
+# A feature's already-running, isolated scratch server; selectors must target actual text.
+node scripts/check-copy-layout.mjs --url http://127.0.0.1:PORT/ --selector ".feature .hint" --output C:/tmp/feature-copy
+# Validate the measurement helper itself (real headless browser).
+node scripts/test-copy-layout.mjs
+~~~
+
+Use `TUCANO_BROWSER_CHANNEL=msedge` or `chrome` when that installed browser is the available
+headless test runtime. Follow the data, port and desktop isolation rules below. Neither copy
+tool may be pointed at the regular workspace; capture synthetic data for public evidence.
+Changes confined to agent instructions, documentation or development-only scripts require
+content/diff review and the affected tool checks; they do not require rebuilding or reinstalling
+an unchanged packaged app.
+
 ## Repositories and branches
 
 Check `git remote -v` before fetching, merging, or pushing. In this checkout:
