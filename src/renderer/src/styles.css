@@ -3980,9 +3980,12 @@ body.is-resizing webview {
   top: 28px;
   right: -24px;
 }
-/* A routine's post keeps its way into the thread on that same outer rail, not inset over the words. */
+/* A routine's post keeps its way into the thread on that same outer rail, not inset over the words. The
+   button sits inside the body, which is a positioning context of its own, so the offset carries the
+   row's 28 px padding as well: 24 beyond the body reads as 52 here. */
 .msg--routine .msg__reply {
-  right: -24px;
+  top: -3px;
+  right: -52px;
 }
 /* The pencil beside my own prompt: my messages are bubbles on the right with no face beside them, so it
    takes the space on the left of the bubble, in line with its first line. Quiet until the row is
