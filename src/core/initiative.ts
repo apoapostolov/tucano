@@ -70,14 +70,14 @@ export class Initiative {
 
   // A configuration edit, against the revision the page read. A save in between is refused instead
   // of overwriting what the other window wrote: a queued review must never apply an old brief.
-  save(person: Person, input: InitiativeInput, expectedRevision: number): InitiativeConfig {
+  save(person: Person, input: InitiativeInput, expectedRevision: number, at = Date.now()): InitiativeConfig {
     const prev = this.db.initiative(person.id)
     if ((prev?.revision ?? 0) !== expectedRevision) throw new Error(staleRevision())
     const clean = cleanInitiative(input)
     const why = initiativeError(clean)
     if (why) throw new Error(why)
     this.targets(person, clean)
-    const now = Date.now()
+    const now = at
     const saved: InitiativeConfig = {
       ...clean,
       personId: person.id,
