@@ -55,6 +55,7 @@ import { checkJevKey, JEV_MODEL, JEV_SECRET } from './jev'
 import { LISTEN_STUB_KEY, listenStub } from './jev-fake'
 import { report } from './report'
 import { readQuotas, fixtureRequest } from './quotas'
+import { quotaCache } from './quota-cache'
 import { usage } from './usage'
 import { Skills } from './skills'
 import { cleanTitle, pageKey, Wiki, type WikiView } from './wiki'
@@ -1088,6 +1089,10 @@ void ready.then(async () => {
   // A question to someone that waited past its deadline: its requester hears of it.
   setInterval(() => runner.sweepQuestions(), 60_000).unref()
   setInterval(() => runner.sweepDelegations(), 60_000).unref()
+  // Read once as the core comes up, so the first visit to Usage and limits draws at once, and every
+  // twenty minutes after that whether or not anyone is looking.
+  void quotaReads.refresh()
+  setInterval(() => void quotaReads.refresh(), QUOTA_POLL_MS).unref()
   if (!fake) {
     // A port taken (another Tucano open, say) is logged and the rest goes on: a call there reaches
     // a server that doesn't know its token, never this workspace's data.
@@ -1457,6 +1462,17 @@ function sweepTeamUps(): void {
     closeConversation(id, L('A equipe fechou sozinha depois de dias parada.', 'The team-up closed itself after days quiet.'))
   }
 }
+
+// The providers' quotas, kept between looks: the page opens on the last read and catches up behind it.
+// Twenty minutes is the poll asked for: the five-hour windows providers report move slower than that,
+// and a read costs one request per provider.
+const QUOTA_POLL_MS = 20 * 60_000
+const quotaReads = quotaCache(() =>
+  readQuotas({
+    home: process.env['TUCANO_QUOTA_HOME'] || homedir(),
+    ...(process.env['TUCANO_QUOTA_FIXTURES'] ? { get: fixtureRequest(process.env['TUCANO_QUOTA_FIXTURES']) } : {})
+  })
+)
 
 const api: Handlers = {
   markRead: ({ conversationId }, ctx) => {
@@ -1898,11 +1914,10 @@ const api: Handlers = {
     return usage(db)
   },
   // What each provider says is left, read from the logins already on this computer.
-  quotas: () =>
-    readQuotas({
-      home: process.env['TUCANO_QUOTA_HOME'] || homedir(),
-      ...(process.env['TUCANO_QUOTA_FIXTURES'] ? { get: fixtureRequest(process.env['TUCANO_QUOTA_FIXTURES']) } : {})
-    }),
+  // What each provider says is left, read from the logins already on this computer. The last read is
+  // handed back at once, so the panel draws without waiting on a provider.
+  quotas: () => quotaReads.get(),
+  quotasRefresh: () => quotaReads.refresh(),
   unpairTelegram: () => void (telegram && bg(telegram.unpair(), 'unpairTelegram')),
 
   // Checked with TypeSafe before it's saved; null removes it. Jev's own row, for the pages that
