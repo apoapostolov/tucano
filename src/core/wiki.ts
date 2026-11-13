@@ -1265,13 +1265,16 @@ export class Wiki {
     // What the resolver said about it, which is about the same finding however many times it's reviewed.
     const notes = new Map((this.db.prepare('SELECT key, note FROM findings WHERE note IS NOT NULL').all() as { key: string; note: string }[]).map((r) => [r.key, r.note]))
     for (const f of this.findings()) if (f.change) keep.add((this.db.prepare('SELECT key FROM findings WHERE id = ?').get(f.id) as { key: string }).key)
+    // A finding that stays open keeps its id across reviews: an agent handed one holds that id until it
+    // closes it, and a new one each review would make the id it was given the answer "no such finding".
+    const openIds = new Map((this.db.prepare("SELECT key, id FROM findings WHERE state = 'open' AND kind != 'git'").all() as { key: string; id: string }[]).map((r) => [r.key, r.id]))
     this.db.prepare("DELETE FROM findings WHERE state = 'open' AND kind != 'git' AND (change_id IS NULL OR change_id NOT IN (SELECT id FROM changes WHERE state IN ('pending', 'conflict')))").run()
     const at = Date.now()
     for (const f of list) {
       if (keep.has(f.key)) continue
       keep.add(f.key)
       const change = f.ops?.length ? this.addChange({ ops: f.ops, by: 'review', ...(f.reason ? { reason: f.reason } : {}) }) : undefined
-      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)").run(sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null, change ? null : (notes.get(f.key) ?? null))
+      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)").run(openIds.get(f.key) ?? sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null, change ? null : (notes.get(f.key) ?? null))
     }
     this.onChange()
   }

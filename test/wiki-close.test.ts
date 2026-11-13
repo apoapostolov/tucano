@@ -77,6 +77,21 @@ describe("an agent closing a finding it settled", () => {
     expect(open?.note).toMatch(/@lia/)
   })
 
+  it('keeps the id it gave the agent while the finding stays open', () => {
+    const w = wiki()
+    const key = 'contradiction:Reforma do apto 302|Andamento da obra'
+    const id = finding(w)
+    w.handOffFinding(id, 'lia')
+    // The next review finds the same thing: a new id here would make the one the agent holds invalid.
+    w.setFindings([{ key, kind: 'contradiction', pages: ['Reforma do apto 302', 'Andamento da obra'], text: 'Uma página diz que espera resposta, a outra que a obra começou.' }])
+    const [again] = w.findings()
+    expect(again?.id).toBe(id)
+    expect(again?.note).toMatch(/@lia/)
+    // …and the agent's id still closes it.
+    expect(wikiClose(w, { name: 'Lia' }, { aviso: id, nota: 'Concordam agora.' }).error).toBeUndefined()
+    expect(w.findings()).toHaveLength(0)
+  })
+
   it('tells the agent, in the request itself, to close it and which id to close', () => {
     const w = wiki()
     const id = finding(w)
