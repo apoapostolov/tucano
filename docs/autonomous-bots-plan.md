@@ -291,27 +291,30 @@ forced) and `5396d38` (recovery) on `feat/autonomous-initiative`. See
 
 ### 6. Verify and deliver the feature
 
-- [ ] Run locked dependency installation sequentially, typecheck, the entire test
+- [x] Run locked dependency installation sequentially, typecheck, the entire test
   suite, build, and focused built-app behavior checks. Report skips separately.
-- [ ] Add `scripts/screens-initiative.mjs` using `qa-background.mjs` and the nearest
+- [x] Add `scripts/screens-initiative.mjs` using `qa-background.mjs` and the nearest
   existing screen harness. Use fake engines, scratch data, isolated profiles/ports,
   and a hidden, unfocusable window; save source SHA, traces, captures, and errors.
-- [ ] Verify installed-app behavior using the built installer and the mandated
+- [x] Verify installed-app behavior using the built installer and the mandated
   self-build install helper. Inspect the actual installed process/window and
   verify the installed bundle against the built source.
-- [ ] Perform synthetic initiative checks only in scratch data. Confirm the regular
+- [x] Perform synthetic initiative checks only in scratch data. Confirm the regular
   workspace, navigation, expected controls, and updates off without seeding work.
   Use background inspection; prepare and request bounded foreground access only
   if a required check cannot be completed without taking over the desktop.
-- [ ] Add the user-facing changelog entry, update feature/audit records, integrate
+- [x] Add the user-facing changelog entry, update feature/audit records, integrate
   the tested source into next, push, and read the remote SHA back.
-- [ ] Treat this as a major feature: rebuild the inherited version's fork release,
+- [x] Treat this as a major feature: rebuild the inherited version's fork release,
   update the existing `next-v<version>` tag and notes, and verify uploaded installer
   and blockmap digests and download behavior under the repository delivery rules.
-- [ ] Close scratch instances and leave the regular installed TucanoNext running.
+- [x] Close scratch instances and leave the regular installed TucanoNext running.
 
 Exit: source, installer, installed runtime, and fork release identify the same
 delivered build. Any blocked smoke check remains explicitly incomplete.
+
+Result: built from `7ada3b4`, delivered as `next-v0.2.28`, with the record landing on
+`next` after it. See [the completion record](#slice-6-the-build-a-person-runs).
 
 ## Acceptance scenarios and evidence
 
@@ -592,3 +595,47 @@ Commits `b4074dd` (the merge) and `5396d38` (recovery) on `feat/autonomous-initi
   and a person inspects the record rather than an automatic replay happening. The
   one effect that is reconciled by identifier is the work a responsibility links to,
   whose own record says how it ended.
+
+### Slice 6: the build a person runs
+
+Source `7ada3b4` on `next`, tag and release `next-v0.2.28`, installed into
+`%LOCALAPPDATA%\Programs\tucanonext`.
+
+- Locked installation, typecheck, build and the focused checks run against the merged
+  tree, in order, never in parallel. The feature tree reported 2,434 passed and 67
+  skipped with none failed. The merged tree reported 2,442 passed and 61 skipped in a
+  full run with one failure, in `test/wiki-git.test.ts`, a file that spends two and a
+  half minutes in git under full parallelism; it passes 18 of 18 alone at the same
+  commit, and an earlier full run of the same tree failed three tests across two files
+  that also pass alone. Those are the load-sensitive files this machine has produced
+  across every slice, not this work; the release notes say exactly this rather than
+  claiming a clean suite.
+- `scripts/screens-initiative.mjs` plays the feature in the built app the way
+  `qa-background.mjs` does, and its own section in `docs/background-qa.md` says how to
+  run it and what it covers. Nine checks, every one of them re-proving that no window
+  showed or took focus: the way in from a DM with no coordinator, the setup, a
+  check-in that reports, one that stays quiet and leaves the conversation untouched,
+  the record of both, a 520 px window measured for overflow (0 px) and folded columns,
+  and the switch that stops it. It also runs against an installed executable through
+  `TUCANO_ELECTRON`.
+- Installed with `node scripts/self-build.mjs install` in the foreground: build,
+  package, close, install, open, verify. The installed `app.asar` is byte-identical to
+  the built one (sha256 `61e16e8e5f098bb7…`), `doctor` reports the package complete with
+  the window up, and the nine checks then ran against the installed
+  `TucanoNext.exe` itself.
+- Every synthetic check used a temporary data directory and reserved ports, so the
+  regular workspace under `%APPDATA%\TucanoNext` was never opened by them, and the
+  installation says in its own notes that it does not update itself.
+- The changelog carries the feature in both languages and the release notes carry the
+  delta from the previous installer, with the source SHA, the sizes and both digests.
+  `gh release view` reads back the two assets' GitHub-computed digests, identical to the
+  local ones, and a real download of the blockmap answers 200 with the exact byte count
+  and digest.
+- Not exact, and said so: the record commits that followed (this section, the
+  background-check notes, the harness change) landed on `next` after `7ada3b4`, so the
+  tag names the commit the installer was built from while `next` sits two commits
+  further on. No product code differs between them.
+- Remaining honest gaps, carried from earlier slices: a report's sentences are still not
+  backed by the message or file they came from; a delegation a check-in starts spends
+  the specialist's own limit; and a check-in that resumes a session after a model or
+  tool-set change has no test of its own.
