@@ -1624,18 +1624,23 @@ const api: Handlers = {
   //
   // A routine's post goes the same way. It is nobody's reply, so there is no run to stop: the ask it
   // carried simply stops being in the room. The routine itself stays, and posts again next time.
+  //
+  // A person's own prompt goes too, and only the prompt: a reply that answered it is its own message and
+  // stays, with its `replyTo` naming something no longer there, which the room already tolerates. What
+  // was said in a thread on it goes with it, because `db.deleteMessage` takes the thread's children.
   deleteMessage: ({ messageId }, ctx) => {
     reachMessage(ctx, messageId)
     const m = db.message(messageId)
     const run = m?.author.kind === 'agent' && m.run
     const routine = m?.author.kind === 'routine'
-    if (!m || (!run && !routine)) return []
+    const prompt = m?.author.kind === 'person'
+    if (!m || (!run && !routine && !prompt)) return []
     manage(ctx, m.conversationId)
     if (m.run?.status === 'working') runner.drop(messageId) // stopped here, so it isn't written to while it goes
     const gone = db.deleteMessage(messageId)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     const who = m.author.kind === 'agent' || m.author.kind === 'routine' ? m.author.id : undefined
-    record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: who, routine, went: gone.length })
+    record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: who, routine, prompt, went: gone.length })
     return gone
   },
 

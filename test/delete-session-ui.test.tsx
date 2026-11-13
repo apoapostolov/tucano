@@ -64,7 +64,12 @@ const paint = async (messages: Message[], replies?: Map<string, Message[]>): Pro
 const render = (messages: Message[]): Promise<void> => paint(messages, new Map())
 // The same conversation where nothing is threaded, so nothing is pinned.
 const renderFlat = (messages: Message[]): Promise<void> => paint(messages, undefined)
-const trash = (): HTMLElement | null => document.querySelector('.msg__delete')
+// The row's own trash, whichever row the case painted. A prompt carries its own now, and it comes
+// first in the room, so the cases that paint both say which one they mean.
+const rowTrash = (): HTMLElement | null => document.querySelector('.msg__delete')
+const trash = (): HTMLElement | null => document.querySelector('.msg--agent .msg__delete')
+const replyTrash = trash
+const promptTrash = (): HTMLElement | null => document.querySelector('.msg--me .msg__delete--prompt')
 
 beforeEach(() => {
   deleted.length = 0
@@ -116,9 +121,12 @@ describe('the trash that deletes a session', () => {
     expect(deleted).toEqual(['r1'])
   })
 
-  it('a prompt of mine has none either: only a reply is a session', async () => {
-    await render([said('m1', 'corrige o login')])
-    expect(trash()).toBeNull()
+  it('a prompt carries its own, and the reply beside it keeps the session one', async () => {
+    await render([said('m1', 'corrige o login'), reply('r1')])
+    expect(promptTrash()).toBeTruthy()
+    expect(promptTrash()!.getAttribute('title')).toBe('Apagar este pedido')
+    expect(replyTrash()).toBeTruthy() // the reply's own, still there
+    expect(replyTrash()!.getAttribute('title')).toBe('Apagar esta sessão')
   })
 
   it("keeps every run's corner on the rail, with the trash in it, so a long reply never loses the glyph", async () => {
@@ -143,7 +151,7 @@ describe('the trash that deletes a session', () => {
 
   it("sits in the thread's own header, beside close, and takes the panel away with the session", async () => {
     await act(async () => root.render(<DeleteSession message={reply('r1')} where="head" />))
-    const button = trash()!
+    const button = rowTrash()!
     expect(button.className).toContain('msg__delete--head')
     expect(button.className).not.toContain('icon-btn--sm') // the header's own size, beside close
     expect(button.getAttribute('title')).toBe('Apagar esta sessão')
@@ -155,10 +163,23 @@ describe('the trash that deletes a session', () => {
     expect(closed).toBe(1) // nothing is left to read in the panel
   })
 
+  it('my own prompt carries the trash: it deletes the ask, not the session', async () => {
+    deleted.length = 0
+    await renderFlat([said('m1', 'corrige o login')])
+    const button = document.querySelector('.msg__delete--prompt') as HTMLElement
+    expect(button).toBeTruthy()
+    expect(button.getAttribute('title')).toBe('Apagar este pedido')
+    await act(async () => button.click())
+    expect(deleted).toEqual([]) // the first press only arms it
+    expect(button.getAttribute('title')).toBe('Clique de novo para apagar o pedido')
+    await act(async () => button.click())
+    expect(deleted).toEqual(['m1'])
+  })
+
   it("a routine's post carries the trash too, and says it deletes the post rather than a session", async () => {
     deleted.length = 0
     await renderFlat([routine('p1')])
-    const button = trash()!
+    const button = rowTrash()!
     expect(button.className).toContain('msg__delete--post')
     expect(button.getAttribute('title')).toBe('Apagar esta publicação')
     await act(async () => button.click())

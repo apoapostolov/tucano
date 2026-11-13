@@ -121,10 +121,19 @@ describe('deleting a session over the API', () => {
     expect(ana.events.some((e: CoreEvent) => e.type === 'message_removed' && e.id === 'rot-post-1')).toBe(true)
   })
 
-  it('a prompt is not a session: deleting one changes nothing', async () => {
-    const prompt = (await ana.call<Snap>('snapshot')).messages.find((m) => m.conversationId === dm && m.author.kind === 'person')!
-    expect(await ana.call<string[]>('deleteMessage', { messageId: prompt.id })).toEqual([])
-    expect((await ana.call<Snap>('snapshot')).messages.some((m) => m.id === prompt.id)).toBe(true)
+  it("a prompt goes on its own: the reply it earned is a message of its own and stays", async () => {
+    // The ask is not a session. Deleting it takes the words out of the room; the answer keeps its own
+    // row, because it is what was said, and its replyTo naming a message no longer there is a state the
+    // room already lives with (a prompt that paged out of the window looks the same).
+    const before = await ana.call<Snap>('snapshot')
+    const prompt = before.messages.find((m) => m.conversationId === dm && m.author.kind === 'person')!
+    const others = before.messages.filter((m) => m.id !== prompt.id).map((m) => m.id)
+    expect(await ana.call<string[]>('deleteMessage', { messageId: prompt.id })).toEqual([prompt.id])
+    const after = await ana.call<Snap>('snapshot')
+    expect(after.messages.some((m) => m.id === prompt.id)).toBe(false)
+    // Nothing else in the room moved: the replies are still there, and so are the other asks.
+    expect(others.every((id) => after.messages.some((m) => m.id === id))).toBe(true)
+    expect(ana.events.some((e: CoreEvent) => e.type === 'message_removed' && e.id === prompt.id)).toBe(true)
   })
 
   it('a reply still at work goes too: it is stopped first, and what it had written goes with it', async () => {
