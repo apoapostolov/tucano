@@ -3952,11 +3952,13 @@ body.is-resizing webview {
 }
 /* The trash that deletes a session, right under the thread button: quiet until the row is hovered,
    and red from the first press on, which is what says the second one deletes. */
+/* The same ink as the thread button above it: the glyphs in one column read as one set, and the armed
+   state is what changes the colour, not the resting state. */
 .msg__delete {
   position: absolute;
   top: 28px;
   right: 4px;
-  color: var(--text-3);
+  color: var(--text-2);
   opacity: 0;
   transition: var(--transition-ui);
 }
@@ -4001,11 +4003,14 @@ body.is-resizing webview {
 .msg__body {
   position: relative;
 }
+/* The pencil shares the strip on the left of my bubble with the reply-in-thread button, which is
+   anchored 6 px out from the bubble's edge: it takes the step beyond that button so neither sits in the
+   other's box. Both are anchored to the same edge, so they cannot drift apart. */
 .msg__edit {
   position: absolute;
   top: 6px;
-  left: -26px;
-  color: var(--text-3);
+  right: calc(100% + 32px);
+  color: var(--text-2);
   opacity: 0;
   transition: var(--transition-ui);
 }
