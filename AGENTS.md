@@ -558,6 +558,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Thinking streamed as dim live text | 235 | 245 |
 | Model-facing language in an English workspace | 242 | 310 |
 | Settings › Models: thinking under the model | 312 | 313 |
+| Settings › Accounts: another Grok login | 415 | 416 |
 | Asks: one section above Approvals | 240 | 247 |
 | Asks: the open question stays next to the field | 241 | 248 |
 | Approval card: action, target, and what became of it | 252 | 334 |
