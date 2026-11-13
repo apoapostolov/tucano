@@ -54,6 +54,12 @@ const same = (a: View | null, b: View): boolean => (b.kind === 'wiki' ? a?.kind 
 // out of reach of the lists below, which have their own groups).
 const NAV_HIDE = 'end:hide'
 
+// What alt + arrow does while a row is picked, for a pointer: the arrow shows which way the row goes.
+const moves = (up: () => void, down: () => void): MenuItem[] => [
+  { label: L('Mover para cima', 'Move up'), icon: 'up', onClick: up },
+  { label: L('Mover para baixo', 'Move down'), icon: 'down', onClick: down }
+]
+
 // `fresh`: a mission just brought it (a new install's short sidebar): tagged until it's opened.
 function NavItem({ view, icon, label, badge, fresh }: { view: View; icon: IconName; label: string; badge?: number; fresh?: () => void }): ReactNode {
   const active = useStore((s) => same(s.view, view))
@@ -242,8 +248,10 @@ export function Sidebar(): ReactNode {
   // A screen's own menu: the steps the keyboard has, and a way over the line for a pointer.
   const navMenu = (id: string): MenuItem[] => [
     ...(parked.includes(id) ? [{ label: L('Mostrar', 'Show'), icon: 'eye' as const, onClick: () => showNav(id) }] : []),
-    { label: L('Mover para cima', 'Move up'), onClick: () => nudgeNav(id, -1) },
-    { label: L('Mover para baixo', 'Move down'), onClick: () => nudgeNav(id, 1) },
+    ...moves(
+      () => nudgeNav(id, -1),
+      () => nudgeNav(id, 1)
+    ),
     ...(parked.includes(id) || shownNav.length <= 1 ? [] : [{ label: L('Ocultar', 'Hide'), icon: 'eyeOff' as const, onClick: () => hideNav(id) }])
   ]
   // Channels sort the same way the DMs and the agents do: a hold picks the row up and the row under
@@ -290,8 +298,10 @@ export function Sidebar(): ReactNode {
   ]
   const channelMenuRest = (c: (typeof channels)[number]): MenuItem[] => [
     'separator',
-    { label: L('Mover para cima', 'Move up'), onClick: () => saveLayout(nudgeChannel(channels, layout, c.id, -1)) },
-    { label: L('Mover para baixo', 'Move down'), onClick: () => saveLayout(nudgeChannel(channels, layout, c.id, 1)) },
+    ...moves(
+      () => saveLayout(nudgeChannel(channels, layout, c.id, -1)),
+      () => saveLayout(nudgeChannel(channels, layout, c.id, 1))
+    ),
     ...arranged.groups.filter((g) => !g.channels.includes(c)).map((g): MenuItem => ({ label: L(`Mover para ${g.name}`, `Move to ${g.name}`), onClick: () => saveLayout(moveChannel(channels, layout, c.id, { group: g.id })) })),
     ...(arranged.groups.some((g) => g.channels.includes(c)) ? [{ label: L('Tirar do grupo', 'Take out of the group'), onClick: () => saveLayout(moveChannel(channels, layout, c.id, {})) }] : []),
     { label: L('Novo grupo com este canal', 'New group with this channel'), icon: 'plus', onClick: () => newGroup(c.id) },
@@ -355,8 +365,10 @@ export function Sidebar(): ReactNode {
     wikiItem(id, conversations.find((x) => x.id === id)?.wikiCapture !== false),
     clearItem(id, `a conversa com ${agentName}`, `the conversation with ${agentName}`),
     'separator',
-    { label: L('Mover para cima', 'Move up'), onClick: () => saveDmOrder(nudge(dms, settings.dmOrder, id, -1)) },
-    { label: L('Mover para baixo', 'Move down'), onClick: () => saveDmOrder(nudge(dms, settings.dmOrder, id, 1)) },
+    ...moves(
+      () => saveDmOrder(nudge(dms, settings.dmOrder, id, -1)),
+      () => saveDmOrder(nudge(dms, settings.dmOrder, id, 1))
+    ),
     {
       label: L('Apagar a conversa…', 'Delete the conversation…'),
       icon: 'trash',
@@ -374,8 +386,10 @@ export function Sidebar(): ReactNode {
   ]
   const agentMenu = (agentId: string, agentName: string): MenuItem[] => [
     { label: L('Mandar mensagem', 'Send a message'), icon: 'send', onClick: () => void openDm(agentId) },
-    { label: L('Mover para cima', 'Move up'), onClick: () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, -1)) },
-    { label: L('Mover para baixo', 'Move down'), onClick: () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, 1)) },
+    ...moves(
+      () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, -1)),
+      () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, 1))
+    ),
     ...(admin ? agentAdminMenu(agentId, agentName) : [{ label: L(`Ver ${agentName}`, `See ${agentName}`), icon: 'eye' as const, onClick: () => navigate({ kind: 'agent', id: agentId }) }])
   ]
   const agentAdminMenu = (agentId: string, agentName: string): MenuItem[] => [
