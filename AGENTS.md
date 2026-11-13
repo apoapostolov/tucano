@@ -594,6 +594,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Wiki: recheck permissions during running replies | | 373 |
 | Wiki: a date that opens a sentence is not a page | | 392 |
 | Wiki: the map fitted to the window it mounted in | 418 | 419 |
+| The toast in the app's orange, in both themes | 421 | 422 |
 | Usage and limits: the quota each provider has left | 304, 309 | 305 |
 | Right-click a picture: save, copy, back in the prompt | 335 | 336 |
 | A reply's pictures as one album | 302 | 303 |
