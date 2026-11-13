@@ -905,11 +905,12 @@ function RoutineMessage({ message, replies }: { message: Message; replies?: Mess
         <div className="md">
           <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(message.text)}</MessageMarkdown>
         </div>
-        {/* The post can go from here: two presses, the same as a session's trash. The routine keeps
-            its slot and posts again next time; only this one lands out of the room. */}
-        <DeleteSession message={message} where="post" />
         {replies && <ThreadLink message={message} replies={replies} />}
       </div>
+      {/* The post can go from here: two presses, the same as a session's trash, on the row's own rail
+          rather than inside the post. The routine keeps its slot and posts again next time; only this
+          one lands out of the room. */}
+      <DeleteSession message={message} where="post" />
     </article>
   )
 }

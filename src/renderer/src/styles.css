@@ -3919,7 +3919,8 @@ body.is-resizing webview {
 .msg__reply--up {
   top: 52px;
 }
-/* In the pinned corner the glyphs share the pin's own origin: thread 4, trash 28, the way back 52. */
+/* In the pinned corner the glyphs share the pin's own origin: thread at 4, and the trash at 28 from
+   the row's top. */
 /* The way back sits beside the trash, one step to its left, not under it: a prompt that is a single
    line has no height under the trash to put another glyph in, and a third row pushed every short reply
    out of its own row. */
@@ -3973,10 +3974,15 @@ body.is-resizing webview {
   opacity: 1;
 }
 /* A routine's post has no run to ride, so its trash takes the row's own corner, 24 px under the
-   reply-in-thread button that holds the first place there. */
+   reply-in-thread button and in the same column the run's glyphs use: outside the post, on the rail,
+   not over its words. */
 .msg__delete--post {
   top: 28px;
-  right: 4px;
+  right: -24px;
+}
+/* A routine's post keeps its way into the thread on that same outer rail, not inset over the words. */
+.msg--routine .msg__reply {
+  right: -24px;
 }
 /* The pencil beside my own prompt: my messages are bubbles on the right with no face beside them, so it
    takes the space on the left of the bubble, in line with its first line. Quiet until the row is
