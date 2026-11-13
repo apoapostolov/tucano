@@ -115,7 +115,7 @@ export const jobAbout = (job: ClassifierJob): { pt: string; en: string } =>
     },
     nextSteps: {
       pt: 'Os próximos passos de uma resposta abrem com toda caixa desmarcada; esta pergunta decide quais já vêm marcadas.',
-      en: "Choose which suggested next steps start checked."
+      en: "Start with all boxes clear; check suggested next steps."
     },
     smart: {
       pt: 'Lê o pedido e escolhe a cadeia de modelos do roteamento inteligente: o papel, o tamanho do trabalho e a capacidade que ele merece.',

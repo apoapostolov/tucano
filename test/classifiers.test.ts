@@ -63,8 +63,8 @@ describe('the classifiers a workspace has', () => {
     expect(classifierFor(s, 'nextSteps')).toEqual(luna)
     // Left out, it is off: the card opens with every box clear.
     expect(classifierFor(settingsWith({ classifiers: [luna], classifierJobs: {} }), 'nextSteps')).toBeUndefined()
-    expect(jobLabel('nextSteps').en).toBe('Which next steps start ticked')
-    expect(jobAbout('nextSteps').en).toContain('every box clear')
+    expect(jobLabel('nextSteps').en).toBe('Suggested next steps')
+    expect(jobAbout('nextSteps').en).toContain('all boxes clear')
   })
 })
 

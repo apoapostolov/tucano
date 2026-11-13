@@ -11,7 +11,7 @@ const { THINKING_SIZES } = await import('../src/renderer/src/components/Pages')
 it('names the reasoning sizes in the language the window speaks, not the one it imported in', () => {
   setLang('en')
   expect(THINKING_SIZES().map((c) => c.label)).toEqual(['Small', 'Medium', 'Large'])
-  expect(THINKING_SIZES().map((c) => c.hint)).toEqual(['6 lines, the rest scrolling.', '12 lines, the rest scrolling.', '18 lines, the rest scrolling.'])
+  expect(THINKING_SIZES().map((c) => c.hint)).toEqual(['6 lines before scrolling.', '12 lines before scrolling.', '18 lines before scrolling.'])
 
   setLang('pt')
   expect(THINKING_SIZES().map((c) => c.label)).toEqual(['Pequeno', 'Médio', 'Grande'])
