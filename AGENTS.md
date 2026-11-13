@@ -706,6 +706,8 @@ to a reviewer than a second PR that has to be read against the first.
 | Delete a session from the room, in two presses | 374 | 375 |
 | Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
 | Give the file its space back, and say whether it is sound | 433 | 437 |
+| Control room visibility and cross-room agent read access | 423 | 424 |
+| Per-bot initiative and bounded responsibilities | 434 | 435 |
 
 The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
 what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR
