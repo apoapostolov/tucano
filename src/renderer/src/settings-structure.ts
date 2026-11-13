@@ -25,7 +25,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
   return [
     { id: 'app-appearance', page: 'app', label: L('Aparência', 'Appearance'), keys: ['theme', 'language', 'clock'], scope: 'mixed', visible: true },
     { id: 'app-conversation', page: 'app', label: L('Conversa', 'Conversation'), keys: ['showThinking', 'thinkingSize', 'steps', 'stepsLatest'], scope: 'personal', visible: true },
-    { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals'], scope: 'workspace', visible: admin },
+    { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'app', label: L('Notificações', 'Notifications'), keys: ['sounds', 'notice'], scope: 'personal', visible: true },
     { id: 'app-dictation', page: 'app', label: L('Ditado', 'Dictation'), keys: ['voice'], scope: 'computer', visible: admin },
     { id: 'app-startup', page: 'app', label: L('Inicialização', 'Startup'), keys: ['openAtLogin'], scope: 'computer', visible: admin },
@@ -35,7 +35,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'workspace-activity', page: 'workspace', label: L('Atividade', 'Activity'), keys: [], scope: 'workspace', visible: team && admin },
     { id: 'workspace-transfer', page: 'workspace', label: L('Importar e exportar', 'Import and export'), keys: [], scope: 'workspace', visible: admin },
     { id: 'workspace-backups', page: 'workspace', label: L('Backups', 'Backups'), keys: [], scope: 'workspace', visible: owner },
-    { id: 'workspace-danger', page: 'workspace', label: L('Excluir workspace', 'Delete workspace'), keys: [], scope: 'workspace', visible: owner },
+    { id: 'workspace-danger', page: 'workspace', label: L('Dados e exclusão', 'Data and deletion'), keys: ['retentionDays'], scope: 'workspace', visible: admin },
     { id: 'agents-replies', page: 'agents', label: L('Respostas', 'Replies'), keys: ['sendMode', 'chainDepth'], scope: 'workspace', visible: admin },
     { id: 'agents-recovery', page: 'agents', label: L('Recuperação', 'Recovery'), keys: ['resumeInterrupted', 'runStallMinutes'], scope: 'workspace', visible: admin },
     { id: 'agents-permissions', page: 'agents', label: L('Permissões', 'Permissions'), keys: ['autonomy', 'actionRules', 'outsideGuard', 'approvalTtlHours'], scope: 'workspace', visible: admin },

@@ -4,6 +4,7 @@ import { overMonthlyLimit } from '../../../shared/limits'
 import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
+import { InitiativeLine } from './Initiative'
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
@@ -252,6 +253,8 @@ export function ConversationView({ id }: { id: string }): ReactNode {
               </span>
             )}
             {conv.topic && <span className="topbar__topic">{conv.topic}</span>}
+            {/* A DM whose bot looks after this person says what it is up to, and opens where it is set. */}
+            {dmAgent && <InitiativeLine conversationId={id} agentId={dmAgent.id} />}
           </div>
           <div className="topbar__actions">
             {/* What these agents' providers have left, in the window that lasts longest: the one line
@@ -304,6 +307,42 @@ const NO_REPLIES: Message[] = []
 
 // How a row brings a message to the top of the list: the button under "Reply in thread" goes back to
 // the prompt its reply answers. A context, rather than the scroller handed down through every row.
+// A landing is a move, not a cut. The list travels to the row on a cubic that starts and ends still, so
+// the eye can follow where it goes; a wheel or a touch mid-flight wins, and a reduced-motion setting keeps
+// the cut. Duration grows with the distance but stays under a second.
+function glide(list: HTMLElement, to: number, done: () => void): void {
+  const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+  const from = list.scrollTop
+  const travel = to - from
+  if (calm || Math.abs(travel) < 2) {
+    list.scrollTop = to
+    done()
+    return
+  }
+  const span = Math.min(760, 260 + Math.abs(travel) * 0.45)
+  const started = performance.now()
+  let stopped = false
+  const stop = (): void => {
+    if (stopped) return
+    stopped = true
+    list.removeEventListener('wheel', stop)
+    list.removeEventListener('touchstart', stop)
+    done()
+  }
+  list.addEventListener('wheel', stop, { passive: true })
+  list.addEventListener('touchstart', stop, { passive: true })
+  const step = (now: number): void => {
+    if (stopped) return
+    const t = Math.min(1, (now - started) / span)
+    // ease in, ease out: still at both ends, fastest in the middle, no overshoot past the row
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    list.scrollTop = from + travel * eased
+    if (t < 1) requestAnimationFrame(step)
+    else stop()
+  }
+  requestAnimationFrame(step)
+}
+
 const JumpTo = createContext<(id: string) => void>(() => {})
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
@@ -397,6 +436,17 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // and the page before is asked for so the prompt turns up under the press if it still exists.
   const held = useRef(0)
   const [pendingJump, setPendingJump] = useState<string | null>(null)
+  // Landing on a row: its top to the top of the list, gliding there, and lit when the travel is done.
+  const land = (el: HTMLElement): void => {
+    const flash = (): void => {
+      el.classList.add('is-flash')
+      setTimeout(() => el.classList.remove('is-flash'), 1800)
+    }
+    const list = ref.current
+    if (!list) return flash()
+    const away = el.getBoundingClientRect().top - list.getBoundingClientRect().top
+    glide(list, list.scrollTop + away, flash)
+  }
   // The session's own start: page in what came before until the core has nothing older, then sit at
   // the first message. A press on the way back with its prompt gone still lands somewhere true.
   const toStart = async (id: string): Promise<void> => {
@@ -410,15 +460,13 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     stick.current = false
     held.current = Date.now() + 1200
     if (!el) {
-      ref.current?.scrollTo({ top: 0 })
+      if (ref.current) glide(ref.current, 0, () => {})
       return
     }
     // The prompt turned up in the pages that came in: land on it, which is where the session's own
     // start runs into this reply's work.
     setPendingJump(null)
-    el.scrollIntoView({ block: 'start' })
-    el.classList.add('is-flash')
-    setTimeout(() => el.classList.remove('is-flash'), 1800)
+    land(el)
   }
   const jump = useMemo(
     () => (id: string) => {
@@ -432,9 +480,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
         void toStart(id)
         return
       }
-      el.scrollIntoView({ block: 'start' })
-      el.classList.add('is-flash')
-      setTimeout(() => el.classList.remove('is-flash'), 1800)
+      land(el)
     },
     [conversationId, older, cut]
   )
@@ -446,9 +492,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     setPendingJump(null)
     stick.current = false
     held.current = Date.now() + 1200
-    el.scrollIntoView({ block: 'start' })
-    el.classList.add('is-flash')
-    setTimeout(() => el.classList.remove('is-flash'), 1800)
+    land(el)
   }, [pendingJump, first])
   // Too little to scroll: the page before comes without waiting for a scroll (once per page, so a
   // failure doesn't ask again and again).
@@ -582,6 +626,46 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   // A request written before what counts as finished left the conversation still carries that line: not shown.
   const text = message.run?.delegation?.rootId === message.id ? said.replace(/\n\n\*\*(Pronto quando|Done when):\*\* [^\n]*/, '') : said
 
+  // My own prompt can be picked up again: the pencil in the rail on its left opens the words where they
+  // stand, and sending posts the edited ask as a new prompt in the same place. What was sent before
+  // stays in the room, because a prompt already sent is what the reply above answered.
+  // How tall the row turned out: a reply that is one line has no room under the trash for another glyph,
+  // so the way back stands beside it there instead of below it.
+  const rowEl = useRef<HTMLElement>(null)
+  const [height, setHeight] = useState(0)
+  useLayoutEffect(() => {
+    const el = rowEl.current
+    if (!el) return
+    const read = (): void => setHeight(el.offsetHeight)
+    read()
+    const seen = new ResizeObserver(read)
+    seen.observe(el)
+    return () => seen.disconnect()
+  }, [])
+  const tight = height > 0 && height < 76
+  // Three glyphs at 6, 30 and 54 from the row's top need 74 px to stand in a column without one hanging
+  // out of the row. A prompt that short or shorter fans them out instead, so nothing spills.
+  const leftStack = height >= 74
+
+  const mineToEdit = !agent && !other && message.author.kind === 'person'
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(message.text)
+  const field = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = field.current
+    if (!editing || !el) return
+    el.focus()
+    // The caret at the end, where the change goes. A DOM without a selection API (the test harness) has
+    // nothing to place, so it is asked for only where it exists.
+    if (typeof el.setSelectionRange === 'function') el.setSelectionRange(el.value.length, el.value.length)
+  }, [editing])
+  const sendEdit = (): void => {
+    const words = draft.trim()
+    if (!words) return
+    sendMessage(message.conversationId, words, [], message.threadId)
+    setEditing(false)
+  }
+
   // The same object between renders, or every link would start over.
   const agentMarkdown = useMemo(() => ({ pre: CodeBlock, a: localLinkFor(message.id), span: MentionSpan }), [message.id])
 
@@ -605,7 +689,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const name = agent ? agent.name : (other ?? me.name)
   return (
     // Someone else's message reads like any other voice in the conversation: on the left, with their name.
-    <article className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
+    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}${editing ? ' is-editing' : ''}${leftStack ? ' is-left-stack' : ''}`} data-id={message.id}>
       <div className="msg__gutter">
         {!grouped &&
           (agent ? (
@@ -617,6 +701,26 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           ))}
       </div>
       <div className="msg__body">
+        {/* Mine to pick up again: the pencil sits in the space on the left of the bubble, quiet until the
+            row is hovered, and opens the words where they stand. */}
+        {mineToEdit && !editing && (
+          <>
+            <button
+              className="msg__edit"
+              title={L('Editar este pedido', 'Edit this prompt')}
+              aria-label={L('Editar este pedido', 'Edit this prompt')}
+              onClick={() => {
+                setDraft(message.text)
+                setEditing(true)
+              }}
+            >
+              <Icon name="edit" size={13} />
+            </button>
+            {/* The ask can go, the same two presses as everywhere else. The reply it earned stays: that
+                is a message of its own, and it answered what was sent. */}
+            <DeleteSession message={message} where="prompt" />
+          </>
+        )}
         {/* The corner rides the message, not just its steps: a reply taller than the screen keeps its
             thread button, its trash and the way back to the prompt at the top of the rail for as long as
             any of the reply is on screen, and they leave with its last line. It starts at the body's own
@@ -624,10 +728,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             takes the first place; the trash and the way back follow it, or take the place themselves
             when nothing is threaded. Without a run there is nothing to ride, and the corner stays in
             ThreadLink. */}
-        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}${tight ? ' msg__anchor-pin--tight' : ''}`}>
           {replies ? <ThreadButton message={message} /> : null}
           {agent && <DeleteSession message={message} />}
-          {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
+          {away && message.run.replyTo && <PromptJump id={message.id} />}
         </div> : null}
         {!grouped && (
           <div className="msg__head">
@@ -648,7 +752,33 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
         {message.run ? <RunSteps message={message} /> : null}
-        {text ? (
+        {editing ? (
+          <div className="msg__edit-box">
+            <textarea
+              ref={field}
+              rows={Math.min(10, Math.max(2, 1 + Math.round(draft.length / 90)))}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  sendEdit()
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setEditing(false)
+                }
+              }}
+            />
+            <div className="msg__edit-actions">
+              <button className="btn btn--primary btn--sm" disabled={!draft.trim()} onClick={sendEdit}>
+                {L('Enviar', 'Send')}
+              </button>
+              <button className="btn btn--sm" onClick={() => setEditing(false)}>
+                {L('Cancelar', 'Cancel')}
+              </button>
+            </div>
+          </div>
+        ) : text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
               <MessageMarkdown urlTransform={safeUrl} remarkPlugins={AGENT_PLUGINS} components={agentMarkdown}>{wikiLinks(text)}</MessageMarkdown>
@@ -746,13 +876,17 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
 
 // The glyph under "Reply in thread", on a reply that answers a prompt another message now sits
 // between: it puts that prompt at the top of the list, so a long reply is one click from what was asked.
+// The way back to the start of this reply: a run taller than the screen scrolls its own first line away,
+// and this takes the room to where the reply begins, which is the start of the work being read. It is
+// the row it sits on, not something further up the conversation.
 export function PromptJump({ id }: { id: string }): ReactNode {
   const jump = useContext(JumpTo)
+  const label = L('Ir para o começo desta resposta', 'Go to the start of this reply')
   return (
     <button
       className="icon-btn icon-btn--sm msg__reply msg__reply--up"
-      title={L('Ir para o pedido que esta resposta responde', 'Go to the prompt this reply answers')}
-      aria-label={L('Ir para o pedido que esta resposta responde', 'Go to the prompt this reply answers')}
+      title={label}
+      aria-label={label}
       onClick={() => jump(id)}
     >
       <Icon name="up" size={12} />
@@ -842,11 +976,12 @@ function RoutineMessage({ message, replies }: { message: Message; replies?: Mess
         <div className="md">
           <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(message.text)}</MessageMarkdown>
         </div>
-        {/* The post can go from here: two presses, the same as a session's trash. The routine keeps
-            its slot and posts again next time; only this one lands out of the room. */}
-        <DeleteSession message={message} where="post" />
         {replies && <ThreadLink message={message} replies={replies} />}
       </div>
+      {/* The post can go from here: two presses, the same as a session's trash, on the row's own rail
+          rather than inside the post. The routine keeps its slot and posts again next time; only this
+          one lands out of the room. */}
+      <DeleteSession message={message} where="post" />
     </article>
   )
 }
@@ -912,21 +1047,34 @@ const ARM_MS = 4000
 // it first, and the words it had written go with it, so the glyph says so.
 // `where`: at the corner of a reply ('corner'), or in the thread's own header ('head'), where it sits
 // in the row beside the summary and close buttons and the panel closes with the session it deleted.
-export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' }): ReactNode {
+export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' | 'prompt' }): ReactNode {
   const head = where === 'head'
   const post = where === 'post'
   // A routine's post is not a session: nothing ran under it, and the routine goes on posting after
   // it is gone. It says so, so the press reads as removing the post rather than ending an agent's work.
   const routine = post || message.author.kind === 'routine'
+  // My own prompt is not a session either: it is the ask, and the reply it earned is a message of its
+  // own that stays behind when the ask goes.
+  const mine = where === 'prompt'
   // Stopping is part of it only when something is running under the row, so the wording says so.
   const at = message.run?.status === 'working'
-  const label = routine ? L('Apagar esta publicação', 'Delete this post') : L('Apagar esta sessão', 'Delete this session')
-  const armedLabel = at
-    ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+  const label = mine
+    ? L('Apagar este pedido', 'Delete this prompt')
     : routine
-      ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
-      : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
-  const confirmLabel = routine ? L('Confirmar: apagar a publicação', 'Confirm: delete the post') : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
+      ? L('Apagar esta publicação', 'Delete this post')
+      : L('Apagar esta sessão', 'Delete this session')
+  const armedLabel = mine
+    ? L('Clique de novo para apagar o pedido', 'Click again to delete the prompt')
+    : at
+      ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+      : routine
+        ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
+        : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+  const confirmLabel = mine
+    ? L('Confirmar: apagar o pedido', 'Confirm: delete the prompt')
+    : routine
+      ? L('Confirmar: apagar a publicação', 'Confirm: delete the post')
+      : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
   const [armed, setArmed] = useState(false)
   useEffect(() => {
     if (!armed) return
@@ -956,7 +1104,7 @@ export function DeleteSession({ message, where = 'corner' }: { message: Message;
   }
   return (
     <button
-      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${armed ? 'is-armed' : ''}`}
+      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${mine ? 'msg__delete--prompt' : ''} ${armed ? 'is-armed' : ''}`}
       title={armed ? armedLabel : label}
       aria-label={armed ? confirmLabel : label}
       aria-pressed={armed}

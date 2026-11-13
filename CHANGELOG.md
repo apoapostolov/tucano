@@ -5,10 +5,27 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 > **Em português:**
+> - **Novo:** cada bot pode ter uma **iniciativa**. Você escolhe um bot, escreve nas suas palavras o que ele cuida pra você, de quanto em quanto tempo confere, onde pode olhar e o que pode fazer fora dali. Entre uma conversa e outra ele confere sozinho: quando não há nada a avisar não aparece nada (nem mensagem, nem não-lida, nem aviso), e quando há ele escreve na conversa como qualquer resposta. A linha no topo do DM diz o que ele está fazendo (próxima conferida, esperando você, conferindo agora, desligada) e abre a janela dele: o pedido, os limites do dia, o que ele está tocando — cada responsabilidade com o estado que o próprio trabalho dela dá — e o que ele fez em cada conferida, da mais nova pra mais velha, com o motivo e o gasto. **Conferir agora** pede uma na hora. A iniciativa **não dá permissão nenhuma**: cada chamada continua sendo decidida pela Autonomia do bot, e o que você escolhe ali só estreita. Uma conferida que repete o que a anterior já disse não aparece de novo, e a ficha dela diz por quê; uma que foi interrompida fica registrada como interrompida, sem repetir nada do que já tinha feito.
 > - **Novo:** os avisos do Tucano agora são **notificações por cima de todas as janelas**: uma pilha no canto da tela, que empurra as anteriores quando chegam outras, recolhe as mais antigas quando chegam muitas, para com o ponteiro em cima e some aos poucos quando o tempo acaba (e volta se você trouxer o ponteiro de volta). Em **Configurações › Notificações** você escolhe quantos segundos cada uma fica, se ela espera o ponteiro, se dá pra decidir por ela, se elas aparecem empilhadas uma de cada vez, o **tema** (claro, escuro ou o do sistema, com o destaque do Windows) e **desenha na tela** o retângulo, com os cantos, do canto onde elas devem aparecer. A roda do mouse sobre um aviso abre ele inteiro, com as imagens e os arquivos que a resposta trouxe.
 > - **Novo:** aprovações e perguntas se decidem **no próprio aviso**, com o mesmo cartão da conversa: as opções com a recomendada marcada, "Outra resposta", as setas entre as decisões e o envio. Aprovar pede que você segure o botão, como na conversa. Uma ação de alto risco nunca fica permitida pra sempre.
 
 ### Added
+
+- **A bot can look after something for you between conversations.** Give any of your bots an
+  initiative: a brief in your own words, how often it checks, when it may interrupt you, the
+  conversations it may look at and the actions it may take. It then reads that work on its own clock,
+  in the DM it belongs to. A check-in that finds nothing leaves no trace at all: no message, no
+  unread, no notice. One that finds something writes in the conversation as any reply does, once.
+  The DM's header carries a line saying what it is doing (next check-in, waiting on you, checking
+  now, off), and opens the window holding the brief, the day's limits, what the bot is carrying
+  (each responsibility with the state its own work gives it) and what it did, newest first, with why
+  each check-in happened and what it cost. Every bot has its own: its own switch on its own page,
+  its own brief, scope and daily allowance, and its own line in its own DM, so a second bot joins
+  rather than replaces the first. **Check now** asks for one on the spot and says what stopped it
+  when it cannot. An initiative **grants nothing**: every tool call is still decided by
+  the bot's Autonomy, and the scope you set can only narrow it. A report repeating the one before it
+  stays out of the conversation, its record saying so; a check-in the app did not survive is closed
+  as interrupted and nothing it may have done is replayed.
 
 - **A bot can settle a finding instead of the built-in resolver.** Wiki settings › The resolver now
   opens with *Who settles it*: the app's own resolver, which reads on the model chosen below it, or one

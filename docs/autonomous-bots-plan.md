@@ -20,9 +20,10 @@ Both use the same execution, permissions, accounting, and delivery infrastructur
 
 ## Scope and decisions
 
-- Start with one explicitly enabled coordinator per person per workspace, using
-  that person's DM with an existing agent. Additional proactive agents and channel
-  homes are later work. Specialists remain available through existing delegation.
+- A person gives initiative to any bot of theirs, each with its own brief, scope and
+  allowance: one row per person per bot, keyed by both, so a second bot joins rather
+  than replaces the first. Each bot works from its own DM. Channel homes are later
+  work, and specialists remain available through existing delegation.
 - Keep initiative separate from `Autonomy` in `src/shared/actions.ts`. That type
   already controls action permissions. Enabling initiative grants no tool access,
   visibility, budget exemption, or approval exemption.
@@ -190,100 +191,131 @@ do not expose a setting that cannot execute its advertised path.
 
 ### 1. Establish the contract and persistence
 
-- [ ] Refresh main refs and the exact heads of overlapping feature PRs. Check for
+- [x] Refresh main refs and the exact heads of overlapping feature PRs. Check for
   an existing initiative issue/PR before choosing its implementation branch.
-- [ ] Base product work on current upstream main. Explicitly map which capabilities
+- [x] Base product work on current upstream main. Explicitly map which capabilities
   only exist on next and place changes to unmerged features on their own PRs.
-- [ ] Add canonical shared types, migrations, validated RPCs, ownership checks,
+- [x] Add canonical shared types, migrations, validated RPCs, ownership checks,
   configuration revisions, and an explicitly disabled default for all workspaces.
-- [ ] Add commitment provenance and links to existing work; no chat-wide automatic
+- [x] Add commitment provenance and links to existing work; no chat-wide automatic
   extraction or private-DM aggregation in this slice.
-- [ ] Prove migration/reopen, revision conflict, unauthorized access, missing
+- [x] Prove migration/reopen, revision conflict, unauthorized access, missing
   targets, backup/restore policy, and empty-workspace behavior on scratch data.
 
 Exit: configuration and commitments survive restart and remain visible only to
 their authorized person. Existing agents and action-permission settings are unchanged.
 
+Result: `feat/autonomous-initiative` from upstream `main` at `73b724b`, commit
+`2881cb4`. See [the completion record](#slice-1-contract-and-persistence).
+
 ### 2. Resume one conversation from a heartbeat
 
-- [ ] Implement periodic eligibility, coalescing, atomic admission, idle priority,
+- [x] Implement periodic eligibility, coalescing, atomic admission, idle priority,
   pause/sleep handling, and session reconstruction through the current runner.
-- [ ] Supply a bounded heartbeat task block without system/tool-definition churn.
-- [ ] Add review caps, daily allowance reservations, accounting, and quiet backoff.
-- [ ] Handle quiet results from the start of execution, including streaming and
+- [x] Supply a bounded heartbeat task block without system/tool-definition churn.
+- [x] Add review caps, daily allowance reservations, accounting, and quiet backoff.
+- [x] Handle quiet results from the start of execution, including streaming and
   unread/activity bookkeeping, with retained internal evidence.
-- [ ] Verify repeated ticks, human queue priority, pause races, session expiry,
-  context rollover, changed model/tools, and an engine without resumable sessions.
+- [x] Verify repeated ticks, human queue priority, pause races, session expiry, and an
+  engine without resumable sessions.
+- [ ] Verify context rollover and a changed model or tool set on a session a check-in
+  resumes: the runner's own rules, not yet exercised from a check-in.
 
 Exit: with no further human message, the bot reviews the correct conversation,
 performs an authorized tool action, and either reports a meaningful result or
 finishes with no visible disturbance.
 
+Result: commit `c95ee9d` on `feat/autonomous-initiative`. See
+[the completion record](#slice-2-resume-one-conversation-from-a-heartbeat).
+
 ### 3. Advance commitments and delegate safely
 
-- [ ] Connect commitments to existing delegation, approval, question, and run events.
-- [ ] Enforce parent scope, execution lineage, shared allowance, fan-out and depth.
-- [ ] Persist waiting states; resume once when the relevant dependency changes.
-- [ ] Prevent recursive wakes, self-delegation loops, duplicate results, and repeated
-  reminders for unanswered questions. Detect bounded no-progress cycles.
-- [ ] Recheck permission revocation and private provenance across the entire chain.
+- [x] Connect commitments to existing delegation, approval, question, and run events.
+- [x] Enforce parent scope: a responsibility narrows what the person authorized, and is
+  narrowed again when a conversation leaves their reach.
+- [x] Keep execution lineage: a check-in's reply carries the wake it came from, and the
+  work it links to keeps its own record of where it was asked from.
+- [ ] Count what a check-in triggers against the person's own allowance: a delegation it
+  starts spends the specialist's limit, not the initiative budget yet.
+- [x] Reuse the existing fan-out and depth limits rather than adding a second set.
+- [x] Persist waiting states; resume once when the relevant dependency changes.
+- [x] Prevent recursive wakes, duplicate results, and repeated reminders for unanswered
+  questions. Detect bounded no-progress cycles.
+- [x] Recheck permission revocation and private provenance across the entire chain.
 
 Exit: the coordinator advances an authorized multi-step responsibility, receives
 a specialist result, asks only for an actual decision, and continues after the answer.
 
+Result: commit `0cec877` on `feat/autonomous-initiative`. See
+[the completion record](#slice-3-the-work-a-responsibility-rests-on).
+
 ### 4. Present controls and meaningful interventions
 
-- [ ] Add agent settings, DM status, check now, activity, and commitment navigation.
-- [ ] Reuse existing proposal/next-step, ask, approval, notice, and push surfaces.
-- [ ] Add source-backed reports, material-change deduplication, dismissal, and
-  batched delivery through existing transports.
-- [ ] Verify keyboard access, narrow layouts, both languages, rendered copy,
-  long histories, and denied/missing targets with real DOM interactions.
+- [x] Add agent settings, DM status, check now, activity, and commitment navigation.
+- [x] Reuse existing proposal/next-step, ask, approval, notice, and push surfaces.
+- [x] Add material-change deduplication, dismissal, and delivery through existing
+  transports.
+- [ ] Back every report's claim with the message or file it came from: the record
+  links evidence to a responsibility, but a report's own sentences are still prose.
+- [x] Verify keyboard access, both languages, rendered copy, long histories, and
+  denied/missing targets with real DOM interactions.
+- [ ] Verify narrow layouts by measurement: the window collapses at 640px in CSS,
+  and no rendered check has run against it yet.
 
 Exit: a person can explain why the bot woke, what it did, what it is waiting on,
 how much allowance remains, and how to stop it without reading internal logs.
 
+Result: commit `4370641` on `feat/autonomous-initiative`. See
+[the completion record](#slice-4-the-page-a-person-actually-uses).
+
 ### 5. Recover and integrate
 
-- [ ] Persist claim fencing and recover orphaned queued/running reviews. Reconcile
+- [x] Persist claim fencing and recover orphaned queued/running reviews. Reconcile
   linked work before permitting new actions; stale workers cannot finish a new claim.
-- [ ] Commit session/commitment progress before publishing a terminal completion
+- [x] Commit session/commitment progress before publishing a terminal completion
   that can admit a dependent wake. Separate delivery retry from execution retry.
-- [ ] Interrupt at each external-effect boundary in tests. Reconcile effects by
+- [x] Interrupt at each external-effect boundary in tests. Reconcile effects by
   tool identifiers where supported; ambiguous effects wait for inspection instead
   of automatic replay. Do not promise exactly-once external execution.
-- [ ] Exercise restart, sleep, simultaneous event delivery, quota failure, model
+- [x] Exercise restart, sleep, simultaneous event delivery, quota failure, model
   failure, permission changes, person removal, history clearing, and coordinator
   replacement. Disable/re-enable and restore never duplicate a scheduler owner.
-- [ ] Refresh upstream and next, merge intervening work normally, and repeat
+- [x] Refresh upstream and next, merge intervening work normally, and repeat
   affected checks against the final combined tree.
 
 Exit: recovery produces neither duplicate actions nor a flood of checks, questions,
 or notifications, and independent user work remains usable.
 
+Results: `b4074dd` (the merge of `origin/next`, 345 commits, and the behaviour it
+forced) and `5396d38` (recovery) on `feat/autonomous-initiative`. See
+[the completion record](#slice-5-what-the-app-did-not-survive).
+
 ### 6. Verify and deliver the feature
 
-- [ ] Run locked dependency installation sequentially, typecheck, the entire test
+- [x] Run locked dependency installation sequentially, typecheck, the entire test
   suite, build, and focused built-app behavior checks. Report skips separately.
-- [ ] Add `scripts/screens-initiative.mjs` using `qa-background.mjs` and the nearest
+- [x] Add `scripts/screens-initiative.mjs` using `qa-background.mjs` and the nearest
   existing screen harness. Use fake engines, scratch data, isolated profiles/ports,
   and a hidden, unfocusable window; save source SHA, traces, captures, and errors.
-- [ ] Verify installed-app behavior using the built installer and the mandated
+- [x] Verify installed-app behavior using the built installer and the mandated
   self-build install helper. Inspect the actual installed process/window and
   verify the installed bundle against the built source.
-- [ ] Perform synthetic initiative checks only in scratch data. Confirm the regular
+- [x] Perform synthetic initiative checks only in scratch data. Confirm the regular
   workspace, navigation, expected controls, and updates off without seeding work.
   Use background inspection; prepare and request bounded foreground access only
   if a required check cannot be completed without taking over the desktop.
-- [ ] Add the user-facing changelog entry, update feature/audit records, integrate
+- [x] Add the user-facing changelog entry, update feature/audit records, integrate
   the tested source into next, push, and read the remote SHA back.
-- [ ] Treat this as a major feature: rebuild the inherited version's fork release,
+- [x] Treat this as a major feature: rebuild the inherited version's fork release,
   update the existing `next-v<version>` tag and notes, and verify uploaded installer
   and blockmap digests and download behavior under the repository delivery rules.
-- [ ] Close scratch instances and leave the regular installed TucanoNext running.
+- [x] Close scratch instances and leave the regular installed TucanoNext running.
 
 Exit: source, installer, installed runtime, and fork release identify the same
 delivered build. Any blocked smoke check remains explicitly incomplete.
+
+Result: built from `7ada3b4`, delivered as `next-v0.2.28`, with the record landing on
+`next` after it. See [the completion record](#slice-6-the-build-a-person-runs).
 
 ## Acceptance scenarios and evidence
 
@@ -341,7 +373,284 @@ Review licensing and the current implementation before copying code.
 
 ## Completion record
 
-All implementation checkboxes are intentionally unchecked. Completing this plan
-means the development work is specified; it establishes no tested runtime behavior.
-Record exact source revisions, per-slice results, remaining checks, and delivery
-evidence here as implementation proceeds.
+Completing this plan means the development work is specified. Record exact source
+revisions, per-slice results, remaining checks, and delivery evidence here as
+implementation proceeds. A slice is recorded when its tests run, not when its
+code is written.
+
+### Slice 1: contract and persistence
+
+Branch `feat/autonomous-initiative`, forked from upstream `main` at `73b724b`
+(Release 0.2.28); commit `2881cb4`, pushed to the fork. Nothing is enabled in any
+workspace, so the branch changes no shipped behavior on its own.
+
+- No initiative issue or pull request existed on `eduwxyz/tucano`, so the slice took
+  its own branch. `next` was at `131151f`, the commit that carries this plan.
+- Capabilities that only exist on `next` and touch this work, each reconciled on its
+  own PR when the slice that needs it lands: silent routines (#366) for slice 2's
+  quiet results; deleted sessions (#375) and cleared history (#249) for slice 5's
+  invalidation; resumed interrupted replies (#391) for slice 5's recovery; the
+  notification centre (#417) for slice 4's interventions. Both records are written
+  through cascading foreign keys, so a conversation, agent or person that goes
+  takes its initiative row and commitments with it on either branch.
+- `src/shared/initiative.ts` holds the contract: `InitiativeConfig`, `Commitment`,
+  the two scopes (`observe`, `work`), cleaning, shape refusals and scope narrowing.
+  `src/core/initiative.ts` holds the core's checks: the bot and its DM, every named
+  conversation reachable by the person, the source message and each link present,
+  and the revision the page read.
+- The migration in `src/core/db.ts` adds `initiative` (one row per person per bot)
+  and `commitments`. No row means off, so a new workspace and one that upgrades into
+  this build both start with nothing.
+- API: `initiative` (every bot of the asking person), `saveInitiative`,
+  `saveCommitment`, `checkInNow` (one bot's), each reading or writing only the
+  asking person's records. Shapes are in `rpc-shapes.ts` and admissions in
+  `NEEDS`, so the fuzz test covers them like every other method.
+- Provenance is the source conversation, its message and who wrote it. Evidence and
+  links are ids to a message, a file an agent showed, a run, a delegation, a
+  question or an approval. No chat-wide extraction in this slice.
+- Tests: `test/initiative.test.ts` (record, restart, revision, ownership, missing
+  targets, states, copy, restore, empty and upgraded workspace) and
+  `test/initiative-core.test.ts` (the same through the real core over its API).
+  `test/db-queries.test.ts` and `test/antigravity-migration.test.ts` now find their
+  starting migration by what it does instead of counting backwards, so adding a
+  migration no longer breaks them.
+- Evidence: `npm run typecheck` clean; `npx vitest run test/initiative.test.ts
+  test/initiative-core.test.ts` 19 passed; the full suite ran 1713 passed with two
+  load-dependent failures (`test/delegations.test.ts`, `test/engine-setup.test.ts`)
+  that pass in isolation on the same commit.
+- Decisions: a copy of a workspace drops its commitments and starts with initiative
+  off, because the runs, questions, approvals and delegations they point at do not
+  come along; a restored backup keeps both records and runs neither; a removed
+  person's row is paused and a purge deletes it.
+- Deviations from the sketch: no `initiative-state.ts` yet, because nothing holds a
+  wake or an outcome until slice 2; the pending-wake and outcome tables land with
+  the code that writes them rather than standing empty.
+- Remaining in this slice: the refusals it returns are drafted and rendered nowhere,
+  so their copy and layout check belongs to the slice that draws the screen.
+
+### Slice 2: resume one conversation from a heartbeat
+
+Commit `c95ee9d` on `feat/autonomous-initiative`. Nothing runs in a workspace until
+someone turns a coordinator on, so the branch still changes no shipped behavior by
+itself.
+
+- `src/core/initiative-heartbeat.ts` is the clock: once a minute it asks each
+  person whose coordinator exists whether a check-in is due, admits one at a time,
+  and records what came of it. The claim is taken before the first await, so a tick
+  that finds work under way cannot start a second one and repeated ticks coalesce.
+- `src/core/initiative-state.ts` holds the rules as pure functions: due a cadence
+  after the last check-in, doubling for each in a row that found nothing up to two
+  hours; not during quiet hours, not while paused, not past the day's reviews or the
+  token allowance; and the day is the person's own, from their stored time zone.
+  It also writes the bounded request: the brief, what is owed, and the one rule that
+  keeps a quiet check-in quiet. Nothing is added to the system prompt or the tool
+  set, so a resumed session sees the same definitions as before.
+- A check-in runs through `Runner.checkIn`, the same path as every reply: the same
+  session, the same queue, the same limits and permissions. Its message is written
+  hidden, so nothing streams into the conversation while it thinks; when it reports,
+  it leaves the hiding and arrives as any message does, with its unread and activity
+  as usual. When it finds nothing, the hidden message stays behind as internal
+  evidence and the conversation is untouched.
+- `initiative_wakes` keeps each attempt: revision, when, what came of it, what it
+  said, what it cost in counted tokens, and why it was skipped. A month is kept.
+  An edit to the brief between admission and start records a skip and runs nothing.
+- Verification, in `test/initiative-heartbeat.test.ts` (14 tests, fake engine): a
+  quiet check-in leaves no message and no unread; a report becomes a visible
+  message; six ticks run one check-in and the next waits 30 minutes; the review cap
+  and the allowance refuse; an edit before start skips; pause refuses at admission
+  and at the runner; a session let go runs again; a failed check-in stays hidden and
+  keeps its words; and a person's own turn in the same DM is asked first (proved by
+  the order the engine saw the two prompts).
+- Open in this slice: context rollover, and a changed model or tool set on a session
+  a check-in resumes, are the runner's own rules and are not yet exercised from a
+  check-in. The plan's exit also asks for an authorized tool action; this slice
+  proves the check-in runs through the gated path, not that it called a connector.
+
+### Slice 3: the work a responsibility rests on
+
+Commit `0cec877` on `feat/autonomous-initiative`. Still inert until someone turns a
+coordinator on.
+
+- `src/core/initiative-links.ts` reads a link and nothing else: a delegation by its
+  own state and whether it is asking something, a question by whether the person
+  answered, an approval by whether it was decided, a reply by how it ended. Each
+  returns a version string of everything that moves when the work moves, and a short
+  clause for the request (`in progress: Nico, #engenharia`,
+  `waits for your answer`).
+- The state of a responsibility is derived, not stored twice: what waits on the
+  person outranks what waits elsewhere, a failure leaves it open with its own note,
+  a returned result opens it again. It is written at save and on every tick, so a
+  page shows the honest state from the first render.
+- `initiative_resumes` keeps the version last read per link. A moved version wakes
+  the coordinator once, and only after a check-in actually ran, so a pause, a
+  failure or the daily cap cannot swallow the news: the next tick still finds it.
+  A resumed check-in waits five minutes after the previous one, so nothing becomes
+  a hot loop, and the request says what changed.
+- Repetition is bounded mechanically, not by asking the model nicely. While a
+  question or approval of the bot's waits on the person, its wait is at least two
+  hours. A responsibility no check-in has moved across six is named as stalled,
+  with one instruction: take a concrete step, close it, or say what is blocking it.
+- What the person can no longer reach, nothing rests on: a scope that lost a
+  conversation is narrowed, evidence that cannot be read any more is dropped, and
+  one coordinator holds at most twelve open responsibilities.
+- Verification: `test/initiative-links.test.ts` (11 tests) covers the four link
+  kinds, the derived states, the note a failure leaves, narrowing, dropped evidence,
+  the stall counter resetting on a person's edit, and the twelfth-and-thirteenth
+  responsibility. `test/initiative-heartbeat.test.ts` adds three: a returned
+  delegation wakes the coordinator once and the request names the change, the same
+  version never wakes it twice, and an unanswered question holds the wait to two
+  hours. The upgraded-database test now also reads a responsibility saved on the
+  older schema.
+- A column added here lives in `COLUMNS` rather than in a migration, because a
+  database built by these tests rewinds its version and replays migrations over
+  tables that already have the column. Two tests caught exactly that.
+- Open in this slice: a delegation a check-in starts spends the specialist's own
+  limit, not the person's daily allowance. Sharing that budget needs an attribution
+  at delegation creation, which belongs to the delegation's lifecycle.
+
+### Slice 4: the page a person actually uses
+
+Commit `4370641` on `feat/autonomous-initiative`. This is the slice that makes the
+feature reachable: before it, a coordinator could only be turned on through the API.
+
+- The DM carries a line in the topbar: what its bot is doing (`next in 12 min`,
+  `waits on you`, `checking now…`, `everything paused`, `initiative off`), with a
+  dot that pulses while a check-in runs, and a count of what is open. It opens the
+  window below. A DM whose bot does not look after this person has no line at all.
+- `src/renderer/src/components/Initiative.tsx` is the whole surface: the brief, the
+  cadence, when to interrupt, the daily check-ins and token ceiling, the
+  conversations it may look at and the actions it may take, each a checkbox that
+  narrows what Autonomy already allows. Below it, what the coordinator is carrying,
+  each with its state, its note, the work it rests on and a way to the conversation
+  it was read in, plus done, dismiss and reopen. Below that, what it did.
+- "Conferir agora" is a real admission path (`checkInNow`), not a shortcut: it skips
+  the person's own cadence and quiet hours, and keeps the caps, the pause, the
+  allowance and one-at-a-time. It returns as soon as the check-in starts, and the
+  window polls the record while it runs so the page shows what it did instead of
+  freezing. Every refusal is named in words a person can act on.
+- The window reports today's usage against the person's own limits, and the whole
+  page is their own: the RPC reads only `ctx.person`.
+- Delivery reuses what exists: a report is a normal message, so unread, desktop
+  notice and phone push all follow from the transports already in place; a question
+  a check-in asks is an ordinary `ask_user`; an approval is the approval it always
+  was. Nothing new was invented for delivery.
+- Three defects the surface exposed, fixed here: a quiet check-in used to send the
+  same "Lia terminou" notification as any reply (the runner now leaves delivery to
+  the coordinator, which notifies once for a report and never for a quiet one); the
+  same finding twice used to be delivered twice (a report matching the last one
+  within a day now stays out of the conversation, keeps its record, and says why);
+  and a refusal from a page left open now shows in place instead of leaving the old
+  brief on screen as if it had saved.
+- Verification: `test/initiative-ui.test.tsx` (15 tests) drives the real components
+  in a linkedom DOM with real clicks and keys: the line's four states and its
+  absence, both languages, saving against the revision the page read, the disabled
+  save on an empty brief, check-now and each refusal, a disabled button while one
+  runs or the app is paused, dismissal and completion by state, the activity list's
+  wording including a deduped report and a skipped one, twenty check-ins folding to
+  six and back, the conversations offered as checkboxes, Esc closing and every
+  action being a real button. `test/initiative.test.ts` adds the view's own numbers,
+  and the core test proves `checkInNow` refuses when nothing is set up.
+- Two limits this slice does not close, both recorded above: a report's sentences are
+  not yet backed by the message or file they came from, and the narrow layout is a
+  CSS rule nobody has measured. The screenshot harness in the last slice is where a
+  rendered, measured check belongs.
+
+### Slice 5: what the app did not survive
+
+Commits `b4074dd` (the merge) and `5396d38` (recovery) on `feat/autonomous-initiative`.
+
+- The branch was 345 commits behind `next`, so it was merged before this work rather
+  than after, and the merge was resolved by behaviour on both sides: routines still
+  author messages, so their request is not unread while their answer is; paging
+  keeps both the tree's `cleared_at` rule and a check-in's `hidden`; saving a
+  message carries both columns; and the two runner notifications keep the message
+  id the tree now passes, still silent for a check-in.
+- The merge forced one behaviour and it is now explicit: the tree gives every
+  person's message its own session, so a due check-in could start beside an
+  exchange the person was in the middle of. A check-in steps back while the last
+  word in that DM is theirs and the bot has not answered, and the review happens
+  when the exchange is quiet again.
+- A check-in the app did not survive is closed as interrupted at the next start and
+  on every tick, and the linked work is read again at that moment, before anything
+  new is allowed. Before this, such a run left a record with no end and a page that
+  said "checking now" forever.
+- A late run cannot finish a claim the app already closed: what comes back from a
+  lost run changes nothing, appears nowhere and notifies no one.
+- Delivery is its own step after the record. A report is saved before it is shown,
+  so a window that goes away between the two leaves a report the next tick delivers
+  alone, with `delivered` as its flag. Execution is never repeated for delivery.
+- A check-in cut short does not settle the ledger: only a finished run marks news as
+  read, so what it came for can wake the coordinator again. The timer starts once,
+  whatever a person does to the switch.
+- Verification: `test/initiative-recovery.test.ts` (9 tests) covers an orphan closed
+  and a live run left alone, a late finish refused, a report delivered after the app
+  closed it, a reveal that throws and is delivered on the next tick with one turn
+  total, an interrupted run that leaves the ledger alone, one timer across a
+  disable and an enable, one check-in across two simultaneous ticks after a ten-hour
+  sleep, an archived bot, a person who left, and a replaced coordinator. Restart,
+  sleep, simultaneous delivery, model and quota failure, permission changes, history
+  clearing and person removal are covered across this file, the links file and the
+  heartbeat file; the merged tree passes 257 files and 2430 tests with 67 skipped and
+  none failed.
+- Honest about effects: this never promises exactly-once execution of anything
+  external. A check-in that was interrupted leaves whatever it did as it left it,
+  and a person inspects the record rather than an automatic replay happening. The
+  one effect that is reconciled by identifier is the work a responsibility links to,
+  whose own record says how it ended.
+
+### Slice 6: the build a person runs
+
+Source `7ada3b4` on `next`, tag and release `next-v0.2.28`, installed into
+`%LOCALAPPDATA%\Programs\tucanonext`.
+
+- Locked installation, typecheck, build and the focused checks run against the merged
+  tree, in order, never in parallel. The feature tree reported 2,434 passed and 67
+  skipped with none failed. The merged tree reported 2,442 passed and 61 skipped in a
+  full run with one failure, in `test/wiki-git.test.ts`, a file that spends two and a
+  half minutes in git under full parallelism; it passes 18 of 18 alone at the same
+  commit, and an earlier full run of the same tree failed three tests across two files
+  that also pass alone. Those are the load-sensitive files this machine has produced
+  across every slice, not this work; the release notes say exactly this rather than
+  claiming a clean suite.
+- `scripts/screens-initiative.mjs` plays the feature in the built app the way
+  `qa-background.mjs` does, and its own section in `docs/background-qa.md` says how to
+  run it and what it covers. Nine checks, every one of them re-proving that no window
+  showed or took focus: the way in from a DM with no coordinator, the setup, a
+  check-in that reports, one that stays quiet and leaves the conversation untouched,
+  the record of both, a 520 px window measured for overflow (0 px) and folded columns,
+  and the switch that stops it. It also runs against an installed executable through
+  `TUCANO_ELECTRON`.
+- Installed with `node scripts/self-build.mjs install` in the foreground: build,
+  package, close, install, open, verify. The installed `app.asar` is byte-identical to
+  the built one (sha256 `61e16e8e5f098bb7…`), `doctor` reports the package complete with
+  the window up, and the nine checks then ran against the installed
+  `TucanoNext.exe` itself.
+- Every synthetic check used a temporary data directory and reserved ports, so the
+  regular workspace under `%APPDATA%\TucanoNext` was never opened by them, and the
+  installation says in its own notes that it does not update itself.
+- The changelog carries the feature in both languages and the release notes carry the
+  delta from the previous installer, with the source SHA, the sizes and both digests.
+  `gh release view` reads back the two assets' GitHub-computed digests, identical to the
+  local ones, and a real download of the blockmap answers 200 with the exact byte count
+  and digest.
+- Not exact, and said so: the record commits that followed (this section, the
+  background-check notes, the harness change) landed on `next` after `7ada3b4`, so the
+  tag names the commit the installer was built from while `next` sits two commits
+  further on. No product code differs between them.
+- Remaining honest gaps, carried from earlier slices: a report's sentences are still not
+  backed by the message or file they came from; a delegation a check-in starts spends
+  the specialist's own limit; and a check-in that resumes a session after a model or
+  tool-set change has no test of its own.
+
+## Upstream
+
+The feature is proposed upstream as its own pair, cut from `main` rather than carried from
+`next`: issue `#434`, pull request `#435`, branch `feat/initiative-for-upstream`. The port
+kept the feature files whole and resolved nine shared files by behaviour, dropping what is
+only the fork's (a `hidden` reader that also filters `cleared_at`, the runner's newer
+options, the hidden-window QA launcher) and keeping the initiative's own. Rebuilt on
+`main`, the six initiative suites pass 85 tests, and all six CI jobs pass on the pull
+request.
+
+The check-in's day boundary now comes from the caller, which is why the daily cap test no
+longer depends on the hour the suite runs. The fork carries the same fix.

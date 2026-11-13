@@ -157,11 +157,11 @@ describe('settings section navigation', () => {
     await act(async () => root.unmount())
     root = createRoot(document.getElementById('root')!)
     access = { admin: false, owner: false, team: true, servers: false }
-    requested = 'workspace-danger'
+    requested = 'models-routing'
     await render()
     expect(document.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('App')
     expect([...document.querySelectorAll('[role="tab"]')].map(el => el.textContent)).toEqual(['App', 'Workspace'])
-    expect(document.querySelector('[data-settings-section="app-sidebar"]')).toBeNull()
+    expect(document.querySelector('[data-settings-section="app-sidebar"]')).not.toBeNull()
   })
 
   it('preserves normal modified-link behavior and cancels pending frames on unmount', async () => {

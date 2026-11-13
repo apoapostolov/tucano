@@ -8,7 +8,7 @@ import { restartTask } from './restart-recovery'
 import { friendly, toolLabel } from '../shared/errors'
 import type { CoreEvent } from '../shared/rpc'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type SendMode, type Settings, type Step, delegating, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isTeam } from '../shared/types'
+import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type InitiativeRun, type SendMode, type Settings, type Step, delegating, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isTeam } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { decideRoute, readPrompt, unavailableTrace } from './model-routing'
@@ -19,6 +19,7 @@ import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './app
 import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, stepFor, type Computers } from './computer'
 import { extractFile } from './wiki-extract'
 import { AGENDAR, CANCELAR, outcome, ROUTINE_TOOL_NAMES, type Routines } from './routines'
+import { isQuiet } from '../shared/initiative'
 import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills'
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom } from './tuca'
 import { LER_GUIA, readGuide } from './guide'
@@ -441,7 +442,7 @@ export interface RoutineEvent {
 // `replyTo`: the message a person wrote that this reply answers (a mention's, a DM's), kept on its run.
 // `followUp`: the instruction a finished reply goes on with. It keeps its text and its steps, and the
 // session it ended with is resumed, so the past comes from the cache instead of being sent again.
-type ReplyOpts = { depth: number; existing?: Message; task?: string; work?: string; routine?: boolean; threadId?: string; trigger?: string; replyTo?: string; followUp?: string }
+type ReplyOpts = { depth: number; existing?: Message; task?: string; work?: string; routine?: boolean; threadId?: string; trigger?: string; replyTo?: string; followUp?: string; initiative?: InitiativeRun }
 // Replies waiting for this agent in this conversation and thread.
 type Parked = { agent: Agent; conv: Conversation; opts: ReplyOpts; urgent: boolean; done: ((m: Message | undefined) => void)[] }
 
@@ -1049,6 +1050,63 @@ export class Runner {
     return this.startReply(agent, conv, { depth: 1, existing: msg, task: this.routineTask(r, when, me), work: msg.run!.work, routine: true })
   }
 
+  // A check-in: the person's coordinator looking at their work on its own, through the same runner as
+  // every reply (same session, same queue, same limits). It says nothing to the conversation while it
+  // works and nothing at all when it finds nothing; what came of it is returned, never posted.
+  // `onStart` runs once the reply is under way, with the message it is writing.
+  async checkIn(input: {
+    personId: string
+    revision: number
+    wake: string
+    agent: Agent
+    conversation: Conversation
+    task: string
+    onStart?: (message: Message) => void
+  }): Promise<{ outcome: 'quiet' | 'reported' | 'failed' | 'interrupted' | 'skipped'; why?: 'paused' | 'agent' | 'dm'; message?: Message }> {
+    const { db } = this.deps
+    if (this.paused) return { outcome: 'skipped', why: 'paused' }
+    const agent = db.agent(input.agent.id)
+    const conv = db.conversation(input.conversation.id)
+    if (!agent || agent.archived) return { outcome: 'skipped', why: 'agent' }
+    if (!conv || conv.kind !== 'dm') return { outcome: 'skipped', why: 'dm' }
+    // Kept out of the conversation from the first moment: nothing to show while it thinks.
+    const anchor: Message = {
+      id: randomUUID(),
+      conversationId: conv.id,
+      author: { kind: 'agent', id: agent.id },
+      text: '',
+      at: Date.now(),
+      hidden: true,
+      run: { status: 'working', depth: 1, steps: [] }
+    }
+    db.saveMessage(anchor)
+    input.onStart?.(anchor)
+    const done = await this.startReply(agent, conv, {
+      depth: 1,
+      existing: anchor,
+      task: input.task,
+      initiative: { wake: input.wake, personId: input.personId, revision: input.revision }
+    })
+    if (!done) return { outcome: 'failed', message: anchor }
+    const status = done.run?.status
+    if (status === 'working' || status === 'interrupted') return { outcome: 'interrupted', message: done }
+    if (status !== 'done') return { outcome: 'failed', message: done }
+    return { outcome: isQuiet(done.text) ? 'quiet' : 'reported', message: done }
+  }
+
+  // A check-in that reported is a message the person reads: it leaves the hiding and the page hears of
+  // it, as any reply does.
+  reveal(m: Message): void {
+    m.hidden = undefined
+    this.deps.db.saveMessage(m)
+    this.deps.emit({ type: 'message', message: { ...m } })
+  }
+
+  // The app is paused ("Pausar tudo"): nothing starts, check-ins included.
+  isPaused(): boolean {
+    return this.paused
+  }
+
   // `me`: the owner, by the workspace's name; a person's routine reads with theirs, and the team's as the channel's.
   private routineTask(r: Routine, when: { scheduledAt: number; late: boolean; event?: RoutineEvent }, owner: string): string {
     const { event } = when
@@ -1212,6 +1270,9 @@ export class Runner {
     if (this.gone.has(m.id)) return // deleted while it ran: it doesn't come back as a half reply
     Object.assign(m, patch)
     this.deps.db.saveMessage(m)
+    // A check-in says nothing to the conversation while it works, and nothing at all when it finds
+    // nothing: the page hears of it only when it has something to report.
+    if (m.hidden) return
     this.deps.emit({ type: 'message', message: { ...m } })
   }
 
@@ -1502,7 +1563,7 @@ export class Runner {
     const task = opts.task ?? (followUp ? followUpTask(opts.existing?.run?.task, followUp) : opts.existing?.run?.task)
     const again = task ? { task } : {}
     const replyTo = opts.trigger ?? opts.replyTo ?? opts.existing?.run?.replyTo
-    msg.run = { status: 'working', depth: opts.depth, steps: [...pastSteps, ...(followUp ? [followUpStep(followUp)] : []), thinking()], ...again, ...(replyTo ? { replyTo } : {}) }
+    msg.run = { status: 'working', depth: opts.depth, steps: [...pastSteps, ...(followUp ? [followUpStep(followUp)] : []), thinking()], ...again, ...(replyTo ? { replyTo } : {}), ...(opts.initiative ? { initiative: opts.initiative } : {}) }
     const save = (patch: Partial<Message> = {}): void => this.update(msg, patch)
     // What it writes before using a tool is narration ("Vou abrir o Studio"): it
     // goes with that step, and the reply keeps only what it says at the end.
@@ -3129,7 +3190,7 @@ ${note}`,
           // Handed work that came to rest: its end goes back to whoever asked, who tells the person.
           const mine = this.handedIn(msg)
           if (mine) return this.settle(mine, 'done', msg)
-          if (!opts.routine) this.deps.notify?.(L(`${agent.name} terminou`, `${agent.name} is done`), outcome(msg) || L('Respondeu na conversa.', 'Replied in the conversation.'), conv.id, 'done', msg.threadId, [requester.id], msg.id)
+          if (!opts.routine && !opts.initiative) this.deps.notify?.(L(`${agent.name} terminou`, `${agent.name} is done`), outcome(msg) || L('Respondeu na conversa.', 'Replied in the conversation.'), conv.id, 'done', msg.threadId, [requester.id], msg.id)
         }
         this.callPeople(conv, msg, agent.name)
         // On handed work, naming whoever asked ("@lia, pronto") calls no one: the answer already goes back to them.
@@ -3157,7 +3218,7 @@ ${note}`,
     // Handed work that stopped short: whoever asked hears why, and takes it to the person.
     const short = st === 'failed' || st === 'limit_reached' || st === 'paused' || st === 'stopped' ? this.handedIn(msg) : undefined
     if (short) this.settle(short, st === 'stopped' ? 'cancelled' : 'failed', msg)
-    else if (!opts.routine && (st === 'failed' || st === 'limit_reached')) this.deps.notify?.(L(`${agent.name} parou`, `${agent.name} stopped`), outcome(msg), conv.id, 'done', msg.threadId, [requester.id], msg.id)
+    else if (!opts.routine && !opts.initiative && (st === 'failed' || st === 'limit_reached')) this.deps.notify?.(L(`${agent.name} parou`, `${agent.name} stopped`), outcome(msg), conv.id, 'done', msg.threadId, [requester.id], msg.id)
 
     const updated = db.agent(agent.id)
     if (updated) emit({ type: 'agent', agent: updated })

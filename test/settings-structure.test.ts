@@ -30,7 +30,7 @@ describe('settings ownership and visibility', () => {
   it('keeps owner-only controls and capability-dependent server setup out of an admin’s destinations', () => {
     const admin = settingsStructure({ admin: true, owner: false, team: true, servers: false })
     expect(admin.find(section => section.id === 'workspace-backups')!.visible).toBe(false)
-    expect(admin.find(section => section.id === 'workspace-danger')!.visible).toBe(false)
+    expect(admin.find(section => section.id === 'workspace-danger')!.visible).toBe(true) // admins manage retention; deletion stays owner-guarded within the component
     expect(admin.find(section => section.id === 'connections-servers')!.visible).toBe(false)
     expect(settingsDestination('servidores', admin).page).toBe('app')
     const available = settingsStructure({ admin: true, owner: true, team: true, servers: true })

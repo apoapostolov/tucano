@@ -22,6 +22,7 @@ import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-p
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { isStepsMode } from '../shared/steps'
 import { defaultRouting, validateRouting } from '../shared/routing'
+import { cleanRetentionDays } from '../shared/retention'
 import { possibleBosses } from '../shared/org'
 import { listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
@@ -58,6 +59,7 @@ import { LISTEN_STUB_KEY, listenStub } from './jev-fake'
 import { report } from './report'
 import { readQuotas, fixtureRequest } from './quotas'
 import { quotaCache } from './quota-cache'
+import { Retention } from './retention'
 import { usage } from './usage'
 import { Skills } from './skills'
 import { cleanTitle, pageKey, Wiki, type WikiView } from './wiki'
@@ -83,6 +85,8 @@ import { Memories } from './memory'
 import { loginEnv } from './mac'
 import { findLocalSkills, skillFolders } from './local-skills'
 import { Routines } from './routines'
+import { Initiative } from './initiative'
+import { Heartbeat } from './initiative-heartbeat'
 import { Runner } from './runs'
 import { agentFromDraft, availableModels, tucaAgent, tucaHello, tucaUpToDate } from './tuca'
 import { initializeWorkspace } from './seed'
@@ -154,6 +158,9 @@ const DEFAULTS: Omit<Settings, 'engines'> = {
 // a new install fills it in, and a name changed in the settings changes theirs.
 const people = new People(db)
 if (!db.owner().name) db.renamePerson(db.ownerId(), db.getSettings(DEFAULTS).workspaceName, false)
+// A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): stored and validated
+// here, admitted by the runner in the next slice. Nothing runs while no one has one.
+const initiative = new Initiative(db, people)
 
 const fakeStatus = (v: string): EngineStatus => ({ installed: true, loggedIn: true, path: 'fake', version: v, account: L('Motor de teste', 'Test engine'), route: 'plan' })
 // TUCANO_FAKE_NO_AI: a computer with nothing set up yet, until the introduction's setup "signs in" (no network).
@@ -1065,6 +1072,33 @@ const runner = new Runner({
   }
 })
 runner.setPaused(!!settings().paused)
+// The clock behind initiative: one check-in at a time per person, admitted only while it is on, not
+// paused, due, and inside that person's reviews and allowance. Nothing runs until someone turns it on.
+const heartbeat = new Heartbeat({
+  db,
+  runner,
+  initiative,
+  settings,
+  people: () => db.people(),
+  // A report that reaches the conversation reaches the person the same way any reply does.
+  notify: (title, body, conversationId, to) => {
+    const who = notifyTo(conversationId, to)
+    toMain({ type: 'notify', title, body, conversationId, ...(who ? { to: who } : {}), sound: settings().sounds !== false })
+    void push.send({ title, body, ...(conversationId ? { conversationId } : {}) }, who)
+  }
+})
+// Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
+// for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
+const retention = new Retention(db, settings, {
+  stop: (id) => runner.stop(id),
+  forgetSessions: (of) => runner.forgetSessions(of),
+  cleared: (conversationIds) => {
+    emit({ type: 'history_wiped', conversationIds })
+    emitConversations(conversationIds)
+    // A question waiting in a thread whose first message went is closed: the list it was in changes.
+    emit({ type: 'inbox' })
+  }
+})
 // Installs from before the Tuca get him at the first start after the introduction.
 void enginesReady.then(() => {
   if (settings().onboarding?.done) ensureTuca()
@@ -1155,6 +1189,27 @@ void ready.then(async () => {
     } catch (e) {
       console.error('[people]', e)
     }
+    // The planner's statistics while the tables change size, and a slice of the pages that deletes
+    // have already freed. A file rebuilt with incremental auto-vacuum gives those pages back here,
+    // a thousand at a time, so the file stops holding its high-water mark without another rewrite.
+    try {
+      db.statistics()
+      db.trim()
+    } catch (e) {
+      console.error('[db]', e)
+    }
+    // What the periods no longer keep (completed hourly, due once a day at most).
+    try {
+      if (retention.due()) {
+        const gone = retention.sweep()
+        if (gone) {
+          console.log(`[history] ${gone} message(s) past their period, gone`)
+          record(undefined, 'history.swept', undefined, { messages: gone })
+        }
+      }
+    } catch (e) {
+      console.error('[history]', e)
+    }
   }
   daily()
   setInterval(daily, 3_600_000).unref()
@@ -1168,6 +1223,7 @@ void ready.then(async () => {
   routines.start()
   // A prompt of mine that was still queued when the app closed goes now (runs.ts, resumeQueued).
   runner.resumeQueued()
+  heartbeat.start()
   // A Tucano that had more people (or an invite out) before the heritage existed gets it now.
   if (db.people({ removed: true }).length > 1 || db.invites().length) inherit()
 }).catch((e: unknown) => {
@@ -1603,18 +1659,23 @@ const api: Handlers = {
   //
   // A routine's post goes the same way. It is nobody's reply, so there is no run to stop: the ask it
   // carried simply stops being in the room. The routine itself stays, and posts again next time.
+  //
+  // A person's own prompt goes too, and only the prompt: a reply that answered it is its own message and
+  // stays, with its `replyTo` naming something no longer there, which the room already tolerates. What
+  // was said in a thread on it goes with it, because `db.deleteMessage` takes the thread's children.
   deleteMessage: ({ messageId }, ctx) => {
     reachMessage(ctx, messageId)
     const m = db.message(messageId)
     const run = m?.author.kind === 'agent' && m.run
     const routine = m?.author.kind === 'routine'
-    if (!m || (!run && !routine)) return []
+    const prompt = m?.author.kind === 'person'
+    if (!m || (!run && !routine && !prompt)) return []
     manage(ctx, m.conversationId)
     if (m.run?.status === 'working') runner.drop(messageId) // stopped here, so it isn't written to while it goes
     const gone = db.deleteMessage(messageId)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     const who = m.author.kind === 'agent' || m.author.kind === 'routine' ? m.author.id : undefined
-    record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: who, routine, went: gone.length })
+    record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: who, routine, prompt, went: gone.length })
     return gone
   },
 
@@ -1653,6 +1714,11 @@ const api: Handlers = {
     // Its owner changes only with the removal hand-over, never by an edit (one with none is the
     // Tucano owner's, as db.agent reads it): a new one is whoever made it.
     const clean: Agent = { ...cleanLook(agent), name: agent.name.trim(), handle: agent.handle.trim().toLowerCase(), archived: before?.archived ?? false, owner: before ? (before.owner ?? db.ownerId()) : ctx.person.id }
+    // How long its history is kept (src/shared/retention.ts), when its page says: whole days, 0 for good.
+    // Anything else isn't a period: it follows the Tucano's again.
+    const kept = cleanRetentionDays(agent.retentionDays)
+    if (kept === undefined) delete clean.retentionDays
+    else clean.retentionDays = kept
     // One handle per agent (archived ones keep theirs), and none that reads as a person's (People.agentNameError).
     const taken = people.agentNameError({ id: clean.id, name: clean.name, handle: clean.handle })
     if (taken) throw new Error(taken)
@@ -1791,6 +1857,17 @@ const api: Handlers = {
     if (c.kind === 'channel') must(ctx.person, { kind: 'admin' })
     record(ctx, c.kind === 'channel' ? 'channel.deleted' : 'dm.deleted', id, c.kind === 'channel' ? { name: c.name } : undefined)
     closeConversation(id)
+  },
+
+  // Taking a history away at once, whatever the period says: every bot's — everything said in this
+  // workspace — or one bot's, which is what it wrote anywhere and every word of its own DMs. The receipts
+  // stay (Usage and the monthly limit count them) and so do the files an agent showed.
+  wipeHistory: ({ agentId }, ctx) => {
+    const agent = agentId ? db.agent(agentId) : undefined
+    if (agentId && !agent) throw new Error(L('Esse agente não existe mais.', 'That agent no longer exists.'))
+    const gone = retention.wipe(agentId)
+    record(ctx, 'history.wiped', agentId ?? 'workspace', agent ? { agent: agent.name, messages: gone } : { messages: gone })
+    return gone
   },
 
   createChannel: ({ name, threads }, ctx) => {
@@ -1941,6 +2018,22 @@ const api: Handlers = {
     }
   },
   backupNow: () => backup(db, backups, workspaceLabel(db.getSettings(DEFAULTS))),
+  // The file's own numbers, from the moment the card opens: size, the free pages nothing will reuse,
+  // and whether it reads back sound (a quick check, 20 ms at 23 MB).
+  dbHealth: () => ({ ...db.size(), ...db.check() }),
+  // Empties the log, rebuilds the file and refreshes the planner. Not while a reply is at work: the
+  // rebuild holds the core's only thread, and that is where the run is writing.
+  optimizeDb: () => {
+    if (db.messagesWithRun(['working', 'waiting_approval']).length) {
+      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', 'A reply is at work right now. Optimize when it finishes.'))
+    }
+    const before = db.size()
+    db.rebuild()
+    const after = db.size()
+    const check = db.check()
+    record(undefined, 'db.optimized', undefined, { before: before.bytes, after: after.bytes })
+    return { before: before.bytes, after: after.bytes, free: after.free, ...check }
+  },
   // Everything in one .zip in Downloads, shown in the Finder: to take to a server, which restores it.
   exportBackup: () => {
     if (serverMode) throw new Error(L('O backup completo sai do app do computador.', 'The full backup comes from the desktop app.'))
@@ -2266,6 +2359,26 @@ const api: Handlers = {
     people.watch(ctx.person, id)
     db.watchRoutine(id, ctx.person.id, on)
     emit({ type: 'routine', routine: db.routine(id)! })
+  },
+  // A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): their own, and only
+  // ever the asking person's. It grants nothing Autonomy does not already allow. No review runs yet:
+  // these records and their checks are the whole of this slice.
+  initiative: (_, ctx) => initiative.views(ctx.person, Date.now(), runner.isPaused()),
+  saveInitiative: ({ config, expectedRevision }, ctx) => {
+    const saved = initiative.save(ctx.person, config, expectedRevision)
+    record(ctx, 'initiative.saved', saved.agentId, { enabled: saved.enabled, revision: saved.revision })
+    return saved
+  },
+  saveCommitment: ({ commitment }, ctx) => {
+    const saved = initiative.saveCommitment(ctx.person, commitment)
+    record(ctx, 'commitment.saved', saved.id, { agent: saved.agentId, state: saved.state })
+    return saved
+  },
+  // "Conferir agora": the person asking their coordinator to look right now, on the spot.
+  checkInNow: ({ agentId }, ctx) => {
+    const started = heartbeat.startNow(ctx.person, agentId)
+    record(ctx, 'initiative.checkNow', agentId, { started: started.started, ...(started.why ? { why: started.why } : {}) })
+    return { ...started, running: heartbeat.running(ctx.person.id, agentId) }
   },
   wiki: (_, ctx) => {
     const w = wikiFor(ctx)
@@ -2781,6 +2894,7 @@ process.parentPort.on('message', (e) => {
 })
 
 process.on('exit', () => {
+  heartbeat.stop()
   for (const e of Object.values(engineImpls)) e.dispose?.() // the Claude Code processes kept open between replies
   db.close()
 })

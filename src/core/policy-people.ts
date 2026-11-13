@@ -24,6 +24,8 @@ export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'stepsLatest',
   'channelLayout',
   'dmOrder',
+  'navOrder',
+  'navHidden',
   'agentOrder',
   'folded',
   'language',
@@ -115,6 +117,7 @@ export const NEEDS: Record<Method, Need> = {
   setChannelMembers: 'anyone',
   clearConversation: 'target', // one's DM; a channel, admins
   deleteConversation: 'target', // one's DM; a channel, admins
+  wipeHistory: 'admin', // it reaches conversations the admin isn't in, and nothing comes back
   openDm: 'anyone',
   ensureTuca: 'anyone',
   settleDraft: 'anyone',
@@ -145,6 +148,12 @@ export const NEEDS: Record<Method, Need> = {
   removeRoutine: 'target',
   runRoutine: 'target',
   watchRoutine: 'anyone',
+  // A person's own proactive coordinator: these handlers only ever touch the asking person's records,
+  // so another person's brief, scope and responsibilities are not reachable through them at all.
+  initiative: 'anyone',
+  checkInNow: 'anyone',
+  saveInitiative: 'anyone',
+  saveCommitment: 'anyone',
   updateSettings: 'target', // personal preferences, anyone; the rest, admins
   browserAction: 'target', // a browser working for a conversation one sees; otherwise admins
   browserInput: 'target',
@@ -271,6 +280,10 @@ export const NEEDS: Record<Method, Need> = {
   installDesktop: 'admin',
   desktopPermissions: 'admin',
   backupNow: 'admin',
+  // The file's size, its free pages and whether it reads back sound. Nothing changes.
+  dbHealth: 'admin',
+  // Rebuilds the file: it holds the core's only thread for seconds, so it is an admin's press.
+  optimizeDb: 'admin',
   openBackups: 'admin',
   report: 'admin',
   usage: 'admin',

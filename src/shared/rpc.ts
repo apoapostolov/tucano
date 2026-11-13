@@ -3,6 +3,7 @@ import type { Answer } from './questions'
 import type { NoticeFeed } from './notice'
 import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion } from './types'
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
+import type { Commitment, CommitmentInput, InitiativeConfig, InitiativeInput, InitiativeView } from './initiative'
 import type { Os, AskEntry, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, SendMode, ProviderQuota, QuotasSnapshot, LocalSkillFolder, Effort } from './types'
 
 export interface Snapshot {
@@ -57,6 +58,7 @@ export interface Api {
   clearConversation(p: { id: string }): void
   setChannelMembers(p: { id: string; agentIds: string[]; mentionOnly?: string[]; listen?: string[] }): void // mentionOnly: those answering only when mentioned; listen: those Jev decides when to bring in
   deleteConversation(p: { id: string }): void // a channel or a DM, with its messages and routines
+  wipeHistory(p: { agentId?: string }): number // a bot's history — what it wrote anywhere and every word of its own DMs — or the whole workspace's when there's no agentId; answers how many messages went
   openDm(p: { agentId: string }): string
   ensureTuca(p: { modelId?: string; fresh?: boolean }): { agentId: string; conversationId: string } // the agent behind the builder screen, with this person's conversation with him, as it was; fresh starts a new one ("Nova conversa")
   createFromDraft(p: { messageId: string }): { agentId: string; conversationId: string } // the agent a Tuca card proposed
@@ -147,6 +149,11 @@ export interface Api {
   importTeam(p: { text: string }): string // what was added; throws if it isn't a team file
   importAgents(p: { path?: string; data?: string }): string // agents from another app's .zip (a path on this computer, or base64); what was added
   backupNow(): string // where the copy went
+  // The file itself: what it takes on disk, how much of that is free pages, and whether it reads back sound.
+  dbHealth(): { bytes: number; free: number; sound: boolean; said: string }
+  // Empties the log, rebuilds the file and refreshes the planner, refusing while a reply is at work:
+  // before and after in bytes, the free pages left, and the check's verdict.
+  optimizeDb(): { before: number; after: number; free: number; sound: boolean; said: string }
   // Everything in one .zip, to take this Tucano to a server (desktop): where it went, and what's in it.
   exportBackup(): { path: string } & BackupSummary
   // On a server, the owner: a backup sent up (/upload) checked and set apart; nothing changes yet.
@@ -235,6 +242,10 @@ export interface Api {
   answerDecision(p: { messageId: string; index: number; answer: Answer | null }): void // one of a question's decisions answered on the card (null clears it), kept until sent
   submitDecisions(p: { messageId: string }): void // sends the decisions answered on the card, as my message
   watchRoutine(p: { id: string; on: boolean }): void // "me avise": told of a channel routine's runs
+  initiative(): InitiativeView[] // my own proactive coordinators, one per bot, and no one else's
+  saveInitiative(p: { config: InitiativeInput; expectedRevision: number }): InitiativeConfig // expectedRevision: what the page read; 0 creates
+  saveCommitment(p: { commitment: CommitmentInput }): Commitment // one responsibility: its provenance, scope and links
+  checkInNow(p: { agentId: string }): { started: boolean; why?: string; running: boolean } // "Conferir agora": one of my bots looking on the spot
 }
 
 export type Method = keyof Api
@@ -262,6 +273,7 @@ export type CoreEvent =
   | { type: 'routine'; routine: Routine }
   | { type: 'routine_removed'; id: string; for?: string } // for: a DM's person, the only one who saw it
   | { type: 'conversation_removed'; id: string; for?: string }
+  | { type: 'history_wiped'; conversationIds: string[] } // history went: read these conversations again (src/core/retention.ts)
   | { type: 'skill'; skill: Skill }
   | { type: 'skill_removed'; id: string }
   | { type: 'wiki' } // a page changed: here, by an agent or in another app
@@ -270,7 +282,7 @@ export type CoreEvent =
   | { type: 'delegations'; delegations?: Delegation[] } // work handed down the tree changed (each gets what they may see)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'message', 'message_removed', 'delta', 'thinking', 'agent', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
+export const CORE_EVENT_TYPES = ['voice', 'message', 'message_removed', 'delta', 'thinking', 'agent', 'conversation', 'history_wiped', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

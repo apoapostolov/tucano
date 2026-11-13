@@ -47,6 +47,8 @@ import {
   importAgents,
   importTeam,
   backupNow,
+  dbHealth,
+  optimizeDb,
   openBackups,
   type TelegramInfo,
   type LocalSkillFolder,
@@ -63,6 +65,7 @@ import {
   TEAM_UP_DAYS,
   archiveAgent,
   setTab,
+  wipeHistory,
   saveSkill,
   skillApplies,
   modelInfo,
@@ -98,6 +101,7 @@ import {
   type BackupSummary
 } from '../store'
 import { ActivityPane, AdminOnly, PeoplePane } from './People'
+import { InitiativeSwitch } from './Initiative'
 import { voiceRefusal } from '../../../shared/voice'
 import { ACTION_KINDS, actionHint, actionMode, AUTONOMY_LEVELS, autonomyHint, autonomyLabel, COMPUTADOR, kindLabel, modeLabel, shellActions, type ActionKind, type ActionMode, type ActionRules, type Autonomy, type Policy } from '../../../shared/actions'
 import { useVoice, VOICE_CHOICES, VoiceSetup } from './VoiceSetup'
@@ -124,6 +128,7 @@ import { HomePhoneCard } from './HomePhone'
 import { useWorkspaceList } from './Workspaces'
 import { workspaceLabel } from '../../../shared/workspaces'
 import { stepsKeep, STEPS_LATEST, STEPS_LATEST_MAX, STEPS_LATEST_MIN, type StepsMode } from '../../../shared/steps'
+import { cleanRetentionDays, MAX_RETENTION_DAYS, retentionLabel } from '../../../shared/retention'
 import exportSkill from '../assets/tucano-export-skill.md?raw'
 import { RoutingPane, SmartRoutingRow } from './Routing'
 
@@ -361,12 +366,16 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
   // How many steps "the latest few" keeps, so this agent's choice reads with the same number.
   const stepsLatest = useStore((s) => s.settings.stepsLatest)
   const routing = useStore((s) => s.settings.routing)
+  // The period it follows when its page doesn't say one (Settings › History).
+  const tucanoDays = useStore((s) => cleanRetentionDays(s.settings.retentionDays) ?? 0)
 
   const [draft, setDraft] = useState<Agent>(() => existing ?? proposed ?? newAgentDraft())
   const [chosen, setChosen] = useState<string[]>(() => (id ? channels.filter((c) => c.members.includes(id)).map((c) => c.id) : []))
   const [saved, setSaved] = useState(false)
   const [grantSaved, setGrantSaved] = useState<string | null>(null)
   const [memorySaved, setMemorySaved] = useState(false)
+  const [historyBusy, setHistoryBusy] = useState(false)
+  const [historyNote, setHistoryNote] = useState('')
   const [saveError, setSaveError] = useState('') // why the core refused it (a person's name, a taken @)
 
   useEffect(() => {
@@ -529,6 +538,18 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               />
               <p className="hint">{L('O contexto do workspace já entra em toda conversa. Aqui vai só o que é deste agente.', "Workspace context is already included. Add only agent-specific instructions.")}</p>
               {instructionLengthNote(draft.instructions.length) && <p className="hint hint--warn">{instructionLengthNote(draft.instructions.length)}</p>}
+            </Card>
+          )}
+
+          {pane('perfil') && !isNew && existing && (
+            <Card
+              title={L('Iniciativa', 'Initiative')}
+              lead={L(
+                'O que este bot cuida pra você entre as conversas: um pedido seu, um intervalo, e o que ele pode olhar e fazer.',
+                'What this bot looks after for you between conversations: your brief, an interval, and what it may read and do.'
+              )}
+            >
+              <InitiativeSwitch agentId={existing.id} />
             </Card>
           )}
 
@@ -948,6 +969,81 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               </div>
             </Card>
           )}
+
+          {pane('perfil') && !isNew && (
+            <Card
+              danger
+              title={L('Histórico deste bot', 'This bot’s history')}
+              lead={L(
+                'O que ele respondeu em qualquer conversa, e tudo o que foi dito nas DMs dele. O que você escreveu nos canais fica, e as memórias dele também: elas têm a aba Memória.',
+                'What it answered anywhere, and everything said in its DMs. What you wrote in channels stays, and so do its memories: they have their own Memory tab.'
+              )}
+            >
+              <div className="field">
+                <span className="field__label">{L('Guardar o histórico dele por', 'Keep its history for')}</span>
+                <div className="segmented" role="radiogroup" aria-label={L('Guardar o histórico dele por', 'Keep its history for')}>
+                  <button role="radio" aria-checked={draft.retentionDays === undefined} className={draft.retentionDays === undefined ? 'is-active' : ''} onClick={() => draft.retentionDays !== undefined && patch({ retentionDays: undefined })}>
+                    {L(`Como o Tucano (${retentionLabel(tucanoDays)})`, `Same as the Tucano (${retentionLabel(tucanoDays)})`)}
+                  </button>
+                  <button role="radio" aria-checked={draft.retentionDays !== undefined} className={draft.retentionDays !== undefined ? 'is-active' : ''} onClick={() => draft.retentionDays === undefined && patch({ retentionDays: tucanoDays || 30 })}>
+                    {L('Só pra este bot', 'Only this bot')}
+                  </button>
+                </div>
+                {draft.retentionDays !== undefined && (
+                  <div className="row">
+                    <NumberInput
+                      min={0}
+                      max={MAX_RETENTION_DAYS}
+                      step={1}
+                      value={draft.retentionDays}
+                      onChange={(n) => patch({ retentionDays: cleanRetentionDays(n) ?? 0 })}
+                      className="input--short"
+                      aria-label={L('Dias', 'Days')}
+                    />
+                    <span className="muted small">{L('dias; 0 guarda tudo, para sempre, mesmo que o Tucano guarde menos', 'days; 0 keeps everything, for good, even when the Tucano keeps less')}</span>
+                  </div>
+                )}
+                <span className="hint">
+                  {L(
+                    'Cada mensagem conta da própria data, na limpeza diária: com 30, o que passou de 30 dias sai do banco e o próximo turno já não lê nada disso.',
+                    'Each message counts from its own date, in the daily cleanup: with 30, anything past 30 days leaves the database and the next turn reads none of it.'
+                  )}
+                </span>
+              </div>
+              <div className="row">
+                <button
+                  className="btn btn--danger"
+                  disabled={historyBusy}
+                  onClick={() => {
+                    void confirmDialog({
+                      title: L(`Apagar o histórico de ${draft.name}?`, `Delete ${draft.name}’s history?`),
+                      body: L(
+                        `Saem as respostas dele em todos os canais e tudo o que foi dito nas DMs dele. ${draft.name} continua na equipe; as memórias e os recibos de uso ficam. Não dá pra desfazer.`,
+                        `Its replies in every channel go, and everything said in its DMs. ${draft.name} stays on the team; memories and usage receipts stay. This cannot be undone.`
+                      ),
+                      confirm: L('Apagar histórico', 'Delete history'),
+                      danger: true
+                    }).then((ok) => {
+                      if (!ok) return
+                      setHistoryBusy(true)
+                      setHistoryNote('')
+                      void wipeHistory(draft.id)
+                        .then((gone) => setHistoryNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`)))
+                        .catch((e: unknown) => setHistoryNote(e instanceof Error ? e.message : String(e)))
+                        .finally(() => setHistoryBusy(false))
+                    })
+                  }}
+                >
+                  {L('Apagar o histórico deste bot', 'Delete this bot’s history')}
+                </button>
+                {historyNote && (
+                  <span className="muted small" role="status">
+                    {historyNote}
+                  </span>
+                )}
+              </div>
+            </Card>
+          )}
         </div>
 
         <aside className="agent-side">
@@ -1346,9 +1442,11 @@ function ActionRulesList({ rules, fallback, readOnly, onChange }: { rules: Actio
   )
 }
 
-export function Card({ title, lead, action, children }: { title: string; lead?: string; action?: ReactNode; children: ReactNode }): ReactNode {
+// `danger`: an area whose controls take something away for good (Settings › History, a bot's own): the
+// card says so before it's opened, so no one finds it by accident.
+export function Card({ title, lead, action, danger, children }: { title: string; lead?: string; action?: ReactNode; danger?: boolean; children: ReactNode }): ReactNode {
   return (
-    <div className="card">
+    <div className={`card${danger ? ' card--danger' : ''}`}>
       <div className="card__head">
         <div className="row row--between">
           <h2>{title}</h2>
@@ -2538,6 +2636,60 @@ function TeamCard(): ReactNode {
   )
 }
 
+// The file everything lives in, as a section of the danger area: what it takes, how much of that
+// nothing will reuse, and a rebuild on demand. The check runs when the card opens, because it costs
+// less than a frame at this size.
+function WorkspaceFileSection(): ReactNode {
+  const admin = useStore(amAdmin)
+  const [health, setHealth] = useState<{ bytes: number; free: number; sound: boolean; said: string } | null>(null)
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  useEffect(() => {
+    if (admin) void dbHealth().then(setHealth).catch(() => {})
+  }, [admin])
+  if (!admin) return null
+  const size = (n: number): string => (n >= 1024 ** 3 ? `${(n / 1024 ** 3).toFixed(2)} GB` : `${(n / 1024 ** 2).toFixed(1)} MB`)
+  const now = health
+    ? health.free >= 100_000
+      ? L(`${size(health.bytes)}, dos quais ${size(health.free)} são páginas livres que nada vai reaproveitar.`, `${size(health.bytes)}, of which ${size(health.free)} are free pages nothing will reuse.`)
+      : L(`${size(health.bytes)}, sem páginas livres presas.`, `${size(health.bytes)}, with no free pages held.`)
+    : ''
+  const check = health ? (health.sound ? L('O arquivo está íntegro.', 'The file is sound.') : L(`O arquivo não passou na verificação: ${health.said}`, `The file did not pass its check: ${health.said}`)) : ''
+  const run = (): void => {
+    setBusy(true)
+    setNote(L('Reescrevendo o arquivo…', 'Rebuilding the file…'))
+    optimizeDb()
+      .then((r) => {
+        setHealth({ bytes: r.after, free: r.free, sound: r.sound, said: r.said })
+        const went = r.before > r.after ? L(`${size(r.before)} → ${size(r.after)}.`, `${size(r.before)} → ${size(r.after)}.`) : L(`Continua em ${size(r.after)}, já estava compacto.`, `Still ${size(r.after)}, it was already compact.`)
+        setNote(`${went} ${r.sound ? L('O arquivo está íntegro.', 'The file is sound.') : L(`O arquivo não passou na verificação: ${r.said}`, `The file did not pass its check: ${r.said}`)}`)
+      })
+      .catch((e: unknown) => setNote(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e)))
+      .finally(() => setBusy(false))
+  }
+  return (
+    <div className="workspace-danger__section">
+      <h3>{L('O arquivo do workspace', 'The workspace file')}</h3>
+      <p className="small muted">
+        {L('Tudo o que este Tucano sabe mora num arquivo só. Ele cresce a cada conversa e não devolve sozinho o espaço do que foi apagado.', 'Everything this Tucano knows lives in one file. It grows with every conversation, and it does not give back the space of what was deleted on its own.')}
+        {now ? ` ${now} ${check}` : ''}
+      </p>
+      <div className="row">
+        <button className="btn btn--sm" disabled={busy} onClick={run}>
+          {busy ? L('Otimizando…', 'Optimizing…') : L('Otimizar', 'Optimize')}
+        </button>
+        {note && <span className="small muted" role="status">{note}</span>}
+      </div>
+      <p className="small muted">
+        {L(
+          'Esvazia o log de escrita, reescreve o arquivo e atualiza as estatísticas do planejador: leva segundos e nada se perde. Não roda com uma resposta trabalhando, e o app fica ocupado até terminar.',
+          'Empties the write-ahead log, rebuilds the file and refreshes the planner’s statistics: it takes seconds and nothing is lost. It does not run while a reply is at work, and the app stays busy until it finishes.'
+        )}
+      </p>
+    </div>
+  )
+}
+
 // A whole Tucano, taken somewhere else: the desktop app exports it in one .zip, and a Tucano on a
 // server (its owner) restores it, replacing what's there (src/core/restore.ts).
 export function BackupCard(): ReactNode {
@@ -2696,6 +2848,7 @@ export function BackupCard(): ReactNode {
 }
 
 function WorkspaceDangerArea(): ReactNode {
+  const owner = useStore(amOwner)
   const name = useStore((s) => workspaceLabel(s.settings))
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   const [note, setNote] = useState('')
@@ -2719,7 +2872,9 @@ function WorkspaceDangerArea(): ReactNode {
         </div>
         {note && <p className="small muted">{note}</p>}
       </div>
-      {window.tucano.workspaces && <div className="workspace-danger__section">
+      <WorkspaceFileSection />
+      <WorkspaceHistorySection />
+      {owner && window.tucano.workspaces && <div className="workspace-danger__section">
         <h3>{L('Excluir workspace', 'Delete workspace')}</h3>
         <p className="small muted">{defaultWorkspace ? L('O workspace padrão não pode ser excluído. Você ainda pode fazer backup ou duplicá-lo.', 'The default workspace cannot be deleted. You can still back it up or duplicate it.') : L(`Excluir “${name}” apaga também seus backups locais, agentes, conversas, memórias, credenciais e rotinas. Copie o backup para fora deste workspace antes. Os outros workspaces e suas pastas de projetos ficam intactos.`, `Deleting “${name}” also deletes its local backups, agents, conversations, memories, credentials and routines. Copy your backup outside this workspace first. Other workspaces and project folders are kept.`)}</p>
         <button className="btn btn--danger btn--sm" disabled={busy || defaultWorkspace} onClick={() => void remove()}>{busy ? L('Aguarde…', 'Please wait…') : L('Excluir workspace e todos os dados', 'Delete workspace and all data')}</button>
@@ -3252,6 +3407,60 @@ function SkillFoldersCard(): ReactNode {
   )
 }
 
+// The workspace's history, as a section of the danger area: the period, and the wipe that is final.
+function WorkspaceHistorySection(): ReactNode {
+  const kept = useStore((s) => cleanRetentionDays(s.settings.retentionDays) ?? 0)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+  const wipe = async (): Promise<void> => {
+    const ok = await confirmDialog({
+      title: L('Apagar o histórico de todos os bots?', 'Delete every bot’s history?'),
+      body: L(
+        'Saem todas as conversas de todos os canais e de todas as DMs: o que você escreveu e o que os bots responderam. Os canais, as DMs, os agentes, as memórias, a wiki e os recibos de uso ficam. Não dá pra desfazer.',
+        'Every conversation in every channel and every DM goes: what you wrote and what the bots answered. Channels, DMs, agents, memories, the wiki and the usage receipts stay. This cannot be undone.'
+      ),
+      confirm: L('Apagar tudo', 'Delete everything'),
+      danger: true
+    })
+    if (!ok) return
+    setBusy(true)
+    setNote('')
+    try {
+      const gone = await wipeHistory()
+      setNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`))
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="workspace-danger__section">
+      <h3>{L('Histórico', 'History')}</h3>
+      <p className="small muted">{L('O que fica guardado do que foi dito e respondido neste workspace. O prazo é conferido uma vez por dia; apagar na hora é o botão abaixo.', 'What is kept of what was said and answered in this workspace. The period is checked once a day; the button below deletes at once.')}</p>
+      <Field
+        label={L('Guardar por quantos dias', 'Keep for how many days')}
+        hint={L(
+          'Zero guarda tudo, para sempre. Com 30, o que foi dito ou respondido há mais de 30 dias sai do banco na limpeza diária. Um bot pode ter um prazo próprio, na página dele. As memórias, a wiki e os recibos de uso não entram nessa conta.',
+          'Zero keeps everything, for good. With 30, anything said or answered more than 30 days ago leaves the database in the daily cleanup. A bot can have its own period, on its page. Memories, the wiki and the usage receipts are not part of it.'
+        )}
+      >
+        <NumberInput min={0} max={MAX_RETENTION_DAYS} step={1} value={kept} onChange={(n) => updateSettings({ retentionDays: cleanRetentionDays(n) ?? 0 })} className="input--short" />
+      </Field>
+      <div className="row">
+        <button className="btn btn--danger btn--sm" disabled={busy} onClick={() => void wipe()}>
+          {L('Apagar o histórico de todos os bots', 'Delete every bot’s history')}
+        </button>
+        {note && (
+          <span className="muted small" role="status">
+            {note}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function SettingsPage(): ReactNode {
   const settings = useStore((s) => s.settings)
   const packaged = useStore((s) => s.packaged)
@@ -3386,7 +3595,8 @@ export function SettingsPage(): ReactNode {
       </Card>
     ),
     'app-sidebar': (
-      <Card title={L('Barra lateral', 'Sidebar')} >
+      <Card title={L('Barra lateral', 'Sidebar')}  lead={L('Reordene as telas na barra lateral. Mova abaixo da linha para ocultar.', 'Reorder screens in the sidebar. Move them below its divider to hide them.')}>
+        {admin && <>
       <div className="key-row">
                     <Icon name="ask" />
                     <div className="grow">
@@ -3403,6 +3613,7 @@ export function SettingsPage(): ReactNode {
                     </div>
                     <Toggle on={settings.hideEmptyApprovals === true} onChange={(v) => updateSettings({ hideEmptyApprovals: v })} />
                   </div>
+      </>}
       </Card>
     ),
     'app-notifications': (

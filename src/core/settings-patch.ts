@@ -17,6 +17,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   voice: { kind: 'object', max: 10_000, nullable: true },
   channelLayout: { kind: 'object', max: 500_000, nullable: true },
   dmOrder: { kind: 'array', max: 100_000, nullable: true },
+  navOrder: { kind: 'array', max: 100_000, nullable: true },
+  navHidden: { kind: 'array', max: 100_000, nullable: true },
   agentOrder: { kind: 'array', max: 100_000, nullable: true },
   orgLayout: { kind: 'object', max: 100_000, nullable: true },
   browserJev: { kind: 'boolean', max: 10, nullable: true },
@@ -32,6 +34,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   wikiResolveBot: { kind: 'string', max: 80, nullable: true },
   wikiDir: { kind: 'string', max: 4_096, nullable: true },
   defaultLimit: { kind: 'number', max: 30 },
+  // How long what was said is kept (src/shared/retention.ts): whole days, 0 for good.
+  retentionDays: { kind: 'number', max: 30, nullable: true },
   approvalTtlHours: { kind: 'number', max: 30 },
   questionDeadlineHours: { kind: 'number', max: 30, nullable: true },
   theme: { kind: ['system', 'light', 'dark'], max: 20 },

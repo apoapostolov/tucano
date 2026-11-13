@@ -98,6 +98,7 @@ export interface Agent {
   autonomy?: Autonomy // how far it goes on its own (src/shared/actions.ts); unset: Settings' level
   outsideGuard?: boolean // false: what goes out (a send, a post, a payment) runs on its rules even after reading something from outside; unset: Settings'
   folders?: LentFolder[] // Mac folders lent to that computer (spec §13, M5.1); changed only through lendFolder/folderAction
+  retentionDays?: number // how long its history is kept: its replies and its own DMs; unset: the Tucano's period, and 0 keeps everything
   archived: boolean
   kind?: 'tuca' // the agent that builds the others: it proposes, the person creates
   owner?: string // the person who gets its approvals: whoever created it (the Tucano's owner for older agents)
@@ -228,6 +229,16 @@ export interface Run {
   silent?: true // a routine's run that had nothing to report ([SILENT]): an empty reply, no notification, no unread
   delegation?: DelegationRef // on the message that opens a piece of handed work in its agent's channel, on an answer given there in the asker's name, and on what brings its answer or its question back
   delegations?: DelegationRef[] // the work this reply handed to the agents below its author
+  initiative?: InitiativeRun // set on a check-in: the person's coordinator looking at their work on its own
+}
+
+// A check-in by someone's proactive coordinator (docs/autonomous-bots-plan.md): a reply the person did
+// not ask for. It stays out of the conversation while it works and when it finds nothing to say; what
+// it says, and what came of every attempt, is in the person's own record.
+export interface InitiativeRun {
+  wake: string // the record of this attempt (initiative_wakes)
+  personId: string
+  revision: number // the configuration it was admitted under: an edit after that, and it stops
 }
 
 // Where a piece of handed work lives, for a message to point at it: the thread `rootId` opened.
@@ -443,6 +454,7 @@ export interface Message {
   text: string
   at: number
   run?: Run
+  hidden?: boolean // a check-in still working, or one that found nothing: kept out of the conversation
   routine?: RoutineRun // set on the message a routine posts (author kind 'routine')
   threadId?: string // a reply in a thread: the id of the message that started it (threads are one level deep)
   threadSummary?: ThreadSummary // on the message that started a thread: what the thread has covered
@@ -540,6 +552,8 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   dmOrder?: string[] // the person's order for the direct messages, by conversation id
   agentOrder?: string[] // the person's order for the agents, by agent id
+  navOrder?: string[] // the person's order for the sidebar's own screens (Approvals, Wiki…), by row id
+  navHidden?: string[] // the screens this person put under the sidebar's line, by row id: out of the way, not forgotten
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // an install from before Settings › Classifiers: a classifier finds what agents click in their browsers
   jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset
@@ -558,6 +572,7 @@ export interface Settings {
   wikiDir?: string // where the wiki's folder is (an Obsidian vault, say); inside the app's data when unset
   defaultLimit: number
   approvalTtlHours: number
+  retentionDays?: number // how long every conversation keeps what was said, in days; 0 or unset: everything, for good (an agent's own page may say otherwise)
   questionDeadlineHours?: number // a question to someone else, unanswered this long: the requester is told (default 4)
   actionRules?: ActionRules // for every agent: which actions ask me first, which it does alone, which never (src/shared/actions.ts)
   autonomy?: Autonomy // every agent's level, unless its page sets its own (default normal)

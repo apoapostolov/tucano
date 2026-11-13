@@ -28,6 +28,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   setChannelMembers: { id: 's', agentIds: 'S', mentionOnly: 'S?', listen: 'S?' },
   clearConversation: { id: 's' },
   deleteConversation: { id: 's' },
+  wipeHistory: { agentId: 's?' },
   openDm: { agentId: 's' },
   ensureTuca: { modelId: 's?', fresh: 'b?' },
   createFromDraft: { messageId: 's' },
@@ -116,6 +117,8 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   importTeam: { text: 's' },
   importAgents: { path: 's?', data: 's?' },
   backupNow: {},
+  dbHealth: {},
+  optimizeDb: {},
   exportBackup: {},
   restoreCheck: { path: 's' },
   restoreApply: {},
@@ -195,6 +198,10 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   answerDecision: { messageId: 's', index: 'n', answer: 'o|null' },
   submitDecisions: { messageId: 's' },
   watchRoutine: { id: 's', on: 'b' },
+  initiative: {},
+  saveInitiative: { config: 'o', expectedRevision: 'n' },
+  saveCommitment: { commitment: 'o' },
+  checkInNow: { agentId: 's' },
 }
 
 const fits = (v: unknown, t: string): boolean => {

@@ -26,7 +26,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | --- | --- | --- |
 | App / `app-appearance` | Theme, interface/workspace language, time format where implemented | Personal preferences; explain existing workspace-language behavior for admins |
 | App / `app-conversation` | Reasoning visibility/height, step display/count, reply shortcut where implemented | Personal display/input behavior; no new feature toggle invented |
-| App / `app-sidebar` | Empty Asks and Approvals visibility | Existing backend access rules; do not expose an admin-only write to members |
+| App / `app-sidebar` | Personal screen order/visibility guidance; empty Asks and Approvals visibility | Screen dragging stays in the sidebar's contextual editor. Members see personal guidance; automatic empty-section controls remain admin-only |
 | App / `app-notifications` | Sounds, notification appearance, timing, placement, interaction and test notification | Personal preferences; preserve explicit approval safeguards |
 | App / `app-dictation` | Dictation engine, model, downloads and existing permission guidance | Existing admin/capability checks |
 | App / `app-startup` | Launch at login | App-wide action, configured in the default workspace; retain installed-app restriction |
@@ -36,7 +36,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | Workspace / `workspace-activity` | Audit activity | Team-mode admins |
 | Workspace / `workspace-transfer` | Import/export team configuration | Existing admin restrictions and warnings |
 | Workspace / `workspace-backups` | Backup export, restore and replacement warnings | Owner, as required by the existing component; automatic-backup timing is not a new configurable control |
-| Workspace / `workspace-danger` | Workspace deletion/reset | Owner only; last in the page |
+| Workspace / `workspace-danger` | File health/space reclamation, history retention/wipe, workspace deletion | Admins manage data and retention; workspace deletion remains owner-only inside the existing component. Last in the page |
 | Agents / `agents-replies` | Send mode and consecutive agent reply cap | Workspace defaults; per-agent/conversation controls stay in their existing local editors |
 | Agents / `agents-recovery` | Resume after restart, inactivity timeout | Workspace behavior; paused/stopped work semantics remain intact |
 | Agents / `agents-permissions` | Autonomy, action rules, outside-workspace guard, approval expiry | Workspace defaults; retain per-agent overrides and risk disclosures |
@@ -98,8 +98,8 @@ Review the real feature head and discussions before changing it. Some stacked br
 - [x] Read workflow, audit history, current source and role policy; record starting refs.
 - [x] Refresh the authored PR inventory and inspect settings-related heads and discussions.
 - [x] Write the architecture, ownership rules, compatibility limits and proposed placements before implementation.
-- [ ] Add governance to AGENTS.md and a typed placement/visibility contract.
-- [ ] Implement the complete TucanoNext structure and reusable Wiki controls.
+- [x] Add governance to AGENTS.md and a typed placement/visibility contract.
+- [x] Implement the TucanoNext structure and reusable Wiki controls; built-UI verification remains below.
 - [ ] Cover category/section navigation, scroll tracking, cancellation, keyboard input, reduced motion, legacy destinations, roles and unavailable capabilities.
 - [ ] Review every PR's disposition; move misplaced controls on applicable open feature branches and verify their published heads.
 - [ ] Build an upstream-main-only counterpart and open a focused overhaul PR with neutral rationale and immutable screenshots.
@@ -112,6 +112,8 @@ Review the real feature head and discussions before changing it. Some stacked br
 ## PR placement review
 
 The following table records the initial placement screening. “Keep” means the feature has no misplaced global control at this snapshot, not that every audit dimension passed. Updated heads and delivery evidence will be recorded as branches are changed.
+
+Implementation update, 14 November: reconciled the published integration through `8025930`, including the coordinator, history retention, database maintenance and personal sidebar ordering. Coordinator configuration stays in its per-person conversation dialog; it is not a new global default. Sidebar order/visibility stays editable in the sidebar and is explained under App / Sidebar. The existing data-safety component keeps file health, retention and deletion together under Workspace / Data and deletion, with its updated admin/owner distinctions. These controls are preserved rather than replaced by older settings markup.
 
 Snapshot: 2026-11-13T18:30:25.651Z; 79 authored PRs screened. Heads with settings-related discussions were re-read before this plan; later head changes require a fresh check.
 

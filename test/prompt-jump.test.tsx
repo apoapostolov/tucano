@@ -32,7 +32,7 @@ describe('the way back to a reply’s prompt', () => {
     const html = renderToStaticMarkup(<PromptJump id="p" />)
     expect(html).toContain('msg__reply')
     expect(html).toContain('msg__reply--up')
-    expect(html).toContain('aria-label="Ir para o pedido que esta resposta responde"')
+    expect(html).toContain('aria-label="Ir para o começo desta resposta"')
     expect(html).toContain('<svg')
   })
 })
