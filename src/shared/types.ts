@@ -551,6 +551,7 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   dmOrder?: string[] // the person's order for the direct messages, by conversation id
   agentOrder?: string[] // the person's order for the agents, by agent id
+  navOrder?: string[] // the person's order for the sidebar's own screens (Asks, Approvals, Wiki…), by row id
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // an install from before Settings › Classifiers: a classifier finds what agents click in their browsers
   jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset

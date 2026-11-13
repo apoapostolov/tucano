@@ -1,8 +1,8 @@
 // Frames for the little quota bars in a session's header: one bar per provider, and only the window
 // that lasts longest — the month where there is a month, the week where there isn't, the short window
-// for a provider that reports nothing longer — and a wallet (no cap) with no bar at all. Measured
-// rather than asserted, and shot from the built app with the providers' answers as fixtures, so
-// nothing is spent.
+// for a provider that reports nothing longer — and a wallet (no cap) with no bar at all. Every bar is
+// the width of the longest name among the bars this conversation draws. Measured rather than asserted,
+// and shot from the built app with the providers' answers as fixtures, so nothing is spent.
 import { _electron as electron } from 'playwright'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -13,6 +13,7 @@ mkdirSync(out, { recursive: true })
 
 const key = (url) => url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/-+$/, '').toLowerCase()
 const R = {
+  claude: 'https://api.anthropic.com/api/oauth/usage',
   codex: 'https://chatgpt.com/backend-api/wham/usage',
   opencode: 'https://opencode.ai/zen/go/v1/usage',
   zai: 'https://api.z.ai/api/monitor/usage/quota/limit',
@@ -21,12 +22,15 @@ const R = {
   deepseek: 'https://api.deepseek.com/user/balance'
 }
 
-// A home with the logins in it, and the answers each route gives. Codex reports a 5-hour window and a
-// week; OpenCode Go reports all three; Z.ai only its short one and nearly spent; Grok a week; DeepSeek
-// a balance with no cap, which is the one provider that must draw no bar.
+// A home with the logins in it, and the answers each route gives. Claude Code and Codex are the two
+// providers of the conversation the app opens on, and their names differ in length, which is what the
+// bars' widths are measured against. Codex reports a 5-hour window and a week; OpenCode Go reports all
+// three; Z.ai only its short one and nearly spent; Grok a week; DeepSeek a balance with no cap, which
+// is the one provider that must draw no bar.
 function fixturesHome() {
   const home = mkdtempSync(join(tmpdir(), 'tucano-strip-home-'))
   const answers = join(home, 'answers')
+  mkdirSync(join(home, '.claude'), { recursive: true })
   mkdirSync(join(home, '.codex'), { recursive: true })
   mkdirSync(join(home, '.pi', 'agent'), { recursive: true })
   mkdirSync(join(home, '.local', 'share', 'opencode'), { recursive: true })
@@ -35,11 +39,16 @@ function fixturesHome() {
   const write = (p, body) => writeFileSync(join(home, p), JSON.stringify(body, null, 2))
   const answer = (url, body) => writeFileSync(join(answers, `${key(url)}.json`), JSON.stringify(body, null, 2))
 
+  write('.claude/.credentials.json', { claudeAiOauth: { accessToken: 'demo-claude', subscriptionType: 'max' } })
   write('.codex/auth.json', { tokens: { access_token: 'demo-codex', account_id: 'acct-demo' } })
   write('.local/share/opencode/auth.json', { 'opencode-go': { type: 'api', key: 'demo-opencode' } })
   write('.pi/agent/auth.json', { zai: { type: 'api', key: 'demo-zai' }, deepseek: { type: 'api', key: 'demo-deepseek' } })
   write('AppData/Local/hermes/auth.json', { providers: { 'xai-oauth': { tokens: { access_token: 'demo-grok' } } } })
 
+  answer(R.claude, {
+    five_hour: { utilization: 18, resets_at: new Date(Date.now() + 3.1 * 3600_000).toISOString() },
+    seven_day: { utilization: 74, resets_at: new Date(Date.now() + 4.6 * 86400_000).toISOString() }
+  })
   answer(R.codex, {
     plan_type: 'plus',
     rate_limit: {
@@ -101,16 +110,22 @@ const look = () =>
       pills: pills.map((p) => {
         const box = r(p)
         const fill = p.querySelector('i')
+        const name = p.querySelector('.quota-strip__name')
+        // The letters' own width, which is the width a pill sized by its own label would have had.
+        const text = document.createRange()
+        if (name) text.selectNodeContents(name)
         return {
           provider: p.dataset.provider,
           span: p.dataset.span,
           tone: p.className.replace('quota-strip__pill', '').trim() || '-',
-          width: Math.round(box.width),
+          column: Math.round(box.width),
+          name: name ? Math.round(text.getBoundingClientRect().width) : null,
           height: Math.round(box.height),
-          fill: fill ? Math.round(r(fill).width) : null,
-          title: p.getAttribute('title')
+          fill: fill ? Math.round(r(fill).width) : null
         }
       }),
+      // Every bar the same width, and that width the longest name among them.
+      columnsEven: new Set(pills.map((p) => Math.round(r(p).width))).size <= 1,
       topbar: topbar ? { height: Math.round(r(topbar).height), sideways: topbar.scrollWidth - topbar.clientWidth } : null,
       actionsSideways: actions ? actions.scrollWidth - actions.clientWidth : null,
       pageSideways: document.scrollingElement.scrollWidth - document.scrollingElement.clientWidth
