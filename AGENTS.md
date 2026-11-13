@@ -387,11 +387,18 @@ For a major feature, after the install and the smoke check:
 3. Keep the tag name `next-v<version>`. Upstream's own `v<version>` exists in the fork's tag
    namespace, and a second tag with the same name makes every later `git fetch --tags` fail with
    "would clobber existing tag", which breaks the daily backport.
-4. Verify what the server holds, not what `gh` printed: the asset size, its `sha256:` digest against
-   the local file, and a ranged GET that returns `206` with real bytes.
-5. Update the release notes for the build: what changed since the previous asset of that version,
-   the SmartScreen warning for an unsigned installer, and the fact that this build does not update
-   itself. Notes describe the delta, not the whole history.
+4. Point that tag at the commit the installer was built from, so the tag, the asset and the notes
+   describe one build. The tag lives on the fork, which is the `origin` remote in this checkout:
+
+   ~~~powershell
+   git tag -f "next-v$version" HEAD
+   git push --force origin "refs/tags/next-v$version"
+   ~~~
+5. Verify what the server holds, not what `gh` printed: the asset size, its `sha256:` digest against
+   the local file, a ranged GET that returns `206` with real bytes, and the tag's target commit.
+6. Update the release notes for the build: what changed since the previous asset of that version, the
+   commit the installer came from, the SmartScreen warning for an unsigned installer, and the fact that
+   this build does not update itself. Notes describe the delta, not the whole history.
 
 ## Integrate and report completion
 
@@ -457,10 +464,11 @@ runtime health.
 
 ## Commit on the feature's own issue or PR
 
-Every change to a feature is committed on origin, `eduwxyz/tucano`, as part of that feature's issue or
-pull request. A commit that exists only on `next`, or only on a local branch, is not delivery: `next` is
-integration and QA, so work that stops there cannot be reviewed, merged or found again by anyone but this
-machine.
+Every change to a feature is committed on the original project, `eduwxyz/tucano` (the `upstream`
+remote in this checkout, where the issues and pull requests live), as part of that feature's issue or pull
+request. A commit that exists only on `next`, or only on a local branch, is not delivery: `origin/next` on
+the fork is integration and QA, so work that stops there cannot be reviewed, merged or found again by
+anyone but this machine.
 
 Look the feature up in the table below before opening anything:
 
