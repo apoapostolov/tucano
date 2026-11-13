@@ -503,7 +503,7 @@ export interface Settings {
   folded?: string[] // the ids of what I folded in the sidebar
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
-  accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
+  accounts?: Account[] // more logins of Claude Code, Codex or Grok, beside the one each already has
 }
 
 // Which chirp a notification plays: a knock when an agent needs me, two notes when the work
@@ -516,8 +516,9 @@ export function chirpOf(kind: 'approval' | 'question' | 'done' | undefined, soun
 
 // Another login of a harness (a work account beside a personal one), in a folder of its own
 // in the app's data: Claude Code's CLAUDE_CONFIG_DIR (with its own Keychain entry), Codex's
-// CODEX_HOME. The person signs in through the CLI itself; the app never sees the credentials.
-export const ACCOUNT_ENGINES = ['claude', 'codex'] as const satisfies readonly EngineId[]
+// CODEX_HOME, Grok's GROK_HOME (with its auth.json). The person signs in through the CLI
+// itself; the app never sees the credentials.
+export const ACCOUNT_ENGINES = ['claude', 'codex', 'grok'] as const satisfies readonly EngineId[]
 export type AccountEngine = (typeof ACCOUNT_ENGINES)[number]
 export interface Account {
   id: string
