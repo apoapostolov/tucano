@@ -25,6 +25,7 @@ export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'channelLayout',
   'dmOrder',
   'navOrder',
+  'navHidden',
   'agentOrder',
   'folded',
   'language',
