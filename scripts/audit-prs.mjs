@@ -38,9 +38,17 @@ const ancestor = (a, b) => {
   }
   return ancestry.get(b).has(a)
 }
-const fields = 'number,title,state,isDraft,url,headRefName,headRefOid,baseRefName,updatedAt,mergedAt,closedAt,mergeable,mergeStateStatus,additions,deletions,changedFiles,files,body,statusCheckRollup'
+const fields = 'number,title,state,isDraft,url,headRefName,headRefOid,baseRefName,updatedAt,mergedAt,closedAt,mergeable,mergeStateStatus,additions,deletions,changedFiles,body,statusCheckRollup'
 const input = value('--input', null)
 const prs = input ? JSON.parse(readFileSync(input, 'utf8')) : JSON.parse(run('gh', ['pr', 'list', '--repo', upstream, '--author', author, '--state', 'all', '--limit', '1000', '--json', fields]))
+// Large nested file lists can exhaust GitHub's list query. File paths are immutable at a head.
+let previous = []
+try { previous = JSON.parse(readFileSync(join(output, 'inventory.json'), 'utf8')).prs ?? [] } catch (error) { if (error.code !== 'ENOENT') throw error }
+for (const pr of prs) {
+  if (Array.isArray(pr.files)) continue
+  const saved = previous.find((p) => p.number === pr.number && p.head === pr.headRefOid && p.fileListComplete)
+  pr.files = saved ? saved.files.map((path) => ({ path })) : JSON.parse(run('gh', ['pr', 'view', String(pr.number), '--repo', upstream, '--json', 'files'])).files
+}
 if (!Array.isArray(prs) || prs.some((p) => !p.url?.startsWith(`https://github.com/${upstream}/pull/`) || !/^[a-f0-9]{40}$/.test(p.headRefOid))) throw new Error('Unexpected PR inventory')
 if (prs.length === 1000) throw new Error('Inventory reached the limit; add pagination before accepting it')
 if (args.includes('--fetch')) {
