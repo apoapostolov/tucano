@@ -304,6 +304,42 @@ const NO_REPLIES: Message[] = []
 
 // How a row brings a message to the top of the list: the button under "Reply in thread" goes back to
 // the prompt its reply answers. A context, rather than the scroller handed down through every row.
+// A landing is a move, not a cut. The list travels to the row on a cubic that starts and ends still, so
+// the eye can follow where it goes; a wheel or a touch mid-flight wins, and a reduced-motion setting keeps
+// the cut. Duration grows with the distance but stays under a second.
+function glide(list: HTMLElement, to: number, done: () => void): void {
+  const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+  const from = list.scrollTop
+  const travel = to - from
+  if (calm || Math.abs(travel) < 2) {
+    list.scrollTop = to
+    done()
+    return
+  }
+  const span = Math.min(760, 260 + Math.abs(travel) * 0.45)
+  const started = performance.now()
+  let stopped = false
+  const stop = (): void => {
+    if (stopped) return
+    stopped = true
+    list.removeEventListener('wheel', stop)
+    list.removeEventListener('touchstart', stop)
+    done()
+  }
+  list.addEventListener('wheel', stop, { passive: true })
+  list.addEventListener('touchstart', stop, { passive: true })
+  const step = (now: number): void => {
+    if (stopped) return
+    const t = Math.min(1, (now - started) / span)
+    // ease in, ease out: still at both ends, fastest in the middle, no overshoot past the row
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    list.scrollTop = from + travel * eased
+    if (t < 1) requestAnimationFrame(step)
+    else stop()
+  }
+  requestAnimationFrame(step)
+}
+
 const JumpTo = createContext<(id: string) => void>(() => {})
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
@@ -397,6 +433,17 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // and the page before is asked for so the prompt turns up under the press if it still exists.
   const held = useRef(0)
   const [pendingJump, setPendingJump] = useState<string | null>(null)
+  // Landing on a row: its top to the top of the list, gliding there, and lit when the travel is done.
+  const land = (el: HTMLElement): void => {
+    const flash = (): void => {
+      el.classList.add('is-flash')
+      setTimeout(() => el.classList.remove('is-flash'), 1800)
+    }
+    const list = ref.current
+    if (!list) return flash()
+    const away = el.getBoundingClientRect().top - list.getBoundingClientRect().top
+    glide(list, list.scrollTop + away, flash)
+  }
   // The session's own start: page in what came before until the core has nothing older, then sit at
   // the first message. A press on the way back with its prompt gone still lands somewhere true.
   const toStart = async (id: string): Promise<void> => {
@@ -410,15 +457,13 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     stick.current = false
     held.current = Date.now() + 1200
     if (!el) {
-      ref.current?.scrollTo({ top: 0 })
+      if (ref.current) glide(ref.current, 0, () => {})
       return
     }
     // The prompt turned up in the pages that came in: land on it, which is where the session's own
     // start runs into this reply's work.
     setPendingJump(null)
-    el.scrollIntoView({ block: 'start' })
-    el.classList.add('is-flash')
-    setTimeout(() => el.classList.remove('is-flash'), 1800)
+    land(el)
   }
   const jump = useMemo(
     () => (id: string) => {
@@ -432,9 +477,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
         void toStart(id)
         return
       }
-      el.scrollIntoView({ block: 'start' })
-      el.classList.add('is-flash')
-      setTimeout(() => el.classList.remove('is-flash'), 1800)
+      land(el)
     },
     [conversationId, older, cut]
   )
@@ -446,9 +489,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     setPendingJump(null)
     stick.current = false
     held.current = Date.now() + 1200
-    el.scrollIntoView({ block: 'start' })
-    el.classList.add('is-flash')
-    setTimeout(() => el.classList.remove('is-flash'), 1800)
+    land(el)
   }, [pendingJump, first])
   // Too little to scroll: the page before comes without waiting for a scroll (once per page, so a
   // failure doesn't ask again and again).
