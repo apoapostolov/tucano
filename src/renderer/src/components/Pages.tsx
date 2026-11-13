@@ -101,6 +101,7 @@ import {
   type BackupSummary
 } from '../store'
 import { ActivityPane, AdminOnly, PeoplePane } from './People'
+import { InitiativeSwitch } from './Initiative'
 import { voiceRefusal } from '../../../shared/voice'
 import { ACTION_KINDS, actionHint, actionMode, AUTONOMY_LEVELS, autonomyHint, autonomyLabel, COMPUTADOR, kindLabel, modeLabel, shellActions, type ActionKind, type ActionMode, type ActionRules, type Autonomy, type Policy } from '../../../shared/actions'
 import { useVoice, VOICE_CHOICES, VoiceSetup } from './VoiceSetup'
@@ -535,6 +536,18 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               />
               <p className="hint">{L('O contexto do workspace já entra em toda conversa. Aqui vai só o que é deste agente.', "Workspace context is already included. Add only agent-specific instructions.")}</p>
               {instructionLengthNote(draft.instructions.length) && <p className="hint hint--warn">{instructionLengthNote(draft.instructions.length)}</p>}
+            </Card>
+          )}
+
+          {pane('perfil') && !isNew && existing && (
+            <Card
+              title={L('Iniciativa', 'Initiative')}
+              lead={L(
+                'O que este bot cuida pra você entre as conversas: um pedido seu, um intervalo, e o que ele pode olhar e fazer.',
+                'What this bot looks after for you between conversations: your brief, an interval, and what it may read and do.'
+              )}
+            >
+              <InitiativeSwitch agentId={existing.id} />
             </Card>
           )}
 
