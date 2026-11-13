@@ -16,6 +16,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'theme',
   'sounds',
+  'notice',
   'showThinking',
   'thinkingSize',
   'clock',
@@ -194,6 +195,7 @@ export const NEEDS: Record<Method, Need> = {
   setMyName: 'anyone',
   setDelegation: 'anyone',
   inbox: 'anyone',
+  noticeFeed: 'anyone',
   answerQuestion: 'target',
   questionsHistory: 'anyone', // only what this person can see anyway
   confirmQuestion: 'target',

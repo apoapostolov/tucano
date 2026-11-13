@@ -187,6 +187,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   leave: {},
   activity: { personId: 's?', kind: 's?', before: 'n?' },
   inbox: {},
+  noticeFeed: {},
   answerQuestion: { id: 's', text: 's' },
   questionsHistory: { limit: 'n?' },
   confirmQuestion: { id: 's', ok: 'b' },
