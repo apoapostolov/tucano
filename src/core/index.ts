@@ -2359,7 +2359,9 @@ const api: Handlers = {
       )
     const conversationId = api.openDm({ agentId: agent.id }, ctx)
     bg(runner.send(conversationId, handOffText(f, (t) => wiki.page(t)), [], undefined, ctx.person.id), 'wikiAsk')
-    wiki.dismissFinding(id)
+    // The finding stays until the agent closes it with wiki_fechar: handed away and dismissed, it left
+    // the list as if it were settled, and a bot that fixed it had nothing to mark.
+    wiki.handOffFinding(id, agent.handle)
     return conversationId
   },
   wikiImport: ({ dir }, ctx) => wiki.importVault(dir, nameOf(ctx)),
