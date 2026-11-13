@@ -1053,11 +1053,15 @@ function WikiSearch({ pages, onClose }: { pages: WikiPageInfo[]; onClose: () => 
 
 // ---------- settings ----------
 
-function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null; onClose: () => void; onImport: () => void }): ReactNode {
+export function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null; onClose: () => void; onImport: () => void }): ReactNode {
   const s = useStore((st) => st.settings)
+  const agents = useStore((st) => st.agents)
   const capture = s.wikiCapture !== false
   const edits = s.wikiEdits ?? 'approve'
   const resolve = s.wikiResolve === true
+  // The bot Wiki settings name for the job, when it is still here: it reads with its own instructions
+  // and model, so the resolver's model is not used and its field is not shown.
+  const bot = s.wikiResolveBot ? agents.find((a) => a.id === s.wikiResolveBot && isTeam(a)) : undefined
   const [dir, setDir] = useState(data?.dir ?? '')
   const [error, setError] = useState('')
   const pick = (window.tucano as unknown as { pickFolder?: () => Promise<string | null> }).pickFolder
@@ -1119,6 +1123,40 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
             <Toggle on={resolve} onChange={(v) => updateSettings({ wikiResolve: v })} />
           </div>
           {resolve && (
+            <div className="wk-setting">
+              <span>
+                <b>{L('Quem resolve', 'Who settles it')}</b>
+                <small>
+                  {L(
+                    'O do app lê no modelo escolhido abaixo. Um bot traz as instruções dele, feitas pra esse trabalho, e o modelo e o esforço dele.',
+                    "The app's resolver reads on the model chosen below. A bot brings its own instructions, written for this job, and its own model and effort."
+                  )}
+                </small>
+              </span>
+              <div className="wk-row">
+                <Select
+                  value={s.wikiResolveBot ?? ''}
+                  onChange={(v) => updateSettings({ wikiResolveBot: v ?? '' })}
+                  options={[{ value: '', label: L('O resolvedor do app', "The app's resolver") }, ...agents.filter(isTeam).map((a) => ({ value: a.id, label: a.name, hint: a.role }))]}
+                  aria-label={L('Quem resolve o achado', 'Who settles the finding')}
+                />
+              </div>
+            </div>
+          )}
+          {resolve && bot ? (
+            <div className="wk-setting">
+              <span>
+                <b>{L(`Lê como ${bot.name}`, `Reads as ${bot.name}`)}</b>
+                <small>
+                  {L(
+                    `As instruções e o modelo são os de ${bot.name}. O modelo do resolvedor do app não é usado enquanto o bot estiver escolhido, e volta a valer quando ele sair.`,
+                    `The instructions and the model are ${bot.name}'s. The app resolver's model is not used while the bot is chosen, and applies again when it is taken out.`
+                  )}
+                </small>
+              </span>
+            </div>
+          ) : null}
+          {resolve && !bot && (
             <div className="wk-setting">
               <span>
                 <b>{L('O modelo dele', 'Its model')}</b>

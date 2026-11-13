@@ -5,11 +5,16 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 ### Added
+- **A bot can settle a finding instead of the built-in resolver.** Wiki settings › The resolver now
+  opens with *Who settles it*: the app's own resolver, which reads on the model chosen below it, or one
+  of the team's bots, which brings its own instructions, model and effort, so the model field leaves the
+  card while a bot has the job. A bot written for the work answers better than a model named for it, and
+  what it spends shows on its own page. A bot that was archived, or deleted, falls back to the app's
+  resolver rather than failing the pass.
 
 - **What each provider has left, read from the logins already on this computer.** Usage and limits gains a column per provider that answers for a quota, with its own windows in its own unit: a percentage left for a subscription, the money left in a wallet, requests against a cap, and when each window resets. A provider whose login expired says so in its own column instead of hiding the others. The core reads them once as it comes up and every twenty minutes after that, and keeps the last reading, so the panel is on screen the moment the page opens: what it draws is the reading the core already holds, and when the fresh one lands the figures count from the old value to the new one instead of jumping. **Read again** forces a read, and the line above the panel says when the numbers were taken.
 - **The Memory page's bot tabs stay in the bar, however many bots there are.** The strip of tabs (All, You, one per bot with notes, Forgotten) was a plain row that ran past the 720 px column as soon as a few bots had notes, so the tabs after the first few, and the search control with them, could not be reached at all. The strip now scrolls inside the bar, the tab you pick slides to the middle of it, and two borderless arrows page it a screenful at a time, each offered only while there is strip in that direction. (#396)
 
-## [Unreleased]
 - **Smart routing is one more classifier feature, not a card of its own.** Settings › Models had a **Router** card of its own for the switch that turns smart routing on, next to the Classifiers section that holds every other job a classifier does. It is the last line of **Classifiers** now, under the six jobs, and the **Configure routing** link became an accent button beside its switch, offered only while the switch is on. The Router model the "who replies in a channel" job falls back to moved under that job, so nothing the old card held is lost.
 - **The clock is yours to pick: 24 hours, or 12 with am and pm.** Every time the app drew was 24-hour, except message times in English, which came out as `3:05 PM` because the shape was picked from the language, so the same conversation showed two clocks in two languages and the agent's own text disagreed with both. Settings › The conversation gains **Clock**, and one helper (`src/shared/clock.ts`) now formats every time the app draws and every time it writes into an agent's context: message times, routine schedules, the panel, usage charts, and the dates a reply or a routine carries into its prompt. Untouched, it reads exactly as it did before. Each person keeps their own. (#393)
 - **A reply that was cut with work behind it offers Continue, before Try again.** A reply killed by an app restart, a crash or a stop, having already read files, written, edited or run commands, offered one way back: **Try again**, which starts the whole thing over. **Continue** now comes first: it opens a new reply in the same thread carrying a proceed message, with what it was asked, how it was cut, every step it took (what it read, what it wrote, what it ran, what failed) and the instruction to go on from where it stopped without redoing what is already done. **Try again** stays a full start from the beginning of the session. A reply killed before any tool call came back has nothing to go on with and keeps **Try again** alone. Once it is continued, the killed reply stops offering either button: the session carries on in the new reply under it. (#390)
@@ -19,7 +24,17 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+<<<<<<< HEAD
 - **Clearer English labels and shorter hints.** Settings, Wiki, Memory, Skills, and related screens use more explicit actions and consistent terms. Hints repeat less information and fit more comfortably beside their controls; privacy and deletion warnings keep their consequences. (#409)
+=======
+- **A message sent while an agent is working starts its own reply.** Two messages to one agent in a
+  direct message gave one reply and one wait: the second was parked behind the reply already running
+  and only started when that one ended, so it looked like nothing happened. Every message now gets its
+  own reply and its own session, side by side, and the only thing that holds one back is the limit of
+  sessions running at once, which serves them in the order they came. A send marked as queued still
+  waits for what is running there, and a steer from a working reply's own pill reaches that reply
+  alone, never a second one of the same agent beside it.
+>>>>>>> origin/next
 
 - **The taskbar shows the toucan.** Windows draws a window's taskbar and Alt-Tab icon for the app id the installer registered, and the app asked for a different one (`dev.tucano.app` against the installer's `dev.tucano.next`), so the button came up under the framework's icon while the exe, the tray and the notifications carried the toucan. The id now lives in one place, `APP_ID` in `src/shared/app-identity.ts`, and the window also hands its icon to the window itself, so a copy run off the code looks like the app. `test/app-identity.test.ts` fails if the id and `package.json › build › appId` drift apart again.
 - **The wiki review stops reading a date as a page.** It took any two capitalised words in a row as a proper name, so a sentence that opens with a date offered "On Nov" as a page the wiki should have (26 hits across 24 pages) and "The Foundry" the same way; both had to be dismissed by hand, and the dismissal was carried forever to keep them quiet. A candidate is now dropped when its first word is a function word or when any word of it is a month, in either language, and a dismissed finding the review no longer finds goes with the pass that stops finding it. Thanks, apoapostolov! (#392)

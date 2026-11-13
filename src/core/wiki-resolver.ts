@@ -5,7 +5,7 @@
 // same shape as the review's, so it waits in the same card) or says what it couldn't settle and asks
 // the one question only the person can answer. Built in, like the curator: no agent, no DM.
 import { L, locale } from '../shared/lang'
-import type { Settings, WikiChange, WikiFinding, WikiOp, WikiPage } from '../shared/types'
+import type { Agent, Settings, WikiChange, WikiFinding, WikiOp, WikiPage } from '../shared/types'
 import { parseOps } from './wiki-curator'
 import type { Wiki, WikiView } from './wiki'
 
@@ -51,6 +51,23 @@ Dates written out ("Jan 12", never "12/01").
 Reply with JSON only:
 {"changes": [{"op": "replace"|"append"|"create", "page": "Title", "section": "Section", "text": "markdown", "old": "exact passage", "new": "new passage"}], "question": "one short sentence", "reason": "one sentence"}`
   )
+
+// Who reads a finding. Wiki settings may name a bot written for the job: it brings its own instructions,
+// which sit above the rules below, and reads on its own model and effort, so the model named for the
+// built-in resolver is not used. A name that no longer matches an agent reads as no bot at all.
+export interface Solver {
+  bot?: Agent
+  // What goes above the job's own rules: the bot's instructions, or nothing for the built-in resolver.
+  system: (base: string) => string
+}
+
+export const chooseSolver = (deps: { settings: () => Settings; agent: (id: string) => Agent | undefined }): Solver => {
+  const id = deps.settings().wikiResolveBot
+  const bot = id ? deps.agent(id) : undefined
+  if (!bot) return { system: (base) => base }
+  const own = bot.instructions.trim()
+  return { bot, system: (base) => (own ? `${own}\n\n${base}` : base) }
+}
 
 export interface Resolution {
   ops: WikiOp[]

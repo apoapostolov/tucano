@@ -64,7 +64,7 @@ import { COPY_SUFFIX, WikiGit } from './wiki-git'
 import { settingsPatchError } from './settings-patch'
 import { WikiCurator } from './wiki-curator'
 import { WikiReviewer } from './wiki-review'
-import { WikiResolver } from './wiki-resolver'
+import { chooseSolver, WikiResolver } from './wiki-resolver'
 import { staleTeamUps, teamUpDays } from './team-up'
 import { extractFile, extractLink } from './wiki-extract'
 import { backup, backupIfDue, exportTeam, importTeam } from './team'
@@ -949,33 +949,50 @@ function mergeWiki(from: { root: string; dir: string; held: { key: string; perso
   wiki.scan()
   return { copied, copies }
 }
-// The curator reads the conversations with the memory's cheap model, and keeps what lasts.
-// The model the wiki reads with: the memory's by default, or the one a job names (the resolver's).
-const wikiLlm = async (system: string, prompt: string, pick?: string): Promise<string> => {
+// One completion for a wiki job: no conversation, no tools, and a receipt, so what it costs is visible
+// where the rest of the spending is. `agentId` names whose spending it is: the wiki's own work, or the
+// bot the resolver was told to use.
+const wikiOnce = async (o: { model: string; effort: Agent['effort']; system: string; prompt: string; agentId: string }): Promise<string> => {
   await enginesReady
   const s = settings()
-  const model = usable(modelInfo(pick || s.memoryModel)) ?? modelInfo('haiku')!
+  const model = usable(modelInfo(o.model)) ?? modelInfo('haiku')!
   const st = s.engines[model.engine]
   if (!st.installed || !st.loggedIn) throw new Error(L(`O ${ENGINES[model.engine].label} não está pronto pra organizar a wiki.`, `${ENGINES[model.engine].label} isn't ready to organize the wiki.`))
   const cwd = join(dataDir, 'agents', '_wiki')
   mkdirSync(cwd, { recursive: true })
   const started = Date.now()
   let text = ''
-  for await (const ev of engineImpls[model.engine].run({ model: model.id, effort: 'low', system, prompt, cwd, signal: AbortSignal.timeout(180_000) })) {
+  for await (const ev of engineImpls[model.engine].run({ model: model.id, effort: o.effort, system: o.system, prompt: o.prompt, cwd, signal: AbortSignal.timeout(180_000) })) {
     if (ev.type === 'text') text += ev.delta
     else if (ev.type === 'done') {
       text = ev.text || text
-      db.addReceipt({ ...ev.usage, model: model.id, ms: Date.now() - started, messageId: 'wiki', agentId: 'wiki', engine: model.engine, at: Date.now() })
+      db.addReceipt({ ...ev.usage, model: model.id, ms: Date.now() - started, messageId: 'wiki', agentId: o.agentId, engine: model.engine, at: Date.now() })
     } else if (ev.type === 'error') throw new Error(ev.message)
   }
   return text
 }
+// The curator reads the conversations with the memory's cheap model, and keeps what lasts.
+// The model the wiki reads with: the memory's by default, or the one a job names (the resolver's).
+const wikiLlm = (system: string, prompt: string, pick?: string): Promise<string> =>
+  wikiOnce({ model: pick || settings().memoryModel, effort: 'low', system, prompt, agentId: 'wiki' })
 // A curation from someone's DM may read the pages held for them; any other, none that's held.
 const curator = new WikiCurator({ wiki, db, settings, emitMessage: (message) => emit({ type: 'message', message }), llm: wikiLlm, hidden: (id) => wiki.heldTitles(id ? (dmOf(id) ?? undefined) : undefined), beforeWrite: () => gitSync.pull() })
 // The review: by hand, or once a week when asked (checked every hour).
 const reviewer = new WikiReviewer({ wiki, settings, llm: wikiLlm })
 // The resolver: a finding the review couldn't settle, read again whole when the person asks (Wiki settings).
-const resolver = new WikiResolver({ wiki, settings, llm: (system, prompt) => wikiLlm(system, prompt, settings().wikiResolveModel) })
+const resolver = new WikiResolver({
+  wiki,
+  settings,
+  // A bot named in Wiki settings reads it, with its own instructions above the job's rules, on its own
+  // model and effort; without one, the built-in resolver reads on the model named for it.
+  llm: (system, prompt) => {
+    const solver = chooseSolver({ settings, agent: (id) => db.agent(id) })
+    const bot = solver.bot
+    return bot
+      ? wikiOnce({ model: bot.modelId, effort: bot.effort, system: solver.system(system), prompt, agentId: bot.id })
+      : wikiLlm(system, prompt, settings().wikiResolveModel)
+  }
+})
 setInterval(() => {
   if (reviewer.due()) void reviewer.review().then(() => emit({ type: 'wiki' }))
 }, 3600_000).unref()
@@ -1532,12 +1549,12 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId, mode }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
     reach(ctx, conversationId)
     // `mode`: how this one joins a reply already running here (the window sends what Enter or the
     // modifier keys said); without it, alongside it, as it always was.
     const how = mode === 'queue' || mode === 'steer' || mode === 'interrupt' ? mode : undefined
-    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(how ? { mode: how } : {}) }), 'sendMessage')
+    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(how ? { mode: how } : {}), ...(steerTo ? { steerTo } : {}) }), 'sendMessage')
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {

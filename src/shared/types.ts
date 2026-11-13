@@ -551,6 +551,9 @@ export interface Settings {
   wikiReview?: 'weekly' | 'off' // reviews the wiki on its own once a week; by hand only otherwise (the default)
   wikiResolve?: boolean // the resolver settles a finding the review couldn't fix, when asked (off by default)
   wikiResolveModel?: string // a model id; unset: the memory model, then Haiku
+  // The bot that reads the finding, by its id: its own instructions and model, with the resolver's
+  // model and effort unused (a bot written for the job beats a model named for it). Unset: the app's own.
+  wikiResolveBot?: string
   wikiDir?: string // where the wiki's folder is (an Obsidian vault, say); inside the app's data when unset
   defaultLimit: number
   approvalTtlHours: number
