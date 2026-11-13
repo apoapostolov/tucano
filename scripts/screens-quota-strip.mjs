@@ -79,8 +79,12 @@ function fixturesHome() {
 
 const { home, answers } = fixturesHome()
 const data = mkdtempSync(join(tmpdir(), 'tucano-'))
+// TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, measured
+// against the bundle a person would actually have.
+const installed = process.env.TUCANO_ELECTRON
 const app = await electron.launch({
-  args: ['.'],
+  args: [...(installed ? [] : ['.'])],
+  ...(installed ? { executablePath: installed } : {}),
   env: { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US', TUCANO_QUOTA_HOME: home, TUCANO_QUOTA_FIXTURES: answers }
 })
 const win = await app.firstWindow()
