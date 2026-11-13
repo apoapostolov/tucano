@@ -49,3 +49,18 @@ using these counts for a later report.
 
 The original 43-PR cohort remains 4 targeted repairs and zero complete feature audits.
 Ancestry, a passing baseline and this intake review do not establish a full feature signoff.
+
+
+## Room sharing requested during the audit
+
+Opened upstream issue #423 and draft PR #424 from `upstream/main`. The user chose separate
+controls for visibility to people and agent read access, private defaults, and Tuca support
+when discussing a room's purpose. Tuca proposes changes; the person confirms sharing history.
+The initial shared permission rules have five passing tests. The feature is not enabled and
+is not part of this security-fix delivery until end-to-end enforcement and UI validation pass.
+
+- [x] Create the issue and a concrete draft PR with permission rules and design/checklist.
+- [ ] Implement persistence, RPC validation and current-permission checks across every read path.
+- [ ] Add room controls, Tuca proposals and explicit widening-of-visibility confirmation.
+- [ ] Verify inherited team-up privacy, client revocation, artifacts, purge/export and restart.
+- [ ] Measure copy at 900/1280, capture synthetic screenshots and check installed scaling.
