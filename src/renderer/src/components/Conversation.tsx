@@ -644,9 +644,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const mineToEdit = !agent && !other && message.author.kind === 'person'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(message.text)
-  // The width the prompt had. The field takes it, so the words stay where they were and the box does not
-  // shrink to its own default width: measured when the pencil is pressed, before the bubble goes.
-  const [boxWidth, setBoxWidth] = useState(0)
   const field = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     const el = field.current
@@ -686,7 +683,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const name = agent ? agent.name : (other ?? me.name)
   return (
     // Someone else's message reads like any other voice in the conversation: on the left, with their name.
-    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
+    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}${editing ? ' is-editing' : ''}`} data-id={message.id}>
       <div className="msg__gutter">
         {!grouped &&
           (agent ? (
@@ -705,9 +702,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             className="msg__edit"
             title={L('Editar este pedido', 'Edit this prompt')}
             aria-label={L('Editar este pedido', 'Edit this prompt')}
-            onClick={(e) => {
-              const bubble = e.currentTarget.closest('.msg__body')?.querySelector('.md')
-              setBoxWidth(bubble ? Math.round(bubble.getBoundingClientRect().width) : 0)
+            onClick={() => {
               setDraft(message.text)
               setEditing(true)
             }}
@@ -747,7 +742,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         {message.run?.route && <RouteLine route={message.run.route} />}
         {message.run ? <RunSteps message={message} /> : null}
         {editing ? (
-          <div className="msg__edit-box" style={boxWidth ? { width: `${boxWidth}px` } : undefined}>
+          <div className="msg__edit-box">
             <textarea
               ref={field}
               rows={Math.min(10, Math.max(2, 1 + Math.round(draft.length / 90)))}

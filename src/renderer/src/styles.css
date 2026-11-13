@@ -4024,13 +4024,19 @@ body.is-resizing webview {
   }
 }
 /* The prompt as a field, where it stands: the words, and the two ways out of them. */
-/* The field takes the width the prompt had, handed over when the pencil is pressed; the textarea fills
-   that box instead of falling back to its own twenty-column default. */
+/* A prompt being edited takes the widest lane a prompt is allowed, not the width its own words happened
+   to need: a short prompt opens a field the length of the column, so there is room to write in. The lane
+   is the bubble's own limit, and the textarea fills it instead of falling back to its twenty-column
+   default. */
+.messages > .msg--me.is-editing .msg__body {
+  width: min(78%, 620px);
+}
 .msg__edit-box {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin: 2px 0 4px;
+  width: 100%;
   max-width: 100%;
 }
 .msg__edit-box textarea {
