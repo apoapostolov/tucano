@@ -14,6 +14,7 @@ Object.assign(window, { innerWidth: 1280, innerHeight: 800 })
 Object.assign(globalThis, { ResizeObserver: class { observe(): void {} unobserve(): void {} disconnect(): void {} } })
 
 const deleted: string[] = []
+let closed = 0
 let fake: State
 vi.mock('../src/renderer/src/store', async (original) => {
   const real = await original<typeof import('../src/renderer/src/store')>()
@@ -21,11 +22,12 @@ vi.mock('../src/renderer/src/store', async (original) => {
     ...real,
     useStore: <T,>(select: (s: State) => T): T => select(fake),
     deleteMessage: (id: string): void => void deleted.push(id),
+    openPanel: (): void => void (closed += 1),
     stopRun: (): void => {}
   }
 })
 const { getState } = await import('../src/renderer/src/store')
-const { MessageList } = await import('../src/renderer/src/components/Conversation')
+const { MessageList, DeleteSession } = await import('../src/renderer/src/components/Conversation')
 const { createRoot } = await import('react-dom/client')
 
 const said = (id: string, text: string, at = 1): Message => ({ id, conversationId: 'dm', author: { kind: 'person', id: 'ana' }, text, at })
@@ -58,6 +60,7 @@ const trash = (): HTMLElement | null => document.querySelector('.msg__delete')
 
 beforeEach(() => {
   deleted.length = 0
+  closed = 0
   root = createRoot(document.getElementById('root')!)
 })
 afterEach(() => act(() => root.unmount()))
@@ -110,16 +113,37 @@ describe('the trash that deletes a session', () => {
     expect(trash()).toBeNull()
   })
 
-  it('rides the corner the thread button took, so a long reply never has one glyph over the other', async () => {
+  it("keeps every run's corner on the rail, with the trash in it, so a long reply never loses the glyph", async () => {
     // In a timeline with threads the thread button is pinned to the top of the run, not left at the
     // message's corner: the trash goes in that same pin, under it, or the two would share one 20px spot.
     await render([said('m1', 'corrige o login'), reply('r1')])
     const pin = trash()!.closest('.msg__anchor-pin')
     expect(pin).toBeTruthy()
     expect(pin!.querySelector('.msg__reply')).toBeTruthy() // the pinned thread button, above it
-    // Without threads nothing is pinned, and the trash stays at the message's own corner.
+    // Nothing threaded means nothing takes the first place, so the trash starts that same column.
     await renderFlat([said('m1', 'corrige o login'), reply('r1')])
-    expect(trash()!.closest('.msg__anchor-pin')).toBeNull()
+    expect(trash()!.closest('.msg__anchor-pin')).toBeTruthy()
+    expect(trash()!.closest('.msg__anchor-pin--alone')).toBeTruthy()
     expect(trash()!.closest('.msg')).toBeTruthy()
+    // The way back to the prompt rides the same pin: on a long run it stays reachable however far
+    // down the steps the reply has been scrolled.
+    await render([said('m1', 'corrige o login'), said('m2', 'e o logout?'), reply('r1')])
+    const jump = document.querySelector('.msg__reply--up')
+    expect(jump).toBeTruthy()
+    expect(jump!.closest('.msg__anchor-pin')).toBeTruthy()
+  })
+
+  it("sits in the thread's own header, beside close, and takes the panel away with the session", async () => {
+    await act(async () => root.render(<DeleteSession message={reply('r1')} where="head" />))
+    const button = trash()!
+    expect(button.className).toContain('msg__delete--head')
+    expect(button.className).not.toContain('icon-btn--sm') // the header's own size, beside close
+    expect(button.getAttribute('title')).toBe('Apagar esta sessão')
+    await act(async () => button.click())
+    expect(deleted).toEqual([]) // the first press only arms it
+    expect(closed).toBe(0)
+    await act(async () => button.click())
+    expect(deleted).toEqual(['r1'])
+    expect(closed).toBe(1) // nothing is left to read in the panel
   })
 })
