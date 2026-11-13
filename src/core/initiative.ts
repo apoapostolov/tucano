@@ -10,6 +10,7 @@ import {
   cleanInitiative,
   closedAtFor,
   commitmentError,
+  dayStartIn,
   inReach,
   initiativeError,
   isClosed,
@@ -27,6 +28,7 @@ import {
 import { L } from '../shared/lang'
 import type { Person } from '../shared/types'
 import { dependencyOf, movedLinks, narrowScope, noteFrom, stateFrom, waitsOnPerson } from './initiative-links'
+import { attemptsOf, dueAt, quietStreakOf } from './initiative-state'
 import type { Db } from './db'
 import type { People } from './people'
 
@@ -40,9 +42,30 @@ export class Initiative {
     private people: People
   ) {}
 
-  // What this person's page shows: their own records, and only theirs.
-  view(person: Person): InitiativeView {
-    return { config: this.db.initiative(person.id) ?? null, commitments: this.db.commitments(person.id) }
+  // What this person's page shows: their own records, what their coordinator did, and what is left of
+  // today. A page is where a person asks why the bot woke, so the work behind each responsibility is
+  // read fresh here too: a state written by a tick that has not happened yet would be a stale answer.
+  view(person: Person, now = Date.now(), paused = false): InitiativeView {
+    const config = this.db.initiative(person.id) ?? null
+    const commitments = this.db.commitments(person.id)
+    const wakes = this.db.wakes(person.id, { limit: 30 })
+    if (!config) return { config, commitments, wakes, status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused } }
+    const fresh = this.refresh(person, now)
+    const open = commitments.filter((c) => !isClosed(c.state))
+    const today = dayStartIn(config.timezone, now)
+    const ran = attemptsOf(wakes).filter((w) => w.at >= today)
+    return {
+      config,
+      commitments: this.db.commitments(person.id),
+      wakes,
+      status: {
+        dueAt: dueAt(config, attemptsOf(wakes)[0]?.at, quietStreakOf(wakes), this.floorMinutes(config, fresh.waitingUser)),
+        open: open.length,
+        waitingOnPerson: open.filter((c) => c.state === 'waiting_user').length,
+        today: { reviews: ran.length, tokens: ran.reduce((n, w) => n + w.tokens, 0) },
+        paused
+      }
+    }
   }
 
   // A configuration edit, against the revision the page read. A save in between is refused instead

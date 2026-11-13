@@ -82,7 +82,7 @@ const commitment = (over: Partial<CommitmentInput> = {}): CommitmentInput => ({
 
 describe('the record', () => {
   it('starts with nothing, and reads as off: a fresh workspace and an upgraded one alike', () => {
-    expect(initiative.view(me)).toEqual({ config: null, commitments: [] })
+    expect(initiative.view(me)).toEqual({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
     // An install from before this build: every migration but the last, then opened as it would be.
     const old = join(mkdtempSync(join(tmpdir(), 'ad-initiative-')), 'old.db')
     const before = MIGRATIONS.length - 1
@@ -105,6 +105,26 @@ describe('the record', () => {
     expect(upgraded.commitment(saved.id)).toMatchObject({ state: 'open', unchangedFor: 0, evidence: [], links: [] })
     expect(upgraded.resumeSeen(upgraded.ownerId(), 'delegation', 'nothing')).toBeUndefined()
     upgraded.close()
+  })
+
+  it('says what it did, what is waiting on the person, and what is left of today', () => {
+    const saved = initiative.save(me, config({ dailyReviews: 4 }), 0)
+    initiative.saveCommitment(me, commitment())
+    const waiting = initiative.saveCommitment(me, commitment({ description: 'Ask the client which number.', state: 'waiting_user' }))
+    const now = Date.now()
+    initiative.settle(me, now, [], now) // one tick passed: nothing moved
+    db.saveWake({ id: 'w1', personId: me.id, agentId: 'orion', revision: saved.revision, at: now - 60_000, endedAt: now - 59_000, outcome: 'reported', text: 'Answered the client.', tokens: 1_200 })
+    db.saveWake({ id: 'w2', personId: me.id, agentId: 'orion', revision: saved.revision, at: now - 120_000, endedAt: now - 119_000, outcome: 'quiet', text: '[[quiet]]', tokens: 300 })
+    const view = initiative.view(me, now)
+    // Newest first, and the person's own bookkeeping: what ran today, what it cost, what is left.
+    expect(view.wakes.map((w) => w.id)).toEqual(['w1', 'w2'])
+    expect(view.status.today).toEqual({ reviews: 2, tokens: 1_500 })
+    expect(view.status.open).toBe(2)
+    expect(view.status.waitingOnPerson).toBe(1)
+    expect(view.status.paused).toBe(false)
+    expect(view.status.dueAt).toBe(now - 60_000 + 15 * 60_000) // the cadence after its last attempt
+    expect(initiative.view(me, now, true).status.paused).toBe(true)
+    expect(view.commitments.map((c) => c.id)).toContain(waiting.id)
   })
 
   it('survives a restart, revision and all', () => {
@@ -135,7 +155,7 @@ describe('whose it is', () => {
   it("is invisible to anyone else, down to not knowing it exists", () => {
     initiative.save(me, config(), 0)
     const mine = initiative.saveCommitment(me, commitment())
-    expect(initiative.view(bia)).toEqual({ config: null, commitments: [] })
+    expect(initiative.view(bia)).toEqual({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
     // Bia cannot reach my responsibility by its id, and cannot write one on my behalf either,
     // whether or not she has a coordinator of her own.
     expect(() => initiative.saveCommitment(bia, commitment({ id: mine.id, description: 'not mine', conversationId: 'dm-bia-orion', scope: { conversations: [], kinds: [] } }))).toThrow(/no longer exists|não existe/)

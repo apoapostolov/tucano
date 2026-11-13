@@ -1,7 +1,7 @@
 // What a check-in may do right now, and what it is told. Pure: the clock, the records and the runner
 // are read by the caller, so every rule here can be read on its own and tested without one.
 import { L, locale } from '../shared/lang'
-import { backoffMinutes, isClosed, type Commitment, type InitiativeConfig, type LinkSnapshot } from '../shared/initiative'
+import { backoffMinutes, isClosed, MAX_QUIET_BACKOFF, type Commitment, type InitiativeConfig, type InitiativeWake, type LinkSnapshot, type WakeOutcome } from '../shared/initiative'
 import { linkLine } from './initiative-links'
 
 // How often the clock looks. A cadence is in minutes, so a minute is close enough, and a tick that
@@ -14,6 +14,22 @@ export const BRIEFED_COMMITMENTS = 12
 export const RESUME_FLOOR_MINUTES = 5
 
 export type Refusal = 'off' | 'paused' | 'busy' | 'not-due' | 'cap' | 'allowance' | 'quiet-hours'
+
+// What a check-in that ran counts as: these are the attempts, not the ones admitted and refused.
+export const RAN: readonly WakeOutcome[] = ['quiet', 'reported', 'failed', 'interrupted']
+export const attemptsOf = (wakes: InitiativeWake[]): InitiativeWake[] => wakes.filter((w) => RAN.includes(w.outcome))
+
+// Quiet check-ins in a row, newest first: each one doubles the wait before the next.
+export const quietStreakOf = (wakes: InitiativeWake[]): number => {
+  let n = 0
+  for (const w of wakes) {
+    if (w.outcome === 'skipped') continue
+    if (w.outcome !== 'quiet') break
+    n++
+    if (n >= MAX_QUIET_BACKOFF) break
+  }
+  return n
+}
 
 export interface AdmissionInput {
   config: InitiativeConfig
@@ -30,6 +46,9 @@ export interface AdmissionInput {
   resume?: boolean
   // What this person's own wait is: the cadence, or longer while something of the bot's waits on them.
   floorMinutes?: number
+  // The person asked for this one ("Conferir agora"): no wait to respect, theirs to skip. The caps,
+  // the allowance and the pause still hold.
+  manual?: boolean
 }
 
 export type Admission = { run: false; why: Refusal } | { run: true; at: number; resume: boolean }
@@ -48,7 +67,9 @@ export function admit(i: AdmissionInput): Admission {
   if (i.paused) return { run: false, why: 'paused' }
   if (i.busy) return { run: false, why: 'busy' }
   const resume = i.resume === true
-  if (resume) {
+  if (i.manual) {
+    // Asked for by hand: the cadence and the quiet hours are theirs to skip. Nothing else is.
+  } else if (resume) {
     // News, but on the clock too: one attempt per floor minutes, so a failing or paused run is retried
     // quietly instead of in a loop.
     if (i.lastAt !== undefined && i.now - i.lastAt < RESUME_FLOOR_MINUTES * 60_000) return { run: false, why: 'not-due' }

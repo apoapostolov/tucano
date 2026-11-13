@@ -104,9 +104,21 @@ export interface Commitment {
   closedAt?: number
 }
 
+// What a page shows: the configuration, what the coordinator holds, what it did, and what is left of
+// today's allowance. Everything here is the person's own.
+export interface InitiativeStatus {
+  dueAt?: number // when the next check-in is due; unset: off
+  open: number // responsibilities still open
+  waitingOnPerson: number // of those, the ones resting on their answer or approval
+  today: { reviews: number; tokens: number } // what today has used
+  paused: boolean // the app is paused, so nothing runs
+}
+
 export interface InitiativeView {
   config: InitiativeConfig | null // unset: this person has no coordinator, and nothing runs
   commitments: Commitment[]
+  wakes: InitiativeWake[] // newest first: the internal evidence, for the person whose it is
+  status: InitiativeStatus
 }
 
 // What a check-in came to. `quiet`: it found nothing that needs the person, and said nothing in the
@@ -147,6 +159,8 @@ export interface InitiativeWake {
   text?: string // what it said, for the person alone
   tokens: number
   messageId?: string
+  // It said what the last one said, word for word: nothing was delivered, and its record says why.
+  deduped?: boolean
 }
 
 // The interval a person's coordinator waits before its next check-in: the brief's cadence, doubling

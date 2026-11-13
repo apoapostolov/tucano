@@ -185,6 +185,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   initiative: {},
   saveInitiative: { config: 'o', expectedRevision: 'n' },
   saveCommitment: { commitment: 'o' },
+  checkInNow: {},
 }
 
 const fits = (v: unknown, t: string): boolean => {

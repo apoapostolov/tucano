@@ -49,7 +49,9 @@ const config = (over: Partial<InitiativeInput> = {}): InitiativeInput => ({
 
 describe('over the API', () => {
   it('has nothing to show until someone asks for it', async () => {
-    expect(await ana.call<InitiativeView>('initiative')).toEqual({ config: null, commitments: [] })
+    expect(await ana.call<InitiativeView>('initiative')).toEqual({ config: null, commitments: [], wakes: [], status: { open: 0, waitingOnPerson: 0, today: { reviews: 0, tokens: 0 }, paused: false } })
+    // "Conferir agora" with nothing set up says so instead of starting anything.
+    expect(await ana.call('checkInNow')).toEqual({ started: false, why: 'off', running: false })
   })
 
   it('saves the brief against the revision the page read, and refuses an older one', async () => {

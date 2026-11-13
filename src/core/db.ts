@@ -629,7 +629,9 @@ const COLUMNS: [string, string, string][] = [
   // Check-ins in a row that found a responsibility exactly where it was: a cycle with no progress is
   // bounded, not repeated forever. Added here rather than by a migration because a database from an
   // older build may already hold the table this column completes.
-  ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0']
+  ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0'],
+  // A check-in that said exactly what the last one said: kept as evidence, never delivered twice.
+  ['initiative_wakes', 'deduped', 'INTEGER']
 ]
 
 
@@ -1908,12 +1910,12 @@ export class Db {
   saveWake(w: InitiativeWake): void {
     this.db
       .prepare(
-        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id, deduped)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET ended_at = excluded.ended_at, outcome = excluded.outcome, why = excluded.why,
-           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id`
+           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id, deduped = excluded.deduped`
       )
-      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null)
+      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null, w.deduped ? 1 : null)
   }
 
   // Newest first: what this person's coordinator did, and what it cost. `since`: only those after.
@@ -1931,7 +1933,8 @@ export class Db {
       ...(r['why'] ? { why: str(r['why']) as InitiativeWake['why'] } : {}),
       ...(r['text'] ? { text: str(r['text']) } : {}),
       tokens: Number(r['tokens']),
-      ...(r['message_id'] ? { messageId: str(r['message_id']) } : {})
+      ...(r['message_id'] ? { messageId: str(r['message_id']) } : {}),
+      ...(r['deduped'] === 1 ? { deduped: true } : {})
     }))
   }
 

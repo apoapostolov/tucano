@@ -49,6 +49,7 @@ let delay = 2
 let clock = 1_000_000
 let dm: string
 let turns: string[] = []
+let told: { title: string; body: string }[] = []
 
 const engines = (): Record<EngineId, Engine> => {
   const one = (id: EngineId): Engine =>
@@ -71,6 +72,7 @@ beforeEach(async () => {
   delay = 2
   clock = 1_000_000
   turns = []
+  told = []
   settings = {
     workspaceName: 'Ana',
     context: '',
@@ -86,7 +88,15 @@ beforeEach(async () => {
   gateway = new Gateway()
   await gateway.start()
   runner = new Runner({ db, engines: engines(), settings: async () => settings, emit: (e) => events.push(e), workDir: mkdtempSync(join(tmpdir(), 'ad-init-work-')), gateway })
-  heartbeat = new Heartbeat({ db, runner, initiative, settings: () => settings, people: () => db.people(), now: () => clock })
+  heartbeat = new Heartbeat({
+    db,
+    runner,
+    initiative,
+    settings: () => settings,
+    people: () => db.people(),
+    notify: (title, body) => told.push({ title, body }),
+    now: () => clock
+  })
   return () => gateway.stop()
 })
 
@@ -339,6 +349,68 @@ describe('a check-in', () => {
     // two hours, because asking a second time helps nobody.
     expect(await heartbeat.tick(clock + 90 * 60_000)).toEqual([])
     expect((await heartbeat.tick(clock + 121 * 60_000)).length).toBe(1)
+  })
+
+  it('reaches the person once for a report, and never for a quiet one', async () => {
+    const { due } = turnedOn()
+    reply = '[[quiet]]'
+    clock = due
+    await heartbeat.tick(due)
+    expect(told).toEqual([])
+    reply = '**The invoice is still unpaid.** I asked the client for the number.'
+    const next = heartbeat.dueAtFor(db.owner(), db.initiative(db.ownerId())!)!
+    clock = next
+    await heartbeat.tick(next)
+    expect(told).toHaveLength(1)
+    expect(told[0]!.title).toMatch(/lia|Lia/)
+    // The notification carries the first line, without the markdown around it.
+    expect(told[0]!.body).toContain('The invoice is still unpaid.')
+    expect(told[0]!.body).not.toContain('**')
+  })
+
+  it('keeps a report that repeats the one before it out of the conversation, and says why', async () => {
+    const { due } = turnedOn()
+    reply = 'The invoice is still unpaid.'
+    clock = due
+    expect((await heartbeat.tick(due)).length).toBe(1)
+    expect(visible()).toHaveLength(1)
+    // The same finding, wrapped differently: not news, so not delivered.
+    reply = '**The invoice is still unpaid.**'
+    const next = heartbeat.dueAtFor(db.owner(), db.initiative(db.ownerId())!)!
+    clock = next
+    const ran = await heartbeat.tick(next)
+    expect(ran[0]).toMatchObject({ outcome: 'reported', deduped: true })
+    expect(visible()).toHaveLength(1)
+    expect(told).toHaveLength(1)
+    // The record keeps what it said, so the page can explain why nothing appeared.
+    expect(db.wakes(db.ownerId())[0]!.deduped).toBe(true)
+    // A day later the same words are a new finding, if it says them again.
+    clock = next + 25 * 3_600_000
+    const later = await heartbeat.tick(clock)
+    expect(later[0]?.deduped).toBeUndefined()
+  })
+
+  it('looks right now when the person asks, and says what stopped it when it cannot', async () => {
+    const { saved } = turnedOn()
+    reply = '[[quiet]]'
+    // Nothing is due for fifteen minutes, and the person asks anyway.
+    clock = saved.updatedAt + 60_000
+    expect(await heartbeat.tick(clock)).toEqual([])
+    expect(heartbeat.startNow(db.owner())).toEqual({ started: true })
+    // One at a time: the button refuses while that one is still going.
+    expect(heartbeat.startNow(db.owner())).toEqual({ started: false, why: 'busy' })
+    await runner.idle()
+    await new Promise((r) => setTimeout(r, 20))
+    expect(db.wakes(db.ownerId()).map((w) => w.outcome)).toEqual(['quiet'])
+    expect(heartbeat.running(db.ownerId())).toBe(false)
+    // Paused: nothing starts, and the reason is the one a person can act on.
+    runner.setPaused(true)
+    expect(heartbeat.startNow(db.owner())).toEqual({ started: false, why: 'paused' })
+    runner.setPaused(false)
+    // The day's reviews spent: it says so instead of spending more.
+    const cap = db.initiative(db.ownerId())!
+    initiative.save(db.owner(), { ...cap, enabled: true, dailyReviews: 1 } as unknown as InitiativeInput, cap.revision)
+    expect(heartbeat.startNow(db.owner())).toEqual({ started: false, why: 'cap' })
   })
 
   it('keeps a failed one out of the conversation, and says so in its record', async () => {

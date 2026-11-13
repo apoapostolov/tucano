@@ -2492,7 +2492,9 @@ ${note}`,
           // Handed work that came to rest: its end goes back to whoever asked, who tells the person.
           const mine = this.handedIn(msg)
           if (mine) return this.settle(mine, 'done', msg)
-          if (!opts.routine) this.deps.notify?.(L(`${agent.name} terminou`, `${agent.name} is done`), outcome(msg) || L('Respondeu na conversa.', 'Replied in the conversation.'), conv.id, 'done', msg.threadId, [requester.id])
+          // A check-in is the coordinator's own turn: it says nothing while it works, and the heartbeat
+          // decides whether what it found reaches the person at all.
+          if (!opts.routine && !opts.initiative) this.deps.notify?.(L(`${agent.name} terminou`, `${agent.name} is done`), outcome(msg) || L('Respondeu na conversa.', 'Replied in the conversation.'), conv.id, 'done', msg.threadId, [requester.id])
         }
         this.callPeople(conv, msg, agent.name)
         // On handed work, naming whoever asked ("@lia, pronto") calls no one: the answer already goes back to them.
@@ -2510,7 +2512,7 @@ ${note}`,
     // Handed work that stopped short: whoever asked hears why, and takes it to the person.
     const short = st === 'failed' || st === 'limit_reached' || st === 'paused' || st === 'stopped' ? this.handedIn(msg) : undefined
     if (short) this.settle(short, st === 'stopped' ? 'cancelled' : 'failed', msg)
-    else if (!opts.routine && (st === 'failed' || st === 'limit_reached')) this.deps.notify?.(L(`${agent.name} parou`, `${agent.name} stopped`), outcome(msg), conv.id, 'done', msg.threadId, [requester.id])
+    else if (!opts.routine && !opts.initiative && (st === 'failed' || st === 'limit_reached')) this.deps.notify?.(L(`${agent.name} parou`, `${agent.name} stopped`), outcome(msg), conv.id, 'done', msg.threadId, [requester.id])
 
     const updated = db.agent(agent.id)
     if (updated) emit({ type: 'agent', agent: updated })

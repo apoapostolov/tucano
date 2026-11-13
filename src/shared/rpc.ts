@@ -220,6 +220,7 @@ export interface Api {
   initiative(): InitiativeView // my own proactive coordinator and its responsibilities, and no one else's
   saveInitiative(p: { config: InitiativeInput; expectedRevision: number }): InitiativeConfig // expectedRevision: what the page read; 0 creates
   saveCommitment(p: { commitment: CommitmentInput }): Commitment // one responsibility: its provenance, scope and links
+  checkInNow(): { started: boolean; why?: string; running: boolean } // "Conferir agora": my coordinator looking on the spot
 }
 
 export type Method = keyof Api

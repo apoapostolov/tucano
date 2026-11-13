@@ -978,7 +978,19 @@ const runner = new Runner({
 runner.setPaused(!!settings().paused)
 // The clock behind initiative: one check-in at a time per person, admitted only while it is on, not
 // paused, due, and inside that person's reviews and allowance. Nothing runs until someone turns it on.
-const heartbeat = new Heartbeat({ db, runner, initiative, settings, people: () => db.people() })
+const heartbeat = new Heartbeat({
+  db,
+  runner,
+  initiative,
+  settings,
+  people: () => db.people(),
+  // A report that reaches the conversation reaches the person the same way any reply does.
+  notify: (title, body, conversationId, to) => {
+    const who = notifyTo(conversationId, to)
+    toMain({ type: 'notify', title, body, conversationId, ...(who ? { to: who } : {}), sound: settings().sounds !== false })
+    void push.send({ title, body, ...(conversationId ? { conversationId } : {}) }, who)
+  }
+})
 // Installs from before the Tuca get him at the first start after the introduction.
 void enginesReady.then(() => {
   if (settings().onboarding?.done) ensureTuca()
@@ -2022,7 +2034,7 @@ const api: Handlers = {
   // A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): their own, and only
   // ever the asking person's. It grants nothing Autonomy does not already allow. No review runs yet:
   // these records and their checks are the whole of this slice.
-  initiative: (_, ctx) => initiative.view(ctx.person),
+  initiative: (_, ctx) => initiative.view(ctx.person, Date.now(), runner.isPaused()),
   saveInitiative: ({ config, expectedRevision }, ctx) => {
     const saved = initiative.save(ctx.person, config, expectedRevision)
     record(ctx, 'initiative.saved', saved.agentId, { enabled: saved.enabled, revision: saved.revision })
@@ -2032,6 +2044,12 @@ const api: Handlers = {
     const saved = initiative.saveCommitment(ctx.person, commitment)
     record(ctx, 'commitment.saved', saved.id, { agent: saved.agentId, state: saved.state })
     return saved
+  },
+  // "Conferir agora": the person asking their coordinator to look right now, on the spot.
+  checkInNow: (_, ctx) => {
+    const started = heartbeat.startNow(ctx.person)
+    record(ctx, 'initiative.checkNow', undefined, { started: started.started, ...(started.why ? { why: started.why } : {}) })
+    return { ...started, running: heartbeat.running(ctx.person.id) }
   },
   wiki: (_, ctx) => {
     const w = wikiFor(ctx)

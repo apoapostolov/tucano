@@ -128,6 +128,7 @@ export const NEEDS: Record<Method, Need> = {
   // A person's own proactive coordinator: these handlers only ever touch the asking person's records,
   // so another person's brief, scope and responsibilities are not reachable through them at all.
   initiative: 'anyone',
+  checkInNow: 'anyone',
   saveInitiative: 'anyone',
   saveCommitment: 'anyone',
   updateSettings: 'target', // personal preferences, anyone; the rest, admins
