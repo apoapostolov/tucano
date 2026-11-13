@@ -89,7 +89,7 @@ is not part of this security-fix delivery until end-to-end enforcement and UI va
 - [x] Pass public retention typecheck and 27 focused tests; the combined deletion/retention
   interaction passes 19 focused tests. UI strings and layouts were unchanged by these repairs.
 - [x] Pass the public retention suite: 1,730 passed, 60 skipped, zero failed.
-- [ ] Complete the final combined-tree suite.
+- [x] Pass the final combined-tree suite: 2,537 passed, 61 skipped, zero failed.
 - [x] Push #432 at `455d7f5`, verify its pushed SHA in a fresh worktree (typecheck and 30 tests), and update its description.
 - [ ] Run built hidden QA, install through the helper and verify the installed app and hash.
 - [ ] Refresh current-head review evidence and publish the reconciled integration without
@@ -139,3 +139,6 @@ pushed-SHA worktree passed typecheck and 11 checks, and its interaction with ini
 The normal installed workspace had a working reply during delivery preparation. Its database
 was inspected read-only for status counts only. Do not close that instance for an installer
 until the work finishes; no live data was edited and no foreground action was used.
+
+The final combined run passed at application source `37d0c63`: 2,537 passed, 61 skipped,
+zero failed. Later record commits do not change the packaged application source.

@@ -11,7 +11,8 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 - [x] Confirm upstream is still `73b724b` and restore previously published audit repairs.
 - [x] Reproduce and repair retention cascades that bypass active/recent/keep-forever messages.
 - [x] Reproduce and repair active and queued replies returning after a history wipe.
-- [ ] Finish full-suite, public revision, hidden runtime and installed-app verification.
+- [x] Finish the public revision, final combined suite (2,537 passed, 61 skipped), build and hidden runtime checks.
+- [ ] Finish installed-app verification after the working live reply completes.
 - [ ] Continue room sharing #423/#424 with persistence, enforcement and Tuca proposals.
 
 See [the current intake record](agent-intake-review.md) for exact source revisions and remaining

@@ -700,6 +700,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Memory: the bot tabs stay inside the bar | 396 | 397 |
 | Times as a 12-hour or a 24-hour clock | 393 | 395 |
 | Isolated UI checks without taking focus | | 372 |
+| Notifications over every window | | 417 |
 | Emit fake sign-in output before resolving the exit | | 386 |
 | Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
 | A hand-off answer comes back however the reply ends | 376 | 377 |
