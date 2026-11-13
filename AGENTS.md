@@ -550,6 +550,7 @@ to a reviewer than a second PR that has to be read against the first.
 
 | Feature | Issue | PR |
 | --- | --- | --- |
+| English labels and hints across Settings and Wiki | 409 | 410 |
 | Skills: filter and group an agent's tab | 228 | 244 |
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
