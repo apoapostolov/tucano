@@ -443,7 +443,7 @@ export interface RoutineEvent {
 // session it ended with is resumed, so the past comes from the cache instead of being sent again.
 type ReplyOpts = { depth: number; existing?: Message; task?: string; work?: string; routine?: boolean; threadId?: string; trigger?: string; replyTo?: string; followUp?: string }
 // Replies waiting for this agent in this conversation and thread.
-type Parked = { agent: Agent; conv: Conversation; opts: ReplyOpts; urgent: boolean; merge: boolean; done: ((m: Message | undefined) => void)[] }
+type Parked = { agent: Agent; conv: Conversation; opts: ReplyOpts; urgent: boolean; done: ((m: Message | undefined) => void)[] }
 
 type Control = {
   ctl: AbortController
@@ -641,7 +641,7 @@ export class Runner {
   // `by`: the person writing (the Tucano's owner when left out: the phone, older callers).
   // `answers`: the question this answers, from the inbox or the decisions card (its asker answers,
   // wherever the person writes from). The caller checked that they may answer it.
-  async send(conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, by?: string, opts: { answers?: string; files?: FileUpload[]; mode?: SendMode } = {}): Promise<void> {
+  async send(conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, by?: string, opts: { answers?: string; files?: FileUpload[]; mode?: SendMode; steerTo?: string } = {}): Promise<void> {
     const { db, emit } = this.deps
     const conv = db.conversation(conversationId)
     const typed = text.trim()
@@ -744,7 +744,7 @@ export class Runner {
     // Handed to the reply that's running there, or in place of it: before the router, since both are
     // about what is running now, whatever answers it (mentions or the router's pick).
     if (mode === 'steer') {
-      if (this.steerIn(conv.id, L(`${writer.name} escreveu isto enquanto você trabalhava:`, `${writer.name} wrote this while you were working:`), typed)) return
+      if (this.steerIn(conv.id, L(`${writer.name} escreveu isto enquanto você trabalhava:`, `${writer.name} wrote this while you were working:`), typed, opts.steerTo)) return
     }
     if (mode === 'interrupt') this.interruptIn(conv.id)
     if (responders.length === 0) {
@@ -768,7 +768,7 @@ export class Runner {
     for (const agent of responders)
       this.runIn(
         conv.id,
-        () => this.startReply(agent, conv, { depth: 1, threadId: replyIn, replyTo: mine.id, ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) }, { urgent: true, merge: mode === 'parallel' }),
+        () => this.startReply(agent, conv, { depth: 1, threadId: replyIn, replyTo: mine.id, ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) }, { urgent: true, parallel: mode === 'parallel' }),
         mode === 'queue',
         queued ? mine : undefined
       )
@@ -835,10 +835,13 @@ export class Runner {
 
   // A steer goes to the reply running in that conversation, which reads it at its next tool call.
   // With none running, the message is a prompt like any other (the caller runs it).
-  private steerIn(conversationId: string, from: string, text: string): boolean {
+  // `only`: the reply a steer was written for. Two replies of one agent can run there at once (two
+  // messages, each its own session), so a steer from a reply's own pill must reach that reply alone.
+  private steerIn(conversationId: string, from: string, text: string, only?: string): boolean {
     let taken = false
     for (const c of this.controllers.values()) {
       if (c.msg.conversationId !== conversationId || c.reason) continue
+      if (only && c.msg.id !== only) continue
       ;(c.steer ??= []).push(`${from}\n\n${text}`)
       taken = true
     }
@@ -1298,22 +1301,20 @@ export class Runner {
     else this.tells.get(key)?.()
   }
 
-  // A reply not routed nor handed off (those wait in routed and handOff): one at a time per agent and
-  // thread (replyKey), wherever it comes from. While the agent replies there it waits, off the queue,
-  // and starts when that reply ends; a person's newer message there takes over theirs (`merge`).
+  // A reply not routed nor handed off (those wait in routed and handOff). A message of the person's own
+  // starts its own reply even while another runs there: every message gets a session, and what holds one
+  // back is the scheduler's limit (MAX_CONCURRENT), which serves them in the order they came. A reply
+  // that had to wait behind another for the same agent is what made a second message look unanswered.
+  // A send the person marked as queued waits for what runs in that conversation, off the queue.
   // Resolves with the reply, or undefined when it failed or was dropped.
-  private startReply(agent: Agent, conv: Conversation, opts: ReplyOpts, how: { urgent?: boolean; merge?: boolean } = {}): Promise<Message | undefined> {
+  private startReply(agent: Agent, conv: Conversation, opts: ReplyOpts, how: { urgent?: boolean; parallel?: boolean } = {}): Promise<Message | undefined> {
     const key = replyKey(agent.id, conv.id, opts.existing ? opts.existing.threadId : opts.threadId)
     return new Promise((resolve) => {
-      const p: Parked = { agent, conv, opts, urgent: !!how.urgent, merge: !!how.merge, done: [resolve] }
+      const p: Parked = { agent, conv, opts, urgent: !!how.urgent, done: [resolve] }
+      if (how.parallel) return this.launch(key, p)
       const line = this.parked.get(key)
       if (!line && !this.followups.busy(key)) return this.launch(key, p)
-      const same = p.merge ? line?.find((x) => x.merge) : undefined
-      if (same) {
-        // The newer message, keeping what an earlier one asked of the agent (an answer given for someone).
-        same.opts = { ...opts, task: opts.task ?? same.opts.task }
-        same.done.push(resolve)
-      } else if (line) line.push(p)
+      if (line) line.push(p)
       else this.parked.set(key, [p])
     })
   }

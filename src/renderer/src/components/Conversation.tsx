@@ -1618,7 +1618,9 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
 // next tool call, and the chain says so, in the person's words (send mode `steer`, src/core/runs.ts).
 // With the reply already over, the same text is an ordinary prompt: nothing here holds it back.
 function SteerPill({ message }: { message: Message }): ReactNode {
-  const steer = (text: string): void => sendMessage(message.conversationId, text, [], message.threadId, [], 'steer')
+  // This reply's steer: it carries the reply's id, so a second session of the same agent in this DM is
+  // not steered by what was written for this one.
+  const steer = (text: string): void => sendMessage(message.conversationId, text, [], message.threadId, [], 'steer', message.id)
   return (
     <PillPrompt
       icon="pointer"

@@ -19,6 +19,14 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+- **A message sent while an agent is working starts its own reply.** Two messages to one agent in a
+  direct message gave one reply and one wait: the second was parked behind the reply already running
+  and only started when that one ended, so it looked like nothing happened. Every message now gets its
+  own reply and its own session, side by side, and the only thing that holds one back is the limit of
+  sessions running at once, which serves them in the order they came. A send marked as queued still
+  waits for what is running there, and a steer from a working reply's own pill reaches that reply
+  alone, never a second one of the same agent beside it.
+
 - **The taskbar shows the toucan.** Windows draws a window's taskbar and Alt-Tab icon for the app id the installer registered, and the app asked for a different one (`dev.tucano.app` against the installer's `dev.tucano.next`), so the button came up under the framework's icon while the exe, the tray and the notifications carried the toucan. The id now lives in one place, `APP_ID` in `src/shared/app-identity.ts`, and the window also hands its icon to the window itself, so a copy run off the code looks like the app. `test/app-identity.test.ts` fails if the id and `package.json › build › appId` drift apart again.
 - **The wiki review stops reading a date as a page.** It took any two capitalised words in a row as a proper name, so a sentence that opens with a date offered "On Nov" as a page the wiki should have (26 hits across 24 pages) and "The Foundry" the same way; both had to be dismissed by hand, and the dismissal was carried forever to keep them quiet. A candidate is now dropped when its first word is a function word or when any word of it is a month, in either language, and a dismissed finding the review no longer finds goes with the pass that stops finding it. Thanks, apoapostolov! (#392)
 
