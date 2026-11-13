@@ -600,6 +600,16 @@ to a reviewer than a second PR that has to be read against the first.
 | Times as a 12-hour or a 24-hour clock | 393 | 395 |
 | Isolated UI checks without taking focus | | 372 |
 | Emit fake sign-in output before resolving the exit | | 386 |
+| Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
+| A hand-off answer comes back however the reply ends | 376 | 377 |
+| Delete a session from the room, in two presses | 374 | 375 |
+
+The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
+what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR
+closed without a merge, a number that no longer exists) and which of your open pull requests have no row
+at all. `--write` drops the shipped rows, `--check` exits non-zero when a row is stale so a scheduled run
+can say so, and `--all-authors` widens the "no row" list past your own PRs, which is off by default
+because another contributor's PR is theirs.
 
 Refresh the table from origin, not from memory:
 
