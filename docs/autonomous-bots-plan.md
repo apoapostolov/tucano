@@ -250,15 +250,22 @@ Result: commit `0cec877` on `feat/autonomous-initiative`. See
 
 ### 4. Present controls and meaningful interventions
 
-- [ ] Add agent settings, DM status, check now, activity, and commitment navigation.
-- [ ] Reuse existing proposal/next-step, ask, approval, notice, and push surfaces.
-- [ ] Add source-backed reports, material-change deduplication, dismissal, and
-  batched delivery through existing transports.
-- [ ] Verify keyboard access, narrow layouts, both languages, rendered copy,
-  long histories, and denied/missing targets with real DOM interactions.
+- [x] Add agent settings, DM status, check now, activity, and commitment navigation.
+- [x] Reuse existing proposal/next-step, ask, approval, notice, and push surfaces.
+- [x] Add material-change deduplication, dismissal, and delivery through existing
+  transports.
+- [ ] Back every report's claim with the message or file it came from: the record
+  links evidence to a responsibility, but a report's own sentences are still prose.
+- [x] Verify keyboard access, both languages, rendered copy, long histories, and
+  denied/missing targets with real DOM interactions.
+- [ ] Verify narrow layouts by measurement: the window collapses at 640px in CSS,
+  and no rendered check has run against it yet.
 
 Exit: a person can explain why the bot woke, what it did, what it is waiting on,
 how much allowance remains, and how to stop it without reading internal logs.
+
+Result: commit `4370641` on `feat/autonomous-initiative`. See
+[the completion record](#slice-4-the-page-a-person-actually-uses).
 
 ### 5. Recover and integrate
 
@@ -491,3 +498,50 @@ coordinator on.
 - Open in this slice: a delegation a check-in starts spends the specialist's own
   limit, not the person's daily allowance. Sharing that budget needs an attribution
   at delegation creation, which belongs to the delegation's lifecycle.
+
+### Slice 4: the page a person actually uses
+
+Commit `4370641` on `feat/autonomous-initiative`. This is the slice that makes the
+feature reachable: before it, a coordinator could only be turned on through the API.
+
+- The DM carries a line in the topbar: what its bot is doing (`next in 12 min`,
+  `waits on you`, `checking now…`, `everything paused`, `initiative off`), with a
+  dot that pulses while a check-in runs, and a count of what is open. It opens the
+  window below. A DM whose bot does not look after this person has no line at all.
+- `src/renderer/src/components/Initiative.tsx` is the whole surface: the brief, the
+  cadence, when to interrupt, the daily check-ins and token ceiling, the
+  conversations it may look at and the actions it may take, each a checkbox that
+  narrows what Autonomy already allows. Below it, what the coordinator is carrying,
+  each with its state, its note, the work it rests on and a way to the conversation
+  it was read in, plus done, dismiss and reopen. Below that, what it did.
+- "Conferir agora" is a real admission path (`checkInNow`), not a shortcut: it skips
+  the person's own cadence and quiet hours, and keeps the caps, the pause, the
+  allowance and one-at-a-time. It returns as soon as the check-in starts, and the
+  window polls the record while it runs so the page shows what it did instead of
+  freezing. Every refusal is named in words a person can act on.
+- The window reports today's usage against the person's own limits, and the whole
+  page is their own: the RPC reads only `ctx.person`.
+- Delivery reuses what exists: a report is a normal message, so unread, desktop
+  notice and phone push all follow from the transports already in place; a question
+  a check-in asks is an ordinary `ask_user`; an approval is the approval it always
+  was. Nothing new was invented for delivery.
+- Three defects the surface exposed, fixed here: a quiet check-in used to send the
+  same "Lia terminou" notification as any reply (the runner now leaves delivery to
+  the coordinator, which notifies once for a report and never for a quiet one); the
+  same finding twice used to be delivered twice (a report matching the last one
+  within a day now stays out of the conversation, keeps its record, and says why);
+  and a refusal from a page left open now shows in place instead of leaving the old
+  brief on screen as if it had saved.
+- Verification: `test/initiative-ui.test.tsx` (15 tests) drives the real components
+  in a linkedom DOM with real clicks and keys: the line's four states and its
+  absence, both languages, saving against the revision the page read, the disabled
+  save on an empty brief, check-now and each refusal, a disabled button while one
+  runs or the app is paused, dismissal and completion by state, the activity list's
+  wording including a deduped report and a skipped one, twenty check-ins folding to
+  six and back, the conversations offered as checkboxes, Esc closing and every
+  action being a real button. `test/initiative.test.ts` adds the view's own numbers,
+  and the core test proves `checkInNow` refuses when nothing is set up.
+- Two limits this slice does not close, both recorded above: a report's sentences are
+  not yet backed by the message or file they came from, and the narrow layout is a
+  CSS rule nobody has measured. The screenshot harness in the last slice is where a
+  rendered, measured check belongs.
