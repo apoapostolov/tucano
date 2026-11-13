@@ -47,7 +47,10 @@ const report = {
 let app
 try {
   await Promise.all(ports.map(({ server }) => new Promise((yes, no) => server.close((e) => (e ? no(e) : yes())))))
-  app = await electron.launch({ args: ['.', '--qa-background'], env })
+  // TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, against the
+  // bundle a person would actually have.
+  const installed = env.TUCANO_ELECTRON
+  app = await electron.launch({ args: [...(installed ? [] : ['.']), '--qa-background'], ...(installed ? { executablePath: installed } : {}), env })
   report.runtime = await app.evaluate(({ app }) => ({ version: app.getVersion(), electron: process.versions.electron, executable: process.execPath, data: app.getPath('userData') }))
 
   // Nothing this script does may show or focus a window: every capture proves it again.
