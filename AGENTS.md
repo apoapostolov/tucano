@@ -21,9 +21,9 @@ Check `git remote -v` before fetching, merging, or pushing. In this checkout:
 | `origin/next` | Published integration branch for TucanoNext |
 | Feature branches | Individual PR sources, including later revisions of already integrated PRs |
 
-Name a branch for what it does: `feat/<topic>` for a feature, `fix/<topic>` for a repair, and
-`codex/<topic>` for an agent's own worktree. The open PR list is overwhelmingly the first two, and a
-branch whose name says nothing makes the next audit re-read its diff to find out.
+Name a branch for what it does. `feat/<topic>` is a feature, `fix/<topic>` a repair, and
+`codex/<topic>` an agent's own worktree. The open PR list is overwhelmingly the first two, and a branch
+whose name says nothing makes the next audit re-read its diff to find out.
 
 When a request says "origin main" to mean the original project, resolve the repository identity
 before choosing a ref. Keep `next` current with `upstream/main` and account for additional work
