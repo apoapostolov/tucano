@@ -18,6 +18,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   retryRun: { messageId: 's', note: 's?' },
   followUpRun: { messageId: 's', text: 's' },
   continueRun: { messageId: 's' },
+  deleteMessage: { messageId: 's' },
   setAgentModels: { agentIds: 'S', modelId: 's?', effort: '[low,medium,high,xhigh]?' },
   saveAgent: { agent: 'o', channelIds: 'S' },
   createChannel: { name: 's', threads: 'b?' },

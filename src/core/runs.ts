@@ -450,6 +450,7 @@ type Control = {
   msg: Message
   reason?: 'stopped' | 'limit' | 'budget' | 'loop' | 'errors' | 'stall' | 'computer' | 'sleeping'
   steer?: string[] // what the person wrote while this reply ran, handed over at the next tool call
+  deleted?: boolean // the session went from under the run: whatever it still tries to write is dropped
 }
 // "Try with instructions": what the person wrote goes into the prompt as a direction for the new
 // attempt, and the model is told it outranks the course of what was asked before.
@@ -487,6 +488,8 @@ export class Runner {
   private active = 0
   private routing = 0
   private controllers = new Map<string, Control>()
+  // The replies deleted from under their own run: whatever that run still tries to write is dropped.
+  private gone = new Set<string>()
   private held = new Map<string, Promise<void>>() // by agent: its replies on an engine that keeps the MCP connection
   private paused = false // "Pausar tudo": nobody starts working until it's off
   private idleWaiters: (() => void)[] = []
@@ -896,6 +899,18 @@ export class Runner {
     c.ctl.abort()
   }
 
+  // A session deleted while its reply was still at work: the run stops here and nothing of it lands
+  // afterwards — not the words it had written, not a note that it stopped. What it spent stays in the
+  // receipts, since the tokens went out either way.
+  drop(messageId: string): void {
+    this.gone.add(messageId)
+    const c = this.controllers.get(messageId)
+    if (!c) return
+    c.deleted = true
+    c.reason = 'stopped'
+    c.ctl.abort()
+  }
+
   // Runs the same agent again in place of a reply that didn't finish.
   // `note`: the person's own direction for the new try. It is added to the prompt after what was
   // asked, so the reply starts steered instead of merely repeated.
@@ -1194,6 +1209,7 @@ export class Runner {
   }
 
   private update(m: Message, patch: Partial<Message>): void {
+    if (this.gone.has(m.id)) return // deleted while it ran: it doesn't come back as a half reply
     Object.assign(m, patch)
     this.deps.db.saveMessage(m)
     this.deps.emit({ type: 'message', message: { ...m } })
@@ -3010,6 +3026,9 @@ ${note}`,
         ? { model: modelId, ms, inputTokens: progress.tokens, cacheReadTokens: progress.cacheRead, outputTokens: 0 } // partial: what the stream reported before it ended
         : undefined
     if (receipt) db.addReceipt({ ...receipt, messageId: msg.id, agentId: agent.id, engine: engineId, at: Date.now(), work })
+    // Deleted from under the run: the receipt is all that's left of it, and nothing else it was about to
+    // say (the answer, a stop note, a word to whoever asked) goes anywhere.
+    if (control.deleted) return msg
     const usedNow = db.usedThisMonth(agent.id)
     // Only an agent with a ceiling has a share of it to warn about.
     if (Number.isFinite(ceiling) && used < ceiling * USAGE_ALERT && usedNow >= ceiling * USAGE_ALERT && usedNow < ceiling) {

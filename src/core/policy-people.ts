@@ -107,6 +107,7 @@ export const NEEDS: Record<Method, Need> = {
   retryRun: 'anyone',
   followUpRun: 'anyone',
   continueRun: 'anyone',
+  deleteMessage: 'anyone', // a conversation one can reach; a channel's own rules decide more
   createChannel: 'anyone',
   renameChannel: 'anyone',
   setTopic: 'anyone',

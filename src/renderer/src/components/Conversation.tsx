@@ -56,6 +56,7 @@ import { canEditChannel,
   retryRun,
   continueRun,
   followUpRun,
+  deleteMessage,
   ACCESS_REQUEST,
   countedTokens,
   sendMessage,
@@ -695,6 +696,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         )}
         {away && message.run?.replyTo && <PromptJump id={message.run.replyTo} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
+        {agent && message.run && <DeleteSession message={message} />}
       </div>
     </article>
   )
@@ -851,6 +853,53 @@ function ThreadButton({ message }: { message: Message }): ReactNode {
   return (
     <button className="icon-btn icon-btn--sm msg__reply" title={label} aria-label={label} onClick={() => openThread(message.id)}>
       <Icon name="thread" size={13} />
+    </button>
+  )
+}
+
+// How long the first press of the trash counts: the second has to come while the glyph is still red.
+const ARM_MS = 4000
+
+// A session's reply can be deleted from the room: the trash under the thread button, in two presses.
+// The first arms it — the glyph goes red and says what the next press does — and the second deletes
+// the reply, with the thread it started and the answers it got there. A press anywhere else, Esc, or
+// four seconds without the second press disarms it. A reply still at work goes too: the press stops
+// it first, and the words it had written go with it, so the glyph says so.
+function DeleteSession({ message }: { message: Message }): ReactNode {
+  const [armed, setArmed] = useState(false)
+  const at = message.run?.status === 'working' // stopping is part of it, so say so before the second press
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), ARM_MS)
+    const away = (e: MouseEvent): void => {
+      if (!(e.target instanceof Element && e.target.closest('.msg__delete'))) setArmed(false)
+    }
+    const escape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setArmed(false)
+    }
+    window.addEventListener('mousedown', away)
+    window.addEventListener('keydown', escape)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('mousedown', away)
+      window.removeEventListener('keydown', escape)
+    }
+  }, [armed])
+  return (
+    <button
+      className={`icon-btn icon-btn--sm msg__delete ${armed ? 'is-armed' : ''}`}
+      title={
+        armed
+          ? at
+            ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+            : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+          : L('Apagar esta sessão', 'Delete this session')
+      }
+      aria-label={armed ? L('Confirmar: apagar a sessão', 'Confirm: delete the session') : L('Apagar esta sessão', 'Delete this session')}
+      aria-pressed={armed}
+      onClick={() => (armed ? deleteMessage(message.id) : setArmed(true))}
+    >
+      <Icon name="trash" size={13} />
     </button>
   )
 }
