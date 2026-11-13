@@ -3535,8 +3535,8 @@ export function SettingsPage(): ReactNode {
           <Card
             title={L('Contas', 'Accounts')}
             lead={L(
-              'Mais de um login do Claude Code ou do Codex, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
-              "Add Claude Code or Codex accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password."
+              'Mais de um login do Claude Code, do Codex ou do Grok, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
+              'Add Claude Code, Codex or Grok accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.'
             )}
           >
             <AccountsCard />
