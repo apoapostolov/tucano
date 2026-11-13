@@ -62,6 +62,49 @@ Changes confined to agent instructions, documentation or development-only script
 content/diff review and the affected tool checks; they do not require rebuilding or reinstalling
 an unchanged packaged app.
 
+## Plan and moderate settings placement
+
+Settings placement is a product decision made before adding a control. Follow the maintained
+[settings architecture](docs/settings-architecture-plan.md) and the typed settings structure.
+The main pages are App, Workspace, Agents, Models, Knowledge and Connections. Each setting
+has one canonical section; global defaults and object-specific overrides keep their scopes.
+
+Before implementing a setting, record its user decision, whether it needs a configurable
+choice, key/path, page/section ID, scope, permitted roles, default, dependencies, persistence,
+restart behavior and overrides. Include privacy or destructive consequences. Put this record
+in the feature's own issue/PR or proposal. A field added to Settings is not permission to append
+another switch at the bottom of the nearest card.
+
+- Register the section and setting ownership in the canonical structure; render from that order.
+  Keep labels, anchors and deep links stable across translation and rearrangement. Update the
+  placement checks and tests when a control moves. An undeclared or unreachable setting is
+  incomplete work, even when the RPC and persistence tests pass.
+- Place personal appearance/input under App; workspace identity, people and data under
+  Workspace; execution, permissions, limits, automation and skill defaults under Agents;
+  runtime/model/accounts/classifier setup under Models; Memory and Wiki under Knowledge;
+  phone/server connections under Connections. Use the detailed section map to resolve overlaps.
+- Keep per-agent/channel/routine controls in their object editors. Link to the canonical home
+  when helpful; do not introduce another independent implementation of the same control.
+- Prefer an existing section when the person is making the same decision. A new section needs
+  a distinct task and a sensible place in the declared order. A new main page requires a revised
+  architecture proposal covering moved controls, scope, roles, discoverability and narrow layouts.
+  Do not add Miscellaneous/Other buckets or empty tabs to reserve space for hypothetical work.
+- Review neighboring open feature PRs before deciding placement. Record which section each adds
+  to, resolve overlaps before integration, and retain the union of compatible controls. On older
+  upstream feature branches, use the documented legacy-tab mapping rather than make the feature
+  depend on the unaccepted overhaul. Update the existing PR when its setting moves.
+- Section navigation must remain keyboard-accessible, track manual scrolling and clear sticky
+  headers. Use links for sections visible together, tabs for panels switched independently.
+  Scrolling must be interruptible and immediate for keyboard/reduced-motion operation. Never
+  move focus merely because the person scrolled past another section.
+- Verify personal/member/admin/owner access, capabilities, legacy links, narrow layouts and
+  dependency states after moving controls. Preserve keys, defaults, values, scope and backend
+  authorization unless an explicitly planned behavior change requires otherwise. Follow the
+  copy and wrapping checks above, and save fresh screenshots of the final arrangement.
+
+Treat the architecture and PR placement review as maintained documents. Update them when a
+feature adds a setting or moves one; do not wait for a second cleanup project to restore order.
+
 ## Repositories and branches
 
 Check `git remote -v` before fetching, merging, or pushing. In this checkout:
@@ -662,6 +705,7 @@ to a reviewer than a second PR that has to be read against the first.
 | A hand-off answer comes back however the reply ends | 376 | 377 |
 | Delete a session from the room, in two presses | 374 | 375 |
 | Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
+| Give the file its space back, and say whether it is sound | 433 | 437 |
 
 The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
 what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR
