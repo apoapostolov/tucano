@@ -21,6 +21,10 @@ Check `git remote -v` before fetching, merging, or pushing. In this checkout:
 | `origin/next` | Published integration branch for TucanoNext |
 | Feature branches | Individual PR sources, including later revisions of already integrated PRs |
 
+Name a branch for what it does: `feat/<topic>` for a feature, `fix/<topic>` for a repair, and
+`codex/<topic>` for an agent's own worktree. The open PR list is overwhelmingly the first two, and a
+branch whose name says nothing makes the next audit re-read its diff to find out.
+
 When a request says "origin main" to mean the original project, resolve the repository identity
 before choosing a ref. Keep `next` current with `upstream/main` and account for additional work
 on `origin/main`. Do not reset or force-push either main branch to align their histories.
@@ -128,8 +132,10 @@ The released app and `TucanoNext` remain independent:
    node scripts/audit-prs.mjs --fetch --patches --report docs/pr-inventory.md
    ~~~
 
-   Reports and cached patches live in `.tucano-local/audit/`. Key review records to the exact
-   head SHA; a changed head makes the earlier review stale. Avoid fixed PR-count claims.
+   Reports and cached patches live in `.tucano-local/audit/`, excluded through `.git/info/exclude` in
+   this checkout, which no clone inherits: keep them out of a commit and add the same exclude after a
+   fresh clone. Key review records to the exact head SHA; a changed head makes the earlier review
+   stale. Avoid fixed PR-count claims.
 5. Maintain a checkbox plan for long audits. A merged PR, a repaired defect, and a fully audited
    feature are different states. Record completed work and remaining checks separately.
 6. Before opening a PR for a change, find the feature in the table under
@@ -220,7 +226,9 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
    Confirm their current disposition before relying on those relationships.
 6. Merge the feature head into the integration candidate. For an already integrated PR, merge
    its newer head so the added commits and contributor attribution enter the history. Port
-   behavior manually only when the histories or implementations require it, and record why.
+   behavior manually only when the histories or implementations require it, and record why. The PR
+   stays open on the project afterwards: this merge puts it in the fork, not in upstream, and its
+   thread is not yours to close or narrate unless the user asks.
 7. Verify the feature in `next`: its setting or entry point is reachable and its handler,
    backend, persistence, and output remain connected. Commit ancestry, a clean merge, type checking,
    and screenshots from another branch do not prove that the feature survived integration.
@@ -243,6 +251,18 @@ Take the union of compatible features instead of selecting entire files from one
 | Competing implementations | Choose the maintained behavior, migrate callers and data, remove redundancy |
 | Product metadata and startup | Preserve TucanoNext identity, data separation, locks, ports, and updates off |
 
+Three resolutions recur more often than the table above:
+
+- **`CHANGELOG.md` conflicts on nearly every merge.** Both sides add under `## [Unreleased]`; keep every
+  entry, `### Added` above `### Fixed`, and drop nothing that shipped in a release. A merge is not the
+  place to reword another feature's line.
+- **A PR cut from an older main arrives with stale expectations.** Its assertions describe the base it
+  was written against, and `next` has moved since: keep its race fixes and its new cases, take `next`'s
+  wording and expected strings, and prove it by running that file and its neighbours together.
+- **A settings key can land in two lists.** `GENERAL_SETTINGS` is one list in one file, so resolving by
+  taking one side wholesale drops the other side's new keys without a conflict. Read the list after
+  resolving and count the keys each branch brought.
+
 Read the resolved code after removing markers. Add regression cases for interactions introduced
 by resolution. Check for losses outside conflict hunks, including a settings control moved to
 another card or a callback disconnected during a component rewrite.
@@ -253,8 +273,9 @@ Run these in the candidate worktree after installing its locked dependencies:
 
 ~~~powershell
 npm ci
-npx tsc --noEmit -p tsconfig.json
-npx vitest run
+npm run typecheck                      # tsc --noEmit -p tsconfig.json
+npm test                               # vitest run, the whole suite
+npx vitest run test/restart-runs.test.ts   # one file, while working
 npm run build
 ~~~
 
@@ -266,18 +287,32 @@ A focused rerun does not replace the full-suite result.
 
 A failure that looks like the host is proved instead of assumed:
 
-- `test/mac.test.ts` › *comes from a clean login shell* asserts the PATH contains `C:\Windows`. A
-  shell that spells the variable `C:\WINDOWS` fails it, because the comparison is case-sensitive.
-  `next` compares both sides in lowercase and the main branches do not. Launch the suite from a shell
-  whose spelling matches, or take that comparison from `next`, and do not count it as your
-  regression.
+- `test/mac.test.ts` › *comes from a clean login shell* once compared its `PATH` against `C:\Windows`
+  case-sensitively, so a shell spelling the variable `C:\WINDOWS` failed it. `next` and current
+  upstream main both compare in lowercase and the suite passes here, so a failure there is a real one
+  again. A host-shaped failure gets named: quote the comparison, prove it on the base branch, then fix
+  it, rather than calling the test flaky.
 - Confirm any other suspected environmental failure on a clean worktree of the base (`git worktree
   add C:/tmp/base upstream/main`), not by stashing your own work: a stash mixes the two questions.
 
-**Run the app built from this source.** Exercise the changed behavior with throwaway data and
-fake engines where suitable, using the background testing policy above. Never put destructive
-or synthetic test data into the live workspace. DOM tests cover behavior; inspect the built UI
-for layout, focus, and overflow because `linkedom` cannot verify those visual properties.
+**Run the app built from this source.** Exercise the changed behavior with throwaway data and fake
+engines where suitable, using the background testing policy above. Never put destructive or synthetic
+test data into the live workspace. Four variables are the whole recipe for an instance that cannot
+touch it:
+
+~~~powershell
+$env:TUCANO_DATA = "$env:TEMP\tucano-check"   # data directory, throwaway
+$env:TUCANO_SEED = '1'                        # the demo team, channels and agents
+$env:TUCANO_FAKE_ENGINES = '1'                # scripted engines, no model is called
+$env:TUCANO_LOCALE = 'en-US'                  # the language the window draws in
+~~~
+
+`TUCANO_FAKE_ENGINES=1` seeds by itself unless `TUCANO_SEED=0`, and background QA refuses to run
+without it. `TUCANO_WEBHOOK_PORT` moves an instance off the default port when two must run together.
+`scripts/screens-*.mjs` is the pattern for a built-UI check: each launches Electron against a scratch
+directory, drives the window with Playwright, and writes PNGs to the directory it is handed, so copy
+the nearest one rather than inventing a harness. DOM tests cover behavior; inspect the built UI for
+layout, focus, and overflow because `linkedom` cannot verify those visual properties.
 
 Repeat affected checks after source changes. Record the checked commit or tree and outcomes
 so evidence from another worktree is not attributed to this build. Documentation-only changes
@@ -293,25 +328,30 @@ installation alone are incomplete.
 
 1. Confirm identity and install destination. Complete type checking, the full suite, the build,
    and the changed-feature check against that built app.
-2. Prepare whisper assets and create a fresh installer without publishing:
+2. Refresh the whisper assets when `scripts/whisper.mjs` changed since they were packed: the helper
+   packages whatever sits in `build/whisper/`, and a stale pair ships dictation that no longer matches
+   the script. It pins its own version and checks its download against a SHA-256.
 
    ~~~powershell
    node scripts/whisper.mjs win x64
-   npx electron-builder --win nsis --x64 --publish never
    ~~~
 
-   Output is `dist/tucanonext-setup-<package version>.exe`. Keep the current package version.
-   Check the installer timestamp against source changes; an older installer cannot deliver the
-   fix. Cached whisper assets are valid only when their version matches the script.
-3. Close scratch instances, then the regular TucanoNext, before installation. Do not kill the
-   released `Tucano.exe`. Use PowerShell to avoid Bash argument conversion:
+3. Build, package, verify, install and launch in one step: `npm run self-install`, or
+   `node scripts/self-build.mjs install --json` when a machine reads the result. Close scratch
+   instances first, since one holding the default ports or the single-instance lock makes the launch
+   stage fail, and do not kill the released `Tucano.exe`. The installer it makes is
+   `dist/tucanonext-setup-<package version>.exe`; an installer older than the source cannot deliver
+   the fix, so check its timestamp against the last change.
+
+   The same sequence by hand, for a helper that is broken or an install to be watched stage by stage:
 
    ~~~powershell
+   npx electron-builder --win nsis --x64 --publish never
    taskkill /F /IM TucanoNext.exe
-   $nextVersion = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
-   $nextInstaller = Join-Path (Get-Location) "dist/tucanonext-setup-$nextVersion.exe"
-   $nextInstall = Start-Process -FilePath $nextInstaller -ArgumentList '/S' -WindowStyle Hidden -Wait -PassThru
-   if ($nextInstall.ExitCode -ne 0) { throw "TucanoNext installation failed: $($nextInstall.ExitCode)" }
+   $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+   $installer = Join-Path (Get-Location) "dist/tucanonext-setup-$version.exe"
+   $install = Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden -Wait -PassThru
+   if ($install.ExitCode -ne 0) { throw "TucanoNext installation failed: $($install.ExitCode)" }
    ~~~
 
    A missing process before installation is harmless. Resolve other shutdown or installer errors.
@@ -349,6 +389,19 @@ nothing else. It typechecks, builds, packages, checks the package, closes the ap
 launches, and requires a window; a failure exits with the stage's own code and `--json` gives one
 line a caller can parse.
 
+Three commands, and the difference matters:
+
+~~~powershell
+node scripts/self-build.mjs install   # npm run self-install: typecheck, build, package, verify, install, launch
+node scripts/self-build.mjs build     # npm run self-build: the same without the install and the launch
+node scripts/self-build.mjs doctor    # npm run doctor: what cannot load, and instances with no window
+~~~
+
+`npm run self-build` does not install, which is the one alias whose name suggests it does. The exit
+code names the stage that failed (`typecheck 2`, `build 3`, `package 4`, `verify 5`, `stop 6`,
+`install 7`, `launch 8`), so a caller can tell a broken test from a broken installer. It packages
+`build/whisper/` as it finds it and never refreshes it.
+
 - **Never pack while `node_modules` is being rewritten.** `npm ci` in one shell and
   `electron-builder` in another ships a package holding the direct dependencies and none of their
   dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
@@ -375,8 +428,8 @@ not major: install it and leave the release alone.
 
 For a major feature, after the install and the smoke check:
 
-1. Rebuild the same version. The package version stays what origin ships (currently inherited from the
-   maintainer); do not bump it because of a feature.
+1. Rebuild the same version. The package version stays the one upstream ships, inherited rather than
+   bumped for a feature.
 2. Build the installer and its blockmap for `win x64` with `--publish never`, then replace both assets
    on the fork's release at that version:
 
@@ -406,8 +459,9 @@ For a major feature, after the install and the smoke check:
 ## Integrate and report completion
 
 Commit only task-related source and evidence. Bring the tested candidate into local `next` by
-ordinary merge or fast-forward, preserving intervening work. When authorized to update the fork,
-push to `origin/next` and verify the remote head. Preserve unrelated user files.
+ordinary merge or fast-forward, preserving intervening work, then push to `origin/next` and read the
+remote head back before reporting: a commit that exists only on this machine has not been delivered.
+Preserve unrelated user files.
 
 A user-facing change carries a `## [Unreleased]` entry: a bold sentence naming the change in the
 person's terms, then what changed and what was wrong before it, with the issue number in parentheses.
@@ -442,6 +496,13 @@ runtime health.
 - Capture pointers only after a gesture starts and release capture in its ending handler.
   Capture on `pointerdown` can send the next click to the capturing element and disable a child button.
 - Comments explain why a choice was made rather than restating code.
+- **A new dependency is a decision, not a convenience.** Check first whether the standard library or a
+  dependency already in `package.json` covers it, keep one `package-lock.json`, and say in the PR what
+  it buys and what it costs. `npm ci` installs that lockfile and nothing else, here and in CI.
+- **No secret enters the tree.** A key, token, password or session cookie does not belong in a
+  fixture, a screenshot, a test or a commit message; the fake engines and fixture files exist so a
+  test never needs one. A screenshot is evidence, so check what the window is showing before it is
+  published.
 - A new setting is five files and sometimes a wire. `src/shared/types.ts` carries the field with a
   comment saying where it is set; `src/shared/workspaces.ts` lists it in `GENERAL_SETTINGS`, or
   `PERSONAL_SETTINGS` in `src/core/policy-people.ts` when it is each person's own; the validation
@@ -552,10 +613,10 @@ as this index, and a feature missing from it is one an agent will open a second 
 ## Public PRs and writing
 
 Open focused product PRs against `eduwxyz/tucano:main`, never against the fork, and cut the branch
-from `upstream/main`. What this account may and may not do there, and what each refusal means, is in
-[Working where you have no admin rights](#working-where-you-have-no-admin-rights). A branch based on `origin/main` carries fork commits upstream does not have (it
-was 41 ahead at one point) and turns CONFLICTING as soon as the base moves; rebase onto
-`upstream/main`, re-run the checks there, and force-push with the lease named.
+from `upstream/main`. A branch based on `origin/main` carries fork commits upstream does not have, so
+it turns CONFLICTING as soon as the base moves: rebase onto `upstream/main`, run the checks there, and
+force-push with the lease named. What this account may and may not do on the project, and what each
+refusal means, is in [Working where you have no admin rights](#working-where-you-have-no-admin-rights).
 
 Leave other contributors' PRs alone: no rebase, review, comment or close unless the user asks for that
 PR by number. Their conflicts are theirs, and a comment in their thread speaks for the maintainer. Reproduce new
