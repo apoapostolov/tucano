@@ -209,18 +209,23 @@ Result: `feat/autonomous-initiative` from upstream `main` at `73b724b`, commit
 
 ### 2. Resume one conversation from a heartbeat
 
-- [ ] Implement periodic eligibility, coalescing, atomic admission, idle priority,
+- [x] Implement periodic eligibility, coalescing, atomic admission, idle priority,
   pause/sleep handling, and session reconstruction through the current runner.
-- [ ] Supply a bounded heartbeat task block without system/tool-definition churn.
-- [ ] Add review caps, daily allowance reservations, accounting, and quiet backoff.
-- [ ] Handle quiet results from the start of execution, including streaming and
+- [x] Supply a bounded heartbeat task block without system/tool-definition churn.
+- [x] Add review caps, daily allowance reservations, accounting, and quiet backoff.
+- [x] Handle quiet results from the start of execution, including streaming and
   unread/activity bookkeeping, with retained internal evidence.
-- [ ] Verify repeated ticks, human queue priority, pause races, session expiry,
-  context rollover, changed model/tools, and an engine without resumable sessions.
+- [x] Verify repeated ticks, human queue priority, pause races, session expiry, and an
+  engine without resumable sessions.
+- [ ] Verify context rollover and a changed model or tool set on a session a check-in
+  resumes: the runner's own rules, not yet exercised from a check-in.
 
 Exit: with no further human message, the bot reviews the correct conversation,
 performs an authorized tool action, and either reports a meaningful result or
 finishes with no visible disturbance.
+
+Result: commit `c95ee9d` on `feat/autonomous-initiative`. See
+[the completion record](#slice-2-resume-one-conversation-from-a-heartbeat).
 
 ### 3. Advance commitments and delegate safely
 
@@ -397,3 +402,41 @@ workspace, so the branch changes no shipped behavior on its own.
   the code that writes them rather than standing empty.
 - Remaining in this slice: the refusals it returns are drafted and rendered nowhere,
   so their copy and layout check belongs to the slice that draws the screen.
+
+### Slice 2: resume one conversation from a heartbeat
+
+Commit `c95ee9d` on `feat/autonomous-initiative`. Nothing runs in a workspace until
+someone turns a coordinator on, so the branch still changes no shipped behavior by
+itself.
+
+- `src/core/initiative-heartbeat.ts` is the clock: once a minute it asks each
+  person whose coordinator exists whether a check-in is due, admits one at a time,
+  and records what came of it. The claim is taken before the first await, so a tick
+  that finds work under way cannot start a second one and repeated ticks coalesce.
+- `src/core/initiative-state.ts` holds the rules as pure functions: due a cadence
+  after the last check-in, doubling for each in a row that found nothing up to two
+  hours; not during quiet hours, not while paused, not past the day's reviews or the
+  token allowance; and the day is the person's own, from their stored time zone.
+  It also writes the bounded request: the brief, what is owed, and the one rule that
+  keeps a quiet check-in quiet. Nothing is added to the system prompt or the tool
+  set, so a resumed session sees the same definitions as before.
+- A check-in runs through `Runner.checkIn`, the same path as every reply: the same
+  session, the same queue, the same limits and permissions. Its message is written
+  hidden, so nothing streams into the conversation while it thinks; when it reports,
+  it leaves the hiding and arrives as any message does, with its unread and activity
+  as usual. When it finds nothing, the hidden message stays behind as internal
+  evidence and the conversation is untouched.
+- `initiative_wakes` keeps each attempt: revision, when, what came of it, what it
+  said, what it cost in counted tokens, and why it was skipped. A month is kept.
+  An edit to the brief between admission and start records a skip and runs nothing.
+- Verification, in `test/initiative-heartbeat.test.ts` (14 tests, fake engine): a
+  quiet check-in leaves no message and no unread; a report becomes a visible
+  message; six ticks run one check-in and the next waits 30 minutes; the review cap
+  and the allowance refuse; an edit before start skips; pause refuses at admission
+  and at the runner; a session let go runs again; a failed check-in stays hidden and
+  keeps its words; and a person's own turn in the same DM is asked first (proved by
+  the order the engine saw the two prompts).
+- Open in this slice: context rollover, and a changed model or tool set on a session
+  a check-in resumes, are the runner's own rules and are not yet exercised from a
+  check-in. The plan's exit also asks for an authorized tool action; this slice
+  proves the check-in runs through the gated path, not that it called a connector.
