@@ -190,19 +190,22 @@ do not expose a setting that cannot execute its advertised path.
 
 ### 1. Establish the contract and persistence
 
-- [ ] Refresh main refs and the exact heads of overlapping feature PRs. Check for
+- [x] Refresh main refs and the exact heads of overlapping feature PRs. Check for
   an existing initiative issue/PR before choosing its implementation branch.
-- [ ] Base product work on current upstream main. Explicitly map which capabilities
+- [x] Base product work on current upstream main. Explicitly map which capabilities
   only exist on next and place changes to unmerged features on their own PRs.
-- [ ] Add canonical shared types, migrations, validated RPCs, ownership checks,
+- [x] Add canonical shared types, migrations, validated RPCs, ownership checks,
   configuration revisions, and an explicitly disabled default for all workspaces.
-- [ ] Add commitment provenance and links to existing work; no chat-wide automatic
+- [x] Add commitment provenance and links to existing work; no chat-wide automatic
   extraction or private-DM aggregation in this slice.
-- [ ] Prove migration/reopen, revision conflict, unauthorized access, missing
+- [x] Prove migration/reopen, revision conflict, unauthorized access, missing
   targets, backup/restore policy, and empty-workspace behavior on scratch data.
 
 Exit: configuration and commitments survive restart and remain visible only to
 their authorized person. Existing agents and action-permission settings are unchanged.
+
+Result: `feat/autonomous-initiative` from upstream `main` at `73b724b`, commit
+`2881cb4`. See [the completion record](#slice-1-contract-and-persistence).
 
 ### 2. Resume one conversation from a heartbeat
 
@@ -341,7 +344,56 @@ Review licensing and the current implementation before copying code.
 
 ## Completion record
 
-All implementation checkboxes are intentionally unchecked. Completing this plan
-means the development work is specified; it establishes no tested runtime behavior.
-Record exact source revisions, per-slice results, remaining checks, and delivery
-evidence here as implementation proceeds.
+Completing this plan means the development work is specified. Record exact source
+revisions, per-slice results, remaining checks, and delivery evidence here as
+implementation proceeds. A slice is recorded when its tests run, not when its
+code is written.
+
+### Slice 1: contract and persistence
+
+Branch `feat/autonomous-initiative`, forked from upstream `main` at `73b724b`
+(Release 0.2.28); commit `2881cb4`, pushed to the fork. Nothing is enabled in any
+workspace, so the branch changes no shipped behavior on its own.
+
+- No initiative issue or pull request existed on `eduwxyz/tucano`, so the slice took
+  its own branch. `next` was at `131151f`, the commit that carries this plan.
+- Capabilities that only exist on `next` and touch this work, each reconciled on its
+  own PR when the slice that needs it lands: silent routines (#366) for slice 2's
+  quiet results; deleted sessions (#375) and cleared history (#249) for slice 5's
+  invalidation; resumed interrupted replies (#391) for slice 5's recovery; the
+  notification centre (#417) for slice 4's interventions. Both records are written
+  through cascading foreign keys, so a conversation, agent or person that goes
+  takes its initiative row and commitments with it on either branch.
+- `src/shared/initiative.ts` holds the contract: `InitiativeConfig`, `Commitment`,
+  the two scopes (`observe`, `work`), cleaning, shape refusals and scope narrowing.
+  `src/core/initiative.ts` holds the core's checks: the bot and its DM, every named
+  conversation reachable by the person, the source message and each link present,
+  and the revision the page read.
+- The migration in `src/core/db.ts` adds `initiative` (one row per person) and
+  `commitments`. No row means off, so a new workspace and one that upgrades into
+  this build both start with nothing.
+- API: `initiative`, `saveInitiative`, `saveCommitment`, each reading or writing
+  only the asking person's records. Shapes are in `rpc-shapes.ts` and admissions in
+  `NEEDS`, so the fuzz test covers them like every other method.
+- Provenance is the source conversation, its message and who wrote it. Evidence and
+  links are ids to a message, a file an agent showed, a run, a delegation, a
+  question or an approval. No chat-wide extraction in this slice.
+- Tests: `test/initiative.test.ts` (record, restart, revision, ownership, missing
+  targets, states, copy, restore, empty and upgraded workspace) and
+  `test/initiative-core.test.ts` (the same through the real core over its API).
+  `test/db-queries.test.ts` and `test/antigravity-migration.test.ts` now find their
+  starting migration by what it does instead of counting backwards, so adding a
+  migration no longer breaks them.
+- Evidence: `npm run typecheck` clean; `npx vitest run test/initiative.test.ts
+  test/initiative-core.test.ts` 19 passed; the full suite ran 1713 passed with two
+  load-dependent failures (`test/delegations.test.ts`, `test/engine-setup.test.ts`)
+  that pass in isolation on the same commit.
+- Decisions: a copy of a workspace drops its commitments and starts with initiative
+  off, because the runs, questions, approvals and delegations they point at do not
+  come along; a restored backup keeps both records and runs neither; a removed
+  person's row is paused and a purge deletes it.
+- Deviations from the sketch: no `initiative-state.ts` yet, because nothing holds a
+  wake or an outcome until slice 2; the pending-wake and outcome tables land with
+  the code that writes them rather than standing empty.
+- Remaining in this slice: the refusals it returns are drafted and rendered nowhere,
+  so their copy and layout check belongs to the slice that draws the screen.
