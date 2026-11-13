@@ -2,7 +2,7 @@
 // service cards inside messages, and the side panel that opens them.
 import { L, locale } from '../../../shared/lang'
 import { timeOpts } from '../../../shared/clock'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { safeUrl } from '../links'
 import remarkGfm from 'remark-gfm'
@@ -32,6 +32,13 @@ function showImages(a: Artifact): void {
   openLightbox(images.map((x) => ({ url: artifactUrl(x), title: x.title })), Math.max(0, images.findIndex((x) => x.id === a.id)))
 }
 
+// Right-click on a picture in a reply, whether it stands alone or sits in the album: save it, copy
+// it, or send its full size back into the field below as an attachment.
+const imageMenuFor = (a: Artifact) => (e: MouseEvent<HTMLButtonElement>): void => {
+  e.preventDefault()
+  openImageMenu({ url: artifactUrl(a), title: a.title, surface: 'reply', conversationId: a.conversationId }, { x: e.clientX, y: e.clientY })
+}
+
 export function ArtifactCard({ id }: { id: string }): ReactNode {
   const a = useStore((s) => s.artifacts.find((x) => x.id === id))
   const open = useStore((s) => s.panel?.kind === 'artifact' && s.panel.id === id)
@@ -43,10 +50,7 @@ export function ArtifactCard({ id }: { id: string }): ReactNode {
         onClick={() => showImages(a)}
         title={a.title}
         // Right-click: save it, copy it, or put it back in the prompt below as an attachment.
-        onContextMenu={(e) => {
-          e.preventDefault()
-          openImageMenu({ url: artifactUrl(a), title: a.title, surface: 'reply', conversationId: a.conversationId }, { x: e.clientX, y: e.clientY })
-        }}
+        onContextMenu={imageMenuFor(a)}
       >
         <img src={artifactUrl(a)} alt={a.title} />
         <span className="artifact-image__caption">{a.title}</span>
@@ -90,6 +94,9 @@ export function ArtifactGallery({ ids }: { ids: string[] }): ReactNode {
                 className={`artifact-image gallery__cell${c.hero ? ' gallery__cell--hero' : ''}`}
                 style={{ gridRow: `span ${c.rowSpan}` }}
                 onClick={() => showImages(a)}
+                // A cell is a thumbnail, not a link: right-click offers the same four choices as the
+                // picture on its own, on the picture it stands for.
+                onContextMenu={imageMenuFor(a)}
                 title={c.more ? L(`${a.title} — e mais ${c.more}`, `${a.title} — and ${c.more} more`) : a.title}
                 aria-label={c.more ? L(`${a.title} — e mais ${c.more}`, `${a.title} — and ${c.more} more`) : a.title}
               >
