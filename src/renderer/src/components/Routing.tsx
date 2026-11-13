@@ -110,7 +110,7 @@ const readerWarning = (reader: ClassifierConfig | undefined, hasKey: boolean): s
 // One switch turns the feature on and reveals the tab; it never opts an agent in by itself. It reads
 // as the last line of Settings › Classifiers, where the job it serves ("Which model answers") is
 // chosen: the routing it opens is a couple of clicks away, and only offered while it is on.
-export function SmartRoutingRow(): ReactNode {
+export function SmartRoutingRow({ configure = true }: { configure?: boolean } = {}): ReactNode {
   const settings = useStore((s) => s.settings)
   const routing = settings.routing?.enabled === true
   const reader = readerOf(settings)
@@ -136,7 +136,7 @@ export function SmartRoutingRow(): ReactNode {
       }
     >
       <div className="row row--end">
-        {routing && (
+        {routing && configure && (
           <button
             className="btn btn--primary btn--sm"
             onClick={() => {

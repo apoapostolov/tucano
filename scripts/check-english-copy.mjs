@@ -178,7 +178,7 @@ try {
       name: 'Settings',
       exact: true
     }).waitFor();
-    for (const tab of ['General', 'Models', 'Agents', 'Phone']) {
+    for (const tab of ['App', 'Workspace', 'Agents', 'Models', 'Knowledge', 'Connections']) {
       const target = page.getByRole('tab', {
         name: tab,
         exact: true

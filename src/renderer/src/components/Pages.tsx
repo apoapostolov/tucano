@@ -110,7 +110,9 @@ import { directReports, possibleBosses } from '../../../shared/org'
 import { perCallTool } from '../../../shared/composio'
 import { ApprovalCard, QuestionCard, questionDrafts, toolWords } from './Conversation'
 import { ProposalCard } from './Tuca'
-import { ChangeCard } from './Wiki'
+import { ChangeCard, WikiSettingsProvider, WikiSettingsSection } from './Wiki'
+import { SettingsLayout } from './SettingsLayout'
+import { settingsDestination, settingsStructure, type SettingsSectionId } from '../settings-structure'
 import { confirmDialog } from './Dialogs'
 import { Modal } from './Modal'
 import { AgentAvatar, AVATARS, Icon, NumberInput, SleepingToucan, time, tokens, UsageBar } from './ui'
@@ -2273,24 +2275,6 @@ function AgentSkills({ agentId, name }: { agentId: string; name: string }): Reac
 // ---------- tabs ----------
 
 type TabList = readonly (readonly [string, string])[]
-// With a team, Pessoas (everyone) and Atividade (admins); a member sees only what's theirs to change.
-// The phone (Telegram) is the owner's alone.
-// `routing`: smart model routing is on, globally or for at least one bot, so its tab exists. Off,
-// the tab is gone and what was configured stays saved (a reply that already has a trace keeps it).
-export const SETTINGS_TABS = (team = false, admin = true, owner = true, routing = false): TabList => [
-  ['geral', L('Geral', 'General')],
-  ...(admin
-    ? ([
-        ['modelos', L('Modelos', 'Models')],
-        ['agentes', L('Agentes', 'Agents')],
-        ...(routing ? [['roteamento', L('Rotas', 'Routing')]] : []),
-        ...(owner ? [['integracoes', L('Celular', 'Phone')]] : [])
-      ] as [string, string][])
-    : []),
-  ...(team ? [['pessoas', L('Pessoas', 'People')] as [string, string]] : []),
-  ...(team && admin ? [['atividade', L('Atividade', 'Activity')] as [string, string]] : []),
-  ...(admin && hasServers() ? [['servidores', L('Servidores', 'Servers')] as [string, string]] : [])
-]
 const AGENT_TABS = (): TabList => [
   ['perfil', L('Perfil', 'Profile')],
   ['canais', L('Canais e skills', 'Channels and skills')],
@@ -3107,12 +3091,6 @@ export function ClassifiersCard(): ReactNode {
           <ModelSelect value={settings.routerModel} onChange={(routerModel) => updateSettings({ routerModel })} />
         </Field>
       )}
-      {/* The last line of the card: smart routing is a classifier feature like the others above, and
-          the tab it opens is offered only while it is on. */}
-      <SmartRoutingRow />
-      {settings.routing?.enabled === true && work && (
-        <OutsideGateway what={L('o pedido de cada resposta vai pro classificador do roteamento escolher o modelo.', 'each reply’s request goes to the routing classifier to pick the model.')} />
-      )}
       {error && <p className="note note--error">{error}</p>}
       <p className="hint">
         <Icon name="shield" size={13} /> {L('Um classificador não escreve texto: devolve uma escolha, um sim/não ou uma nota, com a probabilidade de cada opção. A chave fica no cofre do sistema e nunca volta pra tela.', 'A classifier writes no text: it returns a choice, a yes/no or a score, with each option’s probability. The key stays in the system’s vault and never comes back to the screen.')}
@@ -3280,522 +3258,540 @@ export function SettingsPage(): ReactNode {
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   // At work, Jev and Telegram stay: the person decides, told what leaves the gateway.
   const work = onGateway(settings)
-  const routingClassifier = classifierFor(settings, 'routing')
   const browserClassifier = classifierFor(settings, 'browser')
   const recommendClassifier = classifierFor(settings, 'recommend')
   const stepsClassifier = classifierFor(settings, 'nextSteps')
   const team = useStore(teamMode)
   const admin = useStore(amAdmin)
   const owner = useStore(amOwner)
-  // Smart routing's tab exists while the global switch is on, or while any bot is set to On by itself:
-  // its pools are what both of those route through.
+  // Per-agent routing still needs its pools when the workspace default is off.
   const routingOn = useStore((s) => s.settings.routing?.enabled === true || s.agents.some((a) => a.smartRouting === true))
-  const tabs = SETTINGS_TABS(team, admin, owner, routingOn)
-  const tab = useTab('settings', tabs)
-  const pane = (t: string): boolean => tab === t
+  const requested = useStore((s) => s.tabs.settings)
+  const sections = settingsStructure({ team, admin, owner, servers: hasServers() })
+  const content: Record<SettingsSectionId, ReactNode> = {
+    'app-appearance': (
+      <Card title={L('Aparência', 'Appearance')} >
+      <div className="field">
+                    <span className="field__label">Idioma · Language</span>
+                    <LanguagePicker />
+                    <span className="hint">{admin ? L('O idioma da interface e dos agentes neste workspace.', 'Language for the interface and agent replies in this workspace.') : L('O idioma da interface pra você. Os agentes usam o idioma do workspace.', 'Your interface language. Agents use the workspace language.')}</span>
+                  </div>
+      <div className="field">
+                    <span className="field__label">{L('Tema', 'Theme')}</span>
+                    <div className="segmented" role="radiogroup" aria-label={L('Tema', 'Theme')}>
+                      {(['system', 'light', 'dark'] as const).map((t) => (
+                        <button key={t} type="button" role="radio" aria-checked={settings.theme === t} className={settings.theme === t ? 'is-active' : ''} onClick={() => updateSettings({ theme: t })}>
+                          {t === 'system' ? L('Do sistema', 'System') : t === 'light' ? L('Claro', 'Light') : L('Escuro', 'Dark')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+      <div className="key-row">
+                    <Icon name="clock" />
+                    <div className="grow">
+                      <strong>{L('Relógio', "Time format")}</strong>
+                      <p className="muted small">
+                        {L(
+                          'Como os horários aparecem: 15:05 no relógio de 24 horas, ou 3:05 PM no de 12. Vale pra conversa, pras rotinas e pro que os agentes leem.',
+                          "Use 24-hour (15:05) or 12-hour (3:05 PM) time in chats, routines, and agent context."
+                        )}
+                      </p>
+                    </div>
+                    <div className="segmented" role="radiogroup" aria-label={L('Relógio', "Time format")}>
+                      {CLOCK_CHOICES(settings.clock).map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={c.on}
+                          className={c.on ? 'is-active' : ''}
+                          title={c.hint}
+                          onClick={() => updateSettings({ clock: c.value })}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+      </Card>
+    ),
+    'app-conversation': (
+      <Card title={L('A conversa', "Conversation")}>
+                  <div className="key-row">
+                    <Icon name="spark" />
+                    <div className="grow">
+                      <strong>{L('O que o modelo pensa', "Show reasoning")}</strong>
+                      <p className="muted small">
+                        {L(
+                          'Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio.',
+                          "Show reasoning below the steps, including after completion. Available for Pi agents only."
+                        )}
+                      </p>
+                    </div>
+                    <Toggle on={settings.showThinking === true} onChange={(v) => updateSettings({ showThinking: v })} />
+                  </div>
+                  <div className="key-row">
+                    <Icon name="steps" />
+                    <div className="grow">
+                      <strong>{L('O tamanho do raciocínio', "Reasoning panel height")}</strong>
+                      <p className="muted small">
+                        {L(
+                          'Quanto do raciocínio aparece antes de começar a rolar: umas duas linhas quando ele é só um aviso, ou quase a janela toda quando é ele que você está lendo.',
+                          "Visible reasoning before the panel scrolls."
+                        )}
+                      </p>
+                    </div>
+                    <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', "Reasoning panel height")}>
+                      {THINKING_SIZES().map((c) => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={(settings.thinkingSize ?? 'md') === c.value}
+                          className={(settings.thinkingSize ?? 'md') === c.value ? 'is-active' : ''}
+                          title={c.hint}
+                          onClick={() => updateSettings({ thinkingSize: c.value })}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                <div className="key-row">
+                    <Icon name="menu" />
+                    <div className="grow">
+                      <strong>{L('Os passos da resposta', "Reply steps")}</strong>
+                      <p className="muted small">{STEPS_CHOICES(stepsKeep(settings.stepsLatest)).find((c) => c.value === (settings.steps ?? 'all'))!.hint}</p>
+                      <StepsModePick
+                        value={settings.steps ?? 'all'}
+                        keep={stepsKeep(settings.stepsLatest)}
+                        label={L('Como a resposta mostra os passos', "Step display")}
+                        onChange={(v) => updateSettings({ steps: v ?? 'all' })}
+                      />
+                      {settings.steps === 'latest' && (
+                        <label className="row row--center steps-keep">
+                          <span className="muted small">{L('Quantos passos mostrar', "Visible steps")}</span>
+                          <NumberInput
+                            min={STEPS_LATEST_MIN}
+                            max={STEPS_LATEST_MAX}
+                            value={stepsKeep(settings.stepsLatest)}
+                            aria-label={L('Quantos passos mostrar na janela', "Number of visible steps")}
+                            onChange={(n) => updateSettings({ stepsLatest: stepsKeep(n) })}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+      </Card>
+    ),
+    'app-sidebar': (
+      <Card title={L('Barra lateral', 'Sidebar')} >
+      <div className="key-row">
+                    <Icon name="ask" />
+                    <div className="grow">
+                      <strong>{L('Esconder Perguntas quando não há nenhuma', "Hide empty Asks")}</strong>
+                      <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', "Show Asks only when an agent has a question for you.")}</p>
+                    </div>
+                    <Toggle on={settings.hideEmptyAsks === true} onChange={(v) => updateSettings({ hideEmptyAsks: v })} />
+                  </div>
+      <div className="key-row">
+                    <Icon name="shield" />
+                    <div className="grow">
+                      <strong>{L('Esconder Aprovações quando não há nenhuma', "Hide empty Approvals")}</strong>
+                      <p className="muted small">{L(team ? 'A entrada Pra você sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação ou pergunta. Desligado, ela fica sempre lá.' : 'A entrada Aprovações sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação. Desligado, ela fica sempre lá.', team ? "Show For you only when a question or approval needs you." : "Show Approvals only when an action needs your approval.")}</p>
+                    </div>
+                    <Toggle on={settings.hideEmptyApprovals === true} onChange={(v) => updateSettings({ hideEmptyApprovals: v })} />
+                  </div>
+      </Card>
+    ),
+    'app-notifications': (
+      <Card title={L('Notificações', 'Notifications')}>
+        <div className="key-row">
+          <Icon name="volume" />
+          <div className="grow">
+            <strong>{L('Sons', 'Sounds')}</strong>
+            <p className="muted small">{L('O toque quando um agente precisa de você e quando termina. Desligado, as notificações continuam aparecendo, em silêncio.', "Play a sound when agents need you or finish. Notifications remain visible when muted.")}</p>
+          </div>
+          <Toggle on={settings.sounds !== false} onChange={(v) => updateSettings({ sounds: v })} />
+        </div>
+        <NoticeSettingsCard settings={settings} update={updateSettings} />
+        <NotifyTest />
+      </Card>
+    ),
+    'app-dictation': (
+      <VoiceCard />
+    ),
+    'app-startup': (
+      <Card title={L('Inicialização', 'Startup')} >
+      <div className="key-row">
+                    <Icon name="clock" />
+                    <div className="grow">
+                      <strong>{L('Abrir ao ligar o computador', "Launch at login")}</strong>
+                      <p className="muted small">{packaged ? L('Assim nenhuma rotina depende de você lembrar de abrir o app.', "Start Tucano automatically so routines can run.") : L('Só no app instalado. Rodando com npm run dev, fica desligado.', "Available in the installed app; disabled in development.")}</p>
+                    </div>
+                    <Toggle on={!!settings.openAtLogin && packaged && defaultWorkspace} onChange={(v) => packaged && defaultWorkspace && updateSettings({ openAtLogin: v })} />
+                  </div>
+      {!defaultWorkspace && <p className="muted small">{L('Abrir ao ligar o computador é uma configuração do app: ajuste no workspace padrão. Todos os workspaces iniciam juntos.', "Change login startup in the default workspace. All workspaces start together.")}</p>}
+      </Card>
+    ),
+    'app-updates': (
+      <Card title={L('Atualizações', 'Updates')}>
+        <UpdateSettings />
+      </Card>
+    ),
+    'workspace-context': (
+      <Card title={L('Contexto do workspace', 'Workspace context')}>
+        <p className="muted small">{L('Agentes, conversas, conectores e memórias ficam neste workspace. Os logins do Claude Code e OpenCode continuam compartilhados no computador. Um workspace não é uma sandbox do sistema.', "Workspace data is separate; Claude Code and OpenCode logins are shared. Workspaces are not sandboxes.")}</p>
+        {window.tucano.workspaces && (
+          <Field label={L('Nome do workspace', 'Workspace name')}>
+            <input value={settings.workspaceLabel ?? ''} placeholder={settings.workspaceName} maxLength={120} onChange={(e) => updateSettings({ workspaceLabel: e.target.value })} />
+          </Field>
+        )}
+        {owner && (
+          <Field label={L('Como os agentes te chamam', "Your name")}>
+            <input value={settings.workspaceName} onChange={(e) => updateSettings({ workspaceName: e.target.value })} />
+          </Field>
+        )}
+
+        <Field label={L('Contexto', 'Context')} hint={L('Entra em toda conversa de todo agente: quem você é, o que faz, o que importa agora e o que nunca fazer.', "Shared with every agent: your role, priorities, and rules.")}>
+          <textarea rows={5} value={settings.context} onChange={(e) => updateSettings({ context: e.target.value })} />
+        </Field>
+        <div className="row">
+          {/* What the person already set (the short sidebar, the tour) stays as it was. */}
+          <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: false } })}>
+            {L('Rever a introdução', "Review introduction")}
+          </button>
+          {settings.onboarding?.checklistHidden && (
+            <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: true, checklistHidden: false } })}>
+              {L('Mostrar as missões', 'Show the missions')}
+            </button>
+          )}
+          {settings.onboarding?.fresh && !settings.onboarding.showAll && (
+            <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding!, showAll: true } })}>
+              {L('Mostrar a barra lateral inteira', "Show full sidebar")}
+            </button>
+          )}
+        </div>
+      </Card>
+    ),
+    'workspace-people': (
+      <PeoplePane />
+    ),
+    'workspace-activity': (
+      <ActivityPane />
+    ),
+    'workspace-transfer': (
+      <TeamCard />
+    ),
+    'workspace-backups': (
+      <BackupCard />
+    ),
+    'workspace-danger': (
+      <WorkspaceDangerArea />
+    ),
+    'agents-replies': (
+      <Card title={L('Respostas dos agentes', 'Agent replies')} >
+      <div className="grid2"><Field
+                      label={L('Um novo prompt com uma resposta em curso', "Send mode while replying")}
+                      hint={L(
+                        'Em paralelo, outros agentes e threads podem responder juntos; o mesmo agente termina a resposta atual naquela thread primeiro. Shift+Enter espera a conversa inteira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe. Ctrl+Enter quebra a linha.',
+                        "With Enter: Shift queues; Alt steers; Shift+Alt restarts; Ctrl adds a line."
+                      )}
+                    >
+                      <Select
+                        value={settings.sendMode ?? 'parallel'}
+                        onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                        options={[
+                          { value: 'parallel', label: L('Junto, em paralelo', "Parallel replies") },
+                          { value: 'queue', label: L('Na fila, quando a resposta acabar', "Queue until replies finish") },
+                          { value: 'steer', label: L('Entregue à resposta em curso', "Steer current reply") },
+                          { value: 'interrupt', label: L('Interrompe e começa com esta', "Interrupt and restart") }
+                        ]}
+                        placeholder={L('Escolha', 'Pick')}
+                      />
+                    </Field>
+      <Field label={L('Respostas seguidas entre agentes', "Consecutive agent replies")} hint={L('Quantas respostas os agentes podem dar em sequência, passando a vez entre si, antes de parar e esperar você. De 1 a 10.', "Allow 1–10 agent replies before waiting for you.")}>
+                      <NumberInput
+                        min={1}
+                        max={MAX_CHAIN_DEPTH}
+                        value={chainDepthCap(settings.chainDepth)}
+                        onChange={(n) => updateSettings({ chainDepth: chainDepthCap(n) })}
+                      />
+                    </Field></div>
+      </Card>
+    ),
+    'agents-recovery': (
+      <Card title={L('Recuperação', 'Recovery')}>
+                  <div className="key-row">
+                    <div className="grow">
+                      <strong>{L('Retomar respostas interrompidas', 'Resume interrupted replies')}</strong>
+                      <p className="muted small">{L('Continue o trabalho que estava em andamento quando o Tucano fechou ou travou. Respostas paradas por você continuam paradas. Se os agentes estiverem pausados, o trabalho espera você retomar.', "Resume work after a quit or crash, unless you stopped it. Paused agents wait until resumed.")}</p>
+                    </div>
+                    <Toggle on={settings.resumeInterrupted !== false} onChange={(v) => updateSettings({ resumeInterrupted: v })} />
+                  </div>
+                <div className="settings-followup"><Field label={L('Considerar travado após (min sem sinal)', "Inactivity timeout (minutes)")} hint={L('Sem texto nem ferramenta terminando. Trabalho longo que anda não é cortado.', "Stop after no text or completed tools. Work that shows progress continues.")}>
+                      <NumberInput
+                        min={5}
+                        value={settings.runStallMinutes ?? RUN_STALL_MINUTES}
+                        onChange={(n) => updateSettings({ runStallMinutes: Math.max(5, Math.round(n)) })}
+                      />
+                    </Field></div>
+      </Card>
+    ),
+    'agents-permissions': (
+      <Card
+                  title={L('Autonomia', 'Autonomy')}
+                  lead={L(
+                    'Pra todos os agentes: até onde eles vão sozinhos e o que pede sua aprovação antes, com um botão na conversa. Na página de cada agente dá pra mudar só pra ele. Ler e investigar nunca pede.',
+                    "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval."
+                  )}
+                >
+                  <AutonomyControls own={{ autonomy: settings.autonomy, actionRules: settings.actionRules, outsideGuard: settings.outsideGuard }} onChange={(p) => updateSettings(p)} />
+                <div className="settings-followup"><Field label={L('Expiração de aprovações', 'Approvals expire after')}>
+                      <Select
+                        value={settings.approvalTtlHours ? String(settings.approvalTtlHours) : null}
+                        onChange={(v) => { if (v) updateSettings({ approvalTtlHours: Number(v) }) }}
+                        options={[
+                          { value: '1', label: L('1 hora', '1 hour') },
+                          { value: '24', label: L('24 horas', '24 hours') },
+                          { value: '168', label: L('7 dias', '7 days') }
+                        ]}
+                        placeholder={L('Escolha', 'Pick')}
+                      />
+                    </Field></div>
+      </Card>
+    ),
+    'agents-limits': (
+      <Card title={L('Limites de uso', 'Usage limits')} >
+      <div className="grid2"><Field label={L('Limite padrão por agente (milhões de tokens/mês)', "Monthly limit per agent (million tokens)")}>
+                      <NumberInput
+                        min={0}
+                        step={0.5}
+                        value={settings.defaultLimit / 1_000_000}
+                        onChange={(n) => updateSettings({ defaultLimit: Math.max(0, Math.round(n * 1_000_000)) })}
+                      />
+                    </Field>
+      <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua.', "Pause at the limit and ask you whether to continue.")}>
+                      <NumberInput
+                        min={1}
+                        max={100}
+                        value={settings.runBudgetPct ?? RUN_BUDGET_PCT}
+                        onChange={(n) => updateSettings({ runBudgetPct: Math.min(100, Math.max(1, Math.round(n))) })}
+                      />
+                    </Field></div>
+      </Card>
+    ),
+    'agents-automation': (
+      <Card title={L('Automação', 'Automation')} lead={L('As rotinas rodam enquanto o app está aberto, mesmo com a janela fechada.', "Routines require Tucano to keep running, even with its window closed.")}>
+
+
+                  <div className="key-row">
+                    <Icon name="moon" />
+                    <div className="grow">
+                      <strong>{L('Horário de silêncio', 'Quiet hours')}</strong>
+                      <p className="muted small">{L('Rotinas e gatilhos esperam e rodam quando ele acaba (como atrasados). O que você mandar continua sendo respondido.', "Defer routines and triggers until quiet hours end. Direct messages still get replies.")}</p>
+                      {settings.quietHours && (
+                        <div className="row row--center quiet">
+                          <span className="small">{L('das', 'from')}</span>
+                          <input type="time" value={settings.quietHours.from} onChange={(e) => updateSettings({ quietHours: { ...settings.quietHours!, from: e.target.value } })} />
+                          <span className="small">{L('às', 'to')}</span>
+                          <input type="time" value={settings.quietHours.to} onChange={(e) => updateSettings({ quietHours: { ...settings.quietHours!, to: e.target.value } })} />
+                        </div>
+                      )}
+                    </div>
+                    <Toggle on={!!settings.quietHours} onChange={(v) => updateSettings({ quietHours: v ? { from: '22:00', to: '07:00' } : null })} />
+                  </div>
+                <button className="link" onClick={() => setTab('settings', 'app-startup')}>{L('Configurar inicialização', 'Startup settings')}</button>
+      </Card>
+    ),
+    'agents-collaboration': (
+      <Card
+        title={L('Equipes montadas por agentes', "Agent team-ups")}
+        lead={L(
+          'Quando um agente chama outro que não está na conversa (escrevendo @handle), a conversa vira um canal de equipe, com o que já foi feito levado junto. Esses canais são trabalho, não conversas que ficam: eles fecham sozinhos.',
+          "Calling an outside agent with @handle creates a team-up channel with the current context. Team-ups close automatically."
+        )}
+      >
+        <div className="grid2">
+          <Field
+            label={L('Fechar sozinho depois de (dias parado)', "Auto-close after (inactive days)")}
+            hint={L(
+              'Contados da última mensagem do canal. 0 mantém todos. Também dá pra fechar na hora: botão direito no canal, "Fechar equipe…".',
+              "Since last message. 0 keeps team-ups. Right-click to close."
+            )}
+          >
+            <NumberInput min={0} value={settings.teamUpDays ?? TEAM_UP_DAYS} onChange={(n) => updateSettings({ teamUpDays: Math.max(0, Math.round(n)) })} />
+          </Field>
+        </div>
+      </Card>
+    ),
+    'agents-skills': (
+      <SkillFoldersCard />
+    ),
+    'models-agents': (
+      <AgentModelsPanel />
+    ),
+    'models-runtimes': (
+      <Card
+        title={L('Runtimes', 'Runtimes')}
+        lead={L(
+          'Os programas em que os agentes rodam, cada um como você configurou: no seu plano, no gateway da empresa ou nos seus provedores. O Tucano nunca vê nem guarda as suas credenciais.',
+          "Run agents through your existing plans, gateway, or providers. Tucano does not access or store harness credentials."
+        )}
+        action={
+          <button className="btn btn--ghost btn--sm" onClick={refreshEngines}>
+            {L('Verificar de novo', 'Check again')}
+          </button>
+        }
+      >
+        <HarnessList />
+      </Card>
+    ),
+    'models-accounts': (
+      <Card
+        title={L('Contas', 'Accounts')}
+        lead={L(
+          'Mais de um login do Claude Code, do Codex ou do Grok, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
+          'Add Claude Code, Codex or Grok accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.'
+        )}
+      >
+        <AccountsCard />
+      </Card>
+    ),
+    'models-classifiers': (
+      <><Card
+                  title="Classifiers"
+                  lead={L(
+                    'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, quem escuta entra, a opção sugerida numa pergunta, quais próximos passos fazer, qual modelo responde, o que o agente clica numa página.',
+                    "Fast models for routing, suggestions, and browser controls. Assign a provider to each task below."
+                  )}
+                >
+                  <ClassifiersCard />
+                </Card>
+      <Card title={L('Navegador dos agentes', 'Agents’ browser')} lead={L('Como o app acha o que o agente pede pra clicar (“o botão Buscar”). Pelo texto é de graça e resolve a maioria; quando não acha, o agente usa o número do elemento.', "Find controls by page text at no cost. If no match is found, agents use element numbers.")}>
+                  <div className="key-row">
+                    <Icon name="spark" />
+                    <div className="grow">
+                      <strong>{browserClassifier ? classifierLabel(browserClassifier) : L('Só pelo texto da página', "Page text only")}</strong>
+                      <p className="muted small">
+                        {browserClassifier
+                          ? L('Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.', "When text matching fails, the provider receives page elements and may receive screenshots, including signed-in content.")
+                          : L('De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.', "Match page text for free; use element numbers when no match is found.")}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="hint">
+                    <Icon name="sliders" size={13} /> {L('Quem acha o clique é escolhido em Classifiers, no trabalho “O que o agente clica na página”.', "Choose a provider in Classifiers › Browser controls.")}
+                  </p>
+                </Card>
+      <Card
+                  title={L('As perguntas dos agentes', "Agent suggestions")}
+                  lead={L(
+                    'Um classificador lê a pergunta fechada de um agente — qual opção escolher, qual passo fazer agora — e responde em menos de um segundo com a probabilidade de cada opção. Quem responde cada um dos dois trabalhos é escolhido em Classifiers.',
+                    "Suggest answers and next steps using the providers assigned in Classifiers."
+                  )}
+                >
+                  <div className="key-row">
+                    <Icon name="spark" />
+                    <div className="grow">
+                      <strong>{L('Marcar a opção recomendada', "Suggest answers")}</strong>
+                      <p className="muted small">
+                        {L(
+                          `Desligado por padrão. Ligado, cada pergunta de agente com duas ou mais opções vai pro ${recommendClassifier ? recommendClassifier.name : 'classificador deste trabalho'} com o texto e as opções, e volta com a sugestão. É só uma sugestão: quem escolhe continua sendo você, e "Outra coisa" nunca é sugerida.`,
+                          `Off by default. Send questions and options to ${recommendClassifier ? recommendClassifier.name : 'the classifier'} for suggestions. You choose; “Something else” is never suggested.`
+                        )}
+                      </p>
+                    </div>
+                    <Toggle on={!!settings.jevRecommend} onChange={(v) => updateSettings({ jevRecommend: v })} />
+                  </div>
+                  <div className="key-row">
+                    <Icon name="spark" />
+                    <div className="grow">
+                      <strong>{L('Marcar só os próximos passos que importam', "Suggest next steps")}</strong>
+                      <p className="muted small">
+                        {L(
+                          `Desligado por padrão. Ligado, cada passo de um card de próximos passos vai pro ${stepsClassifier ? stepsClassifier.name : 'classificador deste trabalho'} com o que o agente disse antes, e só os que ele consideraria pra agora começam marcados; o resto espera no card, a um clique. Nunca deixa a lista vazia: se nenhum for marcado, todos ficam.`,
+                          `Send steps and reply context to ${stepsClassifier ? stepsClassifier.name : 'the classifier'} to check suggested tasks. Others stay available; if none is chosen, all stay checked. Off by default.`
+                        )}
+                      </p>
+                    </div>
+                    <Toggle on={!!settings.jevNextSteps} onChange={(v) => updateSettings({ jevNextSteps: v })} />
+                  </div>
+                  {settings.jevRecommend && work && (
+                    <OutsideGateway what={L('cada pergunta de agente com opções, com o texto da pergunta e das opções, vai pro provedor do classificador escolhido.', "every agent question with options, with the question's and the options' text, goes to the chosen classifier's provider.")} />
+                  )}
+                  {(settings.jevRecommend || settings.jevNextSteps) && (
+                    <p className="hint">
+                      <Icon name="sliders" size={13} /> {L('Sem chave no classificador, as duas chaves acima não fazem nada: a pergunta fica sem selo e os passos começam todos marcados.', "A classifier key is required. Without it, answers are not suggested and all next steps stay checked.")}
+                    </p>
+                  )}
+                  {(settings.jevRecommend || settings.jevNextSteps) && (
+                    <p className="hint">
+                      <Icon name="sliders" size={13} /> {L('Quem responde é escolhido em Classifiers: “A opção sugerida na pergunta” e “Quais próximos passos fazer”.', "Assign providers in Classifiers › Suggested answers and Suggested next steps.")}
+                    </p>
+                  )}
+                </Card></>
+    ),
+    'models-routing': (
+      <><Card title={L('Padrões de roteamento', 'Routing defaults')} >
+      <SmartRoutingRow configure={false} />
+      {settings.routing?.enabled === true && work && <OutsideGateway what={L('o pedido de cada resposta vai pro classificador do roteamento escolher o modelo.', 'each reply’s request goes to the routing classifier to pick the model.')} />}
+      <button className="link" onClick={() => setTab('settings', 'models-classifiers')}>{L('Configurar classificadores', 'Classifier settings')}</button>
+      </Card>
+      {routingOn && <RoutingPane />}
+      </>
+    ),
+    'knowledge-memory': (
+      <Card title={L('Memória', 'Memory')} lead={L('Um modelo pequeno resume o que sai da janela de cada conversa e, do mesmo trecho, tira o que vale lembrar sobre você.', "Summarize older messages and extract lasting facts about you.")}>
+        <div className="grid2">
+          <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', "Runs about every 20 messages in long conversations.")}>
+            <ModelSelect value={settings.memoryModel} onChange={(memoryModel) => updateSettings({ memoryModel })} />
+          </Field>
+          <Field label={L('O que ele aprende sobre você', "Memory learning")} hint={L('Só conta o que você disse, nunca o que um agente supôs.', "Learns from your messages, not agent assumptions.")}>
+            <Select
+              value={settings.memoryLearning ?? null}
+              onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
+              options={[
+                { value: 'approve', label: L('Vira sugestão pra você aprovar', "Ask for approval") },
+                { value: 'auto', label: L('Grava sozinho', "Save automatically") },
+                { value: 'off', label: L('Nada (só resume)', "Summaries only") }
+              ]}
+              placeholder={L('Escolha', 'Pick')}
+            />
+          </Field>
+        </div>
+      </Card>
+    ),
+    'knowledge-wiki-capture': (
+      <WikiSettingsSection part="curator" />
+    ),
+    'knowledge-wiki-resolver': (
+      <WikiSettingsSection part="resolver" />
+    ),
+    'knowledge-wiki-storage': (
+      <WikiSettingsSection part="storage" />
+    ),
+    'knowledge-wiki-import': (
+      <WikiSettingsSection part="import" />
+    ),
+    'knowledge-wiki-rules': (
+      <WikiSettingsSection part="rules" />
+    ),
+    'connections-phone': (
+      <>{work && <OutsideGateway what={L('as aprovações, as perguntas dos agentes e o fim das rotinas vão pro seu Telegram, com o texto de cada uma.', 'approvals, the agents’ questions and routine results go to your Telegram, with the text of each.')} />}
+      {window.tucano.phone && <HomePhoneCard />}
+      {defaultWorkspace ? <PhoneCard info={settings.telegram} /> : <WorkspaceTelegramNotice />}</>
+    ),
+    'connections-servers': (
+      <ServersCard />
+    )
+  }
   return (
     <Page title={L('Configurações', 'Settings')}>
-      <Tabs page="settings" tabs={tabs} />
-      <div className="agent-form">
-        {pane('pessoas') && <PeoplePane />}
-        {pane('atividade') && admin && <ActivityPane />}
-        {/* A member's own: the language, the theme and the sounds (their name is in Pessoas). */}
-        {pane('geral') && !admin && (
-          <Card title={L('Pra você', "Your preferences")} lead={L('Como o Tucano aparece pra você. Muda só pra você.', "These appearance settings apply only to you.")}>
-            <div className="field">
-              <span className="field__label">Idioma · Language</span>
-              <LanguagePicker />
-              <span className="hint">{L('O idioma do app pra você. Os agentes respondem no idioma do Tucano.', "Your interface language. Agents use the workspace language.")}</span>
-            </div>
-            <div className="field">
-              <span className="field__label">{L('Tema', 'Theme')}</span>
-              <div className="segmented" role="radiogroup" aria-label={L('Tema', 'Theme')}>
-                {(['system', 'light', 'dark'] as const).map((t) => (
-                  <button key={t} type="button" role="radio" aria-checked={settings.theme === t} className={settings.theme === t ? 'is-active' : ''} onClick={() => updateSettings({ theme: t })}>
-                    {t === 'system' ? L('Do sistema', 'System') : t === 'light' ? L('Claro', 'Light') : L('Escuro', 'Dark')}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <AdminOnly>{L('Só um admin muda os modelos, os agentes, o contexto e as outras configurações do Tucano.', "Only admins can change models, agents, context, and workspace settings.")}</AdminOnly>
-          </Card>
-        )}
-        {pane('geral') && admin && (
-          <Card title="Workspace">
-            <p className="muted small">{L('Agentes, conversas, conectores e memórias ficam neste workspace. Os logins do Claude Code e OpenCode continuam compartilhados no computador. Um workspace não é uma sandbox do sistema.', "Workspace data is separate; Claude Code and OpenCode logins are shared. Workspaces are not sandboxes.")}</p>
-            {window.tucano.workspaces && (
-              <Field label={L('Nome do workspace', 'Workspace name')}>
-                <input value={settings.workspaceLabel ?? ''} placeholder={settings.workspaceName} maxLength={120} onChange={(e) => updateSettings({ workspaceLabel: e.target.value })} />
-              </Field>
-            )}
-            {owner && (
-              <Field label={L('Como os agentes te chamam', "Your name")}>
-                <input value={settings.workspaceName} onChange={(e) => updateSettings({ workspaceName: e.target.value })} />
-              </Field>
-            )}
-            <div className="field">
-              <span className="field__label">Idioma · Language</span>
-              <LanguagePicker />
-              <span className="hint">{L('O idioma do app e o que os agentes usam pra responder.', "Language for the interface and agent replies.")}</span>
-            </div>
-            <Field label={L('Contexto', 'Context')} hint={L('Entra em toda conversa de todo agente: quem você é, o que faz, o que importa agora e o que nunca fazer.', "Shared with every agent: your role, priorities, and rules.")}>
-              <textarea rows={5} value={settings.context} onChange={(e) => updateSettings({ context: e.target.value })} />
-            </Field>
-            <div className="row">
-              {/* What the person already set (the short sidebar, the tour) stays as it was. */}
-              <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: false } })}>
-                {L('Rever a introdução', "Review introduction")}
-              </button>
-              {settings.onboarding?.checklistHidden && (
-                <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: true, checklistHidden: false } })}>
-                  {L('Mostrar as missões', 'Show the missions')}
-                </button>
-              )}
-              {settings.onboarding?.fresh && !settings.onboarding.showAll && (
-                <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding!, showAll: true } })}>
-                  {L('Mostrar a barra lateral inteira', "Show full sidebar")}
-                </button>
-              )}
-            </div>
-          </Card>
-        )}
-
-        {pane('geral') && admin && (
-          <Card title={L('Ao reiniciar', 'On restart')}>
-            <div className="key-row">
-              <div className="grow">
-                <strong>{L('Retomar respostas interrompidas', 'Resume interrupted replies')}</strong>
-                <p className="muted small">{L('Continue o trabalho que estava em andamento quando o Tucano fechou ou travou. Respostas paradas por você continuam paradas. Se os agentes estiverem pausados, o trabalho espera você retomar.', "Resume work after a quit or crash, unless you stopped it. Paused agents wait until resumed.")}</p>
-              </div>
-              <Toggle on={settings.resumeInterrupted !== false} onChange={(v) => updateSettings({ resumeInterrupted: v })} />
-            </div>
-          </Card>
-        )}
-
-        {pane('geral') && admin && <VoiceCard />}
-
-        {pane('geral') && (
-          <Card title={L('Notificações', 'Notifications')}>
-            <div className="key-row">
-              <Icon name="volume" />
-              <div className="grow">
-                <strong>{L('Sons', 'Sounds')}</strong>
-                <p className="muted small">{L('O toque quando um agente precisa de você e quando termina. Desligado, as notificações continuam aparecendo, em silêncio.', "Play a sound when agents need you or finish. Notifications remain visible when muted.")}</p>
-              </div>
-              <Toggle on={settings.sounds !== false} onChange={(v) => updateSettings({ sounds: v })} />
-            </div>
-            <NoticeSettingsCard settings={settings} update={updateSettings} />
-            <NotifyTest />
-          </Card>
-        )}
-
-        {pane('geral') && (
-          <Card title={L('A conversa', "Conversation")}>
-            <div className="key-row">
-              <Icon name="spark" />
-              <div className="grow">
-                <strong>{L('O que o modelo pensa', "Show reasoning")}</strong>
-                <p className="muted small">
-                  {L(
-                    'Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio.',
-                    "Show reasoning below the steps, including after completion. Available for Pi agents only."
-                  )}
-                </p>
-              </div>
-              <Toggle on={settings.showThinking === true} onChange={(v) => updateSettings({ showThinking: v })} />
-            </div>
-            <div className="key-row">
-              <Icon name="steps" />
-              <div className="grow">
-                <strong>{L('O tamanho do raciocínio', "Reasoning panel height")}</strong>
-                <p className="muted small">
-                  {L(
-                    'Quanto do raciocínio aparece antes de começar a rolar: umas duas linhas quando ele é só um aviso, ou quase a janela toda quando é ele que você está lendo.',
-                    "Visible reasoning before the panel scrolls."
-                  )}
-                </p>
-              </div>
-              <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', "Reasoning panel height")}>
-                {THINKING_SIZES().map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={(settings.thinkingSize ?? 'md') === c.value}
-                    className={(settings.thinkingSize ?? 'md') === c.value ? 'is-active' : ''}
-                    title={c.hint}
-                    onClick={() => updateSettings({ thinkingSize: c.value })}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="key-row">
-              <Icon name="clock" />
-              <div className="grow">
-                <strong>{L('Relógio', "Time format")}</strong>
-                <p className="muted small">
-                  {L(
-                    'Como os horários aparecem: 15:05 no relógio de 24 horas, ou 3:05 PM no de 12. Vale pra conversa, pras rotinas e pro que os agentes leem.',
-                    "Use 24-hour (15:05) or 12-hour (3:05 PM) time in chats, routines, and agent context."
-                  )}
-                </p>
-              </div>
-              <div className="segmented" role="radiogroup" aria-label={L('Relógio', "Time format")}>
-                {CLOCK_CHOICES(settings.clock).map((c) => (
-                  <button
-                    key={c.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={c.on}
-                    className={c.on ? 'is-active' : ''}
-                    title={c.hint}
-                    onClick={() => updateSettings({ clock: c.value })}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {pane('geral') && (
-          <Card title={L('Barra lateral', 'Sidebar')}>
-            <div className="key-row">
-              <Icon name="ask" />
-              <div className="grow">
-                <strong>{L('Esconder Perguntas quando não há nenhuma', "Hide empty Asks")}</strong>
-                <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', "Show Asks only when an agent has a question for you.")}</p>
-              </div>
-              <Toggle on={settings.hideEmptyAsks === true} onChange={(v) => updateSettings({ hideEmptyAsks: v })} />
-            </div>
-            <div className="key-row">
-              <Icon name="shield" />
-              <div className="grow">
-                <strong>{L('Esconder Aprovações quando não há nenhuma', "Hide empty Approvals")}</strong>
-                <p className="muted small">{L(team ? 'A entrada Pra você sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação ou pergunta. Desligado, ela fica sempre lá.' : 'A entrada Aprovações sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação. Desligado, ela fica sempre lá.', team ? "Show For you only when a question or approval needs you." : "Show Approvals only when an action needs your approval.")}</p>
-              </div>
-              <Toggle on={settings.hideEmptyApprovals === true} onChange={(v) => updateSettings({ hideEmptyApprovals: v })} />
-            </div>
-            {/* The same field, one line down: what a reply's steps look like. Both are about how a
-                reply reads, and nobody turns one on without the other being right there. */}
-            <div className="key-row">
-              <Icon name="menu" />
-              <div className="grow">
-                <strong>{L('Os passos da resposta', "Reply steps")}</strong>
-                <p className="muted small">{STEPS_CHOICES(stepsKeep(settings.stepsLatest)).find((c) => c.value === (settings.steps ?? 'all'))!.hint}</p>
-                <StepsModePick
-                  value={settings.steps ?? 'all'}
-                  keep={stepsKeep(settings.stepsLatest)}
-                  label={L('Como a resposta mostra os passos', "Step display")}
-                  onChange={(v) => updateSettings({ steps: v ?? 'all' })}
-                />
-                {settings.steps === 'latest' && (
-                  <label className="row row--center steps-keep">
-                    <span className="muted small">{L('Quantos passos mostrar', "Visible steps")}</span>
-                    <NumberInput
-                      min={STEPS_LATEST_MIN}
-                      max={STEPS_LATEST_MAX}
-                      value={stepsKeep(settings.stepsLatest)}
-                      aria-label={L('Quantos passos mostrar na janela', "Number of visible steps")}
-                      onChange={(n) => updateSettings({ stepsLatest: stepsKeep(n) })}
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {pane('geral') && admin && (
-          <Card title={L('Atualizações', 'Updates')}>
-            <UpdateSettings />
-          </Card>
-        )}
-
-        {pane('modelos') && admin && <AgentModelsPanel />}
-
-        {pane('modelos') && (
-          <Card
-            title="Harnesses"
-            lead={L(
-              'Os programas em que os agentes rodam, cada um como você configurou: no seu plano, no gateway da empresa ou nos seus provedores. O Tucano nunca vê nem guarda as suas credenciais.',
-              "Run agents through your existing plans, gateway, or providers. Tucano does not access or store harness credentials."
-            )}
-            action={
-              <button className="btn btn--ghost btn--sm" onClick={refreshEngines}>
-                {L('Verificar de novo', 'Check again')}
-              </button>
-            }
-          >
-            <HarnessList />
-          </Card>
-        )}
-
-        {pane('modelos') && (
-          <Card
-            title={L('Contas', 'Accounts')}
-            lead={L(
-              'Mais de um login do Claude Code, do Codex ou do Grok, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
-              'Add Claude Code, Codex or Grok accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.'
-            )}
-          >
-            <AccountsCard />
-          </Card>
-        )}
-
-        {pane('modelos') && (
-          <Card
-            title="Classifiers"
-            lead={L(
-              'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, quem escuta entra, a opção sugerida numa pergunta, quais próximos passos fazer, qual modelo responde, o que o agente clica numa página.',
-              "Fast models for routing, suggestions, and browser controls. Assign a provider to each task below."
-            )}
-          >
-            <ClassifiersCard />
-          </Card>
-        )}
-
-        {pane('roteamento') && admin && routingOn && <RoutingPane />}
-
-        {pane('agentes') && (
-          <Card
-            title={L('Autonomia', 'Autonomy')}
-            lead={L(
-              'Pra todos os agentes: até onde eles vão sozinhos e o que pede sua aprovação antes, com um botão na conversa. Na página de cada agente dá pra mudar só pra ele. Ler e investigar nunca pede.',
-              "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval."
-            )}
-          >
-            <AutonomyControls own={{ autonomy: settings.autonomy, actionRules: settings.actionRules, outsideGuard: settings.outsideGuard }} onChange={(p) => updateSettings(p)} />
-          </Card>
-        )}
-
-        {pane('agentes') && (
-          <Card title={L('Navegador dos agentes', 'Agents’ browser')} lead={L('Como o app acha o que o agente pede pra clicar (“o botão Buscar”). Pelo texto é de graça e resolve a maioria; quando não acha, o agente usa o número do elemento.', "Find controls by page text at no cost. If no match is found, agents use element numbers.")}>
-            <div className="key-row">
-              <Icon name="spark" />
-              <div className="grow">
-                <strong>{browserClassifier ? classifierLabel(browserClassifier) : L('Só pelo texto da página', "Page text only")}</strong>
-                <p className="muted small">
-                  {browserClassifier
-                    ? L('Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.', "When text matching fails, the provider receives page elements and may receive screenshots, including signed-in content.")
-                    : L('De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.', "Match page text for free; use element numbers when no match is found.")}
-                </p>
-              </div>
-            </div>
-            <p className="hint">
-              <Icon name="sliders" size={13} /> {L('Quem acha o clique é escolhido em Classifiers, no trabalho “O que o agente clica na página”.', "Choose a provider in Classifiers › Browser controls.")}
-            </p>
-          </Card>
-        )}
-
-        {pane('agentes') && (
-          <Card
-            title={L('As perguntas dos agentes', "Agent suggestions")}
-            lead={L(
-              'Um classificador lê a pergunta fechada de um agente — qual opção escolher, qual passo fazer agora — e responde em menos de um segundo com a probabilidade de cada opção. Quem responde cada um dos dois trabalhos é escolhido em Classifiers.',
-              "Suggest answers and next steps using the providers assigned in Classifiers."
-            )}
-          >
-            <div className="key-row">
-              <Icon name="spark" />
-              <div className="grow">
-                <strong>{L('Marcar a opção recomendada', "Suggest answers")}</strong>
-                <p className="muted small">
-                  {L(
-                    `Desligado por padrão. Ligado, cada pergunta de agente com duas ou mais opções vai pro ${recommendClassifier ? recommendClassifier.name : 'classificador deste trabalho'} com o texto e as opções, e volta com a sugestão. É só uma sugestão: quem escolhe continua sendo você, e "Outra coisa" nunca é sugerida.`,
-                    `Off by default. Send questions and options to ${recommendClassifier ? recommendClassifier.name : 'the classifier'} for suggestions. You choose; “Something else” is never suggested.`
-                  )}
-                </p>
-              </div>
-              <Toggle on={!!settings.jevRecommend} onChange={(v) => updateSettings({ jevRecommend: v })} />
-            </div>
-            <div className="key-row">
-              <Icon name="spark" />
-              <div className="grow">
-                <strong>{L('Marcar só os próximos passos que importam', "Suggest next steps")}</strong>
-                <p className="muted small">
-                  {L(
-                    `Desligado por padrão. Ligado, cada passo de um card de próximos passos vai pro ${stepsClassifier ? stepsClassifier.name : 'classificador deste trabalho'} com o que o agente disse antes, e só os que ele consideraria pra agora começam marcados; o resto espera no card, a um clique. Nunca deixa a lista vazia: se nenhum for marcado, todos ficam.`,
-                    `Send steps and reply context to ${stepsClassifier ? stepsClassifier.name : 'the classifier'} to check suggested tasks. Others stay available; if none is chosen, all stay checked. Off by default.`
-                  )}
-                </p>
-              </div>
-              <Toggle on={!!settings.jevNextSteps} onChange={(v) => updateSettings({ jevNextSteps: v })} />
-            </div>
-            {settings.jevRecommend && work && (
-              <OutsideGateway what={L('cada pergunta de agente com opções, com o texto da pergunta e das opções, vai pro provedor do classificador escolhido.', "every agent question with options, with the question's and the options' text, goes to the chosen classifier's provider.")} />
-            )}
-            {(settings.jevRecommend || settings.jevNextSteps) && (
-              <p className="hint">
-                <Icon name="sliders" size={13} /> {L('Sem chave no classificador, as duas chaves acima não fazem nada: a pergunta fica sem selo e os passos começam todos marcados.', "A classifier key is required. Without it, answers are not suggested and all next steps stay checked.")}
-              </p>
-            )}
-            {(settings.jevRecommend || settings.jevNextSteps) && (
-              <p className="hint">
-                <Icon name="sliders" size={13} /> {L('Quem responde é escolhido em Classifiers: “A opção sugerida na pergunta” e “Quais próximos passos fazer”.', "Assign providers in Classifiers › Suggested answers and Suggested next steps.")}
-              </p>
-            )}
-          </Card>
-        )}
-
-        {pane('integracoes') && work && <OutsideGateway what={L('as aprovações, as perguntas dos agentes e o fim das rotinas vão pro seu Telegram, com o texto de cada uma.', 'approvals, the agents’ questions and routine results go to your Telegram, with the text of each.')} />}
-        {pane('integracoes') && window.tucano.phone && <HomePhoneCard />}
-        {pane('integracoes') && (defaultWorkspace ? <PhoneCard info={settings.telegram} /> : <WorkspaceTelegramNotice />)}
-
-        {pane('modelos') && (
-          <Card title={L('Memória', 'Memory')} lead={L('Um modelo pequeno resume o que sai da janela de cada conversa e, do mesmo trecho, tira o que vale lembrar sobre você.', "Summarize older messages and extract lasting facts about you.")}>
-            <div className="grid2">
-              <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', "Runs about every 20 messages in long conversations.")}>
-                <ModelSelect value={settings.memoryModel} onChange={(memoryModel) => updateSettings({ memoryModel })} />
-              </Field>
-              <Field label={L('O que ele aprende sobre você', "Memory learning")} hint={L('Só conta o que você disse, nunca o que um agente supôs.', "Learns from your messages, not agent assumptions.")}>
-                <Select
-                  value={settings.memoryLearning ?? null}
-                  onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
-                  options={[
-                    { value: 'approve', label: L('Vira sugestão pra você aprovar', "Ask for approval") },
-                    { value: 'auto', label: L('Grava sozinho', "Save automatically") },
-                    { value: 'off', label: L('Nada (só resume)', "Summaries only") }
-                  ]}
-                  placeholder={L('Escolha', 'Pick')}
-                />
-              </Field>
-            </div>
-          </Card>
-        )}
-
-        {pane('agentes') && (
-          <Card title={L('Rotinas', 'Routines')} lead={L('As rotinas rodam enquanto o app está aberto, mesmo com a janela fechada.', "Routines require Tucano to keep running, even with its window closed.")}>
-            <div className="key-row">
-              <Icon name="clock" />
-              <div className="grow">
-                <strong>{L('Abrir ao ligar o computador', "Launch at login")}</strong>
-                <p className="muted small">{packaged ? L('Assim nenhuma rotina depende de você lembrar de abrir o app.', "Start Tucano automatically so routines can run.") : L('Só no app instalado. Rodando com npm run dev, fica desligado.', "Available in the installed app; disabled in development.")}</p>
-              </div>
-              <Toggle on={!!settings.openAtLogin && packaged && defaultWorkspace} onChange={(v) => packaged && defaultWorkspace && updateSettings({ openAtLogin: v })} />
-            </div>
-            {!defaultWorkspace && <p className="muted small">{L('Abrir ao ligar o computador é uma configuração do app: ajuste no workspace padrão. Todos os workspaces iniciam juntos.', "Change login startup in the default workspace. All workspaces start together.")}</p>}
-            <div className="key-row">
-              <Icon name="moon" />
-              <div className="grow">
-                <strong>{L('Horário de silêncio', 'Quiet hours')}</strong>
-                <p className="muted small">{L('Rotinas e gatilhos esperam e rodam quando ele acaba (como atrasados). O que você mandar continua sendo respondido.', "Defer routines and triggers until quiet hours end. Direct messages still get replies.")}</p>
-                {settings.quietHours && (
-                  <div className="row row--center quiet">
-                    <span className="small">{L('das', 'from')}</span>
-                    <input type="time" value={settings.quietHours.from} onChange={(e) => updateSettings({ quietHours: { ...settings.quietHours!, from: e.target.value } })} />
-                    <span className="small">{L('às', 'to')}</span>
-                    <input type="time" value={settings.quietHours.to} onChange={(e) => updateSettings({ quietHours: { ...settings.quietHours!, to: e.target.value } })} />
-                  </div>
-                )}
-              </div>
-              <Toggle on={!!settings.quietHours} onChange={(v) => updateSettings({ quietHours: v ? { from: '22:00', to: '07:00' } : null })} />
-            </div>
-          </Card>
-        )}
-
-
-        {pane('geral') && admin && <TeamCard />}
-        {pane('geral') && <BackupCard />}
-        {pane('servidores') && <ServersCard />}
-
-        {pane('agentes') && <SkillFoldersCard />}
-
-        {pane('agentes') && (
-          <Card title={L('Limites', 'Limits')}>
-            <div className="grid2">
-              <Field label={L('Limite padrão por agente (milhões de tokens/mês)', "Monthly limit per agent (million tokens)")}>
-                <NumberInput
-                  min={0}
-                  step={0.5}
-                  value={settings.defaultLimit / 1_000_000}
-                  onChange={(n) => updateSettings({ defaultLimit: Math.max(0, Math.round(n * 1_000_000)) })}
-                />
-              </Field>
-              <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua.', "Pause at the limit and ask you whether to continue.")}>
-                <NumberInput
-                  min={1}
-                  max={100}
-                  value={settings.runBudgetPct ?? RUN_BUDGET_PCT}
-                  onChange={(n) => updateSettings({ runBudgetPct: Math.min(100, Math.max(1, Math.round(n))) })}
-                />
-              </Field>
-              <Field label={L('Considerar travado após (min sem sinal)', "Inactivity timeout (minutes)")} hint={L('Sem texto nem ferramenta terminando. Trabalho longo que anda não é cortado.', "Stop after no text or completed tools. Work that shows progress continues.")}>
-                <NumberInput
-                  min={5}
-                  value={settings.runStallMinutes ?? RUN_STALL_MINUTES}
-                  onChange={(n) => updateSettings({ runStallMinutes: Math.max(5, Math.round(n)) })}
-                />
-              </Field>
-              <Field label={L('Respostas seguidas entre agentes', "Consecutive agent replies")} hint={L('Quantas respostas os agentes podem dar em sequência, passando a vez entre si, antes de parar e esperar você. De 1 a 10.', "Allow 1–10 agent replies before waiting for you.")}>
-                <NumberInput
-                  min={1}
-                  max={MAX_CHAIN_DEPTH}
-                  value={chainDepthCap(settings.chainDepth)}
-                  onChange={(n) => updateSettings({ chainDepth: chainDepthCap(n) })}
-                />
-              </Field>
-              <Field
-                label={L('Um novo prompt com uma resposta em curso', "Send mode while replying")}
-                hint={L(
-                  'Em paralelo, outros agentes e threads podem responder juntos; o mesmo agente termina a resposta atual naquela thread primeiro. Shift+Enter espera a conversa inteira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe. Ctrl+Enter quebra a linha.',
-                  "With Enter: Shift queues; Alt steers; Shift+Alt restarts; Ctrl adds a line."
-                )}
-              >
-                <Select
-                  value={settings.sendMode ?? 'parallel'}
-                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
-                  options={[
-                    { value: 'parallel', label: L('Junto, em paralelo', "Parallel replies") },
-                    { value: 'queue', label: L('Na fila, quando a resposta acabar', "Queue until replies finish") },
-                    { value: 'steer', label: L('Entregue à resposta em curso', "Steer current reply") },
-                    { value: 'interrupt', label: L('Interrompe e começa com esta', "Interrupt and restart") }
-                  ]}
-                  placeholder={L('Escolha', 'Pick')}
-                />
-              </Field>
-              <Field label={L('Expiração de aprovações', 'Approvals expire after')}>
-                <Select
-                  value={settings.approvalTtlHours ? String(settings.approvalTtlHours) : null}
-                  onChange={(v) => { if (v) updateSettings({ approvalTtlHours: Number(v) }) }}
-                  options={[
-                    { value: '1', label: L('1 hora', '1 hour') },
-                    { value: '24', label: L('24 horas', '24 hours') },
-                    { value: '168', label: L('7 dias', '7 days') }
-                  ]}
-                  placeholder={L('Escolha', 'Pick')}
-                />
-              </Field>
-            </div>
-          </Card>
-        )}
-
-        {pane('agentes') && (
-          <Card
-            title={L('Equipes montadas por agentes', "Agent team-ups")}
-            lead={L(
-              'Quando um agente chama outro que não está na conversa (escrevendo @handle), a conversa vira um canal de equipe, com o que já foi feito levado junto. Esses canais são trabalho, não conversas que ficam: eles fecham sozinhos.',
-              "Calling an outside agent with @handle creates a team-up channel with the current context. Team-ups close automatically."
-            )}
-          >
-            <div className="grid2">
-              <Field
-                label={L('Fechar sozinho depois de (dias parado)', "Auto-close after (inactive days)")}
-                hint={L(
-                  'Contados da última mensagem do canal. 0 mantém todos. Também dá pra fechar na hora: botão direito no canal, "Fechar equipe…".',
-                  "Since last message. 0 keeps team-ups. Right-click to close."
-                )}
-              >
-                <NumberInput min={0} value={settings.teamUpDays ?? TEAM_UP_DAYS} onChange={(n) => updateSettings({ teamUpDays: Math.max(0, Math.round(n)) })} />
-              </Field>
-            </div>
-          </Card>
-        )}
-        {pane('geral') && owner && <WorkspaceDangerArea />}
-      </div>
+      <WikiSettingsProvider active={settingsDestination(requested, sections).page === 'knowledge'}>
+        <SettingsLayout requested={requested} sections={sections} content={content} onNavigate={(destination) => setTab('settings', destination)} />
+      </WikiSettingsProvider>
     </Page>
   )
 }

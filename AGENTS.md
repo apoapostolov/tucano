@@ -65,7 +65,8 @@ an unchanged packaged app.
 ## Plan and moderate settings placement
 
 Settings placement is a product decision made before adding a control. Follow the maintained
-[settings architecture](docs/settings-architecture-plan.md) and the typed settings structure.
+[settings architecture](docs/settings-architecture-plan.md) and the
+[typed settings structure](src/renderer/src/settings-structure.ts).
 The main pages are App, Workspace, Agents, Models, Knowledge and Connections. Each setting
 has one canonical section; global defaults and object-specific overrides keep their scopes.
 
@@ -79,6 +80,9 @@ another switch at the bottom of the nearest card.
   Keep labels, anchors and deep links stable across translation and rearrangement. Update the
   placement checks and tests when a control moves. An undeclared or unreachable setting is
   incomplete work, even when the RPC and persistence tests pass.
+  Run `npm run check:settings`: its source check follows literal settings writes through shared
+  controls, checks declared ownership and catches missing or duplicate sections. Dynamic patches,
+  RPC-only controls and access scopes still require the placement review and interaction tests.
 - Place personal appearance/input under App; workspace identity, people and data under
   Workspace; execution, permissions, limits, automation and skill defaults under Agents;
   runtime/model/accounts/classifier setup under Models; Memory and Wiki under Knowledge;
@@ -704,6 +708,8 @@ to a reviewer than a second PR that has to be read against the first.
 | Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
 | A hand-off answer comes back however the reply ends | 376 | 377 |
 | Delete a session from the room, in two presses | 374 | 375 |
+| Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
+| Give the file its space back, and say whether it is sound | 433 | 437 |
 
 The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
 what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR

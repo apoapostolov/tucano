@@ -35,7 +35,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | Workspace / `workspace-people` | People, profile, coverage and roles | Existing team-mode/member/admin/owner rules |
 | Workspace / `workspace-activity` | Audit activity | Team-mode admins |
 | Workspace / `workspace-transfer` | Import/export team configuration | Existing admin restrictions and warnings |
-| Workspace / `workspace-backups` | Backup schedule, export, restore and replacement warnings | Reuse existing component and its access rules |
+| Workspace / `workspace-backups` | Backup export, restore and replacement warnings | Owner, as required by the existing component; automatic-backup timing is not a new configurable control |
 | Workspace / `workspace-danger` | Workspace deletion/reset | Owner only; last in the page |
 | Agents / `agents-replies` | Send mode and consecutive agent reply cap | Workspace defaults; per-agent/conversation controls stay in their existing local editors |
 | Agents / `agents-recovery` | Resume after restart, inactivity timeout | Workspace behavior; paused/stopped work semantics remain intact |
@@ -63,6 +63,8 @@ Connectors, individual agents, channels, routines and workspaces remain objects 
 ## Implementation design
 
 Create a typed settings structure with stable page/section IDs, localized labels, visibility rules and setting-key ownership. Render sections in that declared order instead of accumulating scattered `pane(...)` conditions. Keep component definitions, handlers and RPC methods intact. The rendering map must be checked against the structure so a declared section cannot silently lack content.
+
+The ownership check follows literal Settings writes through the rendered component graph, including shared components and the selected Wiki part. Its parser is an explicit development-only dependency at the version already used by the locked development toolchain; runtime dependencies are unchanged. Dynamic patches and RPC-only controls remain review obligations. Tests must demonstrate that misplaced or undeclared writes, duplicate ownership and missing rendering slots fail the check.
 
 Extract reusable section navigation and scrolling behavior. It must work within `.page__scroll`, account for the sticky header's measured height, survive small viewports, avoid focus jumps during scroll tracking and cancel stale animation frames. Use existing React/CSS and browser APIs; no animation or navigation dependency is needed.
 
