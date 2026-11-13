@@ -88,8 +88,9 @@ is not part of this security-fix delivery until end-to-end enforcement and UI va
   uses current database existence for queued work, and avoids an unbounded tombstone set.
 - [x] Pass public retention typecheck and 27 focused tests; the combined deletion/retention
   interaction passes 19 focused tests. UI strings and layouts were unchanged by these repairs.
-- [ ] Complete the final full suites on both the public branch and final combined tree.
-- [ ] Push #432's revision, verify its pushed SHA in a fresh worktree and update its description.
+- [x] Pass the public retention suite: 1,730 passed, 60 skipped, zero failed.
+- [ ] Complete the final combined-tree suite.
+- [x] Push #432 at `455d7f5`, verify its pushed SHA in a fresh worktree (typecheck and 30 tests), and update its description.
 - [ ] Run built hidden QA, install through the helper and verify the installed app and hash.
 - [ ] Refresh current-head review evidence and publish the reconciled integration without
   overwriting intervening work.
@@ -98,3 +99,28 @@ Room sharing #424 remains a draft. Its access policy must also constrain initiat
 and work scopes. The new per-bot configuration does not authorize bypassing the requesting
 person's source-room visibility. Implement this alongside every other retrieval path before
 turning on the feature.
+
+
+### Summary invalidation and background evidence
+
+Three additional regressions reproduced saved summaries surviving cleanup and pending
+conversation/thread consolidation restoring deleted context. Repair `07e6bcc` resets derived
+summaries in affected conversations and checks a per-conversation history revision before
+publishing model output or learning from it. Existing durable memories, wiki pages, artifacts
+and receipts retain the feature's documented behavior. The memory/retention selection passed
+38 tests before the full public run.
+
+The history harness previously opened ordinary windows and wrote fixtures between launches.
+It now refuses a bundle without background QA support, reserves separate ports, uses fake
+engines in one empty scratch profile, and asserts hidden/unfocusable windows. Five history
+captures passed; generic hidden QA passed seven checks including notification isolation.
+No interface strings or styles changed in this repair batch. A fresh #274 pushed-SHA checkout
+passed typecheck and its five privacy/migration tests; #355 passed typecheck and 15 live-access
+tests. Broader feature audits remain open.
+
+Entanglement's final comparison still blocks the gate: the edited existing database, memory
+and runner modules have file MI 0. The new selection module has MI 59.90, the retention
+coordinator 34.68, the privacy helper 46.17 and the summary regression file 33.60. Across the
+whole intake, including other agents' new per-bot controls, NLOC grew 1,091, summed CC 392
+and CogC 216. These totals are not the size of the retention repair alone. No structural
+cleanup or production-readiness signoff is implied.

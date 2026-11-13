@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-13T22:43:31.726Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-13T23:09:56.512Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 83 total: 61 open, 12 merged, 10 closed.
 
-Upstream main: `73b724bec8a576d316a5dd5f46a07e3bf83cbe75`. Daily driver next: `dca0d36d444e6ce8f2b791f83c79f91b967d923f`. Upstream main is contained: yes.
+Upstream main: `73b724bec8a576d316a5dd5f46a07e3bf83cbe75`. Daily driver HEAD: `3512accf7a5c22ea07bb99220bbd80ae057d7454`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -63,7 +63,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#351](https://github.com/eduwxyz/tucano/pull/351) | MERGED | Read 0 as no monthly limit on the screens too, not as spent | no: inspect patch equivalence | 1 | 13 | not reviewed |
 | [#352](https://github.com/eduwxyz/tucano/pull/352) | CLOSED | Let a configured MCP server wear the image the person gives it, from a file or an https address | yes | 1 | 7 | not reviewed |
 | [#353](https://github.com/eduwxyz/tucano/pull/353) | OPEN | Give a connector the picture it wears, instead of a black terminal | no: inspect patch equivalence | 2 | 9 | not reviewed |
-| [#355](https://github.com/eduwxyz/tucano/pull/355) | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | no: inspect patch equivalence | 5 | 3 | reviewed; prospective DM privacy repaired; further privacy review remains (stale) |
+| [#355](https://github.com/eduwxyz/tucano/pull/355) | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | yes | 5 | 3 | reviewed; prospective DM privacy repaired; further privacy review remains (stale) |
 | [#366](https://github.com/eduwxyz/tucano/pull/366) | OPEN | Let a routine say nothing when it has nothing to report | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#367](https://github.com/eduwxyz/tucano/pull/367) | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | reviewed; upstream PR opened (stale) |
 | [#368](https://github.com/eduwxyz/tucano/pull/368) | MERGED | Update the locked runtime packages past their security advisories | no: inspect patch equivalence | 0 | 0 | not reviewed |
@@ -90,9 +90,9 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#419](https://github.com/eduwxyz/tucano/pull/419) | OPEN | Draw the wiki map in its first frame, and fit it again when the window changes size | no: inspect patch equivalence | 0 | 2 | not reviewed |
 | [#422](https://github.com/eduwxyz/tucano/pull/422) | OPEN | Skin the toast in the app's orange instead of the primary that inverts to white | no: inspect patch equivalence | 1 | 4 | not reviewed |
 | [#424](https://github.com/eduwxyz/tucano/pull/424) | OPEN | Control room visibility and agent read access | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 4 | 5 | not reviewed |
+| [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | yes | 7 | 5 | not reviewed |
 | [#435](https://github.com/eduwxyz/tucano/pull/435) | OPEN | A bot can look after something for you between conversations | no: inspect patch equivalence | 8 | 3 | not reviewed |
-| [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 2 | 3 | not reviewed |
+| [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | yes | 2 | 3 | not reviewed |
 
 ## Commit dependencies
 
@@ -111,10 +111,10 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/renderer/src/styles.css | #244, #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #419, #422, #432, #435 |
 | src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #377, #379, #383, #385, #391, #395, #411, #416, #417, #424, #432, #435 |
 | src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #377, #383, #385, #395, #401, #402, #410, #411, #412, #435 |
-| src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #373, #375, #377, #379, #383, #385, #391, #395, #401, #402, #411, #412, #417, #435 |
+| src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #373, #375, #377, #379, #383, #385, #391, #395, #401, #402, #411, #412, #417, #432, #435 |
 | src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417, #432, #435, #437 |
+| src/renderer/src/components/Pages.tsx | #244, #245, #247, #258, #259, #261, #274, #284, #288, #298, #310, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #435, #437 |
 | src/shared/rpc.ts | #245, #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #322, #332, #338, #353, #375, #379, #383, #385, #401, #402, #411, #416, #417, #432, #435, #437 |
-| src/renderer/src/components/Pages.tsx | #244, #245, #247, #258, #259, #261, #274, #284, #288, #298, #310, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #437 |
 | src/core/db.ts | #247, #249, #250, #258, #259, #261, #272, #274, #279, #288, #322, #332, #333, #334, #338, #353, #355, #366, #375, #377, #383, #391, #411, #416, #417, #432, #435, #437 |
 | src/renderer/src/store.ts | #245, #247, #249, #261, #272, #279, #288, #305, #311, #313, #321, #322, #332, #334, #338, #353, #375, #379, #383, #385, #395, #411, #416, #432, #435, #437 |
 | src/shared/rpc-shapes.ts | #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #332, #338, #353, #375, #379, #383, #385, #411, #417, #432, #435, #437 |
@@ -203,6 +203,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | test/model-routing.test.ts | #333, #383 |
 | test/wiki-live-permissions.test.ts | #355, #373 |
 | src/core/routines.ts | #366, #395 |
+| src/core/memory.ts | #391, #432 |
 | src/renderer/src/components/Routines.tsx | #395, #410 |
 | src/renderer/src/components/Memory.tsx | #397, #410 |
 | src/renderer/src/components/WorkspaceManager.tsx | #410, #416 |
