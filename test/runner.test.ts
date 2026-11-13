@@ -263,6 +263,31 @@ describe('Runner', () => {
     expect(retried.run?.error).toBeUndefined()
   })
 
+  it('tries a stopped reply again in the direction the person wrote', async () => {
+    // "Try with instructions": the ask stays the same, the reply comes back steered.
+    const r = runner(fakeEngine('claude', { delayMs: 20 }))
+    await r.send('d1', 'preciso do relatório de outubro')
+    await new Promise((res) => setTimeout(res, 40))
+    const working = agentMessages()[0]!
+    r.stop(working.id)
+    await r.idle()
+    expect(db.message(working.id)!.run?.status).toBe('stopped')
+
+    r.retry(working.id, 'Faça em tabela e cite as fontes.')
+    await r.idle()
+
+    const turn = claude.turns.at(-1)!
+    const said = `${turn.system}
+${turn.prompt}`
+    expect(said).toContain('Faça em tabela e cite as fontes.') // the direction reached the model
+    expect(said).toContain('direção para a nova tentativa') // and it is told what that is
+    expect(said).toContain('preciso do relatório de outubro') // the ask it is answering did not change
+    const retried = db.message(working.id)!
+    expect(retried.run?.status).toBe('done')
+    expect(agentMessages()).toHaveLength(1) // the same reply, tried again — not a second one
+    expect(retried.text).toContain('Resposta de teste') // and the retry really answered
+  })
+
   it('stops mid-turn when the usage limit is crossed, then refuses the next turn without starting the engine', async () => {
     db.saveAgent(agent('a1', 'lia', { limit: 10 })) // the fake reports more than 10 tokens up front
     const r = runner()
@@ -317,7 +342,7 @@ describe('Runner', () => {
   })
 })
 
-describe('one reply at a time per agent and thread', () => {
+describe('hand-offs and routines wait their turn; a person\'s messages do not', () => {
   const sleep = (ms: number, signal: AbortSignal): Promise<void> => new Promise((res) => { const t = setTimeout(res, ms); signal.addEventListener('abort', () => (clearTimeout(t), res()), { once: true }) })
   // Lia and Bia ask Theo for something; Theo takes `ms` and records how many of his turns overlap.
   const slowTheo = (ms: number): { engine: Engine; active: () => number; max: () => number } => {
@@ -376,7 +401,7 @@ describe('one reply at a time per agent and thread', () => {
     for (let i = 0; i < 200 && by('a2')[0]?.run?.status !== 'working'; i++) await new Promise((res) => setTimeout(res, 5))
   }
 
-  it("a person's mention while the agent replies waits for it, and the ones that pile up are one reply", async () => {
+  it("a person's mentions while the agent replies each get a reply of their own, side by side", async () => {
     const t = slowTheo(400)
     const r = runner(t.engine)
     await r.send('c3', '@theo um')
@@ -384,8 +409,9 @@ describe('one reply at a time per agent and thread', () => {
     await r.send('c3', '@theo dois')
     await r.send('c3', '@theo três')
     await r.idle()
-    expect(by('a2').map((m) => m.run?.status)).toEqual(['done', 'done'])
-    expect(t.max()).toBe(1)
+    // A mention is a message like any other: three messages, three sessions, none folded into another.
+    expect(by('a2').map((m) => m.run?.status)).toEqual(['done', 'done', 'done'])
+    expect(t.max()).toBeGreaterThan(1)
   })
 
   it('a routine in the same chat waits for the reply running there', async () => {

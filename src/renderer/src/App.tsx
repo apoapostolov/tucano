@@ -1,11 +1,12 @@
 import { useEffect, type ReactNode } from 'react'
 import { L } from '../../shared/lang'
-import { getState, navigate, openDialog, setNav, useStore } from './store'
+import { getState, loadWikiWaiting, navigate, openDialog, setNav, useStore } from './store'
 import { Sidebar } from './components/Sidebar'
 import { SidebarResize } from './components/SidebarResize'
 import { ConversationView } from './components/Conversation'
 import { Lightbox } from './components/Lightbox'
-import { AgentPage, ApprovalsPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { AgentPage, ApprovalsPage, AsksPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { ImageMenu } from './components/ImageMenu'
 import { UsagePage } from './components/Usage'
 import { MemoryPage } from './components/Memory'
 import { WikiView } from './components/Wiki'
@@ -32,6 +33,14 @@ export function App(): ReactNode {
   const guest = useStore(guestWelcome)
   const mac = useStore((s) => s.platform === 'mac')
   const navOpen = useStore((s) => s.navOpen)
+  const ready = useStore((s) => s.ready)
+
+  // The curator's changes to pages are the one "Waiting for you" kind the snapshot doesn't carry:
+  // read here so the Asks entry counts them too, and read again when the wiki changes.
+  const wikiRev = useStore((s) => s.wikiRev)
+  useEffect(() => {
+    if (ready) loadWikiWaiting()
+  }, [wikiRev, ready])
 
   useEffect(() => {
     document.documentElement.lang = language === 'en' ? 'en' : 'pt-BR'
@@ -104,6 +113,7 @@ export function App(): ReactNode {
         {view.kind === 'conversation' && <ConversationView key={view.id} id={view.id} />}
         {view.kind === 'agent' && <AgentPage key={view.id} id={view.id} />}
         {view.kind === 'new-agent' && <AgentPage key={view.fromMessage ?? 'new'} draft={view.draft} fromMessage={view.fromMessage} />}
+        {view.kind === 'asks' && <AsksPage />}
         {view.kind === 'approvals' && <ApprovalsPage />}
         {view.kind === 'usage' && <UsagePage />}
         {view.kind === 'connectors' && <ConnectorsPage />}
@@ -122,6 +132,7 @@ export function App(): ReactNode {
       <NameModal />
       <WhatsNew />
       <Lightbox />
+      <ImageMenu />
       <Toasts />
       <CoreDown />
     </div>

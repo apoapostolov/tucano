@@ -1,6 +1,7 @@
 // Routines (spec §14, §17): requests for an agent that run on their own, at a
 // time or when something happens (a new item in a connector, a call on the Mac).
 import { L, lang, locale } from '../../../shared/lang'
+import { timeOpts } from '../../../shared/clock'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
   agentById,
@@ -87,7 +88,7 @@ export function describeRoutine(r: Pick<Routine, 'schedule' | 'trigger'>, connec
 // "hoje 9:00", "amanhã 9:00", "seg, 20/10 9:00"
 export function when(at: number): string {
   const d = new Date(at)
-  const hm = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   const day = (n: number): string => new Date(Date.now() + n * 86_400_000).toDateString()
   if (d.toDateString() === day(0)) return L(`hoje ${hm}`, `today ${hm}`)
   if (d.toDateString() === day(1)) return L(`amanhã ${hm}`, `tomorrow ${hm}`)
@@ -185,7 +186,7 @@ export function RoutinesPage(): ReactNode {
             <>
               {' · '}
               <button className="text-btn" onClick={() => setWeek(startOfWeek(Date.now()))}>
-                {L('voltar pra esta semana', 'back to this week')}
+                {L('voltar pra esta semana', "Back to this week")}
               </button>
             </>
           )}
@@ -194,7 +195,7 @@ export function RoutinesPage(): ReactNode {
       actions={
         <>
           {people.length > 1 && (
-            <div className="cal-people" role="group" aria-label={L('Mostrar só as de um agente', 'Show only one agent’s')}>
+            <div className="cal-people" role="group" aria-label={L('Mostrar só as de um agente', "Filter routines by agent")}>
               {people.map((a) => (
                 <button key={a.id} className={only === a.id ? 'is-on' : only ? 'is-dim' : ''} title={only === a.id ? L('Mostrar todas', 'Show all') : L(`Só as de ${a.name}`, `Only ${a.name}'s`)} onClick={() => setOnly(only === a.id ? null : a.id)}>
                   <AgentAvatar agent={a} size={22} />
@@ -221,7 +222,7 @@ export function RoutinesPage(): ReactNode {
     >
       {watching.length > 0 && (
         <div className="cal-watch">
-          <span className="cal-watch__label">{L('De olho, sem horário', 'Watching, no set time')}</span>
+          <span className="cal-watch__label">{L('De olho, sem horário', "Event-triggered routines")}</span>
           {watching.map((r) => {
             const a = agents.find((x) => x.id === r.agentId)
             return (
@@ -314,7 +315,7 @@ const dayAt = (week: number, i: number): number => {
   d.setDate(d.getDate() + i)
   return d.getTime()
 }
-const hm = (t: number): string => new Date(t).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+const hm = (t: number): string => new Date(t).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
 
 // What actually ran: each request a routine posted, with the agent's reply after it. Worked out per
 // conversation, once per change of it, so a reply elsewhere doesn't redo the calendar.

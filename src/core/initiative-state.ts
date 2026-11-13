@@ -49,6 +49,9 @@ export interface AdmissionInput {
   // The person asked for this one ("Conferir agora"): no wait to respect, theirs to skip. The caps,
   // the allowance and the pause still hold.
   manual?: boolean
+  // The last word in that DM was theirs, and the bot has not answered yet: a review of the thread they
+  // are in the middle of waits, and their own turn never queues behind the coordinator's.
+  personTalking?: boolean
 }
 
 export type Admission = { run: false; why: Refusal } | { run: true; at: number; resume: boolean }
@@ -66,6 +69,7 @@ export function admit(i: AdmissionInput): Admission {
   if (!config.enabled) return { run: false, why: 'off' }
   if (i.paused) return { run: false, why: 'paused' }
   if (i.busy) return { run: false, why: 'busy' }
+  if (!i.manual && i.personTalking) return { run: false, why: 'busy' }
   const resume = i.resume === true
   if (i.manual) {
     // Asked for by hand: the cadence and the quiet hours are theirs to skip. Nothing else is.

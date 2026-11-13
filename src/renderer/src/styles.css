@@ -17,6 +17,8 @@
   --accent-text: #ffffff;
   --primary: #1d1a16;
   --primary-text: #fffaf3;
+  --toast-bg: #fffefb;
+  --toast-ink: #b74d19;
   --bubble: #f1ece4;
   --ok: #1f9d55;
   --ok-soft: rgba(31, 157, 85, 0.12);
@@ -79,6 +81,8 @@
     --accent-text: #1a1917;
     --primary: #f1ece4;
     --primary-text: #1a1917;
+    --toast-bg: #2a2724;
+    --toast-ink: #ff8a3d;
     --bubble: #2a2724;
     --ok: #4bd08a;
     --ok-soft: rgba(75, 208, 138, 0.14);
@@ -110,6 +114,8 @@
   --accent-text: #1a1917;
   --primary: #f1ece4;
   --primary-text: #1a1917;
+  --toast-bg: #2a2724;
+  --toast-ink: #ff8a3d;
   --bubble: #2a2724;
   --ok: #4bd08a;
   --ok-soft: rgba(75, 208, 138, 0.14);
@@ -1021,13 +1027,17 @@ h3 {
   overflow: hidden;
   user-select: none;
 }
-/* Held, the light fills the button in 1.5s (linear: it's a clock) and the component
-   approves when that same 1.5 s run out; let go and it drains back. */
+/* Held, a 3px track along the bottom fills in 1.5s (linear: it's a clock) and the component
+   approves when that same 1.5 s run out; let go and it drains back. A track rather than a fill of
+   the whole button, so the label never has to change size under the pointer. */
 .btn--hold::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.28);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.85);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform var(--dur-base) var(--ease-out);
@@ -1230,6 +1240,13 @@ h3 {
   color: var(--text-3);
   font-size: 11.5px;
 }
+/* A prompt of mine waiting its turn behind the reply above: it goes when that one ends. */
+.msg__queued {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--text-3);
+  font-style: italic;
+}
 .md > :first-child {
   margin-top: 0;
 }
@@ -1330,11 +1347,15 @@ h3 {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+/* A notice sits in the column the messages above the field sit in: its text starts where their
+   bodies start, its time ends where they end, instead of running to the window's two edges. */
 .system-line {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 24px 6px 70px;
+  padding: 6px 28px 6px 74px;
+  max-width: 860px;
+  margin: 0 auto;
   color: var(--text-2);
   font-size: 12.5px;
 }
@@ -1356,8 +1377,15 @@ h3 {
   max-width: 600px;
   font-size: 12.5px;
 }
+.steps__header {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+}
 .steps__toggle {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 7px;
   padding: 3px 9px 3px 7px;
@@ -1372,6 +1400,7 @@ h3 {
 }
 .steps__chev {
   display: inline-flex;
+  flex: none;
   transition: transform var(--dur-base) var(--ease-out);
 }
 /* Done: the label crossfades from the shimmer to the count, the chevron comes back. */
@@ -1410,14 +1439,41 @@ h3 {
   animation: pop var(--dur-enter) var(--ease-spring) backwards;
 }
 .steps__elapsed {
+  flex: none;
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
 }
 .steps__failed {
+  flex: none;
+  white-space: nowrap;
   color: var(--danger);
 }
 .steps__stop {
+  flex: none;
   margin-left: 2px;
+}
+.steps__pulse,
+.steps__done {
+  flex: none;
+}
+.steps__activity,
+.steps__summary,
+.steps__now {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.steps__now {
+  flex: 0 1 320px;
+  min-width: 3ch;
+  max-width: 320px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.steps__toggle:has(.steps__now) .steps__activity {
+  min-width: 4ch;
+  max-width: 40%;
 }
 .steps__list {
   list-style: none;
@@ -1425,6 +1481,168 @@ h3 {
   padding: 2px 0 2px 14px;
   border-left: 2px solid var(--border);
   animation: rise var(--dur-base) var(--ease-out) both;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+/* The line beside the steps is a handle: a double-click on it folds them, from wherever the run has
+   scrolled to. Its hit area is 18 px over a 2 px line, centred on it, and it stops short of the step
+   icons (the list's own padding), so nothing a person reads is under it. */
+.steps__body {
+  position: relative;
+}
+.steps__rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  /* Above the list: it animates in with `rise`, and an animated transform makes a stacking context
+     of its own, which would otherwise sit over the handle and eat the double-click. */
+  z-index: 1;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+/* Hovering or focusing the handle lights the line it sits on, so it reads as something to press. */
+.steps__rail:hover,
+.steps__rail:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.steps__rail:hover + .steps__list,
+.steps__rail:focus-visible + .steps__list {
+  border-left-color: var(--accent);
+}
+/* The latest few (Settings › General): a window that keeps itself at the bottom, the older steps
+   fading into the top edge instead of pushing the new ones off the message. */
+.steps--latest .steps__list {
+  max-height: 232px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+}
+/* The three ways a reply can show its steps (Settings › General, and an agent's own page):
+   four buttons on a wide window, two lines of two on a narrow one. */
+.steps-pick {
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.steps-pick button {
+  flex: 1 1 auto;
+}
+/* The number under the choices, only while the window is the chosen one. */
+.steps-keep {
+  gap: 8px;
+  margin-top: 10px;
+}
+.steps-keep input {
+  width: 72px;
+}
+.steps__earlier {
+  padding: 2px 0 4px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.step--fading {
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+/* The pill under the chain: a steer while the agent works, a follow up once the reply has ended.
+   Small, dim, out of the way until it's wanted, and lined up with the steps' own rail above it. */
+.steps__ask {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px 3px;
+  padding-left: 14px;
+}
+/* Under the thinking block the pill is the last thing in the chain, so it keeps a gap from the box above
+   it instead of sitting on the box's border. */
+.thought + .steps__ask {
+  margin-top: 6px;
+}
+/* The follow up pill rides the reply's own footer — the line that fades in under a finished answer,
+   first in it, before the receipt. So it comes in with that line: a reply that has ended shows its
+   answer, not a button, and a hover (or a tab to it) brings the way to go on with the numbers. */
+.msg__meta .steps__ask--reply {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.msg:hover .msg__meta .steps__ask--reply,
+.msg__meta .steps__ask--reply:focus-within,
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  opacity: 1;
+}
+/* Open, the field needs the row: the pill keeps its place and the receipt goes under it. */
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  flex: 1 1 100%;
+}
+/* Nothing to hover with: no fade to depend on, so it is simply there. */
+@media (hover: none) {
+  .msg__meta .steps__ask--reply {
+    opacity: 1;
+  }
+}
+.steps__ask-pill {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  transition: var(--transition-ui);
+}
+.steps__ask-pill:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--hover);
+}
+.steps__ask-note {
+  display: grid;
+  gap: 8px;
+  max-width: 520px;
+}
+.steps__ask-note textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+}
+.steps__ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+/* What the person steered, or asked it to go on with, in the chain: not a tool call, so it doesn't
+   wear a tool's colours. */
+.step--steer,
+.step--followup {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.step--steer .step__icon,
+.step--followup .step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.step__said {
+  flex-basis: 100%;
+  padding-left: 26px; /* under the label, past the icon */
+  color: var(--text-3);
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  user-select: text;
 }
 .step {
   display: flex;
@@ -1591,14 +1809,16 @@ h3 {
 }
 
 /* approval card */
+/* The card leads with the action and its target (issue #252, direction A): the status is a quiet
+   row, the title is the largest thing in it, and the decisions are one line at the bottom. */
 .approval {
   position: relative;
   margin: 10px 0 4px;
   max-width: 560px;
   border: 1px solid var(--border-strong);
   border-left: 3px solid var(--warn);
-  border-radius: var(--radius-lg);
-  padding: 12px 14px;
+  border-radius: 14px;
+  padding: 20px;
   background: var(--panel);
   box-shadow: var(--shadow);
   transition: border-left-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
@@ -1647,7 +1867,8 @@ h3 {
   box-shadow: none;
 }
 .approval--refused,
-.approval--expired {
+.approval--expired,
+.approval--error {
   border-left-color: var(--danger);
   box-shadow: none;
 }
@@ -1655,29 +1876,129 @@ h3 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
+}
+.approval__grow {
+  flex: 1;
 }
 .approval__badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
   color: var(--warn);
+}
+/* Whose request it is: quiet, and only there to keep the card readable outside its conversation. */
+.approval__who {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-3);
 }
 .approval--approved .approval__badge {
   color: var(--ok);
 }
-.approval--refused .approval__badge {
+.approval--refused .approval__badge,
+.approval--error .approval__badge {
   color: var(--danger);
 }
 .approval__title {
+  margin: 6px 0 6px;
+  font-size: 18px;
+  line-height: 24px;
   font-weight: 600;
-  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.approval__title:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 .approval__why {
-  margin: 4px 0 10px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 20px;
   color: var(--text-2);
+}
+/* The connector and the exact target, as a row of their own rather than inside the title. */
+.approval__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+/* The decisions: one 44px line, the three of them side by side, 12px apart — Approve, the one
+   that can be long, and Refuse, never wrapped onto a second line. The primary used to hold 244px of
+   its own and "Approve and always allow" asked for 196 more, so Refuse fell to a line below at every
+   width. Now the primary grows into whatever the row has left, and the long label gives way before
+   the row does. */
+.approval__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+}
+.approval__actions .btn {
+  height: 44px;
+  border-radius: 9px;
+  flex: 0 0 auto;
+}
+.approval__actions .approval__approve {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+/* The hold carries a longer sentence ("Hold to approve · high-risk action") and is alone with
+   Refuse, so it keeps its own width; the plain Approve stops growing at the 244 the card was drawn
+   for — while the row is a row. Stacked, the three are the card's width, as before. */
+@media (min-width: 561px) {
+  .approval__approve:not(.btn--hold) {
+    max-width: 244px;
+  }
+}
+/* "Approve and always allow": its own words are what would push Refuse down, so it takes the space
+   the row has left and, when the sentence doesn't fit in one line there, it reads on two lines
+   inside the same 44px button ("Approve and / always allow") rather than shortening to "Approve and
+   alw…". Only past two lines — a runner listing every tool it covers — does it end in an
+   ellipsis; the whole sentence is in its tooltip either way. */
+.approval__actions .approval__allow {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.approval__allow-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: normal;
+  line-height: 16px;
+  text-align: center;
+}
+.approval__refuse-btn {
+  min-width: 108px;
+}
+.approval__unconfirmed {
+  font-size: 12.5px;
+  color: var(--danger);
+}
+/* Below this width the three don't fit on one line ("Approve and always allow" would start
+   losing its words at 560), so each takes the card's own line instead. */
+@media (max-width: 560px) {
+  .approval__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .approval__actions .btn {
+    width: 100%;
+    min-width: 0;
+  }
 }
 .approval__call {
   background: var(--code-bg);
@@ -1733,6 +2054,32 @@ h3 {
   justify-content: flex-end;
 }
 
+/* A request still waiting, over the field: the way back to it from anywhere in the conversation.
+   Never takes the focus on arrival; Review is a click, and only a click moves the focus. */
+.approval-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  font-size: 13px;
+  color: var(--text-2);
+  animation: rise 240ms var(--ease-out) backwards;
+}
+.approval-reminder .icon {
+  color: var(--warn);
+  flex: none;
+}
+.approval-reminder .link {
+  margin-left: auto;
+  font-weight: 600;
+}
+
 /* composer */
 .composer-wrap {
   position: relative;
@@ -1741,6 +2088,109 @@ h3 {
   width: 100%;
   max-width: 860px;
   margin: 0 auto;
+}
+/* The work above the field: the replies running now, and the prompts queued behind them. It sits
+   inside the composer's wrapper, so it is attached to the box it belongs to. */
+.work-drawer {
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.work-drawer__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.work-drawer__head:hover {
+  background: var(--hover);
+}
+.work-drawer__count {
+  flex: 1;
+  text-align: left;
+}
+.work-drawer__list {
+  display: grid;
+  gap: 1px;
+  padding: 2px 6px 6px;
+  border-top: 1px solid var(--border);
+}
+.work-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.work-row__go {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.work-row__go:hover {
+  background: var(--hover);
+}
+.work-row__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-row--queued .work-row__text {
+  color: var(--text-2);
+}
+/* A reply that ended: the glyph says how, and its row stays until the trash takes it off. */
+.work-row__state {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--text-3);
+}
+.work-row__state--ok {
+  color: var(--ok);
+}
+.work-row__state--bad {
+  color: var(--danger);
+}
+.work-row--done .work-row__text {
+  color: var(--text-2);
+}
+.work-row .icon-btn:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.work-row__dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: fade-pulse 1.6s ease-in-out infinite;
+}
+.work-drawer__group {
+  padding: 4px 6px 2px;
+  color: var(--text-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .composer {
   border: 1px solid var(--border);
@@ -2201,17 +2651,96 @@ h3 {
   white-space: nowrap;
 }
 .history-row__outcome {
-  flex: 0 1 auto;
+  /* The action's own line ("Delete · Computer"): a reserved column that wraps onto a second line
+     rather than being cut, and gives the width back on a narrow window. */
+  flex: 0 1 160px;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 32%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .table > .table__row {
   animation: rise var(--dur-enter) var(--ease-out) backwards;
 }
 .table__row--btn:hover {
   background: var(--hover);
+}
+
+/* The Asks history: a row of the approvals table whose text is one clipped line, and whose click
+   opens the ask itself under it. */
+.ask-row__head {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  cursor: pointer;
+}
+/* Each column keeps its own height and sits on the row's middle line: a wrapping date made the row
+   three lines tall, which read as a table whose cells were not lined up. */
+.ask-row__head > * {
+  flex: 0 0 auto;
+}
+.ask-row__when {
+  white-space: nowrap;
+}
+.ask-row__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ask-row__chev {
+  display: inline-flex;
+  color: var(--text-3);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.ask-row__chev.is-open {
+  transform: rotate(90deg);
+}
+.ask-row__body {
+  padding: 2px 14px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.ask-row__body > div > :first-child {
+  margin-top: 0;
+}
+.ask-row__body > div > :last-child {
+  margin-bottom: 0;
+}
+.ask-row__body .hint {
+  margin-top: 8px;
+}
+.ask-row:last-child .ask-row__head,
+.ask-row:last-child .ask-row__body {
+  border-bottom: 0;
+}
+
+/* Both history tables give the state pill and the date the same reserved width, centred, so the
+   columns line up from row to row instead of each row drifting by the width of its own label. */
+.history-row,
+.ask-row__head {
+  --history-state: 96px;
+  --history-when: 104px;
+}
+.history-row__state,
+.ask-row__state {
+  flex: 0 0 var(--history-state);
+  width: var(--history-state);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.history-row__when,
+.ask-row__when {
+  flex: 0 0 var(--history-when);
+  width: var(--history-when);
+  text-align: center;
+  white-space: nowrap;
 }
 .connector {
   padding: 0;
@@ -2333,6 +2862,20 @@ h3 {
   align-self: flex-start;
   margin-top: 2px;
   flex-shrink: 0;
+}
+
+/* A three-state switch (Global · On · Off) beside a sentence needs more room than a toggle: in a
+   narrow card it drops to its own line, right-aligned, instead of squeezing the sentence into a
+   column of single words (a 900 px window left it 70 px wide and fourteen lines tall). */
+.key-row--switch {
+  flex-wrap: wrap;
+}
+.key-row--switch .grow {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.key-row--switch .segmented {
+  margin-left: auto;
 }
 
 /* An error arrives calm: it rises in on a red tint that fades, no shake. */
@@ -2590,6 +3133,33 @@ h3 {
   font-weight: 500;
   overflow-wrap: anywhere;
 }
+/* The label and, when Jev suggests it, its pill: they share a line, and the pill wraps under on a
+   narrow card instead of squeezing the label. */
+.ask-option__line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+/* Jev's pick: an accent pill, quiet enough to sit next to a label. It never takes the tick. */
+.ask-option__pill {
+  flex: none;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.ask-list__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .ask-option__detail {
   font-size: 12px;
   color: var(--text-3);
@@ -2785,6 +3355,10 @@ h3 {
 .retry {
   margin-top: 6px;
 }
+/* "Try with instructions": the field that opens under the two ways back, and the row that sends it. */
+.retry-note { display: grid; gap: 8px; margin-top: 8px; max-width: 560px; }
+.retry-note textarea { width: 100%; min-height: 58px; resize: vertical; }
+.retry-note__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
 .connector__actions {
   margin: 4px 0 12px;
@@ -3015,6 +3589,57 @@ h3 {
   font-size: 12px;
   color: var(--text-2);
 }
+
+/* The pictures of one reply, as an album: one large on the left and the others in a column beside
+   it, the two in the golden section (see gallery.ts). One picture keeps the shape above. */
+.artifacts-gallery {
+  display: grid;
+  grid-template-columns: 1.618fr 1fr;
+  gap: 3px;
+  width: min(100%, 420px);
+  aspect-ratio: 1.618 / 1;
+  max-height: 260px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--border);
+}
+.artifacts-gallery .gallery__cell {
+  position: relative;
+  display: block;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--panel);
+  overflow: hidden;
+}
+.artifacts-gallery .gallery__cell img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 160ms ease;
+}
+.artifacts-gallery .gallery__cell:hover img {
+  transform: scale(1.03);
+}
+.artifacts-gallery .gallery__cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.gallery__more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+}
 .artifact-card {
   display: flex;
   align-items: center;
@@ -3154,7 +3779,8 @@ body.is-resizing webview {
   box-shadow: var(--shadow-panel);
   animation: none;
 }
-.thread__lead > .msg .msg__reply {
+.thread__lead > .msg .msg__reply,
+.thread__lead > .msg .msg__delete {
   display: none;
 }
 /* Mine too reads as the thread's heading here: my face and name, no bubble. */
@@ -3224,8 +3850,9 @@ body.is-resizing webview {
 .msg__meta {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   column-gap: 14px;
+  row-gap: 6px;
   margin-top: 4px;
 }
 .msg__meta .receipt,
@@ -3263,12 +3890,95 @@ body.is-resizing webview {
   top: 6px;
   right: calc(100% + 6px);
 }
+/* A run taller than the screen: the button rides the top of the run while it scrolls, and leaves with
+   its last line, instead of sitting at the run's start and scrolling away. The pin takes no room (it
+   is zero-height and sticky), so the first step sits where it did; the button keeps its old offsets,
+   measured from the pin and pushed back into the message's own 28px right padding (-24px = 28 - 4). */
+/* No margin on the wrapper: the steps' own top margin still collapses through the zero-height pin, so
+   the gap above the first step is the 1px it collapsed to before there was a wrapper at all. */
+.msg__anchor-pin {
+  position: sticky;
+  top: 0;
+  height: 0;
+  z-index: 1;
+}
+/* The pin starts at the top of the message body, which is 7 px inside the row's own padding, so the
+   glyphs subtract those 7 to land where a message's corner buttons sit: 4, 28 and 52 from the row's
+   top. 24 px apart, and the rail gives them the whole message to hold on to. */
+.msg__anchor-pin .msg__reply {
+  position: absolute;
+  top: -3px;
+  right: -24px;
+}
 .msg:hover .msg__reply,
 .msg__reply:focus-visible {
   opacity: 1;
 }
+/* Back to the prompt this reply answers, a row under the trash: only on a reply that something came in
+   between, so the two glyphs never fight for the same corner. */
+.msg__reply--up {
+  top: 52px;
+}
+/* In the pinned corner the glyphs share the pin's own origin: thread 4, trash 28, the way back 52. */
+.msg__anchor-pin .msg__reply--up {
+  top: 45px;
+}
+/* Nothing threaded, so nothing takes the first place: the trash starts the column and the way back
+   keeps its 24 px under it. */
+.msg__anchor-pin--alone .msg__delete {
+  top: -3px;
+}
+.msg__anchor-pin--alone .msg__reply--up {
+  top: 21px;
+}
 @media (hover: none) {
   .msg__reply {
+    opacity: 1;
+  }
+}
+/* The trash that deletes a session, right under the thread button: quiet until the row is hovered,
+   and red from the first press on, which is what says the second one deletes. */
+.msg__delete {
+  position: absolute;
+  top: 28px;
+  right: 4px;
+  color: var(--text-3);
+  opacity: 0;
+  transition: var(--transition-ui);
+}
+.msg__delete.is-armed {
+  color: var(--danger);
+  background: var(--danger-soft);
+  opacity: 1;
+}
+.msg__delete.is-armed:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+/* On a reply with a thread, the corner belongs to the pinned thread button: the trash goes in that
+   same column, 24 px under it as it sits on a short reply, and the prompt jump drops a row below. */
+.msg__anchor-pin .msg__delete {
+  top: 21px;
+  right: -24px;
+}
+/* The same trash in the thread's own header, beside the summary and close buttons: in the row, always
+   visible, and armed by the same two presses. */
+.msg__delete--head {
+  position: static;
+  opacity: 1;
+}
+/* A routine's post has no run to ride, so its trash takes the row's own corner, 24 px under the
+   reply-in-thread button that holds the first place there. */
+.msg__delete--post {
+  top: 28px;
+  right: 4px;
+}
+.msg:hover .msg__delete,
+.msg__delete:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .msg__delete {
     opacity: 1;
   }
 }
@@ -5151,6 +5861,39 @@ table.csv th {
 .member:hover {
   background: var(--hover);
 }
+/* A row of the channel's agent list: the agent itself, and mention mode beside it. */
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.member-row:last-child {
+  border-bottom: 0;
+}
+.member-row .member {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+}
+.member-row__mention {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 0 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.member-row__mention input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+@media (max-width: 640px) {
+  .member-row__mention {
+    padding-right: 8px;
+  }
+}
 .member__text {
   display: flex;
   flex-direction: column;
@@ -5839,6 +6582,248 @@ kbd {
   stroke: var(--danger);
 }
 
+/* Each provider is a column and the three quotas are rows, so the same quota lines up across
+   providers and a column never wraps into a second one: many providers scroll sideways. */
+.usage-quotas__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.usage-quotas {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.usage-quotas__grid {
+  display: grid;
+  gap: 6px 12px;
+  align-items: start;
+}
+.usage-quotas__row {
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.usage-quota__head {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.usage-quota__head strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.usage-quota__head.is-off strong {
+  color: var(--text-3);
+}
+.usage-quota__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 34px;
+  font-size: 12px;
+}
+.usage-quota__cell strong {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.usage-quota__cell.is-empty strong,
+.usage-quota__cell.is-empty {
+  color: var(--text-3);
+}
+.usage-quota__cell.is-warn strong {
+  color: var(--warn);
+}
+.usage-quota__cell.is-danger strong {
+  color: var(--danger);
+}
+.usage-quota__track {
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+.usage-quota__track i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width var(--dur-data) var(--ease-out);
+}
+.usage-quota__cell.is-warn .usage-quota__track i {
+  background: var(--warn);
+}
+.usage-quota__cell.is-danger .usage-quota__track i {
+  background: var(--danger);
+}
+
+/* The session header's little bars: one per provider, only the window that lasts longest (a month
+   outlasts a week, a week outlasts the five hours), so the line says whether the plan runs out
+   before it renews. A wallet has no cap, so it draws no bar. In a narrow window only the ones that
+   are actually running low stay, because those are the ones worth the space. */
+.quota-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 5px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.quota-strip:hover {
+  background: var(--hover);
+}
+/* One column per provider: its name above the bar, dim and in small caps, so two bars are never
+   confused for one another. */
+.quota-strip__pill {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+.quota-strip__name {
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.quota-strip__track {
+  display: block;
+  /* The bar is as wide as the name above it: the column reads as one unit, and the name sets the
+     width. */
+  height: 4px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+/* Pointing at a bar opens the provider's own windows: one row each, drawn like the bars in Usage. */
+.quota-strip-wrap {
+  position: relative;
+  display: flex;
+}
+.quota-card {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  min-width: 232px;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  animation: cal-pop var(--dur-enter) var(--ease-out);
+}
+.quota-card__provider + .quota-card__provider {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.quota-card__name {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.quota-card__plan {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-3);
+}
+.quota-card__window {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 3px 10px;
+}
+.quota-card__window + .quota-card__window {
+  margin-top: 8px;
+}
+.quota-card__span {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.quota-card__left {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-1);
+}
+.quota-card__track {
+  grid-column: 1 / -1;
+  display: block;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--border);
+  overflow: hidden;
+}
+.quota-card__track i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+}
+.quota-card__track.is-warn i {
+  background: var(--warn);
+}
+.quota-card__track.is-danger i {
+  background: var(--danger);
+}
+.quota-card__reset {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.quota-card__wallet,
+.quota-card__note {
+  font-size: 11px;
+  color: var(--text-2);
+}
+.quota-card__note {
+  color: var(--text-3);
+}
+.quota-strip__pill i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width var(--dur-data) var(--ease-out);
+}
+.quota-strip__pill.is-warn i {
+  background: var(--warn);
+}
+.quota-strip__pill.is-danger i {
+  background: var(--danger);
+}
+@media (max-width: 900px) {
+  .quota-strip__pill:not(.is-warn):not(.is-danger) {
+    display: none;
+  }
+  .quota-strip:not(:has(.is-warn, .is-danger)) {
+    display: none;
+  }
+}
+
 .usage-agents {
   padding: 4px;
 }
@@ -6143,11 +7128,26 @@ kbd {
 .tabs-line {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 6px;
   margin: 32px 0 4px;
   border-bottom: 1px solid var(--border);
 }
-.tabs-line > button {
+/* The strip is as long as the bots are many: it scrolls inside the bar, and the scrollbar stays
+   out of the way because the arrows below are the way through it. */
+.tabs-line__strip {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.tabs-line__strip::-webkit-scrollbar {
+  display: none;
+}
+.tabs-line__strip > button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -6159,17 +7159,41 @@ kbd {
   background: none;
   color: var(--text-3);
   font-size: 13.5px;
+  white-space: nowrap;
   transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
-.tabs-line > button:hover {
+.tabs-line__strip > button:hover {
   color: var(--text);
 }
-.tabs-line > button.is-on {
+.tabs-line__strip > button.is-on {
   color: var(--text);
   border-bottom-color: var(--text);
 }
-.tabs-line .grow {
-  flex: 1;
+/* Borderless arrows that page the strip; they appear only while there is strip in that direction.
+   A tint on hover is the whole affordance, and the gap either side keeps them off the tab text. */
+.tabs-line__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-2);
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.tabs-line__page:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+.tabs-line__strip + .tabs-line__page {
+  margin-left: 8px;
+}
+.tabs-line__page--back .icon {
+  transform: rotate(180deg);
 }
 .tabs-line__icon {
   width: 28px;
@@ -7153,6 +8177,17 @@ kbd {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* The facets of a tagged library (metadata.hermes.tags): family:*, tool:*, risk:*… */
+.skill-add__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.skill-add__more {
+  font-size: 11px;
+  color: var(--text-3);
+  align-self: center;
+}
 .skill-add__none {
   padding: 18px 12px;
   margin: 0;
@@ -7812,8 +8847,20 @@ kbd {
   margin: 4px 8px;
   font-size: 12px;
 }
+/* The end of a list is a place to let a row go: the same line a row draws, in the gap. */
 .channel-drop {
-  height: 6px;
+  height: 8px;
+  position: relative;
+}
+.channel-drop.is-over::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 
 /* The wiki: what you and the team know, as linked pages */
@@ -7886,6 +8933,11 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .wk-canvas__edges line.is-hot { stroke: var(--accent); stroke-width: 2; }
 .wk-canvas__edges line.is-dim { opacity: 0.18; }
 .wk-node { cursor: pointer; transition: opacity var(--dur-enter) var(--ease-out); animation: fade var(--dur-data) var(--ease-out) both; animation-delay: calc(var(--i) * 22ms); }
+/* A big map arrives in one fade. Each node carries its own opacity animation for the stagger, and an
+   animated element is a layer of its own: eighty of them at once is a first frame the compositor can
+   leave unpainted until something else invalidates it. */
+.wk-canvas.is-many .wk-node { animation: none; }
+.wk-canvas.is-many > svg { animation: fade var(--dur-data) var(--ease-out) both; }
 .wk-node__hit { fill: transparent; }
 .wk-node__dot { fill: var(--k); stroke: var(--bg); stroke-width: 2.5; }
 .wk-node__halo { fill: var(--k); opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
@@ -7940,6 +8992,8 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .wk-settings section { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--border); }
 .wk-settings h4 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
 .wk-setting { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+.wk-settings .wk-setting > .wk-row { flex: 0 0 auto; }
+.wk-settings .wk-setting > .wk-row > .select { width: 210px; }
 .wk-setting > span { display: grid; gap: 2px; }
 .wk-setting b { font-size: 13.5px; font-weight: 600; }
 .wk-setting small { color: var(--text-2); font-size: 12.5px; line-height: 1.45; }
@@ -8004,7 +9058,11 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .wk-finding__kind { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: color-mix(in srgb, var(--tone) 85%, var(--text)); }
 .wk-finding--calm .wk-finding__kind { color: var(--text-3); }
 .wk-finding__text { font-size: 14px; line-height: 1.55; }
-.wk-finding__actions { display: flex; gap: 8px; }
+.wk-finding__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wk-finding__actions .wk-handoff__agent { min-width: 172px; max-width: 220px; }
+.wk-finding__actions .wk-handoff__agent .select__trigger { height: 30px; font-size: 13px; }
+.wk-finding__note { display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
+.wk-finding__note svg { flex: none; margin-top: 2px; color: var(--text-3); }
 .wk-finding .wiki-change { padding: 0; border: 0; box-shadow: none; background: transparent; }
 
 .wk-add { display: grid; gap: 10px; }
@@ -8141,13 +9199,17 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 }
 .toast {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   width: 100%;
   padding: 10px 8px 10px 14px;
   border-radius: var(--radius);
-  background: var(--primary);
-  color: var(--primary-text);
+  /* The signature orange as the text, on a surface that lifts off the page: white in the light, a
+     step above the panel in the dark. `--primary` inverted with the theme and left the dark app
+     holding a white pill. The light ink is the accent darkened until a 13px line of it clears 4.5:1
+     on white (5.09:1); the dark ink is the dark accent as it is (6.33:1). */
+  background: var(--toast-bg);
+  color: var(--toast-ink);
   box-shadow: var(--shadow-lg);
   font-size: 13px;
   line-height: 1.4;
@@ -8160,7 +9222,6 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .toast__text {
   flex: 1;
   min-width: 0;
-  padding-top: 2px;
   overflow-wrap: anywhere;
 }
 .toast__close {
@@ -8169,8 +9230,8 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   opacity: 0.7;
 }
 .toast__close:hover {
-  /* the toast's own text color, faint: shows on the dark toast and on the light one in dark mode */
-  background: color-mix(in srgb, var(--primary-text) 14%, transparent);
+  /* the toast's own orange, faint, on either surface */
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: inherit;
   opacity: 1;
 }
@@ -8397,6 +9458,27 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   height: 36px;
   background: var(--bg);
   color: var(--text-2);
+}
+/* A connector's own picture: shown whole, whatever its shape, on the tile's own surface. */
+.catalog__logo--pic {
+  overflow: hidden;
+  background: var(--panel);
+}
+.catalog__logo--pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* The picture and the two buttons that change it, under the connector's state and address. */
+.connector-modal__icon {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+/* The same tile in the steps that pick a connector: it brings its own surface, so the circle goes. */
+.onb-power-row__icon--tile {
+  width: auto;
+  height: auto;
+  background: none;
 }
 .catalog__state {
   display: flex;
@@ -10994,10 +12076,695 @@ button.agent-card__now:hover {
 .agent-models__row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border); }
 .agent-models__identity { display: flex; align-items: center; gap: 10px; flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
 .agent-models__choice { display: grid; gap: 6px; flex: 2 1 300px; min-width: 0; }
+/* The model on its own line, the thinking under it: beside each other the thinking took the width the
+   model's name needs, and the name was what got cut. */
+.agent-models__picks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; min-width: 0; }
+/* A row's picks are the same three, flush in the same way. */
+.agent-models__row .model-picker { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; min-width: 0; }
+.agent-models__row .model-picker > .select,
+.agent-models__row .model-picker > input { width: 100%; min-width: 0; }
+/* Flush, the three of them: harness, model and thinking in one column, the same width, on top of
+   each other with no gap. Nothing is captioned - the thinking's own placeholder says what it is -
+   so each name gets the whole line, which is the room the model's name lost when it shared one. */
+.agent-models__picks--bulk { grid-template-columns: minmax(0, 1fr); gap: 0; }
+/* The model picker's own two picks are cells of that column, not a row of their own. */
+.agent-models__picks--bulk .model-picker { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; min-width: 0; }
+.agent-models__picks--bulk .model-picker > .select,
+.agent-models__picks--bulk .model-picker > input { width: 100%; min-width: 0; }
+.agent-models__pick { display: grid; gap: 6px; min-width: 0; }
+/* A short list of efforts: under a full-width model it does not need the whole line to itself. */
+.agent-models__pick--effort { width: 100%; }
 .agent-models [role="status"]:not(:empty) { margin-top: 12px; }
 
 /* The intro of a Tucano on a server: a computer's backup brought in from the first screen. */
 .intro-restore { margin-top: 18px; max-width: 520px; }
+/* The filter over a long skill list: the library is a few hundred recipes, and the agent's tab
+   had them all in one column with no way to narrow it. */
+.skill-filter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 2px 0 8px;
+}
+.skill-filter__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-3);
+}
+.skill-filter__search input {
+  flex: 1;
+  border: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+.skill-filter__search input:focus {
+  outline: none;
+  box-shadow: none;
+}
+.check--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.skill-filter__meta {
+  padding: 6px 0 10px;
+  gap: 12px;
+}
+.skill-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+.skill-groups .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
+   arrives, so a long reply can be studied while it is being written. */
+.thought {
+  margin: 6px 0 0;
+  /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
+     than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
+     lines, plus the label and the padding around the text. The plain rule is the middle size, so a
+     copy that predates the setting looks the way it always did. */
+  --thought-lines: 12;
+  max-height: calc(var(--thought-lines) * 1.55em + 34px);
+  overflow-y: auto;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+}
+.thought--sm {
+  --thought-lines: 6;
+}
+.thought--md {
+  --thought-lines: 12;
+}
+.thought--lg {
+  --thought-lines: 18;
+}
+.thought__label {
+  font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+.thought__text {
+  opacity: 0.85;
+}
+/* The open question, kept next to the field: in a long reply the card that waits for an answer is
+   pages up behind later steps, so the person needs a way back to it without scrolling. */
+.ask-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-2);
+  text-align: left;
+  font-size: 13px;
+}
+.ask-strip:hover {
+  border-color: var(--border-strong);
+}
+.ask-strip .icon {
+  color: var(--accent);
+  flex: none;
+}
+.ask-strip__who {
+  flex: none;
+  font-weight: 600;
+  color: var(--text);
+}
+.ask-strip__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ask-strip__count {
+  flex: none;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.ask-strip__go {
+  flex: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Where a cleared history starts: the rows before it are still stored (receipts, approvals) and out
+   of the screen, so the conversation says where it begins instead of pretending it always was empty. */
+.messages__cleared {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 14px;
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+}
+.messages__cleared::before,
+.messages__cleared::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+/* Sorting the sidebar's own rows by hand: press and hold one to pick it up, drop it where it goes.
+   The row is a button, so nothing moves until the hold ends — a slightly short drag is still a click. */
+.nav-row { position: relative; }
+.nav-row.is-picked { opacity: 0.55; }
+.nav-row.is-over::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ---------- Settings › Routing ---------- */
+/* The pools on the left, one pool's chain on the right: six destinations visible at once, one
+   editor in front of you. Widened past the other settings panes because a chain row carries a
+   harness, a model and a thinking level side by side. */
+.agent-form--wide {
+  max-width: 980px;
+}
+.routing {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.routing__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.routing__title {
+  margin: 0 0 2px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.routing__status {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.routing__status.is-on {
+  border-color: transparent;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.routing__body {
+  display: grid;
+  /* 184px, not 168: "Tier 5 · Ultra premium" needs 122px of label beside the 18px badge, and a
+     name that clips is worse than 16px of the editor's width. */
+  grid-template-columns: 184px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.routing__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  /* Flush: the row is the selection, not a box inside a box. The old rail's 6px padding made the
+     2px accent bar float against nothing; nobody gets to line up against nothing. */
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.routing__pool {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* One line per pool: the count lives in the badge at the right, not in a second row under the
+     name, so six pools and the editor beside them cost 36px a row instead of 52. */
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.routing__pool:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+/* The same warm wash as the role pills right below it: selected reads as colour, not as elevation,
+   and there is no stripe to misalign. */
+.routing__pool.is-active {
+  background: var(--accent-soft);
+}
+/* The accent pulled 28% toward the ink, measured, not guessed: the raw accent on its own wash is
+   3.03:1 in the light theme, and the selected row has to be the easiest to read, not the hardest.
+   72/28 measures 4.65:1 light and 7.7:1 dark, over the wash the row actually paints. */
+.routing__pool.is-active .routing__pool-name {
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
+  font-weight: 600;
+}
+.routing__pool-name {
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The count is a circle at the right end of the row: dial geometry fixed at 18px, so the badge
+   sits at the same x on every row and the label never has to be short to make room for it. */
+.routing__pool-count {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  /* Translucent, so it reads on the row's own background in all three states (idle, hover,
+     selected) without needing one fill per state. */
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/* An empty chain is a ring with a 0 in it: same footprint, quieter, and the number is not a lie. */
+.routing__pool-count.is-empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+  /* Not --text-3: a 0 on the bare row measures 3.33:1 at 11px, under the floor. */
+  color: var(--text-2);
+  font-weight: 500;
+}
+.routing__pool:hover .routing__pool-count {
+  color: var(--text);
+}
+.routing__pool.is-active .routing__pool-count {
+  /* The badge keeps the raised surface instead of another tint of the wash: a number tinted into the
+     wash it sits on measured 4.37:1, and the count is 11px. Panel under the same accent mix is 5.7:1. */
+  background: var(--panel);
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
+}
+.routing__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.routing__roles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.routing__role {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+}
+.routing__role:hover {
+  background: var(--hover);
+}
+.routing__role.is-active {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+.routing__role-more {
+  min-width: 130px;
+}
+.routing__pool-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.routing__chain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.route-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A step in a chain is a small card: the number and the three buttons on one line, then the harness,
+   the model and the thinking one under the other, each as wide as the card. A third of a row cuts a
+   model's name and its note short, and a list of cut-off names is a list of guesses. */
+.route-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.route-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+}
+.route-row__fields,
+.route-add__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+/* `.grow` belonged to the horizontal row: in a column it stretched the model field down the card and
+   left the thinking line a hundred pixels below it, so every field keeps its own height and the card is
+   as tall as its three lines. */
+.route-row__fields > .select,
+.route-add__fields > .select {
+  flex: 0 0 auto;
+}
+.route-list > .route-row {
+  flex: 0 0 auto;
+}
+.route-row__n {
+  color: var(--text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.routing__chain-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Each line takes the column: the note ran beside the title as a narrow strip that read as a label. */
+.routing__chain-head > strong,
+.routing__chain-head > span {
+  width: 100%;
+}
+.route-add {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.route-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.route-row__down .icon {
+  transform: rotate(180deg);
+}
+.route-row__actions .icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.route-add {
+  padding-top: 4px;
+}
+/* The shared Select is width:100% by design, and here it keeps it: the card is the line. */
+.route-row__fields > .select,
+.route-add__fields > .select {
+  width: 100%;
+}
+
+/* ---------- the thin line over a reply ---------- */
+.route-line {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.route-line__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 6px 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.route-line__row:hover .route-line__chev {
+  color: var(--text-2);
+}
+.route-line__jev {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.route-line__role {
+  color: var(--text);
+  font-weight: 500;
+}
+.route-line__pool {
+  color: var(--text-2);
+}
+.route-line__arrow {
+  color: var(--text-3);
+}
+.route-line__model {
+  color: var(--text);
+}
+.route-line__thinking,
+.route-line__state {
+  color: var(--text-3);
+}
+.route-line__chev {
+  display: inline-flex;
+  color: var(--text-3);
+  transform: rotate(0deg);
+  transition: transform 180ms ease;
+}
+.route-line.is-open .route-line__chev {
+  transform: rotate(180deg);
+}
+.route-line__why {
+  margin: 0 0 4px;
+  color: var(--warn);
+}
+.route-line__detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.route-line__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+}
+.route-line__label {
+  color: var(--text-3);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.route-line__group ul,
+.route-line__attempts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0 0 0 14px;
+}
+.route-line__warn {
+  color: var(--warn);
+}
+
+/* One bar for what Jev read: complexity and capability weighted together, with the reasoning bonus
+   the core applies, so its length is the demand the tier name beside it comes from. */
+.route-demand {
+  display: inline-block;
+  flex: none;
+  width: 76px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  overflow: hidden;
+}
+.route-demand__fill {
+  /* The accent held back a fifth toward the ink, measured against the track it is drawn on: the raw
+     accent on --border-strong is 2.61:1 in the light theme, under the 3:1 a graphic that carries a
+     value has to meet. 80/20 measures 3.53:1 light and 5.71:1 dark. */
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 80%, var(--text));
+  transition: width 180ms ease;
+}
+/* The three criteria and their sum, only once the line is opened. */
+.route-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 2px 0 4px;
+}
+.route-scores__row {
+  display: grid;
+  grid-template-columns: 96px 64px 44px;
+  align-items: center;
+  gap: 8px;
+}
+.route-scores__label {
+  color: var(--text-2);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.route-scores__track {
+  display: block;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  overflow: hidden;
+}
+.route-scores__fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--text-2);
+}
+.route-scores__value {
+  color: var(--text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.route-scores__row--sum .route-scores__label {
+  color: var(--text);
+  font-weight: 600;
+}
+.route-scores__row--sum .route-scores__fill {
+  background: color-mix(in srgb, var(--accent) 80%, var(--text));
+}
+.route-scores__row--sum .route-scores__value {
+  color: var(--text-2);
+}
+@media (max-width: 900px) {
+  .routing__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .routing__rail {
+    flex-direction: row;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .routing__pool {
+    flex: none;
+  }
+  .route-row,
+  .route-add {
+    flex-wrap: wrap;
+  }
+  .route-row__engine,
+  .route-row__effort {
+    width: auto;
+  }
+}
+/* A right-click on a picture: the little menu of what can be done with it. Over the album (200), because
+   a picture opened full window is the one most likely to be right-clicked. */
+.image-menu {
+  position: fixed;
+  z-index: 260;
+  min-width: 236px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.image-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.image-menu__item:hover,
+.image-menu__item:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.image-menu__item svg {
+  flex: none;
+  opacity: 0.6;
+}
+
 
 /* ---------- organogram ---------- */
 /* Who answers to whom, and what is under way, as a board: cards go where they are put, lines are
@@ -11405,28 +13172,47 @@ button.agent-card__now:hover {
 .org-coach + .org-tools + .org-hint {
   display: none;
 }
-.org-ask {
+.org-ask-wrap {
   position: absolute;
   left: 50%;
   bottom: 20px;
   z-index: 5;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   width: min(540px, calc(100% - 420px));
   min-width: 280px;
+  transform: translateX(-50%);
+  cursor: default;
+}
+.orgb.has-side .org-ask-wrap {
+  left: calc((100% - 352px) / 2 + 76px);
+  width: min(540px, calc(100% - 352px - 270px));
+}
+.org-ask-wrap .composer__images {
+  padding: 0 4px;
+}
+.org-ask__note {
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--warn);
+}
+.org-ask__note--busy {
+  color: var(--text-2);
+}
+.org-ask {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   height: 48px;
   padding: 0 8px 0 12px;
   border-radius: 15px;
   background: var(--panel);
   box-shadow: 0 0 0 1px var(--border-strong), var(--shadow-lg);
-  transform: translateX(-50%);
-  cursor: default;
   transition: box-shadow var(--dur-fast) var(--ease-out);
 }
-.orgb.has-side .org-ask {
-  left: calc((100% - 352px) / 2 + 76px);
-  width: min(540px, calc(100% - 352px - 270px));
+.org-ask .icon-btn {
+  flex: none;
 }
 .org-ask:focus-within {
   box-shadow: 0 0 0 1.5px var(--text), var(--shadow-lg);
@@ -11998,3 +13784,9 @@ button.agent-card__now:hover {
     grid-column: 1 / -1;
   }
 }
+
+/* Model pickers need their own row so the hint keeps its width and controls stay inside the dialog. */
+.wk-settings .wk-setting--model { flex-direction: column; align-items: stretch; gap: 8px; }
+.wk-settings .wk-setting--model > .wk-row { width: 100%; min-width: 0; }
+.wk-settings .wk-setting--model .model-picker { min-width: 0; }
+.wk-settings .wk-setting--model .model-picker > .select { flex: 1 1 180px; min-width: 0; }

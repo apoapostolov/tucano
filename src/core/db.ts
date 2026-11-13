@@ -1,6 +1,7 @@
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type InitiativeWake, type NotifyMode } from '../shared/initiative'
+import { isStepsMode } from '../shared/steps'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import { ALL_PARTS, GENERAL_SETTINGS, WORKSPACE_PARTS, type WorkspaceParts } from '../shared/workspaces'
@@ -18,6 +19,7 @@ import {
   type ArtifactKind,
   type Author,
   type Connector,
+  type ApprovalResult,
   type ConnectorAuth,
   type ConnectorTool,
   type Conversation,
@@ -37,6 +39,7 @@ import {
   type Routine,
   type RoutineRun,
   type Run,
+  type SendMode,
   type Settings,
   type Skill,
   type SkillVersion,
@@ -520,6 +523,8 @@ export const MIGRATIONS = [
     state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'done', 'failed', 'cancelled')),
     asking TEXT,
     asking_told INTEGER NOT NULL DEFAULT 0,
+    parked_told INTEGER NOT NULL DEFAULT 0,
+    nudges INTEGER NOT NULL DEFAULT 0,
     result TEXT,
     told INTEGER NOT NULL DEFAULT 0,
     late_told INTEGER NOT NULL DEFAULT 0,
@@ -615,11 +620,32 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'action_rules', "TEXT NOT NULL DEFAULT '{}'"],
   ['agents', 'autonomy', 'TEXT'],
   ['agents', 'outside_guard', 'INTEGER'],
+  // How an agent's replies show their steps (src/shared/steps.ts): 'all', 'latest', 'one-line'.
+  // Empty: the workspace's setting, which out of the box is every step.
+  ['agents', 'steps_mode', 'TEXT'],
+  // Smart routing (Settings › Routing): Jev picks the model from the person's pools instead of the agent's own.
+  // 1 on for this agent · 0 off for this agent · NULL follow the global switch (Settings › Models › Router).
+  ['agents', 'smart_routing', 'INTEGER'],
   // A phone's push handle (src/core/push.ts), on its device key: {"handle", "tag"} as JSON.
   ['person_keys', 'push', 'TEXT'],
   // A routine on a date ("2026-11-17", once) or on a day of every month (1–31).
   ['routines', 'date', 'TEXT'],
   ['routines', 'month_day', 'INTEGER'],
+  // Clearing a conversation's history without deleting it: what came before stays a row, out of sight.
+  ['conversations', 'cleared_at', 'INTEGER'],
+  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
+  ['messages', 'send_mode', 'TEXT'],
+  // A channel's mention mode, per member: in the room, answering only when mentioned.
+  ['members', 'mention_only', 'INTEGER NOT NULL DEFAULT 0'],
+  // A channel's listen mode, per member: in the room, and Jev says when a message is for them.
+  ['members', 'listen', 'INTEGER NOT NULL DEFAULT 0'],
+  // A channel an agent opened to work with agents called in from another conversation.
+  ['conversations', 'team_up', 'TEXT'],
+  // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
+  ['approvals', 'result', 'TEXT'],
+  // The image a connector wears in the grid: a data: URI (small, downscaled by the screen) or an https URL.
+  // Empty: the store's mark, or the icon of its kind.
+  ['connectors', 'icon', 'TEXT'],
   // The agent an agent answers to (src/shared/org.ts); empty: no one.
   ['agents', 'reports_to', 'TEXT'],
   // A check-in stays out of the conversation while it works, and stays out of it for good when it
@@ -632,13 +658,26 @@ const COLUMNS: [string, string, string][] = [
   ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0'],
   // A check-in that said exactly what the last one said: kept as evidence, never delivered twice.
   ['initiative_wakes', 'deduped', 'INTEGER']
+,
+  // A request that answered as far as it goes before stopping on an approval of mine, and how often
+  // the one asked was knocked on after leaving no reply at all (src/core/delegations.ts).
+  ['delegations', 'parked_told', 'INTEGER NOT NULL DEFAULT 0'],
+  ['delegations', 'nudges', 'INTEGER NOT NULL DEFAULT 0']
 ]
 
 
 type Row = Record<string, unknown>
 
+// A row of `members`, the one place a channel's modes are read from.
+type MemberRow = { conversation_id?: string; agent_id: string; mention_only: number; listen: number }
+
+// The agents of these rows whose `column` is on.
+const idsWhere = (rows: MemberRow[], column: 'mention_only' | 'listen'): string[] => rows.filter((m) => m[column] === 1).map((m) => m.agent_id)
+
 // countedTokens, in SQL: cache reads count CACHE_READ_WEIGHT.
 const COUNTED = `input_tokens - cache_read_tokens * ${1 - CACHE_READ_WEIGHT} + output_tokens`
+// A message still counts for a conversation that was never cleared, or for what came after the cut.
+const STILL_THERE = 'at > COALESCE((SELECT cleared_at FROM conversations WHERE conversations.id = messages.conversation_id), 0)'
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 // A JSON column as it was stored; anything unreadable reads as the empty value it falls back to.
 const jsonOf = (v: unknown): unknown => {
@@ -689,7 +728,7 @@ export class Db {
 
   // Snapshot the live DB, then sanitize only the copy. Publish it only after
   // VACUUM removes deleted history from its pages; no engine/browser files copy.
-  // The extra Claude Code and Codex logins stay too (their folders, and the Mac's keychain,
+  // The extra Claude Code, Codex and Grok logins stay too (their folders, and the Mac's keychain,
   // are the source's): the copy's agents use the usual login.
   // `wikiDir`: the source's wiki folder, which the copy uses too when the wiki comes along.
   duplicateTo(file: string, name: string, parts: WorkspaceParts = ALL_PARTS, wikiDir?: string): void {
@@ -764,7 +803,7 @@ export class Db {
   // comes archived (with no agents it would apply to everyone), a routine needs its agent and place.
   private keepOnly(parts: WorkspaceParts): void {
     if (WORKSPACE_PARTS.every((p) => parts[p])) return
-    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'folded'] : [])])
+    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'dmOrder', 'agentOrder', 'folded'] : [])])
     for (const { key } of this.db.prepare('SELECT key FROM settings').all() as { key: string }[]) if (!kept.has(key)) this.db.prepare('DELETE FROM settings WHERE key = ?').run(key)
     if (!parts.general) this.db.prepare('DELETE FROM secrets WHERE key = ?').run(JEV_KEY)
     if (!parts.connectors) {
@@ -916,11 +955,13 @@ export class Db {
       ...(r['custom_color'] ? { customColor: str(r['custom_color']) } : {}),
       ...(r['picture'] ? { picture: str(r['picture']) } : {}),
       ...(r['avatar'] ? { avatar: JSON.parse(str(r['avatar'])) as Agent['avatar'] } : {}),
-      ...(r['wiki'] === 'none' || r['wiki'] === 'read' ? { wiki: r['wiki'] } : {}),
+      ...(r['wiki'] === 'none' || r['wiki'] === 'read' || r['wiki'] === 'read_write' ? { wiki: r['wiki'] } : {}),
       autoApprove: JSON.parse(str(r['auto_approve']) || '[]') as string[],
       ...(str(r['action_rules']) && str(r['action_rules']) !== '{}' ? { actionRules: cleanRules(JSON.parse(str(r['action_rules']))) } : {}),
       ...(isAutonomy(r['autonomy']) ? { autonomy: r['autonomy'] } : {}),
       ...(r['outside_guard'] === 0 || r['outside_guard'] === 1 ? { outsideGuard: r['outside_guard'] === 1 } : {}),
+      ...(isStepsMode(r['steps_mode']) ? { steps: r['steps_mode'] } : {}),
+      ...(r['smart_routing'] === 0 || r['smart_routing'] === 1 ? { smartRouting: r['smart_routing'] === 1 } : {}),
       folders: JSON.parse(str(r['folders']) || '[]') as LentFolder[],
       archived: r['archived'] === 1,
       ...(str(r['kind']) === 'tuca' ? { kind: 'tuca' as const } : {}),
@@ -942,14 +983,21 @@ export class Db {
   saveAgent(a: Agent): void {
     this.db
       .prepare(
-        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, archived, kind, custom_color, picture, avatar, wiki, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, steps_mode, smart_routing, archived, kind, custom_color, picture, avatar, wiki, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET name = excluded.name, handle = excluded.handle, role = excluded.role,
-           color = excluded.color, instructions = excluded.instructions, model = excluded.model, fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account, account = excluded.account, effort = excluded.effort,
-           limit_tokens = excluded.limit_tokens, max_routines = excluded.max_routines, grants = excluded.grants, memory_mode = excluded.memory_mode,
-           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web, browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve, action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard, archived = excluded.archived, kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color, picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
+           color = excluded.color, instructions = excluded.instructions, model = excluded.model,
+           fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account,
+           account = excluded.account, effort = excluded.effort, limit_tokens = excluded.limit_tokens,
+           max_routines = excluded.max_routines, grants = excluded.grants, memory_mode = excluded.memory_mode,
+           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web,
+           browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve,
+           action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard,
+           steps_mode = excluded.steps_mode, smart_routing = excluded.smart_routing, archived = excluded.archived,
+           kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color,
+           picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
       )
-      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, a.limit, routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki ?? null, Date.now())
+      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, a.limit, routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, isStepsMode(a.steps) ? a.steps : null, a.smartRouting === true ? 1 : a.smartRouting === false ? 0 : null, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki === 'none' || a.wiki === 'read' || a.wiki === 'read_write' ? a.wiki : null, Date.now())
     // An agent made without one belongs to the Tucano's owner; a save that doesn't say keeps it.
     this.db.prepare('UPDATE agents SET owner = COALESCE(?, owner, (SELECT id FROM people WHERE role = ?)) WHERE id = ?').run(a.owner ?? null, 'owner', a.id)
     this.db.prepare('UPDATE agents SET reports_to = ? WHERE id = ?').run(a.reportsTo || null, a.id)
@@ -979,26 +1027,57 @@ export class Db {
          ORDER BY c.created_at`
       )
       .all(personId) as Row[]
-    const members = this.db.prepare('SELECT conversation_id, agent_id FROM members').all() as { conversation_id: string; agent_id: string }[]
-    return rows.map((r) => this.toConversation(r, members.filter((m) => m.conversation_id === r['id']).map((m) => m.agent_id)))
+    const members = this.db.prepare('SELECT conversation_id, agent_id, mention_only, listen FROM members').all() as MemberRow[]
+    return rows.map((r) => {
+      const mine = members.filter((m) => m.conversation_id === r['id'])
+      return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
+    })
   }
 
-  private toConversation(r: Row, members: string[]): Conversation {
+  // `mentionOnly`: the agents of a channel that answer only when mentioned; `listen`: the ones Jev
+  // brings in when the message is theirs (each left out when empty).
+  private toConversation(r: Row, members: string[], mentionOnly: string[] = [], listen: string[] = []): Conversation {
     return {
       id: str(r['id']),
       kind: str(r['kind']) as Conversation['kind'],
       name: str(r['name']),
       topic: r['topic'] ? str(r['topic']) : undefined,
       members,
+      ...(mentionOnly.length ? { mentionOnly } : {}),
+      ...(listen.length ? { listen } : {}),
       summary: r['summary'] ? str(r['summary']) : undefined,
       summaryUntil: r['summary_until'] ? Number(r['summary_until']) : undefined,
       summaryAt: r['summary_at'] ? Number(r['summary_at']) : undefined,
       ...(r['wiki_capture'] === 0 ? { wikiCapture: false } : {}),
       ...(r['threads'] === 1 ? { threads: true } : {}),
+      ...(r['cleared_at'] ? { clearedAt: Number(r['cleared_at']) } : {}),
+      ...(r['team_up'] ? { teamUp: JSON.parse(str(r['team_up'])) as Conversation['teamUp'] } : {}),
       ...(r['owner'] ? { owner: str(r['owner']) } : {}),
       ...(r['created_by'] ? { createdBy: str(r['created_by']) } : {}),
       unread: Number(r['unread'])
     }
+  }
+
+  // Clearing a conversation's history without deleting it. The rows stay (receipts, approvals and the
+  // costs they carry point at message ids), the summary goes with them because it was written about
+  // them, and `summary_until` is moved so the next turns stop looking behind the cut.
+  // The history goes off the screen and out of every read, but the conversation stays: the rows are
+  // still there for the receipts and the approvals that point at them.
+  // What nobody can reach any more goes with it: an unread row would leave a badge over an empty
+  // screen (markRead heals it, but only the next time the conversation is opened).
+  clearConversation(id: string, at = Date.now()): void {
+    this.tx(() => {
+      this.db.prepare('UPDATE conversations SET cleared_at = ?, summary = NULL, summary_until = ?, summary_at = ? WHERE id = ?').run(at, at, at, id)
+      this.db.prepare('DELETE FROM unread WHERE message_id IN (SELECT id FROM messages WHERE conversation_id = ?)').run(id)
+      // A thread's summary was written about messages that are now behind the cut, and the reply that
+      // would read it can't be reached any more.
+      this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ?').run(id)
+    })
+  }
+
+  // The questions still waiting in one conversation: their message is about to be off the screen.
+  openQuestionsIn(conversationId: string): Question[] {
+    return (this.db.prepare("SELECT * FROM questions WHERE state = 'open' AND conversation_id = ? ORDER BY created_at").all(conversationId) as Row[]).map((r) => this.toQuestion(r))
   }
 
   // `until` is the `at` of the last message the summary covers; leave it out to keep it (a hand edit).
@@ -1016,8 +1095,8 @@ export class Db {
       )
       .get(personId, id) as Row | undefined
     if (!r) return undefined
-    const members = (this.db.prepare('SELECT agent_id FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as { agent_id: string }[]).map((m) => m.agent_id)
-    return this.toConversation(r, members)
+    const mine = this.db.prepare('SELECT agent_id, mention_only, listen FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as MemberRow[]
+    return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
   }
 
   // Only whose a conversation is, for checks on every event (no counts, no members).
@@ -1038,7 +1117,9 @@ export class Db {
       const owner = c.kind === 'dm' ? (c.owner ?? this.ownerId()) : null
       // A channel is whoever made it (the owner when the code doesn't say).
       const by = c.kind === 'channel' ? (c.createdBy ?? this.ownerId()) : null
-      this.db.prepare('INSERT INTO conversations (id, kind, name, topic, threads, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, owner, by, Date.now())
+      this.db
+        .prepare('INSERT INTO conversations (id, kind, name, topic, threads, team_up, wiki_capture, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, c.teamUp ? JSON.stringify(c.teamUp) : null, c.wikiCapture === false ? 0 : null, owner, by, Date.now())
       for (const m of c.members) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(c.id, m)
     })
   }
@@ -1061,11 +1142,21 @@ export class Db {
     this.db.prepare('UPDATE conversations SET topic = ? WHERE id = ?').run(topic ?? null, id)
   }
 
-  // Exactly these agents in the conversation.
-  setMembers(id: string, agentIds: string[]): void {
+  // Exactly these agents in the conversation. `mentionOnly`: which of them answer only when
+  // mentioned (a channel's mention mode); `listen`: which of them Jev brings in when a message is
+  // about what they do (a channel's listen mode). Left out, each agent keeps the mode it had. An
+  // agent is in one mode or the other, never both: the one named in `listen` leaves mention mode.
+  setMembers(id: string, agentIds: string[], mentionOnly?: string[], listen?: string[]): void {
+    const agents = [...new Set(agentIds)]
+    const before = this.conversation(id)
+    const quiet = new Set(mentionOnly === undefined ? before?.mentionOnly ?? [] : mentionOnly)
+    const hears = new Set(listen === undefined ? before?.listen ?? [] : listen)
+    for (const a of hears) quiet.delete(a)
+    for (const a of quiet) hears.delete(a)
     this.tx(() => {
       this.db.prepare('DELETE FROM members WHERE conversation_id = ?').run(id)
-      for (const a of new Set(agentIds)) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(id, a)
+      for (const a of agents)
+        this.db.prepare('INSERT INTO members (conversation_id, agent_id, mention_only, listen) VALUES (?, ?, ?, ?)').run(id, a, quiet.has(a) ? 1 : 0, hears.has(a) ? 1 : 0)
     })
   }
 
@@ -1110,6 +1201,12 @@ export class Db {
     return Number(row.n)
   }
 
+  // A reply that ended telling nobody (a routine's [SILENT]): what its running had already made
+  // unread goes back to nothing, for everyone. The notification row stays: it was weighed once.
+  forgetActivity(messageId: string): void {
+    this.db.prepare('DELETE FROM unread WHERE message_id = ?').run(messageId)
+  }
+
   // Who reads a conversation: a DM's person; a channel's, everyone with access.
   private readers(conversationId: string): string[] {
     const c = this.conversationOwner(conversationId)
@@ -1126,7 +1223,11 @@ export class Db {
   // who reads the conversation and isn't looking at it. `viewing`: the owner's open conversation
   // (a desktop), or each person's.
   recordActivity(message: Message, viewing: string | null | Map<string, string | null>): boolean {
-    if (message.author.kind !== 'agent' && message.author.kind !== 'routine') return false
+    // A routine's request is the app asking its agent to work; what the person reads is the answer.
+    // And an answer with nothing to report (a routine's [SILENT]) is news to nobody: it's in the
+    // conversation, one quiet line, for whoever goes looking, and it never counts as unread.
+    if (message.author.kind !== 'agent') return false
+    if (message.run?.silent) return false
     // A check-in the person did not ask for never counts as something to read.
     if (message.hidden) return false
     const phase = message.run?.status ?? 'message'
@@ -1162,8 +1263,17 @@ export class Db {
       ...(r['hidden'] === 1 ? { hidden: true } : {}),
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
+      ...(r['send_mode'] ? { sendMode: str(r['send_mode']) as SendMode } : {}),
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {})
     }
+  }
+
+  // Who spoke last in a conversation, and when: a check-in stays out of an exchange the person is in
+  // the middle of, and knows it is over as soon as the bot has answered.
+  lastAuthor(conversationId: string): { kind: 'person' | 'agent' | 'routine' | 'system'; at: number } | undefined {
+    const r = this.db.prepare('SELECT author_kind, at FROM messages WHERE conversation_id = ? AND hidden IS NULL ORDER BY at DESC LIMIT 1').get(conversationId) as Row | undefined
+    if (!r) return undefined
+    return { kind: str(r['author_kind']) as 'person' | 'agent' | 'routine' | 'system', at: Number(r['at']) }
   }
 
   messages(): Message[] {
@@ -1180,10 +1290,12 @@ export class Db {
 
   // `threadId`: only that thread's replies; null: only what's outside threads; left out: everything.
   // `before`: only those from before that moment.
+  // Nothing from before the conversation was cleared: the rows stay (receipts and approvals point at
+  // them) but no read path sees them again, the model's included.
   recentMessages(conversationId: string, limit: number, threadId?: string | null, before?: number): Message[] {
     const where = (threadId === undefined ? '' : threadId === null ? ' AND thread_id IS NULL' : ' AND thread_id = ?') + (before === undefined ? '' : ' AND at < ?')
     const args = [conversationId, ...(typeof threadId === 'string' ? [threadId] : []), ...(before === undefined ? [] : [before]), limit]
-    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ?${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
+    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ? AND ${STILL_THERE}${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
     return rows.reverse().map((r) => this.toMessage(r))
   }
 
@@ -1249,7 +1361,10 @@ export class Db {
     const cut = this.db
       .prepare(`WITH ${ranked} SELECT conversation_id, at FROM ranked WHERE thread_id IS NULL AND n = ? AND conversation_id IN (SELECT conversation_id FROM ranked WHERE thread_id IS NULL AND n = ?)`)
       .all(n, n + 1) as Row[]
-    return { messages: rows.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
+    // A cleared conversation opens after its cut, the same place every other read starts.
+    const cleared = new Map((this.db.prepare('SELECT id, cleared_at FROM conversations WHERE cleared_at IS NOT NULL').all() as Row[]).map((r) => [str(r['id']), Number(r['cleared_at'])]))
+    const seen = rows.filter((r) => Number(r['at']) > (cleared.get(str(r['conversation_id'])) ?? 0))
+    return { messages: seen.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
   }
 
   // Further back, a page at a time: the `n` messages outside threads before `before` (all of them back
@@ -1257,11 +1372,11 @@ export class Db {
   messagesBefore(conversationId: string, before: number, n: number, from?: number): { messages: Message[]; since: number } {
     const page = (
       from === undefined
-        ? this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? ORDER BY at DESC LIMIT ?').all(conversationId, before, n)
-        : this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? AND at >= ? ORDER BY at DESC').all(conversationId, before, from)
+        ? this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? ORDER BY at DESC LIMIT ?`).all(conversationId, before, n)
+        : this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? AND at >= ? ORDER BY at DESC`).all(conversationId, before, from)
     ) as Row[]
     const oldest = page.length ? Number(page.at(-1)!['at']) : Math.min(before, from ?? before)
-    const more = !!this.db.prepare('SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? LIMIT 1').get(conversationId, oldest)
+    const more = !!this.db.prepare(`SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? LIMIT 1`).get(conversationId, oldest)
     const since = more ? oldest : 0
     if (!page.length) return { messages: [], since }
     const ids = JSON.stringify(page.map((r) => str(r['id'])))
@@ -1294,11 +1409,26 @@ export class Db {
     return r && this.toMessage(r)
   }
 
+  // A session's reply leaves the conversation: the message, the replies in the thread it started,
+  // and the approvals that were asked under it. What the session spent stays in the receipts — the
+  // tokens went out either way. The ids that went come back, so every screen can take them off.
+  deleteMessage(id: string): string[] {
+    return this.tx(() => {
+      const inThread = (this.db.prepare('SELECT id FROM messages WHERE thread_id = ?').all(id) as Row[]).map((r) => str(r['id']))
+      const gone = [id, ...inThread]
+      for (const one of gone) {
+        this.db.prepare('DELETE FROM approvals WHERE message_id = ?').run(one)
+        this.db.prepare('DELETE FROM messages WHERE id = ?').run(one)
+      }
+      return gone
+    })
+  }
+
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, hidden = excluded.hidden`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, hidden, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, hidden = excluded.hidden, send_mode = excluded.send_mode`
       )
       .run(
         m.id,
@@ -1310,8 +1440,14 @@ export class Db {
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
         m.threadId ?? null,
-        m.hidden ? 1 : null
+        m.hidden ? 1 : null,
+        m.sendMode ?? null
       )
+  }
+
+  // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
+  queuedMessages(): Message[] {
+    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode IS NOT NULL ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
   }
 
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of
@@ -1338,7 +1474,7 @@ export class Db {
       n++
       this.saveMessage({
         ...m,
-        run: { ...m.run, status: 'interrupted', steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
+        run: { ...m.run, status: 'interrupted', restartPending: true, steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
       })
     }
     return n
@@ -1407,18 +1543,24 @@ export class Db {
       args: JSON.parse(str(r['args']) || '[]') as string[],
       envKeys: JSON.parse(str(r['env_keys']) || '[]') as string[],
       auth: str(r['auth']) as ConnectorAuth,
+      icon: r['icon'] ? str(r['icon']) : undefined,
       tools: this.tools(id).map(({ inputSchema: _, ...t }) => t)
     }
   }
 
-  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth }): void {
+  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth; icon?: string }): void {
     this.db
       .prepare(
-        `INSERT INTO connectors (id, name, kind, url, command, args, env_keys, auth, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO connectors (id, name, kind, url, command, args, env_keys, auth, icon, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET name = excluded.name, url = excluded.url, command = excluded.command,
-           args = excluded.args, env_keys = excluded.env_keys, auth = excluded.auth`
+           args = excluded.args, env_keys = excluded.env_keys, auth = excluded.auth, icon = excluded.icon`
       )
-      .run(c.id, c.name, c.kind, c.url ?? null, c.command ?? null, JSON.stringify(c.args ?? []), JSON.stringify(c.envKeys ?? []), c.auth, Date.now())
+      .run(c.id, c.name, c.kind, c.url ?? null, c.command ?? null, JSON.stringify(c.args ?? []), JSON.stringify(c.envKeys ?? []), c.auth, c.icon ?? null, Date.now())
+  }
+
+  // The image a connector wears. Its own write, so changing it touches nothing else (no reconnect).
+  setConnectorIcon(id: string, icon: string | undefined): void {
+    this.db.prepare('UPDATE connectors SET icon = ? WHERE id = ?').run(icon ?? null, id)
   }
 
   removeConnector(id: string): void {
@@ -1509,6 +1651,7 @@ export class Db {
       state: str(r['state']) as ApprovalState,
       reason: r['reason'] ? str(r['reason']) : undefined,
       outcome: r['outcome'] ? str(r['outcome']) : undefined,
+      ...(r['result'] ? { result: str(r['result']) as ApprovalResult } : {}),
       createdAt: Number(r['created_at']),
       expiresAt: Number(r['expires_at']),
       decidedAt: r['decided_at'] ? Number(r['decided_at']) : undefined,
@@ -1559,6 +1702,12 @@ export class Db {
       .prepare("UPDATE approvals SET state = ?, reason = ?, decided_at = ?, decided_by = ? WHERE id = ? AND state = 'pending'")
       .run(state, reason ?? null, Date.now(), by ?? null, id)
     return Number(r.changes) === 1
+  }
+
+  // What became of the call, once it's over: it ran, it ran and failed, or nothing ran. Written
+  // apart from the state so a card can show "approved, waiting for the result" in between.
+  setApprovalResult(id: string, result: ApprovalResult): void {
+    this.db.prepare('UPDATE approvals SET result = ? WHERE id = ?').run(result, id)
   }
 
   setApprovalOutcome(id: string, outcome: string): void {
@@ -1632,6 +1781,11 @@ export class Db {
 
   artifacts(): Artifact[] {
     return (this.db.prepare('SELECT * FROM artifacts ORDER BY created_at').all() as Row[]).map((r) => this.toArtifact(r))
+  }
+
+  // What one reply showed: the card over the desktop shows its pictures.
+  artifactsOf(messageId: string): Artifact[] {
+    return (this.db.prepare('SELECT * FROM artifacts WHERE message_id = ? ORDER BY created_at').all(messageId) as Row[]).map((r) => this.toArtifact(r))
   }
 
   artifact(id: string): Artifact | undefined {
@@ -2320,6 +2474,13 @@ export class Db {
     return (this.db.prepare("SELECT * FROM questions WHERE state = 'answered' AND answered_at >= ? ORDER BY answered_at DESC").all(since) as Row[]).map((r) => this.toQuestion(r))
   }
 
+  // Answered and closed questions, newest first: the Asks page's History, which is what the open
+  // list drops off. A closed one has no `answered_at` (nobody answered it), so it sorts by when it
+  // was asked.
+  pastQuestions(limit = 50): Question[] {
+    return (this.db.prepare("SELECT * FROM questions WHERE state != 'open' ORDER BY COALESCE(answered_at, created_at) DESC LIMIT ?").all(limit) as Row[]).map((r) => this.toQuestion(r))
+  }
+
   openQuestions(): Question[] {
     return (this.db.prepare("SELECT * FROM questions WHERE state = 'open' ORDER BY created_at").all() as Row[]).map((r) => this.toQuestion(r))
   }
@@ -2343,6 +2504,8 @@ export class Db {
       state: str(r['state']) as Delegation['state'],
       ...(r['asking'] ? { asking: str(r['asking']) } : {}),
       ...(r['asking_told'] === 1 ? { askingTold: true } : {}),
+      ...(r['parked_told'] === 1 ? { parkedTold: true } : {}),
+      ...(Number(r['nudges'] ?? 0) ? { nudges: Number(r['nudges']) } : {}),
       ...(r['result'] ? { result: str(r['result']) } : {}),
       ...(r['told'] === 1 ? { told: true } : {}),
       ...(r['late_told'] === 1 ? { lateTold: true } : {}),
@@ -2354,11 +2517,11 @@ export class Db {
   saveDelegation(d: Delegation): void {
     this.db
       .prepare(
-        `INSERT INTO delegations (id, from_agent, to_agent, conversation_id, root_id, origin_conversation_id, origin_thread_id, origin_message_id, requested_by, text, done, due_at, state, asking, asking_told, result, told, late_told, created_at, ended_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET state = excluded.state, asking = excluded.asking, asking_told = excluded.asking_told, result = excluded.result, told = excluded.told, late_told = excluded.late_told, ended_at = excluded.ended_at`
+        `INSERT INTO delegations (id, from_agent, to_agent, conversation_id, root_id, origin_conversation_id, origin_thread_id, origin_message_id, requested_by, text, done, due_at, state, asking, asking_told, parked_told, nudges, result, told, late_told, created_at, ended_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET state = excluded.state, asking = excluded.asking, asking_told = excluded.asking_told, parked_told = excluded.parked_told, nudges = excluded.nudges, result = excluded.result, told = excluded.told, late_told = excluded.late_told, ended_at = excluded.ended_at`
       )
-      .run(d.id, d.from, d.to, d.conversationId, d.rootId, d.originConversationId, d.originThreadId ?? null, d.originMessageId, d.requestedBy, d.text, d.done ?? null, d.dueAt ?? null, d.state, d.asking ?? null, d.asking && d.askingTold ? 1 : 0, d.result ?? null, d.told ? 1 : 0, d.lateTold ? 1 : 0, d.createdAt, d.endedAt ?? null)
+      .run(d.id, d.from, d.to, d.conversationId, d.rootId, d.originConversationId, d.originThreadId ?? null, d.originMessageId, d.requestedBy, d.text, d.done ?? null, d.dueAt ?? null, d.state, d.asking ?? null, d.asking && d.askingTold ? 1 : 0, d.parkedTold ? 1 : 0, d.nudges ?? 0, d.result ?? null, d.told ? 1 : 0, d.lateTold ? 1 : 0, d.createdAt, d.endedAt ?? null)
   }
 
   delegation(id: string): Delegation | undefined {

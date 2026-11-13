@@ -267,12 +267,17 @@ describe('a check-in', () => {
     reply = '[[quiet]]'
     clock = due
     const sent = runner.send(dm, 'quick question')
-    const ticking = heartbeat.tick(due)
-    await Promise.all([sent, ticking])
+    // The person speaks first, and the check-in that was due steps back for it: a review of a thread they
+    // are in the middle of waits, and their turn never queues behind the coordinator's.
+    expect((await heartbeat.tick(due)).length).toBe(0)
+    await sent
     await runner.idle()
-    // The person's turn came first, and the check-in waited for it: the same bot, one reply at a time.
-    expect(turns).toHaveLength(2)
+    expect(turns).toHaveLength(1)
     expect(turns[0]).toContain('quick question')
+    // The next one, now that they have been answered, goes ahead.
+    clock = due + 16 * 60_000
+    expect((await heartbeat.tick(clock)).length).toBe(1)
+    expect(turns).toHaveLength(2)
     expect(turns[1]).toContain('Watch the invoice thread')
     // The person's reply is the only thing in the DM: the check-in found nothing and left nothing.
     const shown = visible()

@@ -4,7 +4,7 @@
 // even one taken over, can't reach this computer through it. Its own small preload
 // (src/preload/server.ts) only hands the app the notifications to show. Each server keeps its own
 // session (cookies, storage), apart from this app's and from the others'.
-import { BrowserWindow, dialog, session, shell, WebContentsView, type MenuItemConstructorOptions, type Session, type WebContents } from 'electron'
+import { app, BrowserWindow, dialog, session, shell, WebContentsView, type MenuItemConstructorOptions, type Session, type WebContents } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { hostname } from 'node:os'
@@ -180,12 +180,13 @@ export class Servers {
     if (!win || win.isDestroyed()) return
     for (const [id, v] of this.views) if (id !== this.active) win.contentView.removeChildView(v)
     const view = this.active ? this.views.get(this.active) : undefined
-    if (!view) return void win.setTitle('Tucano')
+    // The app's own name: this window is Tucano's, whatever it is called here (TucanoNext).
+    if (!view) return void win.setTitle(app.getName())
     const { width, height } = win.getContentBounds()
     view.setBounds({ x: 0, y: BAR, width, height: Math.max(0, height - BAR) })
     win.contentView.addChildView(view)
     const s = this.list().find((x) => x.id === this.active)
-    if (s) win.setTitle(`Tucano · ${serverName(s.origin)}`)
+    if (s) win.setTitle(`${app.getName()} · ${serverName(s.origin)}`)
   }
 
   // One view per server, even when it's asked for again while the first is being made.

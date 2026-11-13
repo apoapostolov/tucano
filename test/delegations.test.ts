@@ -3,9 +3,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { CoreEvent } from '../src/shared/rpc'
-import type { Agent, EngineId, Message, Settings } from '../src/shared/types'
+import type { Agent, Conversation, EngineId, Message, Settings } from '../src/shared/types'
 import { Db } from '../src/core/db'
-import { fakeEngine } from '../src/core/engines/fake'
+import { callTool, fakeEngine } from '../src/core/engines/fake'
 import type { Engine, Turn } from '../src/core/engines/types'
 import { Gateway } from '../src/core/gateway'
 import { Runner } from '../src/core/runs'
@@ -179,19 +179,33 @@ describe('work handed down the tree', () => {
 
   it('does not hold the answers back for a request that waits on an approval of mine', async () => {
     const r = runner()
-    await r.send('dm', 'delegue a clara: fale com o Gabriel\ndelegue a nico: demore 2 s')
-    await until(() => db.liveDelegations(0).some((d) => d.to === 'clara' && d.state === 'done'))
-    // Clara is done, Nico still at it: Orion waits to tell it all at once.
-    expect(by('orion', 'dm')).toHaveLength(1)
-    // Nico's reply stops at an approval. That is mine to give, whenever: Clara's answer shouldn't sit behind it.
-    const nico = by('nico', 'eng').at(-1)!
-    db.saveMessage({ ...nico, run: { ...nico.run!, status: 'waiting_approval' } })
-    r.sweepDelegations()
-    await until(() => by('orion', 'dm').length === 2)
-    const told = codex.turns.at(-1)!.prompt
-    expect(told).toMatch(/Clara, #clientes: terminou/)
-    expect(told).toMatch(/Ainda em andamento: \[\w{8}\] Nico, #engenharia \(parado numa aprovação que espera Edu\)/)
-    expect(told).toContain('e o que espera uma aprovação dele')
+    // Nico stays in flight until the assertion, regardless of how busy the test host is.
+    let release!: () => void
+    const held = new Promise<void>((resolve) => { release = resolve })
+    const run = claude.run
+    claude.run = async function* (turn) {
+      if (turn.system.startsWith('Você é Nico')) await held
+      yield* run(turn)
+    }
+    try {
+      await r.send('dm', 'delegue a clara: fale com o Gabriel\ndelegue a nico: outra tarefa')
+      await until(() => db.liveDelegations(0).some((d) => d.to === 'clara' && d.state === 'done'))
+      // Clara is done, Nico still at it: Orion waits to tell it all at once.
+      expect(by('orion', 'dm')).toHaveLength(1)
+      // Nico's reply stops at an approval. That is mine to give, whenever: Clara's answer shouldn't sit behind it.
+      const nico = by('nico', 'eng').at(-1)!
+      db.saveMessage({ ...nico, run: { ...nico.run!, status: 'waiting_approval' } })
+      r.sweepDelegations()
+      await until(() => by('orion', 'dm').length === 2)
+      const told = codex.turns.at(-1)!.prompt
+      expect(told).toMatch(/Clara, #clientes: terminou/)
+      // Held on my yes, and what it wrote before stopping is in the asker's own thread by now (see the
+      // test below for the text itself: here Nico's reply was still empty when it stopped).
+      expect(told).toMatch(/Nico, #engenharia: parou numa aprovação que espera Edu/)
+      expect(told).toContain('Não refaça o que ele fez')
+    } finally {
+      release()
+    }
     // When Nico's work does end, Orion hears of it, alone this time.
     await r.idle()
     expect(by('orion', 'dm')).toHaveLength(3)
@@ -218,6 +232,9 @@ describe('work handed down the tree', () => {
     await r.send('dm', 'delegue a clara em #engenharia: qualquer coisa')
     await r.idle()
     expect(by('orion', 'dm')[1]?.text).toContain('Clara não está em "engenharia". Os canais dele: #clientes, #vendas.')
+    // Nothing is handed into a channel, and the refusal opens no room either: it lists the three agents
+    // Orion already reaches ("who you reach: @clara, @bento, @nico"), and those are asked with `pedir`.
+    expect(db.conversations().filter((c) => c.teamUp)).toEqual([])
     expect(db.messages().filter((m) => m.conversationId !== 'dm')).toEqual([])
   })
 
@@ -291,8 +308,9 @@ describe('work handed down the tree', () => {
     // No person was asked.
     expect(db.openQuestions()).toEqual([])
     expect(db.answeredQuestions(0)).toEqual([])
-    // In the DM: the question showed up in Clara's name, then her answer.
-    expect(by('clara', 'dm').map((m) => m.text.split(':')[0])).toEqual(['Uma pergunta sobre o pedido em #clientes', 'Sobre o pedido em #clientes'])
+    // In the DM: what Clara wrote before asking, her question, then her answer.
+    expect(by('clara', 'dm').map((m) => m.text.split(':')[0])).toEqual(['Até agora, sobre o pedido em #clientes', 'Uma pergunta sobre o pedido em #clientes', 'Sobre o pedido em #clientes'])
+    expect(by('clara', 'dm')[0]?.text).toContain('Te mandei uma pergunta')
     expect(by('orion', 'dm').map((m) => m.text)).toEqual([expect.stringContaining('Pedido ['), 'Respondi a dúvida dele.', 'Pronto: o time terminou o que pedi.'])
     expect(db.delegationAt(thread[0]!.id)).toMatchObject({ state: 'done' })
     expect(db.delegationAt(thread[0]!.id)?.asking).toBeUndefined()
@@ -395,5 +413,139 @@ describe('work handed down the tree', () => {
     await r.idle()
     expect(db.delegationAt(root!.id)).toMatchObject({ state: 'failed', told: true })
     expect(by('orion', 'dm').at(-1)?.text).toBe('Não deu certo: o pedido não terminou.')
+  })
+
+  it('brings what it wrote so far back when it stops at an approval, before my yes', async () => {
+    const r = runner()
+    await r.send('dm', 'delegue a clara: responda o Fulano')
+    await r.idle()
+    const [root] = by('orion', 'clientes')
+    const d = db.delegationAt(root!.id)!
+    // As if the app had been closed right as Clara stopped at an approval: the request open again, her
+    // reply waiting for my yes, and nobody having heard of it.
+    db.saveDelegation({ ...d, state: 'open', told: false, result: undefined, endedAt: undefined })
+    const reply = by('clara', 'clientes')[0]!
+    db.saveMessage({ ...reply, run: { ...reply.run!, status: 'waiting_approval' } })
+    r.sweepDelegations()
+    await r.idle()
+    // Her answer, as far as it goes, is in Orion's thread: not only the news that it waits on me.
+    expect(by('clara', 'dm').map((m) => m.text.split(':')[0]).at(-1)).toBe('Até agora, sobre o pedido em #clientes')
+    expect(codex.turns.at(-1)!.prompt).toMatch(/Clara, #clientes: parou numa aprovação que espera Edu/)
+    expect(codex.turns.at(-1)!.prompt).toContain('Não refaça o que ele fez')
+    expect(db.delegationAt(root!.id)).toMatchObject({ state: 'open', parkedTold: true })
+  })
+
+  // A request whose thread has nothing after it at all: the one asked never wrote a line, no error
+  // either (the run never got going). Nobody used to hear of it, ever.
+  const askedButSilent = (extra: { nudges?: number; createdAt?: number } = {}): string => {
+    const root = { id: 'raiz-muda', conversationId: 'clientes', author: { kind: 'agent' as const, id: 'orion' }, text: '@clara, um pedido:\n\nresponda o Fulano', at: Date.now() }
+    db.saveMessage(root)
+    db.saveDelegation({ id: 'pedido-mudo', from: 'orion', to: 'clara', conversationId: 'clientes', rootId: root.id, originConversationId: 'dm', originMessageId: 'mudo-pedido', requestedBy: db.ownerId(), text: 'responda o Fulano', state: 'open', createdAt: extra.createdAt ?? Date.now(), ...(extra.nudges ? { nudges: extra.nudges } : {}) })
+    return root.id
+  }
+
+  it('knocks once on a request whose thread has nothing, and what comes of it goes back', async () => {
+    const r = runner()
+    const rootId = askedButSilent()
+    // A minute in: too soon to knock.
+    r.sweepDelegations()
+    expect(db.delegation('pedido-mudo')?.nudges).toBeUndefined()
+    r.sweepDelegations(Date.now() + 5 * 60_000)
+    await r.idle()
+    expect(db.delegation('pedido-mudo')?.nudges).toBe(1)
+    // This time it answers, and the answer comes back to where it was asked.
+    expect(db.messages().some((m) => m.threadId === rootId && m.author.kind === 'agent')).toBe(true)
+    expect(db.delegation('pedido-mudo')).toMatchObject({ state: 'done', told: true })
+    expect(by('clara', 'dm').at(-1)?.text).toMatch(/^Sobre o pedido em #clientes:/)
+  })
+
+  it('gives up on a request nobody answered, and whoever asked hears it', async () => {
+    const r = runner()
+    const rootId = askedButSilent({ nudges: 1, createdAt: Date.now() - 11 * 60_000 })
+    r.sweepDelegations()
+    await r.idle()
+    expect(db.delegation('pedido-mudo')).toMatchObject({ state: 'failed', told: true })
+    expect(db.messages().some((m) => m.conversationId === 'dm' && m.text.startsWith('O pedido a **Clara** em #clientes não terminou'))).toBe(true)
+    expect(codex.turns.at(-1)!.prompt).toMatch(/Clara, #clientes: não terminou/)
+    expect(db.messages().some((m) => m.threadId === rootId && m.author.kind === 'agent')).toBe(false)
+  })
+})
+
+// An engine that does exactly what the test says: some tool calls through the app's own gateway, then the
+// words of the reply. The fake one is scripted by what the person wrote; this one is scripted by us.
+const scripted = (id: EngineId, calls: [string, Record<string, unknown>][], say: string): Engine => ({
+  id,
+  async *run(turn: Turn) {
+    for (const [tool, args] of calls) if (turn.mcpUrl) await callTool(turn.mcpUrl, tool, args)
+    yield { type: 'done', text: say, usage: { inputTokens: 10, cacheReadTokens: 0, outputTokens: 5 } }
+  }
+})
+
+function runnerScripted(codex: Engine): Runner {
+  const engines: Record<EngineId, Engine> = {
+    claude: fakeEngine('claude', { delayMs: 1 }),
+    codex,
+    opencode: fakeEngine('opencode'),
+    pi: fakeEngine('pi'),
+    antigravity: fakeEngine('antigravity'),
+    cursor: fakeEngine('cursor'),
+    grok: fakeEngine('grok'),
+    cline: fakeEngine('cline'),
+    hermes: fakeEngine('hermes')
+  }
+  return new Runner({ db, engines, settings: async () => settings, emit: (e) => events.push(e), workDir: mkdtempSync(join(tmpdir(), 'ad-work-')), gateway })
+}
+
+// A mention that reads like a call is no way round the tree, and a refusal is no invitation: a team-up is
+// the room for agents a reply can't reach, and the one it asks for on purpose (chamar_time).
+describe('who a mention may open a room for', () => {
+  const rooms = (): Conversation[] => db.conversations().filter((c) => c.teamUp)
+
+  it('opens none for an agent the reply can already reach: that one is asked with pedir', async () => {
+    const r = runnerScripted(scripted('codex', [], '@clara, dá uma olhada nisto?'))
+    await r.send('dm', 'veja o painel')
+    await r.idle()
+    // Clara answers to Orion: a mention names a target of `pedir`, in her own thread, not a room.
+    expect(rooms()).toEqual([])
+    expect(by('orion', 'dm')).toHaveLength(1)
+  })
+
+  it('opens none from a refusal, even one that echoes an agent out of reach', async () => {
+    // A alone would open a room here: `solo` is nobody Orion reaches, so it would read as a guest. The
+    // refused `pedir` is what says this reply explains a failure and invites no one.
+    const r = runnerScripted(scripted('codex', [['pedir', { para: 'solo', pedido: 'revise o build' }]], 'Não alcancei @solo: ele não responde a mim. Falo com ele pelo Edu?'))
+    await r.send('dm', 'peça pro solo revisar o build')
+    await r.idle()
+    expect(rooms()).toEqual([])
+    expect(by('orion', 'dm')).toHaveLength(1)
+    expect(db.openDelegations()).toEqual([])
+  })
+
+  it('still opens one for an agent out of reach, called by name', async () => {
+    const r = runnerScripted(scripted('codex', [], '@solo, pode revisar isto comigo?'))
+    await r.send('dm', 'veja o painel')
+    await r.idle()
+    const [team] = rooms()
+    // No name given, the handles name it; everyone who was here, plus the one called in.
+    expect(team?.name).toBe('team-up-solo')
+    expect(team?.members.sort()).toEqual(['orion', 'solo'])
+  })
+
+  it('lets chamar_time open one for an agent in reach: the deliberate call is never filtered', async () => {
+    const r = runnerScripted(scripted('codex', [['chamar_time', { quem: ['clara'], nome: 'auditar-retry' }]], 'Chamei a Clara.'))
+    await r.send('dm', 'audite o retry')
+    await r.idle()
+    const [team] = rooms()
+    expect(team?.name).toBe('auditar-retry')
+    expect(team?.members.sort()).toEqual(['clara', 'orion'])
+  })
+
+  it('keeps the deliberate call even in a reply that was refused a hand-off', async () => {
+    const r = runnerScripted(
+      scripted('codex', [['pedir', { para: 'solo', pedido: 'revise o build' }], ['chamar_time', { quem: ['clara'], nome: 'auditar-retry' }]], '@solo não dá. Chamei a Clara.')
+    )
+    await r.send('dm', 'audite o retry')
+    await r.idle()
+    expect(rooms().map((c) => c.name)).toEqual(['auditar-retry'])
   })
 })

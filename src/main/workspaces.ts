@@ -6,6 +6,11 @@ import type { Settings } from '../shared/types'
 
 const UUID7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
+// TucanoNext is installed beside the released app, so the two can be open at once: its own pair of
+// ports, away from the 47717/47718 the released one has used since it could run two workspaces.
+const DEFAULT_WEBHOOK_PORT = 47727
+const DEFAULT_GIT_PORT = 47728
+
 // RFC 9562: 48 bits of milliseconds, version 7, random payload and RFC variant.
 export function workspaceId(): string {
   const bytes = randomBytes(16)
@@ -28,7 +33,7 @@ export class Workspaces {
   readonly root: string
   private file: string
 
-  constructor(root: string) {
+  constructor(root: string, private defaultPorts = { webhookPort: DEFAULT_WEBHOOK_PORT, gitPort: DEFAULT_GIT_PORT }) {
     mkdirSync(root, { recursive: true })
     this.root = realpathSync(root)
     this.file = join(this.root, 'workspaces.json')
@@ -38,7 +43,7 @@ export class Workspaces {
       this.state = state
     } else {
       const id = workspaceId()
-      this.state = { version: 1, selected: id, workspaces: [{ id, name: 'Workspace', dataDir: this.root, webhookPort: 47717, gitPort: 47718, isDefault: true }] }
+      this.state = { version: 1, selected: id, workspaces: [{ id, name: 'Workspace', dataDir: this.root, ...this.defaultPorts, isDefault: true }] }
       this.save(this.state)
     }
   }
@@ -62,7 +67,7 @@ export class Workspaces {
         if (!Number.isInteger(port) || port < 1024 || port > 65535 || ports.has(port)) fail()
         ports.add(port)
       }
-      if (w.isDefault && (w.webhookPort !== 47717 || w.gitPort !== 47718)) fail()
+      if (w.isDefault && (w.webhookPort !== this.defaultPorts.webhookPort || w.gitPort !== this.defaultPorts.gitPort)) fail()
     }
     if (r.workspaces.filter((w) => w.isDefault).length !== 1 || !ids.has(r.selected)) fail()
   }

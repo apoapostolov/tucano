@@ -11,7 +11,7 @@ import { basename, join, relative, resolve, sep } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { L, locale } from '../shared/lang'
 import { UserError } from '../shared/errors'
-import type { WikiChange, WikiFinding, WikiHit, WikiImport, WikiOp, WikiPage, WikiPageInfo, WikiSource, WikiVersion } from '../shared/types'
+import type { WikiAccess, WikiChange, WikiFinding, WikiHit, WikiImport, WikiOp, WikiPage, WikiPageInfo, WikiSource, WikiVersion } from '../shared/types'
 import type { ToolDef } from './gateway'
 
 const PAGES = 'pages'
@@ -247,7 +247,7 @@ export interface WikiDeps {
 }
 
 // What someone may read of the wiki: everything but the pages held for someone else (see `inherit`).
-export type WikiView = Pick<Wiki, 'count' | 'list' | 'kinds' | 'page' | 'search' | 'indexText' | 'graph' | 'log' | 'recent'>
+export type WikiView = Pick<Wiki, 'count' | 'list' | 'kinds' | 'page' | 'search' | 'indexText' | 'graph' | 'log' | 'recent' | 'findings'>
 
 export class Wiki {
   dir: string
@@ -350,6 +350,13 @@ export class Wiki {
       } catch {
         // already there
       }
+    }
+    // What the resolver made of a finding it couldn't settle (src/core/wiki-resolver.ts): a sentence,
+    // or the question only the person can answer.
+    try {
+      this.db.exec('ALTER TABLE findings ADD COLUMN note TEXT')
+    } catch {
+      // already there
     }
     // Which source a version came from (a change the curator made of it): it's seen by whoever sees
     // the source, and goes with it.
@@ -587,17 +594,24 @@ export class Wiki {
     this.db.prepare('DELETE FROM links WHERE src = ?').run(file)
     this.db.prepare('DELETE FROM fts WHERE file = ?').run(file)
   }
-  private version(title: string, by: string, action: WikiVersion['action'], before: string | null, after: string | null, reason?: string, sourceId?: string): void {
+  private version(title: string, by: string, action: WikiVersion['action'], before: string | null, after: string | null, reason?: string, sourceId?: string, conversationId?: string): void {
     const at = Date.now()
     this.db.prepare('INSERT INTO versions (title, key, at, by, action, before, after, reason, source_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(title, pageKey(title), at, by, action, before, after, reason ?? null, sourceId ?? null)
     if (action === 'delete') return
-    const [origin, privateTo] = this.originOf(by, sourceId)
+    const [origin, privateTo] = this.originOf(by, sourceId, conversationId)
     this.db.prepare('INSERT INTO provenance (title, at, origin, private_to) VALUES (?, ?, ?, ?)').run(pageKey(title), at, origin, privateTo)
+    // Agent writes carry their conversation without making a second copy as a curator source.
+    // Hold a team's DM page before onWrite can queue it for git or onChange can announce it.
+    if (conversationId && privateTo && this.getMeta('logAtSwitch')) this.hold(pageKey(title), privateTo)
   }
 
   // Where a version came from: a DM (whose: only they read it), a channel, a file, a link or a note
   // brought in, a hand, another app. '?' is "may have come from a DM": not known any more.
-  private originOf(by: string, sourceId?: string): [string, string | null] {
+  private originOf(by: string, sourceId?: string, conversationId?: string): [string, string | null] {
+    if (conversationId) {
+      const dm = this.deps.dmOf?.(conversationId)
+      return dm ? ['dm', dm] : dm === null ? ['channel', null] : ['conversation', '?']
+    }
     if (sourceId) {
       const src = this.source(sourceId)
       if (!src) return ['source', '?']
@@ -708,6 +722,8 @@ export class Wiki {
         return p && { ...p, backlinks: p.backlinks.filter(shown), missing: [...new Set([...p.missing, ...p.links.filter((t) => !shown(t))])] }
       },
       search: (q, limit = 8) => this.search(q, limit, hidden),
+      // A finding about a page held from this person isn't theirs to see, or to close.
+      findings: () => this.findings().filter((f) => f.pages.every(shown)),
       indexText: () => this.indexFor(list()),
       graph: () => {
         const g = this.graph()
@@ -876,7 +892,7 @@ export class Wiki {
   // ---------- writing ----------
 
   // Creates or changes a page. expectedHash: the copy the change was made on; a page that moved on since is refused.
-  save(p: { title: string; body: string; kind?: string; by: string; byName: string; expectedHash?: string; rename?: string; reason?: string; sourceId?: string }): WikiPage {
+  save(p: { title: string; body: string; kind?: string; by: string; byName: string; expectedHash?: string; rename?: string; reason?: string; sourceId?: string; conversationId?: string }): WikiPage {
     this.writable()
     const title = cleanTitle(p.title)
     if (!title) throw new Error(L('A página precisa de um título.', 'The page needs a title.'))
@@ -927,7 +943,7 @@ export class Wiki {
     writeFileSync(join(this.pagesDir, file), text)
     this.indexFile(file, text, Math.round(statSync(join(this.pagesDir, file)).mtimeMs), p.by)
     const before = existing !== undefined ? parsePage(existing).body : null
-    this.version(title, p.by, existing === undefined ? 'create' : 'edit', before, parsePage(text).body, p.reason, p.sourceId)
+    this.version(title, p.by, existing === undefined ? 'create' : 'edit', before, parsePage(text).body, p.reason, p.sourceId, p.conversationId)
     this.appendLog(existing === undefined ? L(`**${p.byName}** criou [[${title}]]`, `**${p.byName}** created [[${title}]]`) : p.rename && p.rename !== title ? L(`**${p.byName}** renomeou [[${p.rename}]] pra [[${title}]]`, `**${p.byName}** renamed [[${p.rename}]] to [[${title}]]`) : L(`**${p.byName}** editou [[${title}]]`, `**${p.byName}** edited [[${title}]]`))
     this.writeIndex()
     this.deps.onWrite?.({ title, byName: p.byName })
@@ -1232,23 +1248,33 @@ export class Wiki {
     for (const r of rows) {
       const change = r['change_id'] ? this.change(String(r['change_id'])) : undefined
       if (r['change_id'] && (!change || (change.state !== 'pending' && change.state !== 'conflict'))) continue
-      out.push({ id: String(r['id']), at: Number(r['at']), kind: String(r['kind']) as WikiFinding['kind'], pages: JSON.parse(String(r['pages'])) as string[], text: String(r['text']), ...(r['name'] ? { name: String(r['name']) } : {}), ...(change ? { change } : {}) })
+      out.push({ id: String(r['id']), at: Number(r['at']), kind: String(r['kind']) as WikiFinding['kind'], pages: JSON.parse(String(r['pages'])) as string[], text: String(r['text']), ...(r['name'] ? { name: String(r['name']) } : {}), ...(r['note'] ? { note: String(r['note']) } : {}), ...(change ? { change } : {}) })
     }
     return out
   }
 
   // A new review's findings take the place of the old ones; what was dismissed, or still waits, isn't said again.
   setFindings(list: (Omit<WikiFinding, 'id' | 'at' | 'change'> & { key: string; ops?: WikiOp[]; reason?: string })[]): void {
+    // A dismissed finding the review no longer finds is a problem fixed some other way (the page got
+    // written, the link repaired): its row goes, so the key isn't carried as a silence forever.
+    const produced = new Set(list.map((f) => f.key))
+    const stale = this.db.prepare("SELECT id, key FROM findings WHERE state = 'dismissed' AND change_id IS NULL AND kind IN ('broken', 'orphan', 'missing', 'log')").all() as { id: string; key: string }[]
+    for (const r of stale) if (!produced.has(r.key)) this.db.prepare('DELETE FROM findings WHERE id = ?').run(r.id)
     // a fix refused counts as "leave it"
     const keep = new Set((this.db.prepare("SELECT key FROM findings WHERE state = 'dismissed' OR change_id IN (SELECT id FROM changes WHERE state = 'refused')").all() as { key: string }[]).map((r) => r.key))
+    // What the resolver said about it, which is about the same finding however many times it's reviewed.
+    const notes = new Map((this.db.prepare('SELECT key, note FROM findings WHERE note IS NOT NULL').all() as { key: string; note: string }[]).map((r) => [r.key, r.note]))
     for (const f of this.findings()) if (f.change) keep.add((this.db.prepare('SELECT key FROM findings WHERE id = ?').get(f.id) as { key: string }).key)
+    // A finding that stays open keeps its id across reviews: an agent handed one holds that id until it
+    // closes it, and a new one each review would make the id it was given the answer "no such finding".
+    const openIds = new Map((this.db.prepare("SELECT key, id FROM findings WHERE state = 'open' AND kind != 'git'").all() as { key: string; id: string }[]).map((r) => [r.key, r.id]))
     this.db.prepare("DELETE FROM findings WHERE state = 'open' AND kind != 'git' AND (change_id IS NULL OR change_id NOT IN (SELECT id FROM changes WHERE state IN ('pending', 'conflict')))").run()
     const at = Date.now()
     for (const f of list) {
       if (keep.has(f.key)) continue
       keep.add(f.key)
       const change = f.ops?.length ? this.addChange({ ops: f.ops, by: 'review', ...(f.reason ? { reason: f.reason } : {}) }) : undefined
-      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open')").run(sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null)
+      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)").run(openIds.get(f.key) ?? sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null, change ? null : (notes.get(f.key) ?? null))
     }
     this.onChange()
   }
@@ -1261,12 +1287,55 @@ export class Wiki {
     this.onChange()
   }
 
+  // An agent closing a finding it confirmed settled (the tool wiki_fechar). It leaves the list like a
+  // dismissal, and the note says who closed it and what changed, where the resolver's note would sit: so
+  // a later review that finds the same thing again still says what was done about it the last time.
+  closeFinding(id: string, answer: { byName: string; note?: string }): boolean {
+    const r = this.db.prepare('SELECT change_id, state FROM findings WHERE id = ?').get(id) as { change_id: string | null; state: string } | undefined
+    if (!r || r.state !== 'open') return false
+    const note = (answer.note ?? '').trim()
+    const said = `${L('Fechado por', 'Closed by')} @${answer.byName}${note ? `: ${note}` : ''}`
+    this.db.prepare("UPDATE findings SET state = 'dismissed', note = ? WHERE id = ?").run(said, id)
+    if (r.change_id) this.refuseChange(r.change_id)
+    this.onChange()
+    return true
+  }
+
+  // A finding handed to an agent stays in the list until that agent closes it, and says whose hands it
+  // is in meanwhile: the card going away used to leave nobody to ask, and the problem unaccounted for.
+  handOffFinding(id: string, handle: string): void {
+    const at = new Date().toLocaleDateString(locale())
+    this.db.prepare("UPDATE findings SET note = ? WHERE id = ? AND state = 'open'").run(`${L('Com', 'With')} @${handle}, ${L('desde', 'since')} ${at}`, id)
+    this.onChange()
+  }
+
   dismissFinding(id: string): void {
     const r = this.db.prepare('SELECT change_id FROM findings WHERE id = ?').get(id) as { change_id: string | null } | undefined
     if (!r) return
     this.db.prepare("UPDATE findings SET state = 'dismissed' WHERE id = ?").run(id)
     if (r.change_id) this.refuseChange(r.change_id)
     this.onChange()
+  }
+
+  // What the resolver made of a finding (src/core/wiki-resolver.ts): a change package that takes its
+  // place, or what it found and couldn't settle, kept next to the finding so it's read where the
+  // problem is. Nothing is written here: a package from a review or a resolver always waits for the
+  // person, on automatic or not (see Wiki.applyWaiting).
+  resolveFinding(id: string, answer: { ops?: WikiOp[]; note?: string; reason?: string }): WikiChange | undefined {
+    const r = this.db.prepare('SELECT key, state FROM findings WHERE id = ?').get(id) as { key: string; state: string } | undefined
+    if (!r || r.state !== 'open') return undefined
+    const ops = answer.ops ?? []
+    if (ops.length) {
+      const change = this.addChange({ ops, by: 'review', ...(answer.reason ? { reason: answer.reason } : {}) })
+      this.db.prepare('UPDATE findings SET change_id = ?, note = NULL WHERE id = ?').run(change.id, id)
+      this.onChange()
+      return change
+    }
+    const note = (answer.note ?? '').trim()
+    if (!note) return undefined
+    this.db.prepare('UPDATE findings SET note = ? WHERE id = ?').run(note, id)
+    this.onChange()
+    return undefined
   }
 
     addChange(p: { ops: WikiOp[]; sourceId?: string; by: string; reason?: string }): WikiChange {
@@ -1464,12 +1533,33 @@ export const WIKI_LER: ToolDef = {
     return { type: 'object' as const, properties: { pagina: { type: 'string', description: L('O título da página, como no índice.', 'The page title, as in the index.') } }, required: ['pagina'] }
   }
 }
-export const WIKI_TOOLS = [WIKI_INDICE, WIKI_BUSCAR, WIKI_LER]
+export const WIKI_AVISOS: ToolDef = {
+  name: 'wiki_avisos',
+  get description() {
+    return L(
+      'Lista os avisos abertos da revisão da wiki, com o id de cada um, o tipo e o que apontam. Use o id com wiki_fechar quando conferir que o problema foi resolvido.',
+      "Lists the wiki review's open findings, with each one's id, its kind and what it points at. Use the id with wiki_fechar once you have confirmed the problem is fixed."
+    )
+  },
+  inputSchema: { type: 'object', properties: {} }
+}
+export const WIKI_TOOLS = [WIKI_INDICE, WIKI_BUSCAR, WIKI_LER, WIKI_AVISOS]
 export const WIKI_TOOL_NAMES = new Set(WIKI_TOOLS.map((t) => t.name))
 const MAX_READ = 24_000
 
 // One call: the text for the agent, and the step the reply shows.
-export function wikiCall(wiki: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count'>, name: string, args: Record<string, unknown>): { text: string; error?: boolean; step: { label: string; detail: string } } {
+export function wikiCall(wiki: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'findings'>, name: string, args: Record<string, unknown>): { text: string; error?: boolean; step: { label: string; detail: string } } {
+  if (name === WIKI_AVISOS.name) {
+    const list = wiki.findings()
+    const step = { label: L('Leu os avisos da wiki', "Read the wiki's findings"), detail: list.length === 1 ? L('1 aviso', '1 finding') : L(`${list.length} avisos`, `${list.length} findings`) }
+    if (!list.length) return { text: L('Nenhum aviso aberto: a revisão não aponta nada agora.', 'No open finding: the review points at nothing now.'), step }
+    return {
+      text: list
+        .map((f) => `- ${f.id} (${f.kind}): ${f.text.replace(/\s+/g, ' ')}${f.pages.length ? ` · ${f.pages.map((t) => `[[${t}]]`).join(', ')}` : ''}${f.note ? ` · ${f.note}` : ''}`)
+        .join('\n'),
+      step
+    }
+  }
   if (name === WIKI_INDICE.name) {
     const text = wiki.indexText()
     return { text: text.length > MAX_READ ? `${text.slice(0, MAX_READ)}\n…` : text, step: { label: L('Leu o índice da wiki', "Read the wiki's index"), detail: L(`${wiki.count()} páginas`, `${wiki.count()} pages`) } }
@@ -1488,4 +1578,154 @@ export function wikiCall(wiki: Pick<Wiki, 'indexText' | 'search' | 'page' | 'cou
   const body = p.body.length > MAX_READ ? `${p.body.slice(0, MAX_READ)}\n…` : p.body
   const extra = [p.backlinks.length && L(`Citada por: ${p.backlinks.map((t) => `[[${t}]]`).join(', ')}`, `Cited by: ${p.backlinks.map((t) => `[[${t}]]`).join(', ')}`)].filter(Boolean)
   return { text: `# ${p.title}\n(${p.kind}, ${new Date(p.updatedAt).toLocaleDateString(locale())})\n\n${body}${extra.length ? `\n\n${extra.join('\n')}` : ''}`, step: { label: L('Leu na wiki', 'Read in the wiki'), detail: p.title } }
+}
+
+// ---------- the agents' tools: writing pages (an agent set to "read and write") ----------
+
+// A page is the unit. A title that's already there is written into, one that isn't is created; nothing
+// replaces a page whole, so an agent can't quietly drop what was there. An append goes at the end or
+// under a section (made when missing) and a swap only lands while its passage is still in the page.
+// Each write is a version like any other, so the person undoes it from the page's history.
+const MAX_WRITE = 12_000
+
+export const WIKI_ESCREVER: ToolDef = {
+  name: 'wiki_escrever',
+  get description() {
+    return L(
+      'Escreve na wiki: cria a página se ela não existir, ou acrescenta o que você escreveu no fim dela, ou dentro de uma seção (que é criada se não existir). Veja o índice com wiki_indice antes, pra usar o título que já existe quando o assunto é dele. Ligue as páginas com [[Título]].',
+      "Writes to the wiki: creates the page if it isn't there, or adds what you wrote at its end, or inside a section (made if it isn't there). Look at the index with wiki_indice first, to use the title that already exists when the subject is theirs. Link pages with [[Title]]."
+    )
+  },
+  get inputSchema() {
+    return {
+      type: 'object' as const,
+      properties: {
+        pagina: { type: 'string', description: L('O título da página, como no índice.', 'The page title, as in the index.') },
+        texto: { type: 'string', description: L('O que escrever, em Markdown: uma linha de resumo e o resto embaixo. O que é fato, com a data.', 'What to write, in Markdown: a summary line and the rest under it. What is settled, with the date.') },
+        secao: { type: 'string', description: L('A seção onde entra. Sem ela, vai no fim da página.', 'The section it goes in. Without one, it goes at the end of the page.') },
+        tipo: { type: 'string', description: L('O tipo, só quando a página é nova: Pessoa, Projeto, Decisão, Assunto…', 'The kind, only when the page is new: Person, Project, Decision, Topic…') }
+      },
+      required: ['pagina', 'texto']
+    }
+  }
+}
+export const WIKI_EDITAR: ToolDef = {
+  name: 'wiki_editar',
+  get description() {
+    return L(
+      'Corrige um trecho de uma página que já existe: o texto antigo sai e o novo entra no lugar. Use quando algo escrito está errado, velho ou ficou diferente; pra acrescentar coisa nova, use wiki_escrever.',
+      'Corrects a passage of a page that already exists: the old text goes and the new one takes its place. Use it when something written is wrong, stale or no longer true; to add something new, use wiki_escrever.'
+    )
+  },
+  get inputSchema() {
+    return {
+      type: 'object' as const,
+      properties: {
+        pagina: { type: 'string', description: L('O título da página.', 'The page title.') },
+        antigo: { type: 'string', description: L('O trecho exato que sai, copiado da página.', 'The exact passage that goes, copied from the page.') },
+        novo: { type: 'string', description: L('O que fica no lugar dele.', 'What takes its place.') }
+      },
+      required: ['pagina', 'antigo', 'novo']
+    }
+  }
+}
+// Closing a finding is what an agent does with the problem it was handed, after the pages are right:
+// without it the finding stayed in the list, and the same card was read again as if nothing happened.
+export const WIKI_FECHAR: ToolDef = {
+  name: 'wiki_fechar',
+  get description() {
+    return L(
+      'Fecha um aviso da wiki depois de conferir que o problema foi resolvido: ele sai da lista, e a nota diz o que você mudou. Use só quando as páginas já estiverem certas. O id vem do pedido que trouxe o aviso, ou de wiki_avisos.',
+      "Closes a wiki finding once you have confirmed the problem is fixed: it leaves the list, and the note says what you changed. Only use it once the pages are right. The id comes from the request that brought the finding, or from wiki_avisos."
+    )
+  },
+  get inputSchema() {
+    return {
+      type: 'object' as const,
+      properties: {
+        aviso: { type: 'string', description: L('O id do aviso, como em wiki_avisos ou no pedido que trouxe ele.', 'The finding id, as in wiki_avisos or in the request that brought it.') },
+        nota: { type: 'string', description: L('Em uma linha, o que foi feito: o que mudou, ou por que não havia o que mudar.', 'In one line, what was done: what changed, or why there was nothing to change.') }
+      },
+      required: ['aviso']
+    }
+  }
+}
+export const WIKI_WRITE_TOOLS = [WIKI_ESCREVER, WIKI_EDITAR, WIKI_FECHAR]
+export const WIKI_WRITE_TOOL_NAMES = new Set(WIKI_WRITE_TOOLS.map((t) => t.name))
+
+// The tools an agent gets for its level: the three that read, and the two that write on top of them.
+export function wikiToolsFor(access: WikiAccess): ToolDef[] {
+  if (access === 'none') return []
+  return access === 'read_write' ? [...WIKI_TOOLS, ...WIKI_WRITE_TOOLS] : [...WIKI_TOOLS]
+}
+
+// One write: the text for the agent, and the step the reply shows. `canSee` is what this conversation
+// may read: a page held for someone else isn't written either, and isn't even named.
+// The closing call, kept apart from the page writes: it takes a finding's id, not a title.
+export function wikiClose(
+  wiki: Pick<Wiki, 'closeFinding'>,
+  author: { name: string },
+  args: Record<string, unknown>
+): { text: string; error?: boolean; step: { label: string; detail: string } } {
+  const id = typeof args['aviso'] === 'string' ? args['aviso'].trim() : ''
+  const nota = typeof args['nota'] === 'string' ? args['nota'].trim() : ''
+  const step = { label: L('Fechou um aviso da wiki', 'Closed a wiki finding'), detail: nota }
+  if (!id) return { text: L('Faltou o id do aviso: veja com wiki_avisos.', 'The finding id is missing: see them with wiki_avisos.'), error: true, step }
+  if (!wiki.closeFinding(id, { byName: author.name, ...(nota ? { note: nota } : {}) }))
+    return { text: L(`Não há aviso aberto com o id "${id}". Veja com wiki_avisos.`, `There's no open finding with the id "${id}". See them with wiki_avisos.`), error: true, step }
+  return { text: L(`Aviso fechado${nota ? `: ${nota}` : '.'}`, `Finding closed${nota ? `: ${nota}` : '.'}`), step }
+}
+
+export function wikiWrite(
+  wiki: Pick<Wiki, 'page' | 'save' | 'readOnly'>,
+  author: { id: string; name: string },
+  name: string,
+  args: Record<string, unknown>,
+  canSee: (title: string) => boolean,
+  origin: { conversationId?: string } = {}
+): { text: string; error?: boolean; step: { label: string; detail: string } } {
+  const writes = name === WIKI_ESCREVER.name
+  const raw = typeof args['pagina'] === 'string' ? args['pagina'].replace(/^\[\[|\]\]$/g, '') : ''
+  const title = cleanTitle(raw)
+  const step = { label: writes ? L('Escreveu na wiki', 'Wrote in the wiki') : L('Corrigiu na wiki', 'Corrected in the wiki'), detail: title }
+  if (!title) return { text: L('Faltou o título da página.', 'The page title is missing.'), error: true, step }
+  const why = wiki.readOnly()
+  if (why) return { text: L(`A wiki não aceita escrita agora: ${why}`, `The wiki takes no writes now: ${why}`), error: true, step }
+  const page = wiki.page(title)
+  // A page this conversation can't read is one it can't write: for it, it isn't there.
+  if (page && !canSee(page.title)) return { text: L(`Não há página "${title}". Veja os títulos com wiki_indice.`, `There's no page "${title}". See the titles with wiki_indice.`), error: true, step }
+  try {
+    if (!writes) {
+      const antigo = typeof args['antigo'] === 'string' ? args['antigo'] : ''
+      const novo = typeof args['novo'] === 'string' ? args['novo'] : ''
+      if (!antigo.trim()) return { text: L('Faltou o trecho que sai.', 'The passage that goes is missing.'), error: true, step }
+      if (!page) return { text: L(`Ainda não há página "${title}": escreva ela primeiro com wiki_escrever.`, `There's no page "${title}" yet: write it first with wiki_escrever.`), error: true, step }
+      if (novo.trim().length > MAX_WRITE) return { text: L('O trecho novo é longo demais: mande até 12 mil caracteres por vez.', 'The new passage is too long: send up to 12,000 characters at a time.'), error: true, step }
+      const body = applyOp(page.body, { op: 'replace', page: page.title, old: antigo, new: novo })
+      wiki.save({ title: page.title, body, expectedHash: page.hash, by: author.id, byName: author.name, ...origin })
+      return { text: L(`Corrigiu [[${page.title}]].`, `Corrected [[${page.title}]].`), step }
+    }
+    const texto = typeof args['texto'] === 'string' ? args['texto'].trim() : ''
+    const secao = typeof args['secao'] === 'string' ? args['secao'].trim() : ''
+    const tipo = typeof args['tipo'] === 'string' ? args['tipo'].trim() : ''
+    if (!texto) return { text: L('Faltou o que escrever.', 'What to write is missing.'), error: true, step }
+    if (texto.length > MAX_WRITE) return { text: L('O texto é longo demais: mande até 12 mil caracteres por vez.', 'The text is too long: send up to 12,000 characters at a time.'), error: true, step }
+    if (!page) {
+      const made = wiki.save({ title, body: texto, by: author.id, byName: author.name, ...(tipo ? { kind: tipo } : {}), ...origin })
+      return { text: L(`Criou [[${made.title}]] (${made.kind}).`, `Created [[${made.title}]] (${made.kind}).`), step: { label: L('Criou na wiki', 'Created in the wiki'), detail: made.title } }
+    }
+    const body = applyOp(page.body, { op: 'append', page: page.title, ...(secao ? { section: secao } : {}), text: texto })
+    wiki.save({ title: page.title, body, expectedHash: page.hash, by: author.id, byName: author.name, ...origin })
+    return {
+      text: secao ? L(`Escreveu em [[${page.title}]], na seção "${secao}".`, `Wrote in [[${page.title}]], in the section "${secao}".`) : L(`Escreveu no fim de [[${page.title}]].`, `Wrote at the end of [[${page.title}]].`),
+      step
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return {
+      text: e instanceof WikiConflict ? L(`"${title}" mudou enquanto você escrevia: leia de novo com wiki_ler e escreva outra vez.`, `"${title}" changed while you were writing: read it again with wiki_ler and write once more.`) : msg,
+      error: true,
+      step
+    }
+  }
 }

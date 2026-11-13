@@ -66,6 +66,8 @@ export class Heartbeat {
       const quietStreak = quietStreakOf(wakes)
       const today = dayStartIn(config.timezone, now)
       const todayRuns = attempts.filter((w) => w.at >= today)
+      // A DM where the person had the last word and has not been answered yet: their turn comes first.
+      const last = this.deps.db.lastAuthor(config.conversationId)
       // What the work behind each responsibility says now: a link that moved is what a resume is for.
       const fresh = this.deps.initiative.refresh(person, now)
       const verdict = admit({
@@ -79,7 +81,8 @@ export class Heartbeat {
         paused: this.deps.runner.isPaused(),
         quietHours,
         resume: fresh.due.length > 0,
-        floorMinutes: this.deps.initiative.floorMinutes(config, fresh.waitingUser)
+        floorMinutes: this.deps.initiative.floorMinutes(config, fresh.waitingUser),
+        personTalking: last?.kind === 'person'
       })
       if (!verdict.run) continue
       // The claim is taken here, before the first await: a second tick cannot pass this line.

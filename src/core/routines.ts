@@ -1,6 +1,7 @@
 // Routines (spec §14): a request scheduled for an agent, posted in a
 // conversation at a day and time. A tick every 30 s runs whatever is due, so
 // it also catches up after the Mac wakes or the app opens again.
+import { timeOpts } from '../shared/clock'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { L, locale } from '../shared/lang'
@@ -96,7 +97,7 @@ export function dateArg(v: string): { date: string; time?: string } | null {
 
 // "sáb, 18/10, 13:15"
 export const whenText = (at: number): string =>
-  new Date(at).toLocaleString(locale(), { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace('.', '')
+  new Date(at).toLocaleString(locale(), timeOpts({ weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })).replace('.', '')
 
 type ToolOutcome = { routine?: Routine; reply: string; error?: boolean }
 
@@ -442,6 +443,9 @@ export class Routines {
         if (!reply) return
         const latest = this.deps.db.routine(id)
         if (latest) this.store({ ...latest, lastAt: this.now(), lastMessageId: reply.id })
+        // Nothing to report is nothing to tell: no notification, no badge (the run is in the
+        // conversation, one quiet line, for whoever goes looking).
+        if (reply.run?.silent) return
         const title = `${agentName(this.deps.db, r.agentId)} · ${r.name}`
         const fullText = reply.run?.status === 'done' ? reply.text.trim() : ''
         // A person's routine tells them; the team's, only who asked to be told.

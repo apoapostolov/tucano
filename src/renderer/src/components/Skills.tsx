@@ -1,6 +1,7 @@
 // Skills (spec §18): recipes the agents follow, kept like pages to read. Agents
 // propose; I approve, edit, and undo any change from the history.
 import { L } from '../../../shared/lang'
+import { skillOrigin } from '../../../shared/skill-groups'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { safeUrl } from '../links'
@@ -46,7 +47,26 @@ function result(r?: SkillReport): string {
   )
 }
 
-const from = (k: Skill): string => (k.source ? L(`do seu ${k.source.includes('/.codex/') ? 'Codex' : 'Claude Code'}`, `from your ${k.source.includes('/.codex/') ? 'Codex' : 'Claude Code'}`) : L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`))
+// Which harness a linked skill came from, by the folder it lives in: a path is the only thing a
+// linked skill keeps (src/core/local-skills.ts finds them all, each with its own origin).
+const HARNESS_FOLDERS: [string, string][] = [
+  ['/.hermes/', 'Hermes'],
+  ['/.config/opencode/', 'OpenCode'],
+  ['/.opencode/', 'OpenCode'],
+  ['/.copilot/', 'Copilot'],
+  ['/.gemini/', 'Gemini'],
+  ['/.codex/', 'Codex'],
+  ['/.pi/', 'Pi'],
+  ['/.agents/', 'Agents'],
+  ['/.claude/', 'Claude Code']
+]
+const harnessOf = (path: string): string => {
+  const slash = path.replaceAll('\\', '/')
+  return HARNESS_FOLDERS.find(([seg]) => slash.includes(seg))?.[1] ?? 'Claude Code'
+}
+
+const from = (k: Skill): string =>
+  k.source ? L(`do seu ${harnessOf(k.source)}`, `from your ${harnessOf(k.source)}`) : L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`)
 
 // Skills are the admins': a member reads them (what the agents follow), changes nothing.
 export function SkillsPage(): ReactNode {
@@ -87,7 +107,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
 
   if (place.kind === 'review' && pending.length > 0)
     return (
-      <Sheet back={{ label: 'Skills', onClick: toList }} title={L('Propostas', 'Proposals')} lede={L('Dos agentes. Só entram em uso se você aprovar.', 'From the agents. They only go into use if you approve.')}>
+      <Sheet back={{ label: 'Skills', onClick: toList }} title={L('Propostas', 'Proposals')} lede={L('Dos agentes. Só entram em uso se você aprovar.', "Agent proposals become available after your approval.")}>
         {pending.map((k) => (
           <Proposal key={k.id} proposal={k} />
         ))}
@@ -97,7 +117,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
   return (
     <Sheet
       title="Skills"
-      lede={L('Receitas que os agentes seguem pra um tipo de tarefa.', 'Recipes the agents follow for a kind of task.')}
+      lede={L('Receitas que os agentes seguem pra um tipo de tarefa.', "Reusable instructions for specific tasks.")}
       actions={
         admin && (
           <>
@@ -124,7 +144,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
       {active.length === 0 ? (
         <div className="read-empty">
           <p>{L('Nenhuma skill em uso ainda.', 'No skills in use yet.')}</p>
-          <p>{L('Escreva uma, traga uma das que você já usa no terminal, ou deixe os agentes proporem: quando resolverem algo em vários passos, eles sugerem guardar o caminho.', 'Write one, bring one you already use in the terminal, or let the agents propose: when they solve something in several steps, they suggest keeping the path.')}</p>
+          <p>{L('Escreva uma, traga uma das que você já usa no terminal, ou deixe os agentes proporem: quando resolverem algo em vários passos, eles sugerem guardar o caminho.', "Create a skill, import one from your CLI, or review reusable workflows proposed by agents.")}</p>
         </div>
       ) : (
         <section className="read-group">
@@ -212,7 +232,7 @@ function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; stat?: Sk
     >
       <dl className="skill-facts">
         <div>
-          <dt>{L('Quem usa', 'Who uses it')}</dt>
+          <dt>{L('Quem usa', "Assigned agents")}</dt>
           <dd>
             <Who ids={k.agents} />
             {admin && (
@@ -223,7 +243,7 @@ function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; stat?: Sk
           </dd>
         </div>
         <div>
-          <dt>{L('Como está indo', 'How it’s going')}</dt>
+          <dt>{L('Como está indo', "Performance")}</dt>
           <dd>
             {result(stat)}
             {changed && (
@@ -245,7 +265,7 @@ function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; stat?: Sk
         </div>
       )}
       <section className="read-group">
-        <h2>{L('Receita', 'Recipe')}</h2>
+        <h2>{L('Receita', "Instructions")}</h2>
         {k.source && k.body.length > RECOMMENDED_SKILL_BODY_LENGTH && <p className="hint hint--warn" role="status">{skillLengthNote(k.body.length)}</p>}
         {k.body.trim() ? (
           <article className="recipe">
@@ -294,7 +314,9 @@ function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode {
     void localSkills().then(setFound, () => setFound([]))
   }, [])
   const needle = q.trim().toLowerCase()
-  const shown = (found ?? []).filter((l) => !needle || `${l.name} ${l.description} ${l.origin}`.toLowerCase().includes(needle))
+  // The search reads what the library is organised by, not only the name: a category or a facet
+  // ("hermes", "family:model-routing") narrows a library of hundreds the way its own tags do.
+  const shown = (found ?? []).filter((l) => !needle || `${l.name} ${l.description} ${l.origin} ${l.category ?? ''} ${(l.tags ?? []).join(' ')}`.toLowerCase().includes(needle))
   const linked = (l: LocalSkill): boolean => skills.some((k) => k.source === l.source && k.state === 'active')
   useEffect(() => setAt(0), [q])
   useEffect(() => {
@@ -337,10 +359,22 @@ function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode {
                     <span className="skill-add__head">
                       <strong>{l.name}</strong>
                       <span>{l.origin}</span>
+                      {l.category && <span>{l.category}</span>}
+                      {l.version && <span>v{l.version}</span>}
                       {l.scripts && <span className="warn-text">{L('precisa de computador', 'needs a computer')}</span>}
                       {on && <span className="tag tag--ok">{L('em uso', 'in use')}</span>}
                     </span>
                     <span className="skill-add__desc">{l.description}</span>
+                    {l.tags && l.tags.length > 0 && (
+                      <span className="skill-add__tags">
+                        {l.tags.slice(0, 6).map((t) => (
+                          <span key={t} className="tag">
+                            {t}
+                          </span>
+                        ))}
+                        {l.tags.length > 6 && <span className="skill-add__more">+{l.tags.length - 6}</span>}
+                      </span>
+                    )}
                     {l.bodyLength > RECOMMENDED_SKILL_BODY_LENGTH && <span className="warn-text small" role="status">{skillLengthNote(l.bodyLength)}</span>}
                   </button>
                 )
@@ -355,12 +389,12 @@ function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode {
             <h3>{picked.name}</h3>
             <p>{picked.description}</p>
             {picked.bodyLength > RECOMMENDED_SKILL_BODY_LENGTH && <p className="warn-text small" role="status">{skillLengthNote(picked.bodyLength)}</p>}
-            {picked.scripts && <p className="warn-text small">{L('Tem scripts: só roda com um agente que tenha computador (Linux ou este computador).', 'It has scripts: it only runs with an agent that has a computer (Linux or this computer).')}</p>}
-            <span className="skill-add__label">{L('Quem usa?', 'Who uses it?')}</span>
+            {picked.scripts && <p className="warn-text small">{L('Tem scripts: só roda com um agente que tenha computador (Linux ou este computador).', "Scripts require an agent with computer access (Linux or this computer).")}</p>}
+            <span className="skill-add__label">{L('Quem usa?', "Assign agents")}</span>
             <AgentPicker value={agents} onChange={setAgents} />
             {error && <p className="note note--error">{error}</p>}
             <div className="skill-add__acts">
-              <span className="muted small">{L('Lida direto do arquivo: o que você mudar nela vale na próxima vez.', 'Read straight from the file: what you change in it applies next time.')}</span>
+              <span className="muted small">{L('Lida direto do arquivo: o que você mudar nela vale na próxima vez.', "Read from the source file on each use. File edits apply next time.")}</span>
               <button className="btn btn--primary btn--sm" onClick={use}>
                 {L('Usar', 'Use')}
               </button>
@@ -388,7 +422,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {L('Todos os agentes', 'All agents')}
         </button>
         <button type="button" className={everyone ? '' : 'is-active'} onClick={() => everyone && onChange(agents.map((a) => a.id))}>
-          {L('Só alguns', 'Only some')}
+          {L('Só alguns', "Selected agents")}
         </button>
       </div>
       {!everyone && (
@@ -430,7 +464,7 @@ function History({ skill }: { skill: Skill }): ReactNode {
               {showing === v.id ? L('esconder', 'hide') : L('o que mudou', 'what changed')}
             </button>
             <button className="btn btn--xs" onClick={() => restoreSkill(skill.id, v.id)}>
-              {L('Voltar a esta', 'Restore this one')}
+              {L('Voltar a esta', "Restore version")}
             </button>
           </div>
           {showing === v.id && <Diff before={`${v.description}\n\n${v.body}`} after={`${skill.description}\n\n${skill.body}`} />}
@@ -465,7 +499,7 @@ function Proposal({ proposal: p }: { proposal: Skill }): ReactNode {
             <Markdown urlTransform={safeUrl} remarkPlugins={[remarkGfm]}>{p.body}</Markdown>
           </article>
           <p className="proposal__who">
-            {L('Vale pra', 'For')} <Who ids={p.agents} />. {L('Depois de aprovar, dá pra liberar pra outros agentes.', 'After approving, you can open it to other agents.')}
+            {L('Vale pra', 'For')} <Who ids={p.agents} />. {L('Depois de aprovar, dá pra liberar pra outros agentes.', "After approval, you can assign it to more agents.")}
           </p>
         </>
       )}
@@ -534,17 +568,17 @@ function SkillForm({ draft, onChange, onClose }: { draft: SkillInput; onChange: 
           </p>
         ) : (
           <>
-            <Field label={L('Receita', 'Recipe')} hint={L('Os passos, em Markdown: comandos exatos, armadilhas, como conferir.', 'The steps, in Markdown: exact commands, pitfalls, how to check.')}>
+            <Field label={L('Receita', "Instructions")} hint={L('Os passos, em Markdown: comandos exatos, armadilhas, como conferir.', 'The steps, in Markdown: exact commands, pitfalls, how to check.')}>
               <textarea rows={10} className="mono" value={draft.body} onChange={(e) => set({ body: e.target.value })} />
             </Field>
             {draft.body.length > RECOMMENDED_SKILL_BODY_LENGTH && <p className="hint hint--warn" role="status">{skillLengthNote(draft.body.length)}</p>}
           </>
         )}
-        <Field label={L('Quem usa', 'Who uses it')}>
+        <Field label={L('Quem usa', "Assigned agents")}>
           <AgentPicker value={draft.agents} onChange={(agents) => set({ agents })} />
         </Field>
         <div className="row row--between">
-          <span className="hint">{draft.id ? L('A versão de agora fica no histórico: dá pra voltar.', 'The current version stays in the history: you can go back.') : ''}</span>
+          <span className="hint">{draft.id ? L('A versão de agora fica no histórico: dá pra voltar.', "The current version stays in History for restoration.") : ''}</span>
           <div className="row">
             {error && <span className="field__error">{error}</span>}
             <button className="btn btn--sm btn--ghost" onClick={onClose}>

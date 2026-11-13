@@ -1,8 +1,11 @@
 // Domain types shared by the core (utility process) and the renderer.
 import type { AvatarDefinition } from 'open-bot-avatar'
 import type { ActionRules, Autonomy } from './actions'
+import type { ClassifierConfig, ClassifierJob } from './classifiers'
 import type { ChannelLayout } from './channel-layout'
+import type { RouteTrace, RoutingConfig } from './routing'
 import type { Answer, Decision } from './questions'
+import type { NoticeSettings } from './notice'
 import { L, lang, locale, type Lang } from './lang'
 
 export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green' | 'teal' | 'graphite'
@@ -67,6 +70,8 @@ export interface Agent {
   wiki?: WikiAccess // what it can do with the wiki; 'read' when unset
   instructions: string
   modelId: string
+  // How this agent's replies show their steps: over the workspace's setting; unset: follow it.
+  steps?: StepsMode
   // Where a reply goes when modelId's subscription is out (its 5-hour or weekly limit, a 429): tried
   // only when the main model failed before doing anything, and the next reply tries the main one again.
   fallbackModelId?: string
@@ -75,6 +80,9 @@ export interface Agent {
   fallbackAccountId?: string
   accountId?: string // one of settings.accounts, for its harness; unset: the harness's own login
   effort: Effort
+  // Jev reads each prompt and picks from the person's pools instead of modelId, which stays
+  // here as the baseline (what the agent runs on when routing is off, or decides nothing).
+  smartRouting?: boolean
   limit: number // tokens per month
   maxRoutines?: number // routines on at once; unset: MAX_AGENT_ROUTINES
   used: number // tokens used this month, computed from receipts
@@ -115,18 +123,32 @@ export const PROJECTS_DIR = '/projetos'
 export type ComputerKind = 'linux' | 'mac'
 export const isMac = (a: Pick<Agent, 'computer' | 'computerKind'>): boolean => a.computer && a.computerKind === 'mac'
 
+// A channel an agent made by calling agents that weren't in the conversation it was answering in
+// (src/core/team-up.ts): it carries what was already done there, so the ones called in start with the
+// work. It is a channel like any other, and the person deletes it like any other.
+export interface TeamUp {
+  from: string // the conversation it came out of
+  title: string // that conversation's name at the time: "#ops", or the agent of a DM
+  by: string // the agent that called the others in
+  at: number
+}
+
 export interface Conversation {
   id: string
   kind: 'channel' | 'dm'
   name: string // channel name, or agent id for a DM
   topic?: string
   members: string[] // agent ids
+  mentionOnly?: string[] // agents of a channel in mention mode: they read it, and answer only when mentioned
+  teamUp?: TeamUp // set on a channel an agent opened to work with agents called in from elsewhere
+  listen?: string[] // agents of a channel in listen mode: they read it, and Jev says when the message is for them
   summary?: string // what the conversation covered before its recent messages
   summaryUntil?: number // `at` of the last message the summary covers
   summaryAt?: number
   unread?: number
   wikiCapture?: boolean // false: the wiki's curator leaves this conversation out
   threads?: boolean // true: each message's answers go in its thread; unset: in the conversation, like a chat
+  clearedAt?: number // the person cleared the history: earlier messages stay in the rows (costs, approvals) and out of the screen and the next turns
   owner?: string // a DM's person: one DM per agent and person, and only they read it
   createdBy?: string // a channel's maker: they (and admins) rename it, change its topic and its agents
 }
@@ -153,6 +175,9 @@ export interface Step {
   output?: string // what came back, in a few words ("120 rows")
   status: StepStatus
   ms?: number
+  // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran, between
+  // two calls; `followup` is the instruction a finished reply goes on with (runs.ts, followUp).
+  kind?: 'steer' | 'followup'
 }
 
 export interface Receipt {
@@ -170,6 +195,7 @@ export interface Run {
   status: RunStatus
   steps: Step[]
   endedAt?: number // when this reply ended, however it ended: where the conversation shows it (saidAt)
+  restartPending?: boolean // interrupted at shutdown, still eligible for startup recovery
   receipt?: Receipt
   approvalId?: string
   outside?: boolean // it read something from outside (a connector's answer, a page, an app, the web, a trigger's event): what goes out after asks first, with the guard on
@@ -181,6 +207,7 @@ export interface Run {
   question?: string // asked with ask_user, as plain text (every decision, numbered); answered by the next human message here
   questions?: Decision[] // the same decisions, structured (one to four, with options): read them with questionsOf
   answers?: (Answer | null)[] // what was answered on the card so far, by decision, before sending
+  recommended?: (number | null)[] // Jev's pick per decision, by index into its options (null: none is clearly better); unset when it's off or still thinking
   answeredInText?: true // the reply had text of its own, beyond the decisions answered
   answerMessage?: string // the message that sent the decisions answered on the card (the agent reads it; the card shows it)
   answerTyped?: string // what that message had beyond them, written in the message box
@@ -192,11 +219,13 @@ export interface Run {
   routineIds?: string[] // routines scheduled or changed with `agendar_rotina` in this reply
   browser?: boolean // used its browser in this reply (the message links to the live view)
   budget?: number // 'paused': the per-reply budget it reached, in counted tokens
+  route?: RouteTrace // what smart routing decided for this reply, drawn as the thin line over it
   task?: string // what this reply was asked beyond the conversation; kept only while it can be tried again or go on
   work?: string // the piece of work it counts toward, e.g. the issue "OAB-65" (spec §20)
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
   proposal?: Proposal // what an agent proposed, from before a reply could hold several (read both with proposalsOf)
   proposals?: Proposal[] // what an agent proposed in this reply (changes to agents, routines, channels, teams), shown as a group of cards
+  silent?: true // a routine's run that had nothing to report ([SILENT]): an empty reply, no notification, no unread
   delegation?: DelegationRef // on the message that opens a piece of handed work in its agent's channel, on an answer given there in the asker's name, and on what brings its answer or its question back
   delegations?: DelegationRef[] // the work this reply handed to the agents below its author
   initiative?: InitiativeRun // set on a check-in: the person's coordinator looking at their work on its own
@@ -239,6 +268,8 @@ export interface Delegation {
   state: 'open' | 'done' | 'failed' | 'cancelled'
   asking?: string // the message whose question waits for whoever asked
   askingTold?: boolean // whoever asked has heard of that question
+  parkedTold?: boolean // whoever asked has heard it's held on an approval of theirs
+  nudges?: number // how many times the one asked was knocked on after leaving no reply at all
   result?: string // the message it ended with
   told?: boolean // whoever asked has heard how it ended
   lateTold?: boolean // whoever asked has heard it's past its deadline
@@ -263,8 +294,10 @@ export interface AgentDraft {
   agentId?: string // once created
 }
 
-// What the Tuca may propose to change in an agent that exists.
-export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit'>>
+// What the Tuca may propose to change in an agent that exists. `skills`: the whole list of active
+// skills it follows, by name; a single "*" means every one of them (and reads back as "*").
+export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit'>> &
+  { skills?: string[] }
 
 // A change an agent proposes to what exists, or a new routine, channel or team: a card under its message
 // with Aplicar and Descartar. Nothing changes until the person applies it. `appliedId`: the agent,
@@ -360,12 +393,19 @@ export interface Question {
 }
 
 // What's waiting on a person: approvals they can decide and questions to them.
+// A question as one person's page shows it: without where it was asked when they can't see that
+// conversation (someone else's DM: they get the question only).
+export type AskEntry = Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string }
+
 // A question from someone else's DM comes without where it was asked (they see the question only).
+// A question in the inbox: with the decisions asked (ask_user's options), what was answered on the
+// card so far, and, when Jev is on, the option it suggests for each decision.
+export type InboxQuestion = Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[]; recommended?: (number | null)[] }
+
 export interface Inbox {
   approvals: Approval[]
-  // With the decisions asked (ask_user's options) and what was answered on the card so far.
-  questions: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[]
-  answered?: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
+  questions: InboxQuestion[]
+  answered?: InboxQuestion[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
   proposals?: InboxProposal[] // admins: what a member asked to apply (agents and teams are theirs)
 }
 
@@ -417,6 +457,9 @@ export interface Message {
   routine?: RoutineRun // set on the message a routine posts (author kind 'routine')
   threadId?: string // a reply in a thread: the id of the message that started it (threads are one level deep)
   threadSummary?: ThreadSummary // on the message that started a thread: what the thread has covered
+  // A prompt of mine waiting its turn in a conversation that was already answering: 'queue' while it
+  // waits, unset once its reply goes. Kept in the database, so it outlives a restart (runs.ts, resumeQueued).
+  sendMode?: SendMode
 }
 
 // When a message was said: a reply when it ended, anything else when it was written. `at` stays when it
@@ -424,9 +467,36 @@ export interface Message {
 export const saidAt = (m: Message): number => m.run?.endedAt ?? m.at
 
 // A conversation as people read it: in the order things were said, and whoever is still working at the end.
+// A reply at work is the one exception: it stays with the prompt it answers, so that a second prompt
+// written while the first is still running reads below that reply instead of on top of it.
 export function asSaid(messages: Message[]): Message[] {
   const working = (m: Message): boolean => m.run?.status === 'working'
-  return [...messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b)), ...messages.filter(working).sort((a, b) => a.at - b.at)]
+  const said = messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b))
+  const atWork = messages.filter(working).sort((a, b) => a.at - b.at)
+  if (atWork.length === 0) return said
+  // Who answers what: a reply whose prompt is here goes right under it; one whose prompt is on a
+  // page not loaded yet (or was a note) has nowhere to stand, so it waits at the end as before.
+  const answering = new Map<string, Message[]>()
+  const standing: Message[] = []
+  const here = new Set(said.map((m) => m.id))
+  for (const m of atWork) {
+    const to = m.run?.replyTo
+    if (!to || !here.has(to)) {
+      standing.push(m)
+      continue
+    }
+    const had = answering.get(to)
+    if (had) had.push(m)
+    else answering.set(to, [m])
+  }
+  if (answering.size === 0) return [...said, ...standing]
+  const out: Message[] = []
+  for (const m of said) {
+    out.push(m)
+    const replies = answering.get(m.id)
+    if (replies) out.push(...replies)
+  }
+  return [...out, ...standing]
 }
 
 // A thread's own summary, kept on its first message. `until`: the `at` of the last message it covers.
@@ -462,22 +532,40 @@ export interface LocalInfo {
   download?: string // on a server, where the file isn't on this computer: to save it here
 }
 
+// How a reply's steps read: every step, the latest few (older ones fading), or one line with the
+// count. Resolved per reply in src/shared/steps.ts: the agent's own, else the workspace's, else all.
+export type StepsMode = 'all' | 'latest' | 'one-line'
+
 export interface Settings {
   workspaceName: string // the person's name: what the agents call them
   workspaceLabel?: string // the workspace's own name, in the switcher; unset: workspaceName
   context: string
   engines: Record<EngineId, EngineStatus>
-  routerModel: string // a model id, or 'jev' for TypeSafe's Jev (falls back to Haiku)
-  jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core)
+  routerModel: string // a model id, or 'jev' for the classifier chosen in Settings › Classifiers (falls back to Haiku)
+  routing?: RoutingConfig // Settings › Routing: pools, role chains and the switch that turns routing on (src/shared/routing.ts)
+  jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core); kept for installs from before Settings › Classifiers
+  classifiers?: ClassifierConfig[] // Settings › Classifiers: the model pairs that answer typed questions, one key each
+  classifierJobs?: Partial<Record<ClassifierJob, string>> // which classifier serves each job; a job left out is off
+  classifierKeys?: Record<string, boolean> // computed: which classifiers have a key saved (never the key itself)
   voice?: VoiceSettings
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
+  dmOrder?: string[] // the person's order for the direct messages, by conversation id
+  agentOrder?: string[] // the person's order for the agents, by agent id
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
-  browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
+  browserJev?: boolean // an install from before Settings › Classifiers: a classifier finds what agents click in their browsers
+  jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset
+  jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset
   memoryModel: string // summarizes conversations and extracts memories
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
+  sendMode?: SendMode // what Enter does while a reply is running: alongside it (the default), after it, into it, or stopping it
   wikiCapture?: boolean // the curator reads the conversations and keeps what lasts; on when unset
   wikiEdits?: 'approve' | 'auto' // changing a page that exists: waits for me (the default) or goes in
   wikiReview?: 'weekly' | 'off' // reviews the wiki on its own once a week; by hand only otherwise (the default)
+  wikiResolve?: boolean // the resolver settles a finding the review couldn't fix, when asked (off by default)
+  wikiResolveModel?: string // a model id; unset: the memory model, then Haiku
+  // The bot that reads the finding, by its id: its own instructions and model, with the resolver's
+  // model and effort unused (a bot written for the job beats a model named for it). Unset: the app's own.
+  wikiResolveBot?: string
   wikiDir?: string // where the wiki's folder is (an Obsidian vault, say); inside the app's data when unset
   defaultLimit: number
   approvalTtlHours: number
@@ -488,9 +576,11 @@ export interface Settings {
   theme: 'system' | 'light' | 'dark'
   language: Lang // the app's, and the language agents answer in
   openAtLogin?: boolean // so routines run without me opening the app
+  resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: on
   runBudgetPct?: number // per reply, % of the agent's monthly limit before it pauses; default RUN_BUDGET_PCT
   runStallMinutes?: number // without any sign of life; default RUN_STALL_MINUTES
   chainDepth?: number // agent replies in a row from one human message; default CHAIN_DEPTH
+  teamUpDays?: number // a team-up channel closes itself after this many days quiet; default TEAM_UP_DAYS, 0 never
   telegram?: TelegramInfo // computed: the phone bot (spec §19)
   paused?: boolean // "Pausar tudo": no agent starts working, no routine runs
   quietHours?: { from: string; to: string } | null // "HH:MM": routines and triggers wait, and run late when it ends; null: off
@@ -512,9 +602,25 @@ export interface Settings {
     guest?: { by?: string } // someone just invited: their own short welcome first (who invited them)
   }
   folded?: string[] // the ids of what I folded in the sidebar
+  // Asks and Approvals out of the sidebar while nothing is waiting in them; unset: both always there
+  hideEmptyAsks?: boolean
+  hideEmptyApprovals?: boolean
+  skillFolders?: string[] // folders to read skills from, on top of the ones the harnesses keep
+  skillFoldersOff?: string[] // folders found on this computer that aren't read
+  lastImageFolder?: string // the folder the last picture was saved to, so the next one goes there in one click
   sounds?: boolean // the toucan's chirp on a notification; unset: on
+  // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
+  // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
+  showThinking?: boolean
+  thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
+  clock?: '24' | '12' // Settings › The conversation: times as 15:05 or 3:05 PM; unset keeps the app's own reading
+  // How a reply's steps read: every one, the latest few, or a single line with the count
+  // (src/shared/steps.ts). Unset: every one, which is what the app has always done.
+  steps?: StepsMode
+  stepsLatest?: number // how many the 'latest' mode keeps; unset: STEPS_LATEST (20)
+  notice?: NoticeSettings // the cards over the window (src/shared/notice.ts); unset: on, as the system's notification is today
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
-  accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
+  accounts?: Account[] // more logins of Claude Code, Codex or Grok, beside the one each already has
 }
 
 // Which chirp a notification plays: a knock when an agent needs me, two notes when the work
@@ -527,8 +633,9 @@ export function chirpOf(kind: 'approval' | 'question' | 'done' | undefined, soun
 
 // Another login of a harness (a work account beside a personal one), in a folder of its own
 // in the app's data: Claude Code's CLAUDE_CONFIG_DIR (with its own Keychain entry), Codex's
-// CODEX_HOME. The person signs in through the CLI itself; the app never sees the credentials.
-export const ACCOUNT_ENGINES = ['claude', 'codex'] as const satisfies readonly EngineId[]
+// CODEX_HOME, Grok's GROK_HOME (with its auth.json). The person signs in through the CLI
+// itself; the app never sees the credentials.
+export const ACCOUNT_ENGINES = ['claude', 'codex', 'grok'] as const satisfies readonly EngineId[]
 export type AccountEngine = (typeof ACCOUNT_ENGINES)[number]
 export interface Account {
   id: string
@@ -592,6 +699,37 @@ export interface Quota {
   at: number
 }
 
+// One window of a provider's own quota, as the provider reports it (src/core/quotas.ts):
+// a percentage left, a wallet's money, or a count of requests against a cap.
+export interface QuotaWindow {
+  used?: number // 0..1, when the provider says how much is used
+  remaining?: number // in `unit`
+  limit?: number // what the window allows, in `unit`; a wallet has none
+  unit: '%' | 'usd' | 'req' | 'tokens'
+  resetsAt?: number
+}
+
+// The last read of every provider's quota, and when it was taken: what the panel draws the moment it
+// opens, before the read behind it answers.
+export interface QuotasSnapshot {
+  list: ProviderQuota[]
+  at: number
+}
+
+// A provider whose quota Tucano read from the person's own logins: the CLI's, or the ones
+// Pi and Hermes are signed in to. One column in Usage and limits.
+export interface ProviderQuota {
+  id: string // 'codex', 'opencode-go', 'zai', 'grok'…
+  label: string
+  via: string // where the login was found: 'Codex', 'Pi', 'Hermes', 'OpenCode'
+  plan?: string // what the provider calls the account, when it says
+  session?: QuotaWindow // the short window: 5 hours, or hourly
+  week?: QuotaWindow
+  month?: QuotaWindow
+  error?: string // why nothing could be read; the other providers still show
+  at: number // when this reading was taken
+}
+
 // The Codex subscription's windows, as its app-server tells (account/rateLimits/read): how long
 // each is depends on the plan (Plus has only the week).
 export interface CodexQuota {
@@ -636,6 +774,10 @@ export const SAME_TOOL_STOP = 60 // ...and past it, that tool is refused for the
 export const SLEEPS_FREE = 1 // commands that start by sleeping 20 s or more: the first runs, the next ones are refused
 export const SLEEPS_STOP = 4 // refused sleeps in a reply before it stops
 export const PENDING_WAIT_MINUTES = 5 // a connector result still running (a SQL statement) is awaited by the app this long
+// A team-up channel (an agent calling one that isn't in the room) closes itself after this many days
+// with nothing said in it, so the sidebar doesn't fill with rooms that were one piece of work. The
+// person changes it in Settings; 0 keeps them all.
+export const TEAM_UP_DAYS = 7
 export const CHAIN_DEPTH = 3 // agent replies chained from one human message before Tucano stops them
 export const MAX_CHAIN_DEPTH = 10
 // Agents mentioning each other can't loop and burn tokens with nobody watching: a whole number from 1 to MAX_CHAIN_DEPTH, whatever reached the core.
@@ -765,6 +907,10 @@ export interface Connector {
   command?: string // stdio
   args?: string[]
   envKeys?: string[] // names only; values are secrets
+  // The picture this connector wears in the app: a data URL (an image picked by the person, scaled
+  // down by the screen) or an https address. A server added by hand is otherwise a terminal or a
+  // globe. Empty: the store's mark, or its kind's icon.
+  icon?: string
   auth: ConnectorAuth
   status: ConnectorStatus
   error?: string
@@ -781,6 +927,7 @@ export interface ConnectorInput {
   command?: string
   args?: string[]
   env?: Record<string, string>
+  icon?: string // a data: URI or an https address, as setConnectorIcon takes it
 }
 
 // An MCP server found in a harness's own setup (Claude Code, Codex,
@@ -797,6 +944,11 @@ export interface HarnessMcp {
 }
 
 export type ApprovalState = 'pending' | 'approved' | 'refused' | 'expired'
+
+// What became of the call once it was approved: it ran and went through, it ran and came back an
+// error, or nothing ran (a computer that was off, an access that changed, a refusal). Left out
+// while the call is on its way, so a card can say "approved, waiting" without inventing a result.
+export type ApprovalResult = 'done' | 'error' | 'not_run'
 
 // The approval an agent asks with pedir_acesso: a grant, not a tool call.
 export const ACCESS_REQUEST = 'pedir_acesso'
@@ -816,6 +968,7 @@ export interface Approval {
   state: ApprovalState
   reason?: string
   outcome?: string // short summary of what happened when it ran
+  result?: ApprovalResult // what became of the call: not written until it's over
   createdAt: number
   expiresAt: number
   decidedAt?: number
@@ -1100,9 +1253,34 @@ export interface LocalSkill {
   name: string
   description: string
   bodyLength: number // recipe characters, excluding frontmatter
-  origin: string // "Claude Code", "Plugin <name>", "Codex"
+  origin: string // "Claude Code", "Plugin <name>", "Codex", "Pi", "Hermes", "Added"
   files: string[] // its other text files, relative to its folder
   scripts: boolean // it has scripts: an agent needs a computer to run them
+  category?: string // the folder it sits in, when the library is organised in categories (a Hermes one)
+  version?: string // from the frontmatter: a Hermes library keeps one; a plain skill may under metadata
+  tags?: string[] // metadata.hermes.tags, facets included (family:*, tool:*, risk:*…)
+}
+
+// A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
+// Codex, Pi, Hermes, OpenCode…), or one the person added. All the ones that are on mix into the
+// same list (src/core/local-skills.ts).
+export interface LocalSkillFolder {
+  path: string // where it is on this computer
+  source: string // who keeps it: "Claude Code", "Pi", "Hermes"…, or "Added"
+  detected: boolean // found on this computer, not added by hand
+  on: boolean // read; off: kept in the list, not read
+  count: number // skills in it right now
+}
+
+// A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
+// Codex, Pi, Hermes, OpenCode…), or one the person added. All the ones that are on mix into the
+// same list (src/core/local-skills.ts).
+export interface LocalSkillFolder {
+  path: string // where it is on this computer
+  source: string // who keeps it: "Claude Code", "Pi", "Hermes"…, or "Added"
+  detected: boolean // found on this computer, not added by hand
+  on: boolean // read; off: kept in the list, not read
+  count: number // skills in it right now
 }
 
 export interface SkillVersion {
@@ -1183,9 +1361,17 @@ export interface Report {
   work: { work: string; tokens: number; replies: number; agents: string[]; last: number }[]
 }
 
+// How a new prompt arrives in a conversation that is already answering (src/core/runs.ts):
+// alongside what's running, after it, handed to it between tool calls, or in place of it.
+export type SendMode = 'parallel' | 'queue' | 'steer' | 'interrupt'
+
 // ---------- the wiki ----------
-export type WikiAccess = 'none' | 'read'
+// 'read' opens the pages and the search; 'read_write' adds wiki_escrever and wiki_editar, so the
+// agent keeps the wiki itself instead of waiting for the curator.
+export type WikiAccess = 'none' | 'read' | 'read_write'
 export const wikiAccess = (a: Pick<Agent, 'wiki' | 'kind'>): WikiAccess => (a.kind === 'tuca' ? 'none' : (a.wiki ?? 'read'))
+// Whether it may change pages, not only read them.
+export const wikiWrites = (a: Pick<Agent, 'wiki' | 'kind'>): boolean => wikiAccess(a) === 'read_write'
 export interface WikiPageInfo {
   title: string
   kind: string // the page's tipo, from its frontmatter
@@ -1258,6 +1444,7 @@ export interface WikiFinding {
   pages: string[] // the pages it is about
   text: string // what's wrong, in a sentence (Markdown, with [[links]])
   name?: string // broken, missing: the page it would take
+  note?: string // what the resolver found and couldn't settle, or the question only the person can answer
   change?: WikiChange // the fix it suggests, waiting for approval
 }
 // What came in from an Obsidian vault.

@@ -43,9 +43,27 @@ export class Followups {
     this.slot(key).reserved++
   }
 
+  // A place nobody holds any more: what was noted for later there goes with the mark.
+  reset(key: string): void {
+    this.slots.delete(key)
+  }
+
   busy(key: string): boolean {
     const s = this.slots.get(key)
     return !!s && (s.running > 0 || s.reserved > 0)
+  }
+
+  // How many replies are on the key right now. A place that is taken (reserve) but has no reply
+  // running is a queue that never started: the difference is what tells a reply that is coming
+  // from one that never will.
+  running(key: string): number {
+    return this.slots.get(key)?.running ?? 0
+  }
+
+  // What is left on a key goes, so a place taken for a job that never ran can't keep it busy for
+  // good. Nothing running means nothing to lose.
+  forget(key: string): void {
+    if (!this.slots.get(key)?.running) this.slots.delete(key)
   }
 
   // Several hand-offs while it replies become one follow-up: the deepest chain, the latest work.

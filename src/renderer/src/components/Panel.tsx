@@ -1,11 +1,14 @@
 // What agents make on their computers, in the chat: artifact cards and
 // service cards inside messages, and the side panel that opens them.
 import { L, locale } from '../../../shared/lang'
-import { useEffect, useState, type ReactNode } from 'react'
+import { timeOpts } from '../../../shared/clock'
+import { useEffect, useState, type MouseEvent, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { safeUrl } from '../links'
 import remarkGfm from 'remark-gfm'
+import { openImageMenu } from '../image-menu'
 import { agentById, amAdmin, getState, openLightbox, artifactUrl, browserAction, browserInput, browserOf, reachable, windowless, computerOf, openExternal, openPanel, stopService, useFrame, useStore, workingAgents, type Artifact } from '../store'
+import { galleryLayout } from '../gallery'
 import { call } from '../rpc'
 import { Icon, ownColor, type IconName } from './ui'
 import { PanelResize } from './SidebarResize'
@@ -29,13 +32,26 @@ function showImages(a: Artifact): void {
   openLightbox(images.map((x) => ({ url: artifactUrl(x), title: x.title })), Math.max(0, images.findIndex((x) => x.id === a.id)))
 }
 
+// Right-click on a picture in a reply, whether it stands alone or sits in the album: save it, copy
+// it, or send its full size back into the field below as an attachment.
+const imageMenuFor = (a: Artifact) => (e: MouseEvent<HTMLButtonElement>): void => {
+  e.preventDefault()
+  openImageMenu({ url: artifactUrl(a), title: a.title, surface: 'reply', conversationId: a.conversationId }, { x: e.clientX, y: e.clientY })
+}
+
 export function ArtifactCard({ id }: { id: string }): ReactNode {
   const a = useStore((s) => s.artifacts.find((x) => x.id === id))
   const open = useStore((s) => s.panel?.kind === 'artifact' && s.panel.id === id)
   if (!a) return null
   if (a.kind === 'image')
     return (
-      <button className="artifact-image" onClick={() => showImages(a)} title={a.title}>
+      <button
+        className="artifact-image"
+        onClick={() => showImages(a)}
+        title={a.title}
+        // Right-click: save it, copy it, or put it back in the prompt below as an attachment.
+        onContextMenu={imageMenuFor(a)}
+      >
         <img src={artifactUrl(a)} alt={a.title} />
         <span className="artifact-image__caption">{a.title}</span>
       </button>
@@ -53,6 +69,54 @@ export function ArtifactCard({ id }: { id: string }): ReactNode {
       </span>
       <span className="artifact-card__open">{L('Abrir', 'Open')}</span>
     </button>
+  )
+}
+
+// What one reply made, in the chat: its pictures as an album — one large and the rest beside it,
+// the golden section — and whatever isn't a picture still a card under them. One picture is not an
+// album: it stays exactly the picture it always was.
+export function ArtifactGallery({ ids }: { ids: string[] }): ReactNode {
+  const all = useStore((s) => s.artifacts)
+  const picked = ids.map((id) => all.find((x) => x.id === id)).filter((a): a is Artifact => !!a)
+  const images = picked.filter((a) => a.kind === 'image')
+  const cells = galleryLayout(images.length)
+  return (
+    <>
+      {cells.length === 0 ? (
+        images.map((a) => <ArtifactCard key={a.id} id={a.id} />)
+      ) : (
+        <div className="artifacts-gallery" role="group" aria-label={L('As imagens desta resposta', 'The images in this reply')}>
+          {cells.map((c) => {
+            const a = images[c.index]!
+            return (
+              <button
+                key={a.id}
+                className={`artifact-image gallery__cell${c.hero ? ' gallery__cell--hero' : ''}`}
+                style={{ gridRow: `span ${c.rowSpan}` }}
+                onClick={() => showImages(a)}
+                // A cell is a thumbnail, not a link: right-click offers the same four choices as the
+                // picture on its own, on the picture it stands for.
+                onContextMenu={imageMenuFor(a)}
+                title={c.more ? L(`${a.title} — e mais ${c.more}`, `${a.title} — and ${c.more} more`) : a.title}
+                aria-label={c.more ? L(`${a.title} — e mais ${c.more}`, `${a.title} — and ${c.more} more`) : a.title}
+              >
+                <img src={artifactUrl(a)} alt={a.title} />
+                {c.more ? (
+                  <span className="gallery__more" aria-hidden="true">
+                    +{c.more}
+                  </span>
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {picked
+        .filter((a) => a.kind !== 'image')
+        .map((a) => (
+          <ArtifactCard key={a.id} id={a.id} />
+        ))}
+    </>
   )
 }
 
@@ -114,7 +178,7 @@ const LOG_ICON: Record<string, IconName> = {
   Waited: 'clock'
 }
 const logIcon = (label: string): IconName => LOG_ICON[label] ?? (/assumiu|devolveu|took over|handed/i.test(label) ? 'hand' : 'spark')
-const clock = (at: number): string => new Date(at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+const clock = (at: number): string => new Date(at).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit', second: '2-digit' }))
 
 // Live while the agent is answering with it, or while I drive it.
 function useLive(agentId: string): boolean {

@@ -1,7 +1,7 @@
 import { L } from '../../../shared/lang'
 import { usedShare } from '../../../shared/limits'
 import { isWaiting, mineIn, waitingIn, waitingTitle, type Waiting } from './waiting'
-import { memo, useCallback, useId, useRef, useState, type HTMLAttributes, type ReactNode } from 'react'
+import { memo, useCallback, useId, useState, type HTMLAttributes, type ReactNode } from 'react'
 import {
   agentById,
   archiveAgent,
@@ -10,6 +10,7 @@ import {
   openTuca,
   isTeam,
   deleteConversation,
+  clearHistory,
   markRead,
   navigate,
   openDialog,
@@ -31,10 +32,13 @@ import {
   youPerson,
   type Agent,
   type State,
-  type View
+  type View,
+  waitingOnYou,
 } from '../store'
 import type { SidebarPart } from '../../../shared/onboarding'
-import { addGroup, arrange, moveChannel, nudgeChannel, removeGroup, renameGroup, type ChannelLayout } from '../../../shared/channel-layout'
+import { addGroup, arrange, moveChannel, moveChannelTo, nudgeChannel, removeGroup, renameGroup, type ChannelLayout } from '../../../shared/channel-layout'
+import { moveBefore, nudge, ordered } from '../../../shared/list-order'
+import { useHoldReorder } from '../reorder'
 import { call } from '../rpc'
 import { ContextMenu, confirmDialog, type MenuItem, type MenuState } from './Dialogs'
 import { FoldToggle, useFold } from './Fold'
@@ -160,11 +164,21 @@ export function Sidebar(): ReactNode {
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
   const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const asks = useStore(waitingOnYou)
+  // Out of the sidebar while nothing waits in them, when that's asked for; the one I'm looking at stays,
+  // so ticking the setting never takes away the page under my feet.
+  const onAsks = useStore((s) => s.view?.kind === 'asks')
+  const onApprovals = useStore((s) => s.view?.kind === 'approvals')
+  const showAsks = !settings.hideEmptyAsks || asks > 0 || onAsks
+  const showApprovals = !settings.hideEmptyApprovals || pending > 0 || onApprovals
   const suggestions = useStore((s) => pendingMemories(s).length)
   const proposals = useStore((s) => s.skills.filter((k) => k.state === 'pending').length)
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
   const channels = conversations.filter((c) => c.kind === 'channel')
-  const dms = conversations.filter((c) => c.kind === 'dm' && agentOf(c.name)?.kind !== 'tuca')
+  // The person's own order for these two lists, the way the channels have one (they were creation
+  // order before, forever). A row the order doesn't know yet shows last.
+  const dms = ordered(conversations.filter((c) => c.kind === 'dm' && agentOf(c.name)?.kind !== 'tuca'), settings.dmOrder)
+  const teamAgents = ordered(agents.filter(isTeam), settings.agentOrder)
   const [menu, setMenu] = useState<MenuState>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
   const open = (e: React.MouseEvent, items: MenuItem[]): void => {
@@ -180,42 +194,34 @@ export function Sidebar(): ReactNode {
   const dmsWaiting = useStore((s) => anyWaiting(s, dms.map((c) => c.id)))
   const whole: ChannelLayout = { loose: arranged.loose.map((c) => c.id), groups: arranged.groups.map((g) => ({ ...g, channels: g.channels.map((c) => c.id) })) }
   const saveLayout = (next: ChannelLayout): void => updateSettings({ channelLayout: next })
+  const saveDmOrder = (next: string[]): void => updateSettings({ dmOrder: next })
+  const saveAgentOrder = (next: string[]): void => updateSettings({ agentOrder: next })
+  // Press and hold a row to pick it up, then drop it where it goes; Alt+arrows move the row the
+  // keyboard is on. Both start from the list as it is shown, so what's on screen is what's saved.
+  const dmsSort = useHoldReorder({ onDrop: (id, before) => saveDmOrder(moveBefore(dms, settings.dmOrder, id, before)), onNudge: (id, by) => saveDmOrder(nudge(dms, settings.dmOrder, id, by)) })
+  const agentsSort = useHoldReorder({ onDrop: (id, before) => saveAgentOrder(moveBefore(teamAgents, settings.agentOrder, id, before)), onNudge: (id, by) => saveAgentOrder(nudge(teamAgents, settings.agentOrder, id, by)) })
+  // Channels sort the same way the DMs and the agents do: a hold picks the row up and the row under
+  // the pointer draws the line it will land on. What it was let go on says where it goes, so a
+  // channel dropped on another joins that one's group.
+  const channelsSort = useHoldReorder({
+    onDrop: (id, at) => {
+      const next = moveChannelTo(channels, layout, id, at)
+      if (next) saveLayout(next)
+    },
+    onNudge: (id, by) => saveLayout(nudgeChannel(channels, layout, id, by))
+  })
+  const rowClass = (sort: typeof dmsSort, id: string): string => `nav-row${sort.picked === id ? ' is-picked' : ''}${sort.over === id && sort.picked !== id ? ' is-over' : ''}`
+  // A place that only takes a drop (the end of a list) says so the same way a row does.
+  const zoneClass = (sort: typeof dmsSort, id: string): string => `channel-drop${sort.over === id && sort.picked ? ' is-over' : ''}`
   const [naming, setNaming] = useState<string | null>(null)
   const newGroup = (channelId: string): void => {
     const id = crypto.randomUUID()
     saveLayout(moveChannel(channels, addGroup(layout, { id, name: L('Novo grupo', 'New group') }), channelId, { group: id }))
     setNaming(id)
   }
-  const dragged = useRef<string | null>(null)
-  const accept = (e: React.DragEvent): void => {
-    if (dragged.current) e.preventDefault()
-  }
-  const dropOn = (to: { group?: string; before?: string }) => ({
-    onDragEnter: accept,
-    onDragOver: accept,
-    onDrop: (e: React.DragEvent): void => {
-      const id = dragged.current
-      if (!id) return
-      e.preventDefault()
-      e.stopPropagation()
-      dragged.current = null
-      saveLayout(moveChannel(channels, layout, id, to))
-    }
-  })
-  const channelRow = (c: (typeof channels)[number], group?: string): ReactNode => (
-    <div
-      key={c.id}
-      draggable
-      onDragStart={(e) => {
-        dragged.current = c.id
-        e.dataTransfer.effectAllowed = 'move'
-        e.dataTransfer.setData('text/plain', c.name)
-      }}
-      onDragEnd={() => (dragged.current = null)}
-      onContextMenu={(e) => open(e, channelMenu(c))}
-      {...dropOn({ group, before: c.id })}
-    >
-      <ChannelItem id={c.id} name={c.name} unread={c.unread} />
+  const channelRow = (c: (typeof channels)[number]): ReactNode => (
+    <div key={c.id} className={rowClass(channelsSort, c.id)} {...channelsSort.rowProps(c.id)} onContextMenu={(e) => open(e, channelMenu(c))}>
+      <ChannelItem id={c.id} name={c.name} unread={c.unread} teamUp={!!c.teamUp} />
     </div>
   )
   // The wiki's curator reads every conversation; one can be kept out (a personal DM, say).
@@ -240,29 +246,66 @@ export function Sidebar(): ReactNode {
     { label: L('Novo grupo com este canal', 'New group with this channel'), icon: 'plus', onClick: () => newGroup(c.id) },
     ...(admin ? channelDelete(c) : [])
   ]
+  // A team-up closes instead of being deleted: same thing underneath (its messages go, the conversation
+  // that opened it stays whole), said in the words that fit a room an agent put together for one job.
   const channelDelete = (c: (typeof channels)[number]): MenuItem[] => [
+    clearItem(c.id, `#${c.name}`, `#${c.name}`),
     'separator',
-    {
-      label: L('Excluir canal…', 'Delete channel…'),
-      icon: 'trash',
-      danger: true,
-      onClick: () =>
-        void confirmDialog({
-          title: L(`Excluir #${c.name}?`, `Delete #${c.name}?`),
-          body: L('As mensagens e as rotinas que postam nele vão junto. Os agentes continuam no time. Não dá pra desfazer.', "Its messages and the routines that post in it go too. The agents stay on the team. This can't be undone."),
-          confirm: L(`Excluir #${c.name}`, `Delete #${c.name}`),
-          danger: true
-        }).then((ok) => {
-          if (ok) void deleteConversation(c.id)
-        })
-    }
+    c.teamUp
+      ? {
+          label: L('Fechar equipe…', 'Close team-up…'),
+          icon: 'users',
+          danger: true,
+          onClick: () =>
+            void confirmDialog({
+              title: L(`Fechar #${c.name}?`, `Close #${c.name}?`),
+              body: L('As mensagens dela vão junto. A conversa que a abriu continua inteira, e os agentes continuam no time. Não dá pra desfazer.', "Its messages go with it. The conversation that opened it stays whole, and the agents stay on the team. This can't be undone."),
+              confirm: L(`Fechar #${c.name}`, `Close #${c.name}`),
+              danger: true
+            }).then((ok) => {
+              if (ok) void deleteConversation(c.id)
+            })
+        }
+      : {
+          label: L('Excluir canal…', 'Delete channel…'),
+          icon: 'trash',
+          danger: true,
+          onClick: () =>
+            void confirmDialog({
+              title: L(`Excluir #${c.name}?`, `Delete #${c.name}?`),
+              body: L('As mensagens e as rotinas que postam nele vão junto. Os agentes continuam no time. Não dá pra desfazer.', "Its messages and the routines that post in it go too. The agents stay on the team. This can't be undone."),
+              confirm: L(`Excluir #${c.name}`, `Delete #${c.name}`),
+              danger: true
+            }).then((ok) => {
+              if (ok) void deleteConversation(c.id)
+            })
+        }
   ]
+  // The history out of sight, the conversation kept: same DM, same channel, same place in the list.
+  const clearItem = (id: string, what: string, whatEn: string): MenuItem => ({
+    label: L('Limpar o histórico…', 'Clear the history…'),
+    icon: 'spark',
+    onClick: () =>
+      void confirmDialog({
+        title: L(`Limpar o histórico de ${what}?`, `Clear the history of ${whatEn}?`),
+        body: L(
+          'Some da tela e do que o agente lê, e ele começa do zero na próxima mensagem. As mensagens continuam guardadas: os recibos, os custos e as aprovações que apontam pra elas ficam como estão. Não dá pra desfazer pela tela.',
+          'It leaves the screen and what the agent reads, and it starts from nothing on the next message. The messages stay stored: the receipts, the costs and the approvals that point at them are kept as they are. It cannot be undone from the screen.'
+        ),
+        confirm: L('Limpar o histórico', 'Clear the history')
+      }).then((ok) => {
+        if (ok) void clearHistory(id)
+      })
+  })
   const dmMenu = (id: string, agentId: string, agentName: string): MenuItem[] => [
     { label: L(`Ver ${agentName}`, `See ${agentName}`), icon: 'eye', onClick: () => navigate({ kind: 'agent', id: agentId }) },
     { label: L('Marcar como lido', 'Mark as read'), icon: 'check', onClick: () => markRead(id) },
     { label: L('Configurações da conversa…', 'Conversation settings…'), icon: 'gear', onClick: () => openDialog({ kind: 'settings', id }) },
     wikiItem(id, conversations.find((x) => x.id === id)?.wikiCapture !== false),
+    clearItem(id, `a conversa com ${agentName}`, `the conversation with ${agentName}`),
     'separator',
+    { label: L('Mover para cima', 'Move up'), onClick: () => saveDmOrder(nudge(dms, settings.dmOrder, id, -1)) },
+    { label: L('Mover para baixo', 'Move down'), onClick: () => saveDmOrder(nudge(dms, settings.dmOrder, id, 1)) },
     {
       label: L('Apagar a conversa…', 'Delete the conversation…'),
       icon: 'trash',
@@ -280,6 +323,8 @@ export function Sidebar(): ReactNode {
   ]
   const agentMenu = (agentId: string, agentName: string): MenuItem[] => [
     { label: L('Mandar mensagem', 'Send a message'), icon: 'send', onClick: () => void openDm(agentId) },
+    { label: L('Mover para cima', 'Move up'), onClick: () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, -1)) },
+    { label: L('Mover para baixo', 'Move down'), onClick: () => saveAgentOrder(nudge(teamAgents, settings.agentOrder, agentId, 1)) },
     ...(admin ? agentAdminMenu(agentId, agentName) : [{ label: L(`Ver ${agentName}`, `See ${agentName}`), icon: 'eye' as const, onClick: () => navigate({ kind: 'agent', id: agentId }) }])
   ]
   const agentAdminMenu = (agentId: string, agentName: string): MenuItem[] => [
@@ -339,7 +384,8 @@ export function Sidebar(): ReactNode {
       )}
       <nav className="sidebar__scroll">
         <TucaItem />
-        <NavItem view={{ kind: 'approvals' }} icon="shield" label={team ? L('Pra você', 'For you') : L('Aprovações', 'Approvals')} badge={pending} />
+        {showAsks && <NavItem view={{ kind: 'asks' }} icon="ask" label={L('Perguntas', 'Asks')} badge={asks} />}
+        {showApprovals && <NavItem view={{ kind: 'approvals' }} icon="shield" label={team ? L('Pra você', 'For you') : L('Aprovações', 'Approvals')} badge={pending} />}
         {(parts.shows('memory') || suggestions > 0) && <NavItem view={{ kind: 'memory' }} icon="book" label={L('Memória', 'Memory')} badge={suggestions} fresh={fresh('memory')} />}
         {parts.shows('wiki') && <NavItem view={{ kind: 'wiki' }} icon="layers" label="Wiki" fresh={fresh('wiki')} />}
         {parts.shows('routines') && <NavItem view={{ kind: 'routines' }} icon="clock" label={L('Rotinas', 'Routines')} fresh={fresh('routines')} />}
@@ -361,8 +407,8 @@ export function Sidebar(): ReactNode {
           }
         >
           {arranged.loose.map((c) => channelRow(c))}
-          {/* Dropped here, a channel goes last among those in no group. */}
-          <div className="channel-drop" {...dropOn({})} />
+          {/* Let go here, a channel goes last among those in no group. */}
+          <div className={zoneClass(channelsSort, 'end:loose')} {...channelsSort.zoneProps('end:loose')} />
           {arranged.groups.map((g) => (
             <GroupFold
               key={g.id}
@@ -371,7 +417,7 @@ export function Sidebar(): ReactNode {
               unread={g.channels.reduce((n, c) => n + (c.unread ?? 0), 0)}
               waiting={waitingGroups.includes(g.id)}
               head={{
-                ...dropOn({ group: g.id }),
+                ...channelsSort.zoneProps(`grp:${g.id}`),
                 onContextMenu: (e) =>
                   open(e, [
                     { label: L('Renomear', 'Rename'), icon: 'edit', onClick: () => setNaming(g.id) },
@@ -398,7 +444,8 @@ export function Sidebar(): ReactNode {
                 )
               }
             >
-              {g.channels.map((c) => channelRow(c, g.id))}
+              {g.channels.map((c) => channelRow(c))}
+              <div className={zoneClass(channelsSort, `end:${g.id}`)} {...channelsSort.zoneProps(`end:${g.id}`)} />
             </GroupFold>
           ))}
         </Section>
@@ -409,7 +456,7 @@ export function Sidebar(): ReactNode {
             const agent = agentOf(c.name)
             if (!agent) return null
             return (
-              <div key={c.id} onContextMenu={(e) => open(e, dmMenu(c.id, agent.id, agent.name))}>
+              <div key={c.id} className={rowClass(dmsSort, c.id)} {...dmsSort.rowProps(c.id)} onContextMenu={(e) => open(e, dmMenu(c.id, agent.id, agent.name))}>
                 <DmItem id={c.id} agent={agent} unread={c.unread} owner={team && agent.owner !== you ? personById({ people }, agent.owner)?.name : undefined} />
               </div>
             )
@@ -428,13 +475,11 @@ export function Sidebar(): ReactNode {
             ) : undefined
           }
         >
-          {agents
-            .filter(isTeam)
-            .map((a) => (
-              <div key={a.id} onContextMenu={(e) => open(e, agentMenu(a.id, a.name))}>
-                <AgentItem id={a.id} owner={team && a.owner !== you ? personById({ people }, a.owner)?.name : undefined} />
-              </div>
-            ))}
+          {teamAgents.map((a) => (
+            <div key={a.id} className={rowClass(agentsSort, a.id)} {...agentsSort.rowProps(a.id)} onContextMenu={(e) => open(e, agentMenu(a.id, a.name))}>
+              <AgentItem id={a.id} owner={team && a.owner !== you ? personById({ people }, a.owner)?.name : undefined} />
+            </div>
+          ))}
           {agents.some((a) => a.archived) && (
             <button className="nav-item nav-item--quiet" onClick={() => openDialog({ kind: 'archived' })}>
               <Icon name="layers" />
@@ -458,13 +503,13 @@ export function Sidebar(): ReactNode {
   )
 }
 
-const ChannelItem = memo(function ChannelItem({ id, name, unread }: { id: string; name: string; unread?: number }): ReactNode {
+const ChannelItem = memo(function ChannelItem({ id, name, unread, teamUp }: { id: string; name: string; unread?: number; teamUp?: boolean }): ReactNode {
   const active = useStore((s) => s.view?.kind === 'conversation' && s.view.id === id)
   const working = useStore((s) => isWorking(s, id))
   const waiting = useWaitingTitle(id)
   return (
     <button className={`nav-item ${active ? 'is-active' : ''} ${unread ? 'is-unread' : ''}`} onClick={() => navigate({ kind: 'conversation', id })}>
-      <Icon name="hash" />
+      {teamUp ? <span title={L('Equipe montada por um agente', 'A team an agent put together')}><Icon name="users" /></span> : <Icon name="hash" />}
       <span className="nav-item__label">{name}</span>
       {waiting ? <WaitingMark title={waiting} /> : <LiveDot working={working} />}
       {unread ? <span key={unread} className="badge badge--soft">{unread}</span> : null}
