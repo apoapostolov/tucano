@@ -278,31 +278,31 @@ const MEMORY_MODES = (): { value: MemoryMode; label: string; hint: string }[] =>
 const CLOCK_CHOICES = (chosen: '24' | '12' | undefined): { value: '24' | '12'; label: string; hint: string; on: boolean }[] => {
   const inForce = chosen ?? (lang() === 'en' ? '12' : '24')
   return [
-    { value: '24', label: '24 h', hint: L('15:05, do jeito que sempre foi.', '15:05, the way it always was.'), on: inForce === '24' },
-    { value: '12', label: '12 h', hint: L('3:05 PM, com AM e PM.', '3:05 PM, with am and pm.'), on: inForce === '12' }
+    { value: '24', label: '24 h', hint: L('15:05, do jeito que sempre foi.', "24-hour time, e.g. 15:05."), on: inForce === '24' },
+    { value: '12', label: '12 h', hint: L('3:05 PM, com AM e PM.', "12-hour time, e.g. 3:05 PM."), on: inForce === '12' }
   ]
 }
 // How tall the reasoning preview is before it scrolls, chosen in Settings › The conversation. Written
 // as a function because `L()` reads the language when it is called: a table built at import is written
 // before the app knows which language it speaks, so it kept the Portuguese labels in an English window.
 export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
-  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines, the rest scrolling.') },
-  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines, the rest scrolling.') },
-  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines, the rest scrolling.') }
+  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', "6 lines before scrolling.") },
+  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', "12 lines before scrolling.") },
+  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', "18 lines before scrolling.") }
 ]
 // How a reply's steps read, in the order they go from "everything" to "nothing": the labels carry
 // the number the person chose, since that is what "the latest few" means on this computer.
 const STEPS_CHOICES = (keep: number): { value: StepsMode; label: string; hint: string }[] => [
-  { value: 'all', label: L('Todos', 'All steps'), hint: L('Cada passo, do jeito que sempre foi.', 'Every step, the way it always was.') },
+  { value: 'all', label: L('Todos', 'All steps'), hint: L('Cada passo, do jeito que sempre foi.', "Show every step.") },
   {
     value: 'latest',
     label: L(`Últimos ${keep}`, `Last ${keep}`),
-    hint: L('A resposta mostra só os mais novos, numa janela que rola sozinha; os mais antigos somem no topo, desbotando.', 'A reply shows only the newest, in a window that scrolls itself; the oldest fade out at the top.')
+    hint: L('A resposta mostra só os mais novos, numa janela que rola sozinha; os mais antigos somem no topo, desbotando.', "Show recent steps in an auto-scrolling panel. Older steps fade out.")
   },
   {
     value: 'one-line',
     label: L('Uma linha', 'One line'),
-    hint: L('Uma linha com o passo atual e seu alvo. Clique para abrir os detalhes. Bom pra canal cheio, com vários agentes ao mesmo tempo.', 'One line with the current step and its target. Click to open the details. Good for a busy channel with several agents at once.')
+    hint: L('Uma linha com o passo atual e seu alvo. Clique para abrir os detalhes. Bom pra canal cheio, com vários agentes ao mesmo tempo.', "Show the current step and target on one line. Click to expand.")
   }
 ]
 
@@ -732,7 +732,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               title={L('Passos na resposta', 'Steps in a reply')}
               lead={`${L(
                 'Como as respostas deste agente mostram os passos: todos, só os últimos, ou uma linha com a atividade atual. O padrão é a configuração do app.',
-                'How this agent’s replies show their steps: all of them, only the latest few, or one line with the current activity. The default is the app’s setting.'
+                "Show all steps, recent steps, or a single activity line. Default follows app settings."
               )}${isNew || !admin ? '' : L(' Muda na hora, sem precisar salvar.', " Applies immediately.")}`}
             >
               <StepsModePick
@@ -2956,7 +2956,7 @@ export function ClassifiersCard(): ReactNode {
     <>
       {list.length === 0 && (
         <p className="muted small">
-          {L('Nenhum classificador ainda. Adicione um e escolha, abaixo, o que ele responde: quem fala no canal, quem escuta entra, a opção sugerida, os próximos passos, qual modelo responde, o que o agente clica.', 'No classifier yet. Add one and choose, below, what it answers: who speaks in a channel, which listener joins, the suggested option, the next steps, which model answers, what an agent clicks.')}
+          {L('Nenhum classificador ainda. Adicione um e escolha, abaixo, o que ele responde: quem fala no canal, quem escuta entra, a opção sugerida, os próximos passos, qual modelo responde, o que o agente clica.', "Add a classifier, then assign it to tasks below.")}
         </p>
       )}
       {list.map((c) => {
@@ -3025,10 +3025,10 @@ export function ClassifiersCard(): ReactNode {
           <Field label={L('Provedor', 'Provider')}>
             <Select value={provider} onChange={(v) => pickProvider(v as ClassifierProvider)} options={PROVIDERS.map((p) => ({ value: p.provider, label: p.label, hint: p.model }))} />
           </Field>
-          <Field label={L('Nome', 'Name')} hint={L('Como ele aparece nas escolhas abaixo.', 'How it reads in the choices below.')}>
+          <Field label={L('Nome', 'Name')} hint={L('Como ele aparece nas escolhas abaixo.', "Display name in task assignments.")}>
             <input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
-          <Field label={L('Modelo', 'Model')} hint={L('O par de modelos que responde. Fixar a versão mantém as probabilidades que você já calibrou.', 'The model pair that answers. Pinning a version keeps the probabilities you already tuned.')}>
+          <Field label={L('Modelo', 'Model')} hint={L('O par de modelos que responde. Fixar a versão mantém as probabilidades que você já calibrou.', "Model pair used for decisions. Pin a version to preserve your calibration.")}>
             <input value={model} onChange={(e) => setModel(e.target.value)} />
           </Field>
           <div className="row">
@@ -3051,7 +3051,7 @@ export function ClassifiersCard(): ReactNode {
 
       {list.length > 0 && (
         <>
-          <h3 className="h3">{L('Onde cada um é usado', 'Where each one is used')}</h3>
+          <h3 className="h3">{L('Onde cada um é usado', "Task assignments")}</h3>
           {CLASSIFIER_JOBS.map((job) => (
             <Field key={job} label={jobLabel(job)[lang()]} hint={jobAbout(job)[lang()]}>
               <Select
@@ -3100,7 +3100,7 @@ export function ClassifiersCard(): ReactNode {
       {!jobs.routing && (
         <Field
           label={L('Modelo do roteador', 'Router model')}
-          hint={L('Sem classificador em “Quem responde no canal”, é este modelo pequeno que lê cada mensagem e decide quem responde. Prefira um rápido: ele roda antes de cada resposta num canal.', 'With no classifier on “Who replies in a channel”, this small model reads each message and decides who replies. Go for a fast one: it runs before every reply in a channel.')}
+          hint={L('Sem classificador em “Quem responde no canal”, é este modelo pequeno que lê cada mensagem e decide quem responde. Prefira um rápido: ele roda antes de cada resposta num canal.', "Choose a fast fallback model for channel replies when no classifier is assigned.")}
         >
           <ModelSelect value={settings.routerModel} onChange={(routerModel) => updateSettings({ routerModel })} />
         </Field>
@@ -3363,7 +3363,7 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <div className="grow">
                 <strong>{L('Retomar respostas interrompidas', 'Resume interrupted replies')}</strong>
-                <p className="muted small">{L('Continue o trabalho que estava em andamento quando o Tucano fechou ou travou. Respostas paradas por você continuam paradas. Se os agentes estiverem pausados, o trabalho espera você retomar.', 'Continue work that was running when Tucano quit or crashed. Replies you stopped stay stopped. If agents are paused, work waits until you resume them.')}</p>
+                <p className="muted small">{L('Continue o trabalho que estava em andamento quando o Tucano fechou ou travou. Respostas paradas por você continuam paradas. Se os agentes estiverem pausados, o trabalho espera você retomar.', "Resume work after a quit or crash, unless you stopped it. Paused agents wait until resumed.")}</p>
               </div>
               <Toggle on={settings.resumeInterrupted !== false} onChange={(v) => updateSettings({ resumeInterrupted: v })} />
             </div>
@@ -3387,15 +3387,15 @@ export function SettingsPage(): ReactNode {
         )}
 
         {pane('geral') && (
-          <Card title={L('A conversa', 'The conversation')}>
+          <Card title={L('A conversa', "Conversation")}>
             <div className="key-row">
               <Icon name="spark" />
               <div className="grow">
-                <strong>{L('O que o modelo pensa', 'What the model is thinking')}</strong>
+                <strong>{L('O que o modelo pensa', "Show reasoning")}</strong>
                 <p className="muted small">
                   {L(
                     'Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio.',
-                    'While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.'
+                    "Show reasoning below the steps, including after completion. Available for Pi agents only."
                   )}
                 </p>
               </div>
@@ -3404,15 +3404,15 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <Icon name="steps" />
               <div className="grow">
-                <strong>{L('O tamanho do raciocínio', 'How much of the reasoning shows')}</strong>
+                <strong>{L('O tamanho do raciocínio', "Reasoning panel height")}</strong>
                 <p className="muted small">
                   {L(
                     'Quanto do raciocínio aparece antes de começar a rolar: umas duas linhas quando ele é só um aviso, ou quase a janela toda quando é ele que você está lendo.',
-                    'How much of the reasoning shows before it starts scrolling: a couple of lines when it is only a hint, or most of the window when the reasoning is what you are reading.'
+                    "Visible reasoning before the panel scrolls."
                   )}
                 </p>
               </div>
-              <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', 'How much reasoning shows')}>
+              <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', "Reasoning panel height")}>
                 {THINKING_SIZES().map((c) => (
                   <button
                     key={c.value}
@@ -3431,15 +3431,15 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <Icon name="clock" />
               <div className="grow">
-                <strong>{L('Relógio', 'Clock')}</strong>
+                <strong>{L('Relógio', "Time format")}</strong>
                 <p className="muted small">
                   {L(
                     'Como os horários aparecem: 15:05 no relógio de 24 horas, ou 3:05 PM no de 12. Vale pra conversa, pras rotinas e pro que os agentes leem.',
-                    'How times read: 15:05 on a 24-hour clock, or 3:05 PM on a 12-hour one. It covers the conversation, the routines, and what agents read.'
+                    "Use 24-hour (15:05) or 12-hour (3:05 PM) time in chats, routines, and agent context."
                   )}
                 </p>
               </div>
-              <div className="segmented" role="radiogroup" aria-label={L('Relógio', 'Clock')}>
+              <div className="segmented" role="radiogroup" aria-label={L('Relógio', "Time format")}>
                 {CLOCK_CHOICES(settings.clock).map((c) => (
                   <button
                     key={c.value}
@@ -3463,16 +3463,16 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <Icon name="ask" />
               <div className="grow">
-                <strong>{L('Esconder Perguntas quando não há nenhuma', 'Hide Asks when there are none')}</strong>
-                <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', 'The Asks entry leaves the sidebar while no agent is asking you anything, and comes back with the first question. Off, it is always there.')}</p>
+                <strong>{L('Esconder Perguntas quando não há nenhuma', "Hide empty Asks")}</strong>
+                <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', "Show Asks only when an agent has a question for you.")}</p>
               </div>
               <Toggle on={settings.hideEmptyAsks === true} onChange={(v) => updateSettings({ hideEmptyAsks: v })} />
             </div>
             <div className="key-row">
               <Icon name="shield" />
               <div className="grow">
-                <strong>{L('Esconder Aprovações quando não há nenhuma', 'Hide Approvals when there are none')}</strong>
-                <p className="muted small">{L(team ? 'A entrada Pra você sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação ou pergunta. Desligado, ela fica sempre lá.' : 'A entrada Aprovações sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação. Desligado, ela fica sempre lá.', team ? 'The For you entry leaves the sidebar while nothing waits on you, and comes back with the first approval or question. Off, it is always there.' : 'The Approvals entry leaves the sidebar while nothing waits on you, and comes back with the first approval. Off, it is always there.')}</p>
+                <strong>{L('Esconder Aprovações quando não há nenhuma', "Hide empty Approvals")}</strong>
+                <p className="muted small">{L(team ? 'A entrada Pra você sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação ou pergunta. Desligado, ela fica sempre lá.' : 'A entrada Aprovações sai da barra lateral enquanto nada espera por você, e volta na primeira aprovação. Desligado, ela fica sempre lá.', team ? "Show For you only when a question or approval needs you." : "Show Approvals only when an action needs your approval.")}</p>
               </div>
               <Toggle on={settings.hideEmptyApprovals === true} onChange={(v) => updateSettings({ hideEmptyApprovals: v })} />
             </div>
@@ -3481,22 +3481,22 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <Icon name="menu" />
               <div className="grow">
-                <strong>{L('Os passos da resposta', 'A reply’s steps')}</strong>
+                <strong>{L('Os passos da resposta', "Reply steps")}</strong>
                 <p className="muted small">{STEPS_CHOICES(stepsKeep(settings.stepsLatest)).find((c) => c.value === (settings.steps ?? 'all'))!.hint}</p>
                 <StepsModePick
                   value={settings.steps ?? 'all'}
                   keep={stepsKeep(settings.stepsLatest)}
-                  label={L('Como a resposta mostra os passos', 'How a reply shows its steps')}
+                  label={L('Como a resposta mostra os passos', "Step display")}
                   onChange={(v) => updateSettings({ steps: v ?? 'all' })}
                 />
                 {settings.steps === 'latest' && (
                   <label className="row row--center steps-keep">
-                    <span className="muted small">{L('Quantos passos mostrar', 'How many steps to show')}</span>
+                    <span className="muted small">{L('Quantos passos mostrar', "Visible steps")}</span>
                     <NumberInput
                       min={STEPS_LATEST_MIN}
                       max={STEPS_LATEST_MAX}
                       value={stepsKeep(settings.stepsLatest)}
-                      aria-label={L('Quantos passos mostrar na janela', 'How many steps the window shows')}
+                      aria-label={L('Quantos passos mostrar na janela', "Number of visible steps")}
                       onChange={(n) => updateSettings({ stepsLatest: stepsKeep(n) })}
                     />
                   </label>
@@ -3548,7 +3548,7 @@ export function SettingsPage(): ReactNode {
             title="Classifiers"
             lead={L(
               'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, quem escuta entra, a opção sugerida numa pergunta, quais próximos passos fazer, qual modelo responde, o que o agente clica numa página.',
-              'Models that answer closed questions — one option out of several, a yes/no, a score — in under a second and with each answer’s probability. TypeSafe’s Jev was the first; OpenAI’s Luna and Google’s Decision 1 do the same job, and Jev is also sold through OpenRouter. Each one serves a job: who replies in a channel, which listener joins, the option suggested on a question, which next steps are worth doing, which model answers, what an agent clicks in a page.'
+              "Fast models for routing, suggestions, and browser controls. Assign a provider to each task below."
             )}
           >
             <ClassifiersCard />
@@ -3577,33 +3577,33 @@ export function SettingsPage(): ReactNode {
                 <strong>{browserClassifier ? classifierLabel(browserClassifier) : L('Só pelo texto da página', "Page text only")}</strong>
                 <p className="muted small">
                   {browserClassifier
-                    ? L('Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.', 'Finds the element in under 1 second, even without text when the classifier reads the screenshot. Every click text can’t resolve sends the page’s element list, and sometimes its screenshot, to the chosen provider, including signed-in areas.')
-                    : L('De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.', 'Free, and it handles most cases: the agent uses the text and, when it can’t find it, the element’s number.')}
+                    ? L('Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.', "When text matching fails, the provider receives page elements and may receive screenshots, including signed-in content.")
+                    : L('De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.', "Match page text for free; use element numbers when no match is found.")}
                 </p>
               </div>
             </div>
             <p className="hint">
-              <Icon name="sliders" size={13} /> {L('Quem acha o clique é escolhido em Classifiers, no trabalho “O que o agente clica na página”.', 'Who finds the click is chosen in Classifiers, under “What an agent clicks in a page”.')}
+              <Icon name="sliders" size={13} /> {L('Quem acha o clique é escolhido em Classifiers, no trabalho “O que o agente clica na página”.', "Choose a provider in Classifiers › Browser controls.")}
             </p>
           </Card>
         )}
 
         {pane('agentes') && (
           <Card
-            title={L('As perguntas dos agentes', 'The agents’ questions')}
+            title={L('As perguntas dos agentes', "Agent suggestions")}
             lead={L(
               'Um classificador lê a pergunta fechada de um agente — qual opção escolher, qual passo fazer agora — e responde em menos de um segundo com a probabilidade de cada opção. Quem responde cada um dos dois trabalhos é escolhido em Classifiers.',
-              'A classifier reads an agent’s closed question — which option to pick, which step to do now — and answers in under a second with each option’s probability. Which one serves each of the two jobs is chosen in Classifiers.'
+              "Suggest answers and next steps using the providers assigned in Classifiers."
             )}
           >
             <div className="key-row">
               <Icon name="spark" />
               <div className="grow">
-                <strong>{L('Marcar a opção recomendada', 'Mark the recommended option')}</strong>
+                <strong>{L('Marcar a opção recomendada', "Suggest answers")}</strong>
                 <p className="muted small">
                   {L(
                     `Desligado por padrão. Ligado, cada pergunta de agente com duas ou mais opções vai pro ${recommendClassifier ? recommendClassifier.name : 'classificador deste trabalho'} com o texto e as opções, e volta com a sugestão. É só uma sugestão: quem escolhe continua sendo você, e "Outra coisa" nunca é sugerida.`,
-                    `Off by default. On, every agent question with two or more options goes to ${recommendClassifier ? recommendClassifier.name : 'this job’s classifier'} with its text and options, and comes back with a suggestion. It is only a suggestion: you still choose, and "Something else" is never suggested.`
+                    `Off by default. Send questions and options to ${recommendClassifier ? recommendClassifier.name : 'the classifier'} for suggestions. You choose; “Something else” is never suggested.`
                   )}
                 </p>
               </div>
@@ -3612,11 +3612,11 @@ export function SettingsPage(): ReactNode {
             <div className="key-row">
               <Icon name="spark" />
               <div className="grow">
-                <strong>{L('Marcar só os próximos passos que importam', 'Tick only the next steps worth doing')}</strong>
+                <strong>{L('Marcar só os próximos passos que importam', "Suggest next steps")}</strong>
                 <p className="muted small">
                   {L(
                     `Desligado por padrão. Ligado, cada passo de um card de próximos passos vai pro ${stepsClassifier ? stepsClassifier.name : 'classificador deste trabalho'} com o que o agente disse antes, e só os que ele consideraria pra agora começam marcados; o resto espera no card, a um clique. Nunca deixa a lista vazia: se nenhum for marcado, todos ficam.`,
-                    `Off by default. On, every step of a next-steps card goes to ${stepsClassifier ? stepsClassifier.name : 'this job’s classifier'} with what the agent said before it, and only the ones it would do now start ticked; the rest waits in the card, one click away. It never empties the list: if none is picked, all of them stay ticked.`
+                    `Send steps and reply context to ${stepsClassifier ? stepsClassifier.name : 'the classifier'} to check suggested tasks. Others stay available; if none is chosen, all stay checked. Off by default.`
                   )}
                 </p>
               </div>
@@ -3627,12 +3627,12 @@ export function SettingsPage(): ReactNode {
             )}
             {(settings.jevRecommend || settings.jevNextSteps) && (
               <p className="hint">
-                <Icon name="sliders" size={13} /> {L('Sem chave no classificador, as duas chaves acima não fazem nada: a pergunta fica sem selo e os passos começam todos marcados.', 'With no key on the classifier, the two switches above do nothing: the question shows no pill and every step starts ticked.')}
+                <Icon name="sliders" size={13} /> {L('Sem chave no classificador, as duas chaves acima não fazem nada: a pergunta fica sem selo e os passos começam todos marcados.', "A classifier key is required. Without it, answers are not suggested and all next steps stay checked.")}
               </p>
             )}
             {(settings.jevRecommend || settings.jevNextSteps) && (
               <p className="hint">
-                <Icon name="sliders" size={13} /> {L('Quem responde é escolhido em Classifiers: “A opção sugerida na pergunta” e “Quais próximos passos fazer”.', 'Who answers is chosen in Classifiers: “The option suggested on a question” and “Which next steps are worth doing”.')}
+                <Icon name="sliders" size={13} /> {L('Quem responde é escolhido em Classifiers: “A opção sugerida na pergunta” e “Quais próximos passos fazer”.', "Assign providers in Classifiers › Suggested answers and Suggested next steps.")}
               </p>
             )}
           </Card>
