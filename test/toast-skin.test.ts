@@ -55,6 +55,9 @@ const colors = `(() => {
   }
 })()`
 
+type Rgb = [number, number, number]
+type Read = { toast: Rgb; page: Rgb; ink: Rgb; contrast: number }
+
 it('draws a white toast in the light theme and a raised dark one in the dark theme', async () => {
   const browser = await launch()
   if (!browser) return
@@ -63,11 +66,11 @@ it('draws a white toast in the light theme and a raised dark one in the dark the
     await page.setContent(
       `<style>${css}</style><div class="toasts"><div class="toast"><span class="toast__text">Try again.</span></div></div>`
     )
-    const read = async (theme: string) => {
+    const read = async (theme: string): Promise<Read> => {
       await page.evaluate((value) => {
         document.documentElement.dataset.theme = value
       }, theme)
-      return page.evaluate(colors)
+      return (await page.evaluate(colors)) as Read
     }
 
     const dark = await read('dark')
