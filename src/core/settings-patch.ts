@@ -29,6 +29,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   wikiReview: { kind: ['weekly', 'off'], max: 20, nullable: true },
   wikiResolve: { kind: 'boolean', max: 10, nullable: true },
   wikiResolveModel: { kind: 'string', max: 200, nullable: true },
+  wikiResolveBot: { kind: 'string', max: 80, nullable: true },
   wikiDir: { kind: 'string', max: 4_096, nullable: true },
   defaultLimit: { kind: 'number', max: 30 },
   approvalTtlHours: { kind: 'number', max: 30 },
