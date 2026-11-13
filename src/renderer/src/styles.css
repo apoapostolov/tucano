@@ -3905,10 +3905,14 @@ body.is-resizing webview {
 .msg__reply:focus-visible {
   opacity: 1;
 }
-/* Back to the prompt this reply answers, right under the thread button: only on a reply that
-   something came in between, so the two glyphs never fight for the same corner. */
+/* Back to the prompt this reply answers, a row under the trash: only on a reply that something came in
+   between, so the two glyphs never fight for the same corner. */
 .msg__reply--up {
-  top: 28px;
+  top: 52px;
+}
+/* In the pinned corner the glyphs share the pin's own origin: thread 4, trash 28, the way back 52. */
+.msg__anchor-pin .msg__reply--up {
+  top: 52px;
 }
 @media (hover: none) {
   .msg__reply {
@@ -3935,10 +3939,16 @@ body.is-resizing webview {
   background: var(--danger-soft);
 }
 /* On a reply with a thread, the corner belongs to the pinned thread button: the trash goes in that
-   same column, a row under the prompt jump, so the two never overlap and neither swallows a press. */
+   same column, 24 px under it as it sits on a short reply, and the prompt jump drops a row below. */
 .msg__anchor-pin .msg__delete {
-  top: 52px;
+  top: 28px;
   right: -24px;
+}
+/* The same trash in the thread's own header, beside the summary and close buttons: in the row, always
+   visible, and armed by the same two presses. */
+.msg__delete--head {
+  position: static;
+  opacity: 1;
 }
 .msg:hover .msg__delete,
 .msg__delete:focus-visible {
