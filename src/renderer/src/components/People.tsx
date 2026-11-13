@@ -569,6 +569,7 @@ const KINDS = (): [string, string][] => [
   ['skill', 'Skills'],
   ['routine', L('Rotinas', 'Routines')],
   ['channel', L('Canais', 'Channels')],
+  ['history', L('Histórico', 'History')],
   ['proposal', L('Propostas', 'Proposals')]
 ]
 
@@ -631,6 +632,12 @@ export function activityText(e: ActivityEntry, s: Pick<State, 'people' | 'agents
             `rebuilt the Tucano's file (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
           )
         : L('reescreveu o arquivo do Tucano', "rebuilt the Tucano's file")
+    case 'history.wiped':
+      return typeof d['agent'] === 'string'
+        ? L(`apagou o histórico de ${String(d['agent'])}`, `deleted ${String(d['agent'])}’s history`)
+        : L('apagou o histórico de todos os bots', 'deleted every bot’s history')
+    case 'history.swept':
+      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `history past its period went (${Number(d['messages'] ?? 0)} messages)`)
   }
   const [thing, verb] = e.kind.split('.')
   const noun = ({ agent: L('o agente', 'agent'), connector: L('o conector', 'connector'), skill: L('a skill', 'skill'), routine: L('a rotina', 'routine'), channel: L('o canal', 'channel') } as Record<string, string>)[thing ?? ''] ?? thing
