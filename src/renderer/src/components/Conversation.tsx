@@ -391,19 +391,40 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // Back to the prompt a reply answers, from that reply's own row: its first line at the top of the
   // list, and lit for a moment so it's clear where the jump landed. `held` keeps the list from
   // snapping back to the end while the jump lands (a scroll that ends near the bottom re-sticks).
+  // The prompt may not be in front of us — still further back than what's loaded, or gone with a
+  // session deleted from under it. A press then still goes somewhere real: the top of the session,
+  // and the page before is asked for so the prompt turns up under the press if it still exists.
   const held = useRef(0)
+  const [pendingJump, setPendingJump] = useState<string | null>(null)
   const jump = useMemo(
     () => (id: string) => {
       const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(id)}"]`)
-      if (!el) return
       stick.current = false
       held.current = Date.now() + 1200
+      if (!el) {
+        ref.current?.scrollTo({ top: 0 })
+        setPendingJump(id)
+        if (older && cut === 0) void loadOlder(conversationId, id)
+        return
+      }
       el.scrollIntoView({ block: 'start' })
       el.classList.add('is-flash')
       setTimeout(() => el.classList.remove('is-flash'), 1800)
     },
-    []
+    [conversationId, older, cut]
   )
+  // The page before came in and with it the prompt: land on it now, and let the press be done.
+  useEffect(() => {
+    if (!pendingJump) return
+    const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(pendingJump)}"]`)
+    if (!el) return
+    setPendingJump(null)
+    stick.current = false
+    held.current = Date.now() + 1200
+    el.scrollIntoView({ block: 'start' })
+    el.classList.add('is-flash')
+    setTimeout(() => el.classList.remove('is-flash'), 1800)
+  }, [pendingJump, first])
   // Too little to scroll: the page before comes without waiting for a scroll (once per page, so a
   // failure doesn't ask again and again).
   const tried = useRef<string | undefined>(undefined)
@@ -571,6 +592,18 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           ))}
       </div>
       <div className="msg__body">
+        {/* The corner rides the message, not just its steps: a reply taller than the screen keeps its
+            thread button, its trash and the way back to the prompt at the top of the rail for as long as
+            any of the reply is on screen, and they leave with its last line. It starts at the body's own
+            top, before the head, so the rail has the whole message to travel down. The thread button
+            takes the first place; the trash and the way back follow it, or take the place themselves
+            when nothing is threaded. Without a run there is nothing to ride, and the corner stays in
+            ThreadLink. */}
+        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+          {replies ? <ThreadButton message={message} /> : null}
+          {agent && <DeleteSession message={message} />}
+          {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
+        </div> : null}
         {!grouped && (
           <div className="msg__head">
             {agent ? (
@@ -589,21 +622,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           </div>
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
-        {/* Every run keeps its corner on the rail: a run taller than the screen scrolls its buttons away,
-            so they ride the top of it here and leave with its last line. The thread button takes the first
-            place; the trash and the way back to the prompt follow it, or take the place themselves when
-            nothing is threaded. Without a run there is nothing to ride, and the corner stays in
-            ThreadLink. */}
-        {message.run ? (
-          <div className="msg__anchor">
-            <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
-              {replies ? <ThreadButton message={message} /> : null}
-              {agent && <DeleteSession message={message} />}
-              {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
-            </div>
-            <RunSteps message={message} />
-          </div>
-        ) : null}
+        {message.run ? <RunSteps message={message} /> : null}
         {text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
@@ -798,6 +817,9 @@ function RoutineMessage({ message, replies }: { message: Message; replies?: Mess
         <div className="md">
           <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(message.text)}</MessageMarkdown>
         </div>
+        {/* The post can go from here: two presses, the same as a session's trash. The routine keeps
+            its slot and posts again next time; only this one lands out of the room. */}
+        <DeleteSession message={message} where="post" />
         {replies && <ThreadLink message={message} replies={replies} />}
       </div>
     </article>
@@ -865,10 +887,22 @@ const ARM_MS = 4000
 // it first, and the words it had written go with it, so the glyph says so.
 // `where`: at the corner of a reply ('corner'), or in the thread's own header ('head'), where it sits
 // in the row beside the summary and close buttons and the panel closes with the session it deleted.
-export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' }): ReactNode {
+export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' }): ReactNode {
   const head = where === 'head'
+  const post = where === 'post'
+  // A routine's post is not a session: nothing ran under it, and the routine goes on posting after
+  // it is gone. It says so, so the press reads as removing the post rather than ending an agent's work.
+  const routine = post || message.author.kind === 'routine'
+  // Stopping is part of it only when something is running under the row, so the wording says so.
+  const at = message.run?.status === 'working'
+  const label = routine ? L('Apagar esta publicação', 'Delete this post') : L('Apagar esta sessão', 'Delete this session')
+  const armedLabel = at
+    ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+    : routine
+      ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
+      : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+  const confirmLabel = routine ? L('Confirmar: apagar a publicação', 'Confirm: delete the post') : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
   const [armed, setArmed] = useState(false)
-  const at = message.run?.status === 'working' // stopping is part of it, so say so before the second press
   useEffect(() => {
     if (!armed) return
     const timer = setTimeout(() => setArmed(false), ARM_MS)
@@ -897,15 +931,9 @@ export function DeleteSession({ message, where = 'corner' }: { message: Message;
   }
   return (
     <button
-      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${armed ? 'is-armed' : ''}`}
-      title={
-        armed
-          ? at
-            ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
-            : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
-          : L('Apagar esta sessão', 'Delete this session')
-      }
-      aria-label={armed ? L('Confirmar: apagar a sessão', 'Confirm: delete the session') : L('Apagar esta sessão', 'Delete this session')}
+      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${armed ? 'is-armed' : ''}`}
+      title={armed ? armedLabel : label}
+      aria-label={armed ? confirmLabel : label}
       aria-pressed={armed}
       onClick={press}
     >
