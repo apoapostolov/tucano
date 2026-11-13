@@ -142,3 +142,7 @@ This supplements the upstream-main proposal for controls supplied by open featur
 ## Resolver model layout
 
 The expanded resolver with a custom model leaves only 55.5 px for its 34-character fallback hint, producing five lines and overflowing controls. Put the model picker below the label and hint, let its selects flex inside the available width, and retain the reset button. This change belongs on the existing resolver PR #268. The two-line target is checked with the custom model selected as well as with defaults.
+
+## Installed font check
+
+The installed Electron renderer at Windows display scaling wraps the resolver-assignment hint more than the headless browser did. Replace “Use the built-in resolver with the model below, or an agent’s own instructions, model, and effort.” with “An agent uses its own instructions, model, and effort.” The separate Resolver model field already explains the built-in choice. Verify this hint's rendered line count in the installed app as well as its screenshot.

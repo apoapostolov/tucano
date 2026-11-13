@@ -1129,7 +1129,7 @@ export function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData
                 <small>
                   {L(
                     'O do app lê no modelo escolhido abaixo. Um bot traz as instruções dele, feitas pra esse trabalho, e o modelo e o esforço dele.',
-                    "Use the built-in resolver with the model below, or an agent’s own instructions, model, and effort."
+                    "An agent uses its own instructions, model, and effort."
                   )}
                 </small>
               </span>
