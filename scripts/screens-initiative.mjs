@@ -105,6 +105,9 @@ try {
   const brief = window.locator('.initiative textarea').first()
   await brief.fill('Watch whether the client answered about the invoice, and tell me what changed.')
   await window.locator('.initiative').getByRole('button', { name: /^Salvar$|^Save$/ }).click()
+  // A window nobody had saved opens with the switch off, so the brief is written before it is turned on:
+  // the switch is the state, and it refuses to go up with nothing to look after.
+  await window.locator('.initiative').getByRole('switch').click()
   await window.locator('.initiative__state').filter({ hasText: /Próxima conferida|Next check-in/ }).waitFor()
   await capture('04-window-saved')
 
