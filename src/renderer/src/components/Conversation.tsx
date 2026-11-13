@@ -1984,13 +1984,31 @@ export function Thought({ message, working }: { message: Message; working: boole
 function StepRow({ step, dim = 0 }: { step: Step; dim?: number }): ReactNode {
   const [whole, setWhole] = useState(false)
   const [allInput, setAllInput] = useState(false)
-  // A steer, or a follow up, in the chain isn't a tool call: it's what the person wrote — while the
-  // reply ran, or to make it go on — and it reads as their words under what it changed.
-  if (step.kind === 'steer' || step.kind === 'followup')
+  // A steer is not a prompt and not a tool: it is the person's direction for this reply, handed over
+  // between two calls. In the chain it reads as a call of its own — the row a call gets — and what it
+  // carries is their words, whole, two lines at a time and all of it on a click (runs.ts, `steerIn`).
+  if (step.kind === 'steer')
     return (
-      <li className={`step step--${step.kind}`}>
+      <li className={`step step--steer step--why step--${step.status}${dim > 0 ? ' step--fading' : ''}`} style={dim > 0 ? { opacity: dim } : undefined}>
         <span className="step__icon">
-          <Icon name={step.kind === 'steer' ? 'pointer' : 'down'} size={12} />
+          {step.status === 'running' ? <span className="spinner" /> : <Icon name={step.status === 'error' ? 'x' : 'pointer'} size={12} />}
+        </span>
+        <span className="step__label">{step.label}</span>
+        {step.input && (
+          <code className={`step__input${allInput ? ' is-whole' : ''}`} title={allInput ? undefined : L('Ver tudo', 'See all')} onClick={() => setAllInput(!allInput)}>
+            <span className="step__clamp">{step.input}</span>
+          </code>
+        )}
+        {step.error && <span className="step__output">{step.error}</span>}
+      </li>
+    )
+  // A follow up is the instruction a finished reply goes on with: still the person's words, still not
+  // a call — it has no argument of its own to open, so it keeps the row it had.
+  if (step.kind === 'followup')
+    return (
+      <li className={`step step--followup`}>
+        <span className="step__icon">
+          <Icon name="down" size={12} />
         </span>
         <span className="step__label">{step.label}</span>
         {step.detail && <span className="step__said">{step.detail}</span>}

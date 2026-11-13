@@ -1623,14 +1623,21 @@ h3 {
   align-items: center;
   gap: 10px;
 }
-/* What the person steered, or asked it to go on with, in the chain: not a tool call, so it doesn't
-   wear a tool's colours. */
-.step--steer,
+/* What the person steered, in the chain: a call's own row, carrying their words whole. */
+.step--steer .step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+/* Their words, not a tool's arguments: the same row, in the font people read in. */
+.step--steer .step__input {
+  font-family: var(--font);
+  font-size: 12.5px;
+}
+/* A follow up, in the chain: the instruction a finished reply goes on with, not a tool call. */
 .step--followup {
   flex-wrap: wrap;
   row-gap: 2px;
 }
-.step--steer .step__icon,
 .step--followup .step__icon {
   background: var(--accent-soft);
   color: var(--accent);

@@ -170,7 +170,7 @@ describe('a prompt that arrives while a reply is running', () => {
     expect(other[0]?.run?.status).toBe('done') // d2 was left alone
   })
 
-  it('steer: with a reply running there, it starts no new one; the message is in the conversation', async () => {
+  it('steer: with a reply running there, it starts no new one, and nothing of it is posted', async () => {
     db.saveAgent(agent())
     db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
     const r = runnerWith(fakeEngine('claude', { delayMs: 15 }))
@@ -178,8 +178,10 @@ describe('a prompt that arrives while a reply is running', () => {
     await r.send('d1', 'mude de plano', [], undefined, undefined, { mode: 'steer' })
     await r.idle()
     expect(agentMessages()).toHaveLength(1) // no second reply: it went into the one running
-    expect(mine()).toHaveLength(2)
-    expect(mine()[1]?.text).toBe('mude de plano')
+    // A steer is not a prompt: no message of mine appears in the DM, and the reply's chain carries it.
+    expect(mine()).toHaveLength(1)
+    const row = db.message(agentMessages()[0]!.id)?.run?.steps.find((s) => s.kind === 'steer')
+    expect(row?.input).toBe('mude de plano')
   })
 })
 
@@ -274,9 +276,13 @@ describe('a queued prompt outlives a restart', () => {
 })
 
 describe('a steer reaches the agent between two tool calls', () => {
-  it('hands it over with the next tool result, and says so in a step', async () => {
-    // Two calls, with a pause between them: the person writes during the pause.
+  it('hands it over with the next tool result, as a row of the chain', async () => {
+    // Two calls, and the person writes in the gap between them. That gap is made of the run itself,
+    // not of a clock: the engine holds the second call until the steer's row is in the chain, so a
+    // slow machine hands it over with a call the test still knows (the first one is already done).
     const results: unknown[] = []
+    const between: string[] = []
+    const steered = (): boolean => db.messages().some((m) => m.run?.steps.some((s) => s.kind === 'steer'))
     const engine: Engine = {
       id: 'claude',
       async *run(turn: Turn) {
@@ -286,7 +292,8 @@ describe('a steer reaches the agent between two tool calls', () => {
           await client.connect(new StreamableHTTPClientTransport(new URL(turn.mcpUrl)))
           const list = (await client.listTools()).tools.map((t) => t.name).find((n) => n.endsWith('__list_tasks'))!
           results.push(await client.callTool({ name: list, arguments: {} }))
-          await new Promise((res) => setTimeout(res, 400))
+          between.push('waiting') // the first call is answered: this is the gap
+          for (let i = 0; i < 500 && !steered(); i++) await new Promise((res) => setTimeout(res, 10))
           results.push(await client.callTool({ name: list, arguments: {} }))
           await client.close()
           reply = 'vi as tarefas'
@@ -299,7 +306,8 @@ describe('a steer reaches the agent between two tool calls', () => {
     db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
     const r = runnerWith(engine)
     await r.send('d1', 'quais tarefas?')
-    await new Promise((res) => setTimeout(res, 150)) // inside the pause between the two calls
+    for (let i = 0; i < 500 && !between.length; i++) await new Promise((res) => setTimeout(res, 10))
+    expect(between).toHaveLength(1) // the run got to the gap, whatever the machine's speed
     await r.send('d1', 'mude de plano: só as abertas', [], undefined, undefined, { mode: 'steer' })
     await r.idle()
     expect(results).toHaveLength(2)
@@ -307,10 +315,42 @@ describe('a steer reaches the agent between two tool calls', () => {
     expect(allText(results[1])).toContain('mude de plano') // handed over at the second call
     expect(allText(results[1])).toContain('escreveu isto enquanto você trabalhava')
     const reply = agentMessages()[0]!
-    const steerStep = reply.run?.steps.find((s) => s.label === 'Recebeu o que você escreveu')
+    const steerStep = reply.run?.steps.find((s) => s.kind === 'steer')
     expect(steerStep).toBeDefined()
-    // In the chain it reads as a steer, not as a tool call, and it carries what the person wrote.
-    expect(steerStep?.kind).toBe('steer')
-    expect(steerStep?.detail).toContain('mude de plano: só as abertas')
+    // A row of its own in the chain, carrying what the person wrote, whole, and it is done: the call
+    // that came after it is where the reply read it.
+    expect(steerStep?.input).toBe('mude de plano: só as abertas')
+    expect(steerStep?.status).toBe('done')
+    expect(steerStep?.label).toBe('Orientação')
+    expect(reply.run?.steps.filter((s) => s.kind === 'steer')).toHaveLength(1)
+  })
+
+  it('is not a prompt when the reply ends before reading it: the row says so', async () => {
+    // An engine that says what each reply was told, so the test can say "this text never arrived".
+    const told: string[] = []
+    const base = fakeEngine('claude', { delayMs: 1 })
+    const engine: Engine = {
+      id: 'claude',
+      async *run(turn: Turn) {
+        told.push(turn.prompt)
+        yield* base.run(turn)
+      }
+    }
+    db.saveAgent(agent())
+    db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
+    const r = runnerWith(engine)
+    await r.send('d1', 'conte uma história, demore 1 s')
+    await new Promise((res) => setTimeout(res, 120)) // the reply is running, with no tool call ahead of it
+    await r.send('d1', 'mude de plano', [], undefined, undefined, { mode: 'steer' })
+    expect(mine()).toHaveLength(1) // not a message of mine
+    const working = agentMessages()[0]!
+    expect(working.run?.steps.find((s) => s.kind === 'steer')?.status).toBe('running')
+    await r.idle()
+    // The reply ended before its next call: no prompt, no second reply, and the row says it wasn't read.
+    expect(agentMessages()).toHaveLength(1)
+    const left = db.message(working.id)!.run!.steps.find((s) => s.kind === 'steer')!
+    expect(left.status).toBe('error')
+    expect(left.input).toBe('mude de plano')
+    expect(told).toHaveLength(1) // the agent never got it as a prompt of its own
   })
 })
