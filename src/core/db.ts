@@ -1,6 +1,6 @@
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { cleanRules, isAutonomy } from '../shared/actions'
-import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type NotifyMode } from '../shared/initiative'
+import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type InitiativeWake, type NotifyMode } from '../shared/initiative'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import { ALL_PARTS, GENERAL_SETTINGS, WORKSPACE_PARTS, type WorkspaceParts } from '../shared/workspaces'
@@ -573,6 +573,25 @@ export const MIGRATIONS = [
   );
   CREATE INDEX IF NOT EXISTS commitments_by_person ON commitments (person_id, state);
   CREATE INDEX IF NOT EXISTS commitments_by_check ON commitments (next_check_at) WHERE next_check_at IS NOT NULL;
+  `,
+  // Each check-in a coordinator ran (or was admitted for and then refused): when, under which
+  // revision, what came of it, what it said, and what it cost. This is the internal evidence: a quiet
+  // check-in leaves nothing in the conversation, and what a review did is still readable here.
+  `
+  CREATE TABLE IF NOT EXISTS initiative_wakes (
+    id TEXT PRIMARY KEY,
+    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+    agent_id TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    at INTEGER NOT NULL,
+    ended_at INTEGER,
+    outcome TEXT NOT NULL CHECK (outcome IN ('quiet', 'reported', 'failed', 'skipped', 'interrupted')),
+    why TEXT,
+    text TEXT,
+    tokens INTEGER NOT NULL DEFAULT 0,
+    message_id TEXT
+  );
+  CREATE INDEX IF NOT EXISTS wakes_by_person ON initiative_wakes (person_id, at);
   `
 ]
 
@@ -590,7 +609,11 @@ const COLUMNS: [string, string, string][] = [
   ['routines', 'date', 'TEXT'],
   ['routines', 'month_day', 'INTEGER'],
   // The agent an agent answers to (src/shared/org.ts); empty: no one.
-  ['agents', 'reports_to', 'TEXT']
+  ['agents', 'reports_to', 'TEXT'],
+  // A check-in stays out of the conversation while it works, and stays out of it for good when it
+  // finds nothing to say: the column keeps it out of what a page reads (the reply's wake record keeps
+  // what it did).
+  ['messages', 'hidden', 'INTEGER']
 ]
 
 
@@ -690,6 +713,7 @@ export class Db {
           DELETE FROM delegations;
           DELETE FROM activity;
           DELETE FROM commitments;
+          DELETE FROM initiative_wakes;
           UPDATE initiative SET enabled = 0, revision = revision + 1;
         `)
         target.keepOnly(parts)
@@ -1084,6 +1108,8 @@ export class Db {
   // (a desktop), or each person's.
   recordActivity(message: Message, viewing: string | null | Map<string, string | null>): boolean {
     if (message.author.kind !== 'agent' && message.author.kind !== 'routine') return false
+    // A check-in the person did not ask for never counts as something to read.
+    if (message.hidden) return false
     const phase = message.run?.status ?? 'message'
     if (phase !== 'message' && !['working', 'done', 'failed', 'limit_reached', 'waiting_input', 'waiting_approval'].includes(phase)) return false
     return this.tx(() => {
@@ -1114,6 +1140,7 @@ export class Db {
       text: str(r['text']),
       at: Number(r['at']),
       run: r['run'] ? (JSON.parse(str(r['run'])) as Run) : undefined,
+      ...(r['hidden'] === 1 ? { hidden: true } : {}),
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {})
@@ -1186,7 +1213,7 @@ export class Db {
   // still going wherever they started, and every routine's request with its reply (Routines draws what
   // ran), each with all its replies. `since`: per conversation with older ones left, from when it's whole.
   openingMessages(n: number): { messages: Message[]; since: Record<string, number> } {
-    const ranked = 'ranked AS (SELECT id, conversation_id, thread_id, at, ROW_NUMBER() OVER (PARTITION BY conversation_id, thread_id IS NULL ORDER BY at DESC) AS n FROM messages)'
+    const ranked = `ranked AS (SELECT id, conversation_id, thread_id, at, ROW_NUMBER() OVER (PARTITION BY conversation_id, thread_id IS NULL ORDER BY at DESC) AS n FROM messages WHERE hidden IS NULL)`
     const rows = this.db
       .prepare(
         `WITH ${ranked},
@@ -1211,16 +1238,16 @@ export class Db {
   messagesBefore(conversationId: string, before: number, n: number, from?: number): { messages: Message[]; since: number } {
     const page = (
       from === undefined
-        ? this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? ORDER BY at DESC LIMIT ?').all(conversationId, before, n)
-        : this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? AND at >= ? ORDER BY at DESC').all(conversationId, before, from)
+        ? this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? ORDER BY at DESC LIMIT ?').all(conversationId, before, n)
+        : this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? AND at >= ? ORDER BY at DESC').all(conversationId, before, from)
     ) as Row[]
     const oldest = page.length ? Number(page.at(-1)!['at']) : Math.min(before, from ?? before)
-    const more = !!this.db.prepare('SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? LIMIT 1').get(conversationId, oldest)
+    const more = !!this.db.prepare('SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND hidden IS NULL AND at < ? LIMIT 1').get(conversationId, oldest)
     const since = more ? oldest : 0
     if (!page.length) return { messages: [], since }
     const ids = JSON.stringify(page.map((r) => str(r['id'])))
     const rows = this.db
-      .prepare('SELECT * FROM messages WHERE conversation_id = ? AND (id IN (SELECT value FROM json_each(?)) OR thread_id IN (SELECT value FROM json_each(?))) ORDER BY at')
+      .prepare('SELECT * FROM messages WHERE conversation_id = ? AND hidden IS NULL AND (id IN (SELECT value FROM json_each(?)) OR thread_id IN (SELECT value FROM json_each(?))) ORDER BY at')
       .all(conversationId, ids, ids) as Row[]
     return { messages: rows.map((r) => this.toMessage(r)), since }
   }
@@ -1239,7 +1266,7 @@ export class Db {
 
   // Where the agent wrote last: while it works, the conversation of its reply.
   lastConversationOf(agentId: string): string | undefined {
-    const r = this.db.prepare("SELECT conversation_id FROM messages WHERE author_kind = 'agent' AND author_id = ? ORDER BY at DESC LIMIT 1").get(agentId) as Row | undefined
+    const r = this.db.prepare("SELECT conversation_id FROM messages WHERE author_kind = 'agent' AND author_id = ? AND hidden IS NULL ORDER BY at DESC LIMIT 1").get(agentId) as Row | undefined
     return r && str(r['conversation_id'])
   }
 
@@ -1251,8 +1278,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, hidden = excluded.hidden`
       )
       .run(
         m.id,
@@ -1263,7 +1290,8 @@ export class Db {
         m.at,
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
-        m.threadId ?? null
+        m.threadId ?? null,
+        m.hidden ? 1 : null
       )
   }
 
@@ -1832,6 +1860,49 @@ export class Db {
       )
   }
 
+  // What a reply cost, in counted tokens: the receipts it wrote.
+  tokensForMessage(messageId: string): number {
+    const r = this.db.prepare(`SELECT COALESCE(SUM(${COUNTED}), 0) AS n FROM receipts WHERE message_id = ?`).get(messageId) as Row | undefined
+    return Number(r?.['n'] ?? 0)
+  }
+
+  // ---------- a person's check-ins ----------
+
+  saveWake(w: InitiativeWake): void {
+    this.db
+      .prepare(
+        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET ended_at = excluded.ended_at, outcome = excluded.outcome, why = excluded.why,
+           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id`
+      )
+      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null)
+  }
+
+  // Newest first: what this person's coordinator did, and what it cost. `since`: only those after.
+  wakes(personId: string, opts: { since?: number; limit?: number } = {}): InitiativeWake[] {
+    const since = opts.since ?? 0
+    const limit = opts.limit ?? 50
+    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE person_id = ? AND at >= ? ORDER BY at DESC LIMIT ?').all(personId, since, limit) as Row[]).map((r) => ({
+      id: str(r['id']),
+      personId: str(r['person_id']),
+      agentId: str(r['agent_id']),
+      revision: Number(r['revision']),
+      at: Number(r['at']),
+      ...(r['ended_at'] == null ? {} : { endedAt: Number(r['ended_at']) }),
+      outcome: str(r['outcome']) as InitiativeWake['outcome'],
+      ...(r['why'] ? { why: str(r['why']) as InitiativeWake['why'] } : {}),
+      ...(r['text'] ? { text: str(r['text']) } : {}),
+      tokens: Number(r['tokens']),
+      ...(r['message_id'] ? { messageId: str(r['message_id']) } : {})
+    }))
+  }
+
+  // What is older than the record keeps: a month of check-ins is enough to see a rhythm.
+  pruneWakes(personId: string, before: number): void {
+    this.db.prepare('DELETE FROM initiative_wakes WHERE person_id = ? AND at < ?').run(personId, before)
+  }
+
   // ---------- skills ----------
 
   skills(): Skill[] {
@@ -2153,6 +2224,7 @@ export class Db {
       this.db.prepare('DELETE FROM routine_watchers WHERE person_id = ?').run(personId)
       // What they asked a bot to look after goes with the rest of their data.
       this.db.prepare('DELETE FROM commitments WHERE person_id = ?').run(personId)
+      this.db.prepare('DELETE FROM initiative_wakes WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM initiative WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM invites WHERE restore = ? AND used_at IS NULL').run(personId)
       this.db.prepare("UPDATE people SET purged_at = ?, prefs = '{}', about = '', delegate_to = NULL, delegate_until = NULL WHERE id = ? AND removed_at IS NOT NULL").run(now, personId)

@@ -12,7 +12,7 @@ import { L } from './lang'
 export const COMMITMENT_STATES = ['open', 'in_progress', 'waiting_external', 'waiting_user', 'done', 'dismissed'] as const
 export type CommitmentState = (typeof COMMITMENT_STATES)[number]
 const CLOSED: readonly CommitmentState[] = ['done', 'dismissed']
-const isClosed = (s: CommitmentState): boolean => CLOSED.includes(s)
+export const isClosed = (s: CommitmentState): boolean => CLOSED.includes(s)
 
 // Whether a person wants to be interrupted. Permission to run reviews is `enabled`, separately.
 // material: findings that matter now; decisions: only what waits on them; none: never interrupts.
@@ -104,6 +104,65 @@ export interface Commitment {
 export interface InitiativeView {
   config: InitiativeConfig | null // unset: this person has no coordinator, and nothing runs
   commitments: Commitment[]
+}
+
+// What a check-in came to. `quiet`: it found nothing that needs the person, and said nothing in the
+// conversation. `reported`: it said something they can read. `failed`: the reply did not finish
+// (`interrupted`: the app stopped with it running). `skipped`: it was admitted and then refused
+// before any work started (`why` says what changed).
+export const WAKE_OUTCOMES = ['quiet', 'reported', 'failed', 'skipped', 'interrupted'] as const
+export type WakeOutcome = (typeof WAKE_OUTCOMES)[number]
+
+// Why a check-in was admitted and did not run. The record keeps it, so a person can later read that
+// their bot was ready and what stopped it.
+export const WAKE_WHYS = ['paused', 'revision', 'agent', 'dm', 'off', 'error'] as const
+export type WakeWhy = (typeof WAKE_WHYS)[number]
+
+// One attempt, kept after the conversation forgot it: the internal evidence of what the coordinator
+// did on the person's behalf, and what it cost.
+export interface InitiativeWake {
+  id: string
+  personId: string
+  agentId: string
+  revision: number // the configuration it was admitted under
+  at: number
+  endedAt?: number
+  outcome: WakeOutcome
+  why?: WakeWhy
+  text?: string // what it said, for the person alone
+  tokens: number
+  messageId?: string
+}
+
+// The interval a person's coordinator waits before its next check-in: the brief's cadence, doubling
+// for each check-in in a row that found nothing, up to the ceiling.
+export const MAX_QUIET_BACKOFF = 8
+export const backoffMinutes = (cadenceMinutes: number, quietStreak: number): number =>
+  Math.min(MAX_CADENCE_MINUTES, cadenceMinutes * 2 ** Math.min(quietStreak, MAX_QUIET_BACKOFF))
+
+// When the day a daily allowance counts in began, in the person's own time zone (no zone: this
+// computer's day). Nothing here depends on the platform's zone, so a person who travels keeps the
+// day they wrote.
+export const dayStartIn = (timeZone: string, now: number): number => {
+  const local = new Date(now)
+  if (!timeZone) return new Date(local.getFullYear(), local.getMonth(), local.getDate()).getTime()
+  const offsetAt = (at: number): number => {
+    const parts = new Intl.DateTimeFormat('en', { timeZone, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(at))
+    const v = (type: string): number => Number(parts.find((p) => p.type === type)?.value ?? 0)
+    const asUtc = Date.UTC(v('year'), v('month') - 1, v('day'), v('hour') % 24, v('minute'), v('second'))
+    return asUtc - at
+  }
+  const offset = offsetAt(now)
+  const shifted = new Date(now + offset)
+  return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) - offset
+}
+
+// Whether a check-in's answer is the marker and nothing else. Anything written after it is a report,
+// and a report is never hidden: losing what the person should read is worse than a stray marker.
+export const QUIET_MARKER = '[[quiet]]'
+export const isQuiet = (text: string): boolean => {
+  const lines = text.trim().split('\n').map((l) => l.trim()).filter(Boolean)
+  return lines.length === 1 && (lines[0] ?? '').replace(/[*_`]/g, '').toLowerCase() === QUIET_MARKER
 }
 
 // The tuning defaults, not promises. Cadence doubles after quiet reviews up to MAX_CADENCE_MINUTES.

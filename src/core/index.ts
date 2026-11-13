@@ -73,6 +73,7 @@ import { loginEnv } from './mac'
 import { findLocalSkills } from './local-skills'
 import { Routines } from './routines'
 import { Initiative } from './initiative'
+import { Heartbeat } from './initiative-heartbeat'
 import { Runner } from './runs'
 import { agentFromDraft, availableModels, tucaAgent, tucaHello, tucaUpToDate } from './tuca'
 import { initializeWorkspace } from './seed'
@@ -975,6 +976,9 @@ const runner = new Runner({
   }
 })
 runner.setPaused(!!settings().paused)
+// The clock behind initiative: one check-in at a time per person, admitted only while it is on, not
+// paused, due, and inside that person's reviews and allowance. Nothing runs until someone turns it on.
+const heartbeat = new Heartbeat({ db, runner, settings, people: () => db.people() })
 // Installs from before the Tuca get him at the first start after the introduction.
 void enginesReady.then(() => {
   if (settings().onboarding?.done) ensureTuca()
@@ -1067,6 +1071,7 @@ void ready.then(async () => {
   for (const a of db.agents()) if (a.computer && !a.archived) void computers.refresh(a)
   await enginesReady
   routines.start()
+  heartbeat.start()
   // A Tucano that had more people (or an invite out) before the heritage existed gets it now.
   if (db.people({ removed: true }).length > 1 || db.invites().length) inherit()
 }).catch((e: unknown) => {
@@ -2488,6 +2493,7 @@ process.parentPort.on('message', (e) => {
 })
 
 process.on('exit', () => {
+  heartbeat.stop()
   for (const e of Object.values(engineImpls)) e.dispose?.() // the Claude Code processes kept open between replies
   db.close()
 })
