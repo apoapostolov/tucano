@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { L, locale } from '../shared/lang'
 import { monthlyCeiling } from '../shared/limits'
+import { restartTask } from './restart-recovery'
 import { friendly, toolLabel } from '../shared/errors'
 import type { CoreEvent } from '../shared/rpc'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
@@ -481,6 +482,7 @@ const bareModelFor = (engine: EngineId, model: string): string => {
 }
 
 export class Runner {
+  private retrying = new Set<string>()
   private queue: { job: () => Promise<unknown>; urgent: boolean }[] = []
   private active = 0
   private routing = 0
@@ -904,7 +906,34 @@ export class Runner {
     if (!agent || !conv) return
     const said = note?.trim()
     const task = said ? [msg.run.task, RETRY_NOTE(), said].filter(Boolean).join('\n\n') : undefined
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg, ...(task ? { task } : {}) }, { urgent: true })
+    this.restartReply(agent, conv, msg, task)
+  }
+
+  private restartReply(agent: Agent, conv: Conversation, msg: Message, task?: string, urgent = true): void {
+    if (this.retrying.has(msg.id)) return
+    this.retrying.add(msg.id)
+    void this.startReply(agent, conv, { depth: msg.run?.depth ?? 1, existing: msg, ...(task ? { task } : {}), work: msg.run?.work }, { urgent })
+      .finally(() => this.retrying.delete(msg.id))
+  }
+
+  // Recovery uses the scheduler even while paused; queued replies start only after unpausing.
+  async resumeInterrupted(): Promise<void> {
+    const { db } = this.deps
+    const enabled = (await this.deps.settings()).resumeInterrupted !== false
+    for (const msg of db.messagesWithRun(['interrupted'])) {
+      if (!msg.run?.restartPending) continue
+      if (!enabled) {
+        const { restartPending: _, ...run } = msg.run
+        db.saveMessage({ ...msg, run })
+        continue
+      }
+      if (msg.author.kind !== 'agent') continue
+      const agent = db.agent(msg.author.id)
+      const conv = db.conversation(msg.conversationId)
+      if (!agent || agent.archived || !conv || !conv.members.includes(agent.id)) continue
+      this.restartReply(agent, conv, msg, restartTask(msg), false)
+    }
+
   }
 
   // A finished reply goes on where it stopped, with an instruction. It isn't a message of its own and

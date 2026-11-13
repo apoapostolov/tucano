@@ -17,6 +17,7 @@ export const GENERAL_SETTINGS = [
   'runBudgetPct',
   'runStallMinutes',
   'chainDepth',
+  'resumeInterrupted',
   'teamUpDays',
   'actionRules',
   'autonomy',

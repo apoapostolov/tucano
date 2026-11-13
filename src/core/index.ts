@@ -1121,6 +1121,7 @@ void ready.then(async () => {
   returnChannelFolders()
   for (const a of db.agents()) if (a.computer && !a.archived) void computers.refresh(a)
   await enginesReady
+  await runner.resumeInterrupted()
   routines.start()
   // A prompt of mine that was still queued when the app closed goes now (runs.ts, resumeQueued).
   runner.resumeQueued()

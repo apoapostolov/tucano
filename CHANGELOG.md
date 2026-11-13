@@ -31,6 +31,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **An agent can close the wiki finding it was asked to settle.** The review's card handed a finding to an agent and the card left the list right then, so a bot that fixed the pages had nothing to mark and a bot that did not fix them left no trace either. A handed finding now stays, with a line saying which agent has it, and the agent has two tools for it: **wiki_avisos**, which lists the open findings with their ids, and **wiki_fechar**, which closes one once the pages are right and keeps a line of what changed. The request the agent receives names the finding's id and says the finding only leaves the list when it closes it. Closing a finding is a write, so it follows the agent's wiki level, and a finding that stays open keeps its id from one review to the next, so the id the agent was given still works when it gets there.
 
+- **A reply cut by a restart carries on by itself.** When Tucano quits or crashes while agents are working, the replies that were running are picked up again once the harnesses are detected: each goes on with its partial output and the steps it already completed, and tells the agent to check a tool's state before repeating it. A reply the person stopped stays stopped, a paused workspace waits until it is resumed, and the new switch under Settings › General, *On restart*, turns the whole thing off to leave interrupted replies for a manual retry. An older reply retried by hand also keeps its own original request now, however far the conversation has grown since and whether or not it was summarized.
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**
