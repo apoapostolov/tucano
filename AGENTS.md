@@ -245,6 +245,14 @@ The released app and `TucanoNext` remain independent:
 
 ## Worktrees, refs, and pushes
 
+Keep `C:/git-ext/tucano` on `next` for everyday fork work; use an isolated worktree for an
+upstream feature branch. Those branches may not track this fork's AGENTS.md, so switching the
+primary checkout can remove the instructions. If another task already has the primary checkout
+on a feature branch, preserve its work and consult `next:AGENTS.md` rather than silently changing
+its branch. Keep local instruction copies out of that feature's upstream diff. Before delivery,
+verify that the authoritative instructions and referenced guides are committed on `next` and
+present in the primary checkout; a copy left only in a disposable worktree is not delivered.
+
 Branches are cut in a worktree, and the hazards there destroy work or waste a cycle:
 
 - **A worktree does not get its own install unless you link one, and removing the worktree follows the
