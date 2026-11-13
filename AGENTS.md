@@ -355,9 +355,10 @@ installation alone are incomplete.
    ~~~
 
    A missing process before installation is harmless. Resolve other shutdown or installer errors.
-4. **Always launch and observe the installed app after installation.** Silent installation may
-   finish with no app running. Use an environment without scratch-only `TUCANO_DATA`,
-   `TUCANO_SEED`, or `TUCANO_FAKE_ENGINES` overrides and launch the installed executable:
+4. **Observe the installed app, and start it yourself when the helper's launch left no window.** A
+   silent installation finishes with no app running often enough that the window is the check, not
+   the install's exit code. Use an environment without scratch-only `TUCANO_DATA`, `TUCANO_SEED`, or
+   `TUCANO_FAKE_ENGINES` overrides and start the installed executable:
 
    ~~~powershell
    Start-Process -FilePath "$env:LOCALAPPDATA\Programs\tucanonext\TucanoNext.exe" -WindowStyle Hidden
