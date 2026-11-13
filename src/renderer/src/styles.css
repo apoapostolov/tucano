@@ -4024,11 +4024,20 @@ body.is-resizing webview {
   }
 }
 /* The prompt as a field, where it stands: the words, and the two ways out of them. */
+/* The field takes the width the prompt had, handed over when the pencil is pressed; the textarea fills
+   that box instead of falling back to its own twenty-column default. */
 .msg__edit-box {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin: 2px 0 4px;
+  max-width: 100%;
+}
+.msg__edit-box textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  min-height: 62px;
 }
 .msg__edit-actions {
   display: flex;
