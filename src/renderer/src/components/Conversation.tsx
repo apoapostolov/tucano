@@ -28,6 +28,7 @@ import { canEditChannel,
   personName,
   conversationTitle,
   lastBrowserIn,
+  getState,
   loadOlder,
   loadThread,
   messageById,
@@ -396,15 +397,39 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // and the page before is asked for so the prompt turns up under the press if it still exists.
   const held = useRef(0)
   const [pendingJump, setPendingJump] = useState<string | null>(null)
+  // The session's own start: page in what came before until the core has nothing older, then sit at
+  // the first message. A press on the way back with its prompt gone still lands somewhere true.
+  const toStart = async (id: string): Promise<void> => {
+    stick.current = false
+    held.current = Date.now() + 3000
+    for (let i = 0; i < 400; i++) {
+      if (!getState().history[conversationId]) break
+      await loadOlder(conversationId)
+    }
+    const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(id)}"]`)
+    stick.current = false
+    held.current = Date.now() + 1200
+    if (!el) {
+      ref.current?.scrollTo({ top: 0 })
+      return
+    }
+    // The prompt turned up in the pages that came in: land on it, which is where the session's own
+    // start runs into this reply's work.
+    setPendingJump(null)
+    el.scrollIntoView({ block: 'start' })
+    el.classList.add('is-flash')
+    setTimeout(() => el.classList.remove('is-flash'), 1800)
+  }
   const jump = useMemo(
     () => (id: string) => {
       const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(id)}"]`)
       stick.current = false
       held.current = Date.now() + 1200
       if (!el) {
-        ref.current?.scrollTo({ top: 0 })
+        // Not in front of us: the top of the session, not the top of what happens to be loaded. The
+        // pages before come in until there are none left, then the list sits at its first message.
         setPendingJump(id)
-        if (older && cut === 0) void loadOlder(conversationId, id)
+        void toStart(id)
         return
       }
       el.scrollIntoView({ block: 'start' })
