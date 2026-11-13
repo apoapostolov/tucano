@@ -3920,8 +3920,12 @@ body.is-resizing webview {
   top: 52px;
 }
 /* In the pinned corner the glyphs share the pin's own origin: thread 4, trash 28, the way back 52. */
+/* The way back sits beside the trash, one step to its left, not under it: a prompt that is a single
+   line has no height under the trash to put another glyph in, and a third row pushed every short reply
+   out of its own row. */
 .msg__anchor-pin .msg__reply--up {
-  top: 45px;
+  top: 21px;
+  right: -48px;
 }
 /* Nothing threaded, so nothing takes the first place: the trash starts the column and the way back
    keeps its 24 px under it. */
@@ -3929,7 +3933,8 @@ body.is-resizing webview {
   top: -3px;
 }
 .msg__anchor-pin--alone .msg__reply--up {
-  top: 21px;
+  top: -3px;
+  right: -48px;
 }
 @media (hover: none) {
   .msg__reply {
@@ -3972,6 +3977,40 @@ body.is-resizing webview {
 .msg__delete--post {
   top: 28px;
   right: 4px;
+}
+/* The pencil beside my own prompt: my messages are bubbles on the right with no face beside them, so it
+   takes the space on the left of the bubble, in line with its first line. Quiet until the row is
+   hovered, then it opens the words where they stand. */
+.msg__body {
+  position: relative;
+}
+.msg__edit {
+  position: absolute;
+  top: 6px;
+  left: -26px;
+  color: var(--text-3);
+  opacity: 0;
+  transition: var(--transition-ui);
+}
+.msg:hover .msg__edit,
+.msg__edit:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .msg__edit {
+    opacity: 1;
+  }
+}
+/* The prompt as a field, where it stands: the words, and the two ways out of them. */
+.msg__edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+.msg__edit-actions {
+  display: flex;
+  gap: 6px;
 }
 .msg:hover .msg__delete,
 .msg__delete:focus-visible {

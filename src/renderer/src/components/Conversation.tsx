@@ -582,6 +582,28 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   // A request written before what counts as finished left the conversation still carries that line: not shown.
   const text = message.run?.delegation?.rootId === message.id ? said.replace(/\n\n\*\*(Pronto quando|Done when):\*\* [^\n]*/, '') : said
 
+  // My own prompt can be picked up again: the pencil in the rail on its left opens the words where they
+  // stand, and sending posts the edited ask as a new prompt in the same place. What was sent before
+  // stays in the room, because a prompt already sent is what the reply above answered.
+  const mineToEdit = !agent && !other && message.author.kind === 'person'
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(message.text)
+  const field = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    const el = field.current
+    if (!editing || !el) return
+    el.focus()
+    // The caret at the end, where the change goes. A DOM without a selection API (the test harness) has
+    // nothing to place, so it is asked for only where it exists.
+    if (typeof el.setSelectionRange === 'function') el.setSelectionRange(el.value.length, el.value.length)
+  }, [editing])
+  const sendEdit = (): void => {
+    const words = draft.trim()
+    if (!words) return
+    sendMessage(message.conversationId, words, [], message.threadId)
+    setEditing(false)
+  }
+
   // The same object between renders, or every link would start over.
   const agentMarkdown = useMemo(() => ({ pre: CodeBlock, a: localLinkFor(message.id), span: MentionSpan }), [message.id])
 
@@ -617,6 +639,21 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           ))}
       </div>
       <div className="msg__body">
+        {/* Mine to pick up again: the pencil sits in the space on the left of the bubble, quiet until the
+            row is hovered, and opens the words where they stand. */}
+        {mineToEdit && !editing && (
+          <button
+            className="msg__edit"
+            title={L('Editar este pedido', 'Edit this prompt')}
+            aria-label={L('Editar este pedido', 'Edit this prompt')}
+            onClick={() => {
+              setDraft(message.text)
+              setEditing(true)
+            }}
+          >
+            <Icon name="edit" size={13} />
+          </button>
+        )}
         {/* The corner rides the message, not just its steps: a reply taller than the screen keeps its
             thread button, its trash and the way back to the prompt at the top of the rail for as long as
             any of the reply is on screen, and they leave with its last line. It starts at the body's own
@@ -648,7 +685,33 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
         {message.run ? <RunSteps message={message} /> : null}
-        {text ? (
+        {editing ? (
+          <div className="msg__edit-box">
+            <textarea
+              ref={field}
+              rows={Math.min(10, Math.max(2, 1 + Math.round(draft.length / 90)))}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  sendEdit()
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setEditing(false)
+                }
+              }}
+            />
+            <div className="msg__edit-actions">
+              <button className="btn btn--primary btn--sm" disabled={!draft.trim()} onClick={sendEdit}>
+                {L('Enviar', 'Send')}
+              </button>
+              <button className="btn btn--sm" onClick={() => setEditing(false)}>
+                {L('Cancelar', 'Cancel')}
+              </button>
+            </div>
+          </div>
+        ) : text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
               <MessageMarkdown urlTransform={safeUrl} remarkPlugins={AGENT_PLUGINS} components={agentMarkdown}>{wikiLinks(text)}</MessageMarkdown>
