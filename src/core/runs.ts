@@ -489,8 +489,6 @@ export class Runner {
   private active = 0
   private routing = 0
   private controllers = new Map<string, Control>()
-  // The replies deleted from under their own run: whatever that run still tries to write is dropped.
-  private gone = new Set<string>()
   private held = new Map<string, Promise<void>>() // by agent: its replies on an engine that keeps the MCP connection
   private paused = false // "Pausar tudo": nobody starts working until it's off
   private idleWaiters: (() => void)[] = []
@@ -893,21 +891,18 @@ export class Runner {
     writeFileSync(join(dir, FILE_TEXT_NAME), JSON.stringify(read))
   }
 
-  stop(messageId: string): void {
+  // Removed history must not return when an aborted or queued reply settles.
+  drop(messageId: string): void {
     const c = this.controllers.get(messageId)
     if (!c) return
+    c.deleted = true
     c.reason = 'stopped'
     c.ctl.abort()
   }
 
-  // A session deleted while its reply was still at work: the run stops here and nothing of it lands
-  // afterwards — not the words it had written, not a note that it stopped. What it spent stays in the
-  // receipts, since the tokens went out either way.
-  drop(messageId: string): void {
-    this.gone.add(messageId)
+  stop(messageId: string): void {
     const c = this.controllers.get(messageId)
     if (!c) return
-    c.deleted = true
     c.reason = 'stopped'
     c.ctl.abort()
   }
@@ -1267,7 +1262,7 @@ export class Runner {
   }
 
   private update(m: Message, patch: Partial<Message>): void {
-    if (this.gone.has(m.id)) return // deleted while it ran: it doesn't come back as a half reply
+    if (this.controllers.get(m.id)?.deleted) return
     Object.assign(m, patch)
     this.deps.db.saveMessage(m)
     // A check-in says nothing to the conversation while it works, and nothing at all when it finds
@@ -1510,8 +1505,7 @@ export class Runner {
     const key = replyKey(agent.id, conv.id, threadId)
     const { reserved, ...rest } = opts
     this.followups.start(key, reserved)
-    // A queued reply has no message to drop yet, but its deleted parent is marked.
-    if ((threadId && this.gone.has(threadId)) || (opts.existing && this.gone.has(opts.existing.id))) {
+    if ((threadId && !this.deps.db.message(threadId)) || (opts.existing && !this.deps.db.message(opts.existing.id))) {
       this.followups.end(key)
       this.followups.take(key)
       this.startWaiting(key)
