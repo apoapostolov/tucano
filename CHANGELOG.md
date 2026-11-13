@@ -4,6 +4,15 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+> **Em português:**
+> - **Novo:** os avisos do Tucano agora são **notificações por cima de todas as janelas**, no estilo do Telegram: uma pilha no canto da tela, que empurra as anteriores quando chegam outras, recolhe as mais antigas quando chegam muitas, para com o ponteiro em cima e some aos poucos quando o tempo acaba (e volta se você trouxer o ponteiro de volta). Em **Configurações › Notificações** você escolhe quantos segundos cada uma fica, se ela espera o ponteiro, se dá pra decidir por ela, e **desenha na tela** o retângulo, com os cantos, do canto onde elas devem aparecer. Sem escolher, é o canto de baixo, à direita. A roda do mouse sobre um aviso abre ele inteiro, com as imagens e os arquivos que a resposta trouxe.
+> - **Novo:** aprovações e perguntas se decidem **no próprio aviso**, sem abrir a conversa: aprovar, recusar, e responder as opções da pergunta. Uma ação de alto risco pede que você segure o botão. O aviso continua aparecendo em "Pra você" e na conversa.
+
+### Added
+
+- **Notifications over every window.** A notification used to be the system's own: a banner that the app could not lay out, could not keep on screen, and could say nothing more in than a title and a line of text. They are now cards in a window of the app's own, transparent and always on top, in a rectangle the person chooses: the bottom right corner until they pick another one, dragged on screen by its corners (Settings › Notifications › Where). A card arrives from the edge its stack grows from, pushes the ones before it along, folds the older ones into a row when a swarm arrives so the newest stay in sight, holds its place while the pointer is on it, and fades when its seconds are up, coming back if the pointer returns during the fade (Settings decides the seconds, the pointer, and whether to use the cards at all: on until then). The mouse wheel over a card opens it whole: the full text, the pictures and files the reply brought, and every action it has. Clicking it opens the conversation, or the screen it is about. The window passes the click through everywhere there is no card, and never takes the focus.
+- **Deciding from a notification.** An approval or a question is decided on the card itself: approve, refuse, or pick the options of a question, one decision at a time, the way the conversation's own card asks. Deciding from the card carries the permissions the conversation has (whoever may decide there may decide here), a high-risk approval asks for the button to be held, and the card goes away as soon as the decision is made anywhere, because what waits is the core's own answer and not what the notification said.
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**
