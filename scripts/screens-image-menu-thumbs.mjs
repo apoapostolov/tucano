@@ -3,7 +3,7 @@
 // that conversation's field. This photographs the menu on a cell, the chip it leaves in the composer,
 // and the clipboard path, on the built app.
 import { _electron as electron } from 'playwright'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { deflateSync } from 'node:zlib'
@@ -93,6 +93,7 @@ await idle(win)
 await say(win, 'gere só o gráfico do mês, uma imagem')
 await idle(win)
 await app.close()
+await new Promise((r) => setTimeout(r, 1500)) // the single-instance lock frees a moment after the window closes
 
 // ---- name those pictures on the replies that made them ----
 const db = new DatabaseSync(join(data, 'tucano.db'))
@@ -142,12 +143,13 @@ const shot = (name) => win.screenshot({ path: `${out}/${name}.png` })
 const items = () => win.locator('.image-menu [role="menuitem"]').evaluateAll((els) => els.map((e) => e.textContent?.trim() ?? ''))
 
 const report = {}
-// A cell beside the large one: this is the thumbnail that had no menu before.
+// A cell beside the large one: the thumbnail that had no menu before, and the first save of a session,
+// which names the system's downloads folder because nothing has been saved yet.
 const beside = win.locator('.artifacts-gallery').first().locator('.gallery__cell:not(.gallery__cell--hero)').first()
 await beside.scrollIntoViewIfNeeded()
 await beside.click({ button: 'right' })
 await win.waitForSelector('.image-menu')
-report.cellMenu = await items()
+report.cellMenuFirstSave = await items()
 const menuBox = await win.locator('.image-menu').boundingBox()
 report.menuAt = { x: Math.round(menuBox.x), y: Math.round(menuBox.y), w: Math.round(menuBox.width), h: Math.round(menuBox.height) }
 await shot('01-menu-on-a-cell')
@@ -172,15 +174,37 @@ report.singleMenu = await items()
 await shot('03-menu-on-a-single-picture')
 await win.locator('.image-menu__item:has-text("Copy to clipboard")').click()
 await win.waitForTimeout(600)
-// The app says it copied; the system clipboard itself is read on a best-effort basis, since the
-// module Playwright hands back in the main process does not always carry readImage.
 report.copyToast = await win.locator('.toast__text').last().innerText().catch(() => '(none)')
-report.clipboard = await app
-  .evaluate(({ clipboard }) => {
-    const img = clipboard.readImage()
-    return { empty: img.isEmpty(), size: img.getSize() }
-  })
-  .catch((e) => `unreadable: ${String(e).slice(0, 80)}`)
+await app.close()
+await new Promise((r) => setTimeout(r, 1500))
+
+// ---- third run: one click into the folder the last picture went to, no dialog ----
+const shots = join(out, 'shots')
+mkdirSync(shots, { recursive: true })
+const db2 = new DatabaseSync(join(data, 'tucano.db'))
+db2.prepare("INSERT INTO settings (key, value) VALUES ('lastImageFolder', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(JSON.stringify(shots)) // settings values are JSON, so a string goes in quoted
+db2.close()
+
+app = await electron.launch({ args: ['.'], env: { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '0', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en' } })
+win = await app.firstWindow()
+await win.setViewportSize({ width: 1280, height: 900 })
+await win.waitForSelector('.sidebar')
+win.on('pageerror', (e) => errors.push(String(e)))
+win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await win.click('.section:has-text("Agents") .nav-item:has-text("Lia")')
+if (await win.locator('button:has-text("Open DM")').count()) await win.locator('button:has-text("Open DM")').first().click()
+await win.waitForSelector('.artifacts-gallery')
+await win.waitForTimeout(600)
+const cellAgain = win.locator('.artifacts-gallery').first().locator('.gallery__cell:not(.gallery__cell--hero)').first()
+await cellAgain.scrollIntoViewIfNeeded()
+await cellAgain.click({ button: 'right' })
+await win.waitForSelector('.image-menu')
+report.cellMenuRemembered = await items()
+await win.locator('.image-menu__item:has-text("Save to Shots")').click()
+await win.waitForTimeout(900)
+report.saveToast = await win.locator('.toast__text').last().innerText().catch(() => '(none)')
+report.savedFiles = readdirSync(shots).map((name) => ({ name, bytes: statSync(join(shots, name)).size }))
+await shot('04-saved-into-the-folder')
 
 report.errors = errors
 console.log(JSON.stringify(report, null, 1))

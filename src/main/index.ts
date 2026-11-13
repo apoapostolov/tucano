@@ -777,6 +777,17 @@ ipcMain.handle('image:fromClipboard', async (event) => {
   return null
 })
 
+// Where a picture goes in one click before the person has saved one themselves: the folder the system
+// keeps downloads in. The page names it in the menu, so a first save needs no dialog either.
+ipcMain.handle('image:folder', (event) => {
+  if (!fromApp(event)) return null
+  try {
+    return { folder: app.getPath('downloads') }
+  } catch {
+    return null
+  }
+})
+
 ipcMain.handle('image:clipboard', async (event, arg: unknown) => {
   if (!fromApp(event)) return false
   const { url } = (arg ?? {}) as { url?: unknown }
