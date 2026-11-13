@@ -3921,12 +3921,12 @@ body.is-resizing webview {
 }
 /* In the pinned corner the glyphs share the pin's own origin: thread at 4, and the trash at 28 from
    the row's top. */
-/* The way back sits beside the trash, one step to its left, not under it: a prompt that is a single
-   line has no height under the trash to put another glyph in, and a third row pushed every short reply
-   out of its own row. */
+/* The way back sits under the trash, in the same column: thread 4, trash 28, way back 52 from the row's
+   top. A reply that is a single line has no height under the trash for a third glyph, so there it stands
+   beside the trash instead, in the row's own padding and out of the words. */
 .msg__anchor-pin .msg__reply--up {
-  top: 21px;
-  right: -48px;
+  top: 45px;
+  right: -24px;
 }
 /* Nothing threaded, so nothing takes the first place: the trash starts the column and the way back
    keeps its 24 px under it. */
@@ -3934,8 +3934,16 @@ body.is-resizing webview {
   top: -3px;
 }
 .msg__anchor-pin--alone .msg__reply--up {
+  top: 21px;
+  right: -24px;
+}
+.msg__anchor-pin--tight .msg__reply--up {
+  top: 21px;
+  right: 4px;
+}
+.msg__anchor-pin--tight.msg__anchor-pin--alone .msg__reply--up {
   top: -3px;
-  right: -48px;
+  right: 4px;
 }
 @media (hover: none) {
   .msg__reply {

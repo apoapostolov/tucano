@@ -585,6 +585,21 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   // My own prompt can be picked up again: the pencil in the rail on its left opens the words where they
   // stand, and sending posts the edited ask as a new prompt in the same place. What was sent before
   // stays in the room, because a prompt already sent is what the reply above answered.
+  // How tall the row turned out: a reply that is one line has no room under the trash for another glyph,
+  // so the way back stands beside it there instead of below it.
+  const rowEl = useRef<HTMLElement>(null)
+  const [height, setHeight] = useState(0)
+  useLayoutEffect(() => {
+    const el = rowEl.current
+    if (!el) return
+    const read = (): void => setHeight(el.offsetHeight)
+    read()
+    const seen = new ResizeObserver(read)
+    seen.observe(el)
+    return () => seen.disconnect()
+  }, [])
+  const tight = height > 0 && height < 76
+
   const mineToEdit = !agent && !other && message.author.kind === 'person'
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(message.text)
@@ -627,7 +642,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const name = agent ? agent.name : (other ?? me.name)
   return (
     // Someone else's message reads like any other voice in the conversation: on the left, with their name.
-    <article className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
+    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
       <div className="msg__gutter">
         {!grouped &&
           (agent ? (
@@ -661,10 +676,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             takes the first place; the trash and the way back follow it, or take the place themselves
             when nothing is threaded. Without a run there is nothing to ride, and the corner stays in
             ThreadLink. */}
-        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}${tight ? ' msg__anchor-pin--tight' : ''}`}>
           {replies ? <ThreadButton message={message} /> : null}
           {agent && <DeleteSession message={message} />}
-          {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
+          {away && message.run.replyTo && <PromptJump id={message.id} />}
         </div> : null}
         {!grouped && (
           <div className="msg__head">
@@ -809,13 +824,17 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
 
 // The glyph under "Reply in thread", on a reply that answers a prompt another message now sits
 // between: it puts that prompt at the top of the list, so a long reply is one click from what was asked.
+// The way back to the start of this reply: a run taller than the screen scrolls its own first line away,
+// and this takes the room to where the reply begins, which is the start of the work being read. It is
+// the row it sits on, not something further up the conversation.
 export function PromptJump({ id }: { id: string }): ReactNode {
   const jump = useContext(JumpTo)
+  const label = L('Ir para o começo desta resposta', 'Go to the start of this reply')
   return (
     <button
       className="icon-btn icon-btn--sm msg__reply msg__reply--up"
-      title={L('Ir para o pedido que esta resposta responde', 'Go to the prompt this reply answers')}
-      aria-label={L('Ir para o pedido que esta resposta responde', 'Go to the prompt this reply answers')}
+      title={label}
+      aria-label={label}
       onClick={() => jump(id)}
     >
       <Icon name="up" size={12} />
