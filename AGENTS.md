@@ -552,7 +552,8 @@ as this index, and a feature missing from it is one an agent will open a second 
 ## Public PRs and writing
 
 Open focused product PRs against `eduwxyz/tucano:main`, never against the fork, and cut the branch
-from `upstream/main`. A branch based on `origin/main` carries fork commits upstream does not have (it
+from `upstream/main`. What this account may and may not do there, and what each refusal means, is in
+[Working where you have no admin rights](#working-where-you-have-no-admin-rights). A branch based on `origin/main` carries fork commits upstream does not have (it
 was 41 ahead at one point) and turns CONFLICTING as soon as the base moves; rebase onto
 `upstream/main`, re-run the checks there, and force-push with the lease named.
 
@@ -566,3 +567,49 @@ evidence in public reports. Do not copy this fork-local guide into upstream feat
 Read `C:/git/self-profile/profile/operational.md` before substantial prose. Apply its supported
 writing habits while preserving facts, attribution, uncertainty, obligations, and exact syntax.
 The profile's examples and learning records remain private.
+
+## Working where you have no admin rights
+
+The work happens in repositories this account only reads. Measured, not assumed:
+
+~~~powershell
+$q = '.permissions | to_entries | map(select(.value)) | map(.key) | join(",")'
+gh api repos/eduwxyz/tucano --jq $q          # pull
+gh api repos/apoapostolov/tucano --jq $q     # admin,maintain,pull,push,triage
+gh api repos/NousResearch/hermes-agent --jq $q   # pull
+~~~
+
+`pull` is read: it opens an issue, comments, opens a pull request from the fork, and reads checks. Every
+change to the repository's own state needs `write`, and this account has none on `eduwxyz/tucano` or on
+`NousResearch/hermes-agent`. Expect the refusal rather than treating it as a failure to fix.
+
+Authorship is the one exception, and it is worth knowing precisely: an issue or pull request you opened
+stays yours to edit, close and reopen without `write`, so a decision you took can be recorded on your own
+thread. Someone else's is read-only.
+
+GitHub's wording for these refusals is misleading. Adding a label to an issue answered `Must have admin
+rights to Repository.`, which is the same sentence a failed workflow re-run gives; read the operation, not
+the sentence, to know what was missing.
+
+| What is out of reach | How it shows up | What to do instead |
+| --- | --- | --- |
+| Re-running a failed workflow | `run <id> cannot be rerun; Must have admin rights to Repository.` | Push an empty commit that says why (`Re-run the checks: the Linux job failed in the test that does not touch this`), and check the new run |
+| Merging a pull request | The merge button is a maintainer's | Keep the PR body standing on its own and wait, or ask in the thread |
+| Approving, or dismissing a review | `write` is required, and GitHub refuses a self-approval anyway | Say what was tested in the body and let a maintainer approve |
+| Labels, milestones, assignees, projects, a pinned comment, on any issue | `Must have admin rights to Repository.` (403), or the control is missing in the UI | Name the triage you want in the first lines of the body |
+| Repository settings: default branch, merge strategy, required checks, secrets, environments, webhooks | Refused (403) | A change that needs one is described in the PR, with the value it needs, not attempted |
+| Pushing a branch, a tag or a release to the project | `403`, or `! [remote rejected]` | Push to the fork and open the cross-repo PR; the fork's own tag is the `next-v<version>` one |
+| Editing or deleting someone else's comment or description | The edit control is absent | Your own comments and threads stay editable: correct yourself there |
+| Deleting a branch after merge, or closing someone else's issue | Refused (403) | Say which branch is now dead; the threads you opened are yours to close |
+| Installing hooks, a release script, or a secret the checks need | Nothing to install them on, or the job fails where you cannot look | Run the checks locally before pushing, and state in the PR which check cannot pass and why |
+| Capping the open-PR queue | `hermes-agent` has refused a sixth open PR from this account, and neither project lets it clean up after itself | Land or withdraw one of your own before opening another, and close the stale ones you opened: nobody else will |
+
+A pull request that comes from a fork runs on a **read-only token and without the project's secrets**, so a
+job that comments, pushes or calls a keyed service fails for that reason alone. Read the log before
+changing code: the failure is the token, not the change, and the run on the maintainer's branch is the one
+that proves it.
+
+Two habits keep this cheap. Ask for nothing that can be worked around (an empty commit costs a minute;
+asking for `write` costs a day). And when something genuinely needs an administrator, put the exact
+setting, value and reason in the PR body, once, so the person with the permission can act on it without
+reading a conversation.
