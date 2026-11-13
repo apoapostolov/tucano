@@ -124,3 +124,18 @@ coordinator 34.68, the privacy helper 46.17 and the summary regression file 33.6
 whole intake, including other agents' new per-bot controls, NLOC grew 1,091, summed CC 392
 and CogC 216. These totals are not the size of the retention repair alone. No structural
 cleanup or production-readiness signoff is implied.
+
+
+### Database-maintenance interaction
+
+The first final combined run passed 2,536 tests, skipped 61 and failed one assertion:
+`test/db-file.test.ts` required zero free bytes in a fresh database. Per-bot initiative
+legitimately rebuilds an empty table and frees two pages (8,192 bytes); the reported value
+was correct. Preserve the migration, and verify size/free bytes through a separate read-only
+SQLite connection instead. This test-only repair is published on #437 at `6434860`; a fresh
+pushed-SHA worktree passed typecheck and 11 checks, and its interaction with initiative passed
+16. The full combined rerun remains required; the focused selection is not a replacement.
+
+The normal installed workspace had a working reply during delivery preparation. Its database
+was inspected read-only for status counts only. Do not close that instance for an installer
+until the work finishes; no live data was edited and no foreground action was used.
