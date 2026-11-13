@@ -11,6 +11,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Added
 
+- **Supabase in the connector store.** Your Supabase projects from [Supabase](https://supabase.com/docs/guides/getting-started/mcp)'s official server, in Development next to Neon: tables, SQL, migrations, logs and Edge Functions. One click opens Supabase's sign-in in the browser, where you choose the organization the agents may reach. Its tools that write (running SQL, applying a migration, deploying a function) come in under the same classes and approvals as any connector's.
+
 - **A bot can look after something for you between conversations.** Give any of your bots an
   initiative: a brief in your own words, how often it checks, when it may interrupt you, the
   conversations it may look at and the actions it may take. It then reads that work on its own clock,
@@ -45,6 +47,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Let Jev reach tier 4 on its own, and a chain card that reads.** Tier 4 had no switch of its own: the reading could always spend the expensive pool. Its page gains **Let Jev reach tier 4 on its own**, on by default so a setup keeps behaving as it did, and off the reading stops at tier 3 while a role's floor can still bring a reply there; tier 5 needs it on as well as its own switch. Each step of a pool's chain is a card, with the harness, the model and the thinking one under the other at the card's full width, and the chain's title and its note now sit on two lines instead of sharing one.
 
 ### Fixed
+
+- **A connector whose sign-in server offers to stay signed in is asked for it, so it stops asking to authorize again every day.** Vercel's MCP server lists only its own scope (`openid`), while its authorization server also offers `offline_access`, the one that comes with a refresh token. The sign-in asked for the first list alone, got no refresh token, and lasted as long as the access token: the connector showed "needs authorization" again the next day. The app now reads what the authorization server offers and asks for `offline_access` when it is there, in the registration and in the authorization page. A connector signed in before this has to be authorized once more to get a sign-in that renews itself.
+
+- **A Codex agent no longer fails every other reply with "Codex no longer has this conversation".** Codex keeps a conversation between replies only while its app-server can take every turn; when it can't (the app-server didn't start once, or the Codex home the app uses got a config of its own), replies go through `codex exec`, which keeps nothing. Whether the engine keeps sessions was read once, when the app opened, and stayed true: the app went on asking Codex to resume conversations it had answered through exec, and the reply failed at once, in about 50 ms, each time a conversation was picked up again. It is now asked before every reply.
 
 - **Clearer English labels and shorter hints.** Settings, Wiki, Memory, Skills, and related screens use more explicit actions and consistent terms. Hints repeat less information and fit more comfortably beside their controls; privacy and deletion warnings keep their consequences. (#409)
 
