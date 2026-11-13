@@ -292,7 +292,7 @@ function HarnessRow({ engine, st, picked, toggle }: { engine: EngineId; st: Engi
           <code className="harness__cmd">{manual}</code>
         </div>
       )}
-      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', 'Installing in the terminal that opened. Once it finishes, it shows up here on its own.')}</p>}
+      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', "Complete installation in the terminal. Tucano detects it automatically.")}</p>}
       {!st.installed && install === 'node' && (
         <p className="hint hint--warn harness__body">
           {L(`O ${ENGINES[engine].label} precisa do Node.js. Instale o Node.js e depois clique em Instalar de novo.`, `${ENGINES[engine].label} needs Node.js. Install Node.js, then click Install again.`)}{' '}
@@ -407,7 +407,7 @@ export function HarnessMcps({ onAdded }: { onAdded: (id: string) => void }): Rea
   )
 }
 
-// More logins of Claude Code and Codex: a work account beside a personal one. Each lives in a
+// More logins of Claude Code, Codex and Grok: a work account beside a personal one. Each lives in a
 // folder of its own and is signed into through the CLI, in a terminal; an agent picks one on its page.
 export function AccountsCard(): ReactNode {
   const accounts = useStore((s) => s.settings.accounts ?? [])
@@ -416,11 +416,22 @@ export function AccountsCard(): ReactNode {
   const [name, setName] = useState('')
   const [manual, setManual] = useState<Record<string, string>>({})
   const [removing, setRemoving] = useState<string | null>(null)
+  const [leftBehind, setLeftBehind] = useState(false)
   const add = async (): Promise<void> => {
     const a = await addAccount(engine, name)
     setName('')
     const r = await loginAccount(a.id)
     if (!r.opened) setManual((m) => ({ ...m, [a.id]: r.command }))
+  }
+  // Removing takes the account out of the list whatever happens next; the folder with its login can
+  // still be held by a CLI someone left open, and then it goes at the next launch instead.
+  const drop = async (id: string): Promise<void> => {
+    try {
+      const r = await removeAccount(id)
+      setLeftBehind(!r.folder)
+    } finally {
+      setRemoving(null)
+    }
   }
   return (
     <div className="accounts">
@@ -445,8 +456,8 @@ export function AccountsCard(): ReactNode {
             </button>
           )}
           {removing === a.id ? (
-            <button className="btn btn--sm btn--danger" onClick={() => void removeAccount(a.id).then(() => setRemoving(null))}>
-              {L('Remover mesmo', 'Remove it')}
+            <button className="btn btn--sm btn--danger" onClick={() => void drop(a.id)}>
+              {L('Remover', 'Remove')}
             </button>
           ) : (
             <button className="btn btn--ghost btn--sm" onClick={() => setRemoving(a.id)}>
@@ -472,6 +483,14 @@ export function AccountsCard(): ReactNode {
           {L(
             `Os agentes dessa conta voltam pro login de sempre do ${ENGINES[accounts.find((a) => a.id === removing)?.engine ?? 'claude'].label}, e o login dela sai deste computador.`,
             `Its agents go back to ${ENGINES[accounts.find((a) => a.id === removing)?.engine ?? 'claude'].label}’s usual login, and its sign-in leaves this computer.`
+          )}
+        </p>
+      )}
+      {leftBehind && (
+        <p className="hint hint--warn">
+          {L(
+            'O login dessa conta não saiu agora porque o CLI dela ainda estava aberto: feche a janela dele. Ele sai na próxima vez que o Tucano abrir.',
+            'That account’s sign-in did not leave now because its CLI was still open: close its window. It goes the next time Tucano opens.'
           )}
         </p>
       )}

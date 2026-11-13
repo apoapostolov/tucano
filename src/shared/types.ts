@@ -5,6 +5,7 @@ import type { ClassifierConfig, ClassifierJob } from './classifiers'
 import type { ChannelLayout } from './channel-layout'
 import type { RouteTrace, RoutingConfig } from './routing'
 import type { Answer, Decision } from './questions'
+import type { NoticeSettings } from './notice'
 import { L, lang, locale, type Lang } from './lang'
 
 export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green' | 'teal' | 'graphite'
@@ -194,6 +195,7 @@ export interface Run {
   status: RunStatus
   steps: Step[]
   endedAt?: number // when this reply ended, however it ended: where the conversation shows it (saidAt)
+  restartPending?: boolean // interrupted at shutdown, still eligible for startup recovery
   receipt?: Receipt
   approvalId?: string
   outside?: boolean // it read something from outside (a connector's answer, a page, an app, the web, a trigger's event): what goes out after asks first, with the guard on
@@ -550,6 +552,9 @@ export interface Settings {
   wikiReview?: 'weekly' | 'off' // reviews the wiki on its own once a week; by hand only otherwise (the default)
   wikiResolve?: boolean // the resolver settles a finding the review couldn't fix, when asked (off by default)
   wikiResolveModel?: string // a model id; unset: the memory model, then Haiku
+  // The bot that reads the finding, by its id: its own instructions and model, with the resolver's
+  // model and effort unused (a bot written for the job beats a model named for it). Unset: the app's own.
+  wikiResolveBot?: string
   wikiDir?: string // where the wiki's folder is (an Obsidian vault, say); inside the app's data when unset
   defaultLimit: number
   approvalTtlHours: number
@@ -560,6 +565,7 @@ export interface Settings {
   theme: 'system' | 'light' | 'dark'
   language: Lang // the app's, and the language agents answer in
   openAtLogin?: boolean // so routines run without me opening the app
+  resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: on
   runBudgetPct?: number // per reply, % of the agent's monthly limit before it pauses; default RUN_BUDGET_PCT
   runStallMinutes?: number // without any sign of life; default RUN_STALL_MINUTES
   chainDepth?: number // agent replies in a row from one human message; default CHAIN_DEPTH
@@ -595,12 +601,15 @@ export interface Settings {
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
   showThinking?: boolean
+  thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
+  clock?: '24' | '12' // Settings › The conversation: times as 15:05 or 3:05 PM; unset keeps the app's own reading
   // How a reply's steps read: every one, the latest few, or a single line with the count
   // (src/shared/steps.ts). Unset: every one, which is what the app has always done.
   steps?: StepsMode
   stepsLatest?: number // how many the 'latest' mode keeps; unset: STEPS_LATEST (20)
+  notice?: NoticeSettings // the cards over the window (src/shared/notice.ts); unset: on, as the system's notification is today
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
-  accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
+  accounts?: Account[] // more logins of Claude Code, Codex or Grok, beside the one each already has
 }
 
 // Which chirp a notification plays: a knock when an agent needs me, two notes when the work
@@ -613,8 +622,9 @@ export function chirpOf(kind: 'approval' | 'question' | 'done' | undefined, soun
 
 // Another login of a harness (a work account beside a personal one), in a folder of its own
 // in the app's data: Claude Code's CLAUDE_CONFIG_DIR (with its own Keychain entry), Codex's
-// CODEX_HOME. The person signs in through the CLI itself; the app never sees the credentials.
-export const ACCOUNT_ENGINES = ['claude', 'codex'] as const satisfies readonly EngineId[]
+// CODEX_HOME, Grok's GROK_HOME (with its auth.json). The person signs in through the CLI
+// itself; the app never sees the credentials.
+export const ACCOUNT_ENGINES = ['claude', 'codex', 'grok'] as const satisfies readonly EngineId[]
 export type AccountEngine = (typeof ACCOUNT_ENGINES)[number]
 export interface Account {
   id: string
@@ -686,6 +696,13 @@ export interface QuotaWindow {
   limit?: number // what the window allows, in `unit`; a wallet has none
   unit: '%' | 'usd' | 'req' | 'tokens'
   resetsAt?: number
+}
+
+// The last read of every provider's quota, and when it was taken: what the panel draws the moment it
+// opens, before the read behind it answers.
+export interface QuotasSnapshot {
+  list: ProviderQuota[]
+  at: number
 }
 
 // A provider whose quota Tucano read from the person's own logins: the CLI's, or the ones

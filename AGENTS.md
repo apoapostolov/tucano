@@ -8,6 +8,60 @@ beside the released **`Tucano`**. Preserve that combination throughout developme
 A successful build, an installer exit code, or a process left from an earlier installation
 does not establish that the new app launched or that the changed feature works.
 
+## Write and verify interface copy
+
+**New and changed interface strings must pass an editorial review and a rendered layout check
+before delivery.** This applies to every feature: Settings, Wiki, agent profiles, dialogs,
+buttons, menus, tooltips, empty states, errors and notifications. Do not reintroduce verbose
+wording when merging or resolving conflicts. Follow [the copy guide and tools](docs/interface-copy.md).
+
+- Write calm, professional, grammatical English. Name the action or setting directly; use
+  sentence case, active verbs and established product terms. Avoid chatty narration, rhetorical
+  questions, metaphors, filler, unexplained jargon and instructions about clicking when the
+  action itself can be named. Prefer “Use memory model” to “Use the memory's”.
+- Give labels and buttons one clear job. Aim for one line. Hints add only information the label
+  does not provide and must fit within two rendered lines at the supported narrow layout.
+  Do not add a hint merely because neighboring controls have one. Shorten without making text
+  cryptic or dropping scope, defaults, fallback behavior, privacy disclosures or consequences.
+- Keep one term for one concept. Match nearby approved strings and the guide's terminology.
+  Preserve interpolation, plural meaning, accessibility names and localization structure.
+  Do not change another language incidentally while polishing English.
+- Draft exact labels, hints and exceptional warnings before implementation. Review the whole
+  feature flow, including disabled, enabled, custom-model, error and empty states. For an
+  existing feature, review the changed strings beside their previous wording.
+- Measure the built UI at 900 and 1280 CSS pixels, and at a smaller supported width when the
+  feature permits it. Use `measureCopy` from `scripts/lib/copy-layout.mjs` in the feature's
+  isolated browser harness, or the CLI below for a directly reachable test page. Include
+  adjacent controls and realistic long values; a default collapsed state is insufficient.
+- Save a screenshot and JSON measurements with source SHA, viewport, font, available width,
+  character count, line count and overflow result. Character budgets are estimates, never
+  proof of fit. Verify the installed Electron renderer at the user's display scaling for
+  affected desktop surfaces: browser measurements previously missed an extra line there.
+- A label wrapping unexpectedly, a hint exceeding two lines, or clipped/overflowing text fails
+  the feature check. Rewrite first. If essential information still needs more room, use a
+  suitable layout or a separate explanation. Never shrink type, hide text, clamp/ellipsize a
+  warning, or remove meaningful information just to pass. Destructive/privacy warnings may
+  exceed two lines; record the specific reason and check that the full text remains visible.
+- Report the editorial review, layout evidence and any explicit exception in the feature PR.
+  Automated measurements cannot judge grammar or meaning. A green tool result alone is not
+  copy approval; review both the words and the screenshot before marking this work complete.
+
+~~~powershell
+# Existing full Settings/Wiki check; requires a fresh npm run build.
+node scripts/check-english-copy.mjs C:/tmp/tucano-copy-evidence
+# A feature's already-running, isolated scratch server; selectors must target actual text.
+node scripts/check-copy-layout.mjs --url http://127.0.0.1:PORT/ --selector ".feature .hint" --output C:/tmp/feature-copy
+# Validate the measurement helper itself (real headless browser).
+node scripts/test-copy-layout.mjs
+~~~
+
+Use `TUCANO_BROWSER_CHANNEL=msedge` or `chrome` when that installed browser is the available
+headless test runtime. Follow the data, port and desktop isolation rules below. Neither copy
+tool may be pointed at the regular workspace; capture synthetic data for public evidence.
+Changes confined to agent instructions, documentation or development-only scripts require
+content/diff review and the affected tool checks; they do not require rebuilding or reinstalling
+an unchanged packaged app.
+
 ## Repositories and branches
 
 Check `git remote -v` before fetching, merging, or pushing. In this checkout:
@@ -20,6 +74,10 @@ Check `git remote -v` before fetching, merging, or pushing. In this checkout:
 | `origin/main` | Fork's main branch; inspect whether it mirrors upstream or has additional commits |
 | `origin/next` | Published integration branch for TucanoNext |
 | Feature branches | Individual PR sources, including later revisions of already integrated PRs |
+
+Name a branch for what it does. `feat/<topic>` is a feature, `fix/<topic>` a repair, and
+`codex/<topic>` an agent's own worktree. The open PR list is overwhelmingly the first two, and a branch
+whose name says nothing makes the next audit re-read its diff to find out.
 
 When a request says "origin main" to mean the original project, resolve the repository identity
 before choosing a ref. Keep `next` current with `upstream/main` and account for additional work
@@ -92,9 +150,12 @@ The released app and `TucanoNext` remain independent:
 5. **Keep one definition per surface.** Extend existing RPC methods, settings keys, types,
    database columns, and SQL statements. Duplicate declarations and parallel implementations
    of the same feature are integration defects.
-6. **Do not bump versions, move tags, publish releases, or enable self-update.** Releases belong
-   to the maintainer. Package with `--publish never`; do not run `scripts/release.sh` during
-   integration. An authorized source-branch push is separate from release publication.
+6. **The fork's release is ours; the maintainer's is not.** Upstream's versions, tags and releases
+   stay untouched, and an upstream version is inherited rather than bumped for fork work. The
+   TucanoNext release on `apoapostolov/tucano` is rebuilt when a major feature completes, which is the
+   one release an agent may publish, and it keeps the `next-v<version>` tag (see
+   [Rebuild the release](#rebuild-the-release-when-a-major-feature-completes)). Package with
+   `--publish never` and keep self-update off; do not run `scripts/release.sh` during integration.
 7. **Do not commit generated products.** `out/`, `dist/`, `node_modules/`, and `build/whisper/`
    stay ignored. If they appear in status, inspect the destination paths.
 
@@ -125,10 +186,49 @@ The released app and `TucanoNext` remain independent:
    node scripts/audit-prs.mjs --fetch --patches --report docs/pr-inventory.md
    ~~~
 
-   Reports and cached patches live in `.tucano-local/audit/`. Key review records to the exact
-   head SHA; a changed head makes the earlier review stale. Avoid fixed PR-count claims.
+   Reports and cached patches live in `.tucano-local/audit/`, excluded through `.git/info/exclude` in
+   this checkout, which no clone inherits: keep them out of a commit and add the same exclude after a
+   fresh clone. Key review records to the exact head SHA; a changed head makes the earlier review
+   stale. Avoid fixed PR-count claims.
 5. Maintain a checkbox plan for long audits. A merged PR, a repaired defect, and a fully audited
    feature are different states. Record completed work and remaining checks separately.
+6. Before opening a PR for a change, find the feature in the table under
+   [Commit on the feature's own issue or PR](#commit-on-the-features-own-issue-or-pr): a change in the
+   domain of a feature that already has an open pair belongs on that PR, not on a new one.
+
+## Worktrees, refs, and pushes
+
+Branches are cut in a worktree, and the hazards there destroy work or waste a cycle:
+
+- **A worktree does not get its own install unless you link one, and removing the worktree follows the
+  link.** `git worktree remove` treats the `node_modules` junction as a directory and deletes what it
+  points to, emptying the checkout's install; every later command then fails with `Cannot find
+  module`. Link it in (`cmd //c mklink /J` in Bash, `cmd /c mklink /J` in PowerShell, where Bash
+  needs the doubled slash to keep MSYS from rewriting the argument), and remove the link first:
+
+  ~~~bash
+  python -c "import os; p=r'C:\path\wt\node_modules'; os.path.isjunction(p) and os.rmdir(p)"
+  git worktree remove --force C:/path/wt
+  ~~~
+
+  Never remove a worktree whose `node_modules` is a real directory without confirming it is not the
+  shared one. A wiped install is recovered by `npm ci` alone, never beside a build.
+- **Pass native tools `C:/…` paths, never `/c/…`.** Git Bash rewrites a leading `/c/tmp/...` argument
+  into `C:\c\tmp\...` and builds a tree outside the one you meant, which is how a worktree ends up
+  somewhere nobody looks. `cd /c/tmp/x` is a shell builtin and stays correct; `git worktree add
+  /c/tmp/x`, `node /tmp/a.js` and `git -C /c/x` do not.
+- **`--force-with-lease` on a feature branch needs the branch and the SHA.** `origin` fetches only
+  `+refs/heads/main:refs/remotes/origin/main`, so a feature branch has no tracking ref to compare
+  against and the plain form fails with "stale info". Name the remote head you expect:
+  `git push --force-with-lease=feat/x:$(git ls-remote origin refs/heads/feat/x | cut -f1) origin
+  HEAD:feat/x`.
+- **A fetch by branch name can leave the remote-tracking ref stale.** After a push,
+  `git fetch origin <branch>` followed by `git rev-list origin/<branch>..<branch>` may still list
+  commits that are already published. Fetch the ref explicitly or read `git ls-remote` before
+  concluding a push failed.
+- **Verify a pushed branch from the pushed SHA, not from the worktree.** A fix left uncommitted in a
+  worktree has been delivered more than once. Extract the remote tip into a fresh worktree and run
+  the type check and that branch's tests there.
 
 ## Keep next current with upstream and the fork's main
 
@@ -165,7 +265,11 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
    Suggestions in a reply can change the intended behavior before code reaches the PR head.
 2. Fetch the exact current head, including from the contributor's fork when necessary. Record
    PR number and head SHA. Do not rely on a stale local branch or a merge commit subject.
-3. Compare with the previously integrated revision and current upstream main. Keep repairs to
+3. Compare with the previously integrated revision and current upstream main. A revision to an
+   unmerged feature belongs on that PR's own branch as a new commit, which updates the PR in place;
+   do not open a second PR for the same story. When the revision needs surface that only exists
+   higher up a stack (moving a switch into a section a later branch adds), put it on the branch that
+   has that surface, and say in both PRs where it went and why. Keep repairs to
    unmerged features on their existing PRs. Reproduce a new upstream bug in an isolated worktree
    based on current `upstream/main`, then open a focused fix against the original project.
 4. Review the full path: user action, renderer state, RPC contract, permissions, persistence,
@@ -176,7 +280,9 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
    Confirm their current disposition before relying on those relationships.
 6. Merge the feature head into the integration candidate. For an already integrated PR, merge
    its newer head so the added commits and contributor attribution enter the history. Port
-   behavior manually only when the histories or implementations require it, and record why.
+   behavior manually only when the histories or implementations require it, and record why. The PR
+   stays open on the project afterwards: this merge puts it in the fork, not in upstream, and its
+   thread is not yours to close or narrate unless the user asks.
 7. Verify the feature in `next`: its setting or entry point is reachable and its handler,
    backend, persistence, and output remain connected. Commit ancestry, a clean merge, type checking,
    and screenshots from another branch do not prove that the feature survived integration.
@@ -199,6 +305,18 @@ Take the union of compatible features instead of selecting entire files from one
 | Competing implementations | Choose the maintained behavior, migrate callers and data, remove redundancy |
 | Product metadata and startup | Preserve TucanoNext identity, data separation, locks, ports, and updates off |
 
+Three resolutions recur more often than the table above:
+
+- **`CHANGELOG.md` conflicts on nearly every merge.** Both sides add under `## [Unreleased]`; keep every
+  entry, `### Added` above `### Fixed`, and drop nothing that shipped in a release. A merge is not the
+  place to reword another feature's line.
+- **A PR cut from an older main arrives with stale expectations.** Its assertions describe the base it
+  was written against, and `next` has moved since: keep its race fixes and its new cases, take `next`'s
+  wording and expected strings, and prove it by running that file and its neighbours together.
+- **A settings key can land in two lists.** `GENERAL_SETTINGS` is one list in one file, so resolving by
+  taking one side wholesale drops the other side's new keys without a conflict. Read the list after
+  resolving and count the keys each branch brought.
+
 Read the resolved code after removing markers. Add regression cases for interactions introduced
 by resolution. Check for losses outside conflict hunks, including a settings control moved to
 another card or a callback disconnected during a component rewrite.
@@ -209,8 +327,9 @@ Run these in the candidate worktree after installing its locked dependencies:
 
 ~~~powershell
 npm ci
-npx tsc --noEmit -p tsconfig.json
-npx vitest run
+npm run typecheck                      # tsc --noEmit -p tsconfig.json
+npm test                               # vitest run, the whole suite
+npx vitest run test/restart-runs.test.ts   # one file, while working
 npm run build
 ~~~
 
@@ -220,10 +339,34 @@ failures instead of disabling assertions or increasing timeouts to get a green r
 If the host lacks a required shell, correct the test process's PATH and record that setup.
 A focused rerun does not replace the full-suite result.
 
-**Run the app built from this source.** Exercise the changed behavior with throwaway data and
-fake engines where suitable, using the background testing policy above. Never put destructive
-or synthetic test data into the live workspace. DOM tests cover behavior; inspect the built UI
-for layout, focus, and overflow because `linkedom` cannot verify those visual properties.
+A failure that looks like the host is proved instead of assumed:
+
+- `test/mac.test.ts` › *comes from a clean login shell* once compared its `PATH` against `C:\Windows`
+  case-sensitively, so a shell spelling the variable `C:\WINDOWS` failed it. `next` and current
+  upstream main both compare in lowercase and the suite passes here, so a failure there is a real one
+  again. A host-shaped failure gets named: quote the comparison, prove it on the base branch, then fix
+  it, rather than calling the test flaky.
+- Confirm any other suspected environmental failure on a clean worktree of the base (`git worktree
+  add C:/tmp/base upstream/main`), not by stashing your own work: a stash mixes the two questions.
+
+**Run the app built from this source.** Exercise the changed behavior with throwaway data and fake
+engines where suitable, using the background testing policy above. Never put destructive or synthetic
+test data into the live workspace. Four variables are the whole recipe for an instance that cannot
+touch it:
+
+~~~powershell
+$env:TUCANO_DATA = "$env:TEMP\tucano-check"   # data directory, throwaway
+$env:TUCANO_SEED = '1'                        # the demo team, channels and agents
+$env:TUCANO_FAKE_ENGINES = '1'                # scripted engines, no model is called
+$env:TUCANO_LOCALE = 'en-US'                  # the language the window draws in
+~~~
+
+`TUCANO_FAKE_ENGINES=1` seeds by itself unless `TUCANO_SEED=0`, and background QA refuses to run
+without it. `TUCANO_WEBHOOK_PORT` moves an instance off the default port when two must run together.
+`scripts/screens-*.mjs` is the pattern for a built-UI check: each launches Electron against a scratch
+directory, drives the window with Playwright, and writes PNGs to the directory it is handed, so copy
+the nearest one rather than inventing a harness. DOM tests cover behavior; inspect the built UI for
+layout, focus, and overflow because `linkedom` cannot verify those visual properties.
 
 Repeat affected checks after source changes. Record the checked commit or tree and outcomes
 so evidence from another worktree is not attributed to this build. Documentation-only changes
@@ -231,36 +374,45 @@ need a content and diff review; they do not require rebuilding or installing the
 
 ## Build, install, launch, and verify
 
-For an authorized TucanoNext code delivery, finish the entire sequence. Compilation, packaging,
-and installation alone are incomplete.
+A completed feature, or an integrated pull request, is built and installed on the live copy of
+TucanoNext by default, so the person can try it without asking for that step. Do not wait for an
+instruction to install and do not stop at a tested source tree: the installed app is where the work is
+tested. Finish the entire sequence below for every code delivery. Compilation, packaging, and
+installation alone are incomplete.
 
 1. Confirm identity and install destination. Complete type checking, the full suite, the build,
    and the changed-feature check against that built app.
-2. Prepare whisper assets and create a fresh installer without publishing:
+2. Refresh the whisper assets when `scripts/whisper.mjs` changed since they were packed: the helper
+   packages whatever sits in `build/whisper/`, and a stale pair ships dictation that no longer matches
+   the script. It pins its own version and checks its download against a SHA-256.
 
    ~~~powershell
    node scripts/whisper.mjs win x64
-   npx electron-builder --win nsis --x64 --publish never
    ~~~
 
-   Output is `dist/tucanonext-setup-<package version>.exe`. Keep the current package version.
-   Check the installer timestamp against source changes; an older installer cannot deliver the
-   fix. Cached whisper assets are valid only when their version matches the script.
-3. Close scratch instances, then the regular TucanoNext, before installation. Do not kill the
-   released `Tucano.exe`. Use PowerShell to avoid Bash argument conversion:
+3. Build, package, verify, install and launch in one step: `npm run self-install`, or
+   `node scripts/self-build.mjs install --json` when a machine reads the result. Close scratch
+   instances first, since one holding the default ports or the single-instance lock makes the launch
+   stage fail, and do not kill the released `Tucano.exe`. The installer it makes is
+   `dist/tucanonext-setup-<package version>.exe`; an installer older than the source cannot deliver
+   the fix, so check its timestamp against the last change.
+
+   The same sequence by hand, for a helper that is broken or an install to be watched stage by stage:
 
    ~~~powershell
+   npx electron-builder --win nsis --x64 --publish never
    taskkill /F /IM TucanoNext.exe
-   $nextVersion = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
-   $nextInstaller = Join-Path (Get-Location) "dist/tucanonext-setup-$nextVersion.exe"
-   $nextInstall = Start-Process -FilePath $nextInstaller -ArgumentList '/S' -WindowStyle Hidden -Wait -PassThru
-   if ($nextInstall.ExitCode -ne 0) { throw "TucanoNext installation failed: $($nextInstall.ExitCode)" }
+   $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+   $installer = Join-Path (Get-Location) "dist/tucanonext-setup-$version.exe"
+   $install = Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden -Wait -PassThru
+   if ($install.ExitCode -ne 0) { throw "TucanoNext installation failed: $($install.ExitCode)" }
    ~~~
 
    A missing process before installation is harmless. Resolve other shutdown or installer errors.
-4. **Always launch and observe the installed app after installation.** Silent installation may
-   finish with no app running. Use an environment without scratch-only `TUCANO_DATA`,
-   `TUCANO_SEED`, or `TUCANO_FAKE_ENGINES` overrides and launch the installed executable:
+4. **Observe the installed app, and start it yourself when the helper's launch left no window.** A
+   silent installation finishes with no app running often enough that the window is the check, not
+   the install's exit code. Use an environment without scratch-only `TUCANO_DATA`, `TUCANO_SEED`, or
+   `TUCANO_FAKE_ENGINES` overrides and start the installed executable:
 
    ~~~powershell
    Start-Process -FilePath "$env:LOCALAPPDATA\Programs\tucanonext\TucanoNext.exe" -WindowStyle Hidden
@@ -277,6 +429,9 @@ and installation alone are incomplete.
    - The changed feature works in the installed build. Use a scratch instance for synthetic
      runs or writes; close another instance if its ports would conflict.
    - No startup error, failed migration, broken navigation, or unexpected data reset occurs.
+   - The code running is the code built: the installed `app.asar` holds a string only this change adds.
+     A rebuilt window with a stale bundle looks identical until you look for it, so search the file
+     for a label, a class or a message the change introduced.
 6. Leave the regular installed app running on its normal workspace unless the user asks
    otherwise. Close scratch instances; never leave fake engines as the daily app. If a launch
    fails, the user stops automation, or a check cannot run without unapproved takeover, report
@@ -289,11 +444,27 @@ nothing else. It typechecks, builds, packages, checks the package, closes the ap
 launches, and requires a window; a failure exits with the stage's own code and `--json` gives one
 line a caller can parse.
 
+Three commands, and the difference matters:
+
+~~~powershell
+node scripts/self-build.mjs install   # npm run self-install: typecheck, build, package, verify, install, launch
+node scripts/self-build.mjs build     # npm run self-build: the same without the install and the launch
+node scripts/self-build.mjs doctor    # npm run doctor: what cannot load, and instances with no window
+~~~
+
+`npm run self-build` does not install, which is the one alias whose name suggests it does. The exit
+code names the stage that failed (`typecheck 2`, `build 3`, `package 4`, `verify 5`, `stop 6`,
+`install 7`, `launch 8`), so a caller can tell a broken test from a broken installer. It packages
+`build/whisper/` as it finds it and never refreshes it.
+
 - **Never pack while `node_modules` is being rewritten.** `npm ci` in one shell and
   `electron-builder` in another ships a package holding the direct dependencies and none of their
   dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
   and the processes left behind hold the single-instance lock, so every later launch, including the
   taskbar shortcut, does nothing at all. Run `npm ci` alone and wait for it to finish.
+- **Run it in the foreground.** A shell the runner moves to the background cannot answer the
+  installer's stdin: the run prints `stdin is not a tty` and ends without installing, leaving the
+  previous installer in `dist/` to be mistaken for a fresh one.
 - **`node scripts/self-build.mjs doctor` after any launch that shows no window.** It names a
   package that cannot load and instances that run without a window; `doctor --fix` closes those
   instances so the next launch can start.
@@ -302,11 +473,60 @@ line a caller can parse.
 - Do not copy `dist/win-unpacked` over the installed folder and do not edit the installed package
   in place: both leave a build no installer knows about, and the next install silently reverts it.
 
+### Rebuild the release when a major feature completes
+
+The live install is for trying a feature today; the fork's release is what other machines can install.
+A **major feature** is one the person would notice as a new capability, one that changes a released
+surface (settings, a schema column, the RPC contract, an installer asset), or one that a published
+build cannot be brought up to without it. A copy fix, a label, an internal refactor or a single bug is
+not major: install it and leave the release alone.
+
+For a major feature, after the install and the smoke check:
+
+1. Rebuild the same version. The package version stays the one upstream ships, inherited rather than
+   bumped for a feature.
+2. Build the installer and its blockmap for `win x64` with `--publish never`, then replace both assets
+   on the fork's release at that version:
+
+   ~~~powershell
+   $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+   gh release upload "next-v$version" -R apoapostolov/tucano `
+     "dist/tucanonext-setup-$version.exe" `
+     "dist/tucanonext-setup-$version.exe.blockmap" --clobber
+   ~~~
+
+3. Keep the tag name `next-v<version>`. Upstream's own `v<version>` exists in the fork's tag
+   namespace, and a second tag with the same name makes every later `git fetch --tags` fail with
+   "would clobber existing tag", which breaks the daily backport.
+4. Point that tag at the commit the installer was built from, so the tag, the asset and the notes
+   describe one build. The tag lives on the fork, which is the `origin` remote in this checkout:
+
+   ~~~powershell
+   git tag -f "next-v$version" HEAD
+   git push --force origin "refs/tags/next-v$version"
+   ~~~
+5. Verify what the server holds, not what `gh` printed: the asset size, its `sha256:` digest against
+   the local file, a ranged GET that returns `206` with real bytes, and the tag's target commit.
+6. Update the release notes for the build: what changed since the previous asset of that version, the
+   commit the installer came from, the SmartScreen warning for an unsigned installer, and the fact that
+   this build does not update itself. Notes describe the delta, not the whole history.
+
 ## Integrate and report completion
 
 Commit only task-related source and evidence. Bring the tested candidate into local `next` by
-ordinary merge or fast-forward, preserving intervening work. When authorized to update the fork,
-push to `origin/next` and verify the remote head. Preserve unrelated user files.
+ordinary merge or fast-forward, preserving intervening work, then push to `origin/next` and read the
+remote head back before reporting: a commit that exists only on this machine has not been delivered.
+Preserve unrelated user files.
+
+A user-facing change carries a `## [Unreleased]` entry: a bold sentence naming the change in the
+person's terms, then what changed and what was wrong before it, with the issue number in parentheses.
+`### Added` sits above `### Fixed`, and a section that carries a Portuguese summary gets the same
+entry there. That section is also the release's notes, so write it for the person reading the update,
+not for a reviewer.
+
+The pre-commit hook lints staged Markdown and only warns. Voice-gate and Vale output on
+`CHANGELOG.md`, naming bold lead-ins or repeated phrasing, is expected in this file and does not
+block the commit; leave the entry's shape and fix only the lines the change touched.
 
 Report the integrated commit, upstream/PR heads included, checks and counts, installer used,
 installed-app launch and smoke result, and remaining limitations. Update audit and inventory
@@ -331,10 +551,145 @@ runtime health.
 - Capture pointers only after a gesture starts and release capture in its ending handler.
   Capture on `pointerdown` can send the next click to the capturing element and disable a child button.
 - Comments explain why a choice was made rather than restating code.
+- **A new dependency is a decision, not a convenience.** Check first whether the standard library or a
+  dependency already in `package.json` covers it, keep one `package-lock.json`, and say in the PR what
+  it buys and what it costs. `npm ci` installs that lockfile and nothing else, here and in CI.
+- **No secret enters the tree.** A key, token, password or session cookie does not belong in a
+  fixture, a screenshot, a test or a commit message; the fake engines and fixture files exist so a
+  test never needs one. A screenshot is evidence, so check what the window is showing before it is
+  published.
+- A new setting is five files and sometimes a wire. `src/shared/types.ts` carries the field with a
+  comment saying where it is set; `src/shared/workspaces.ts` lists it in `GENERAL_SETTINGS`, or
+  `PERSONAL_SETTINGS` in `src/core/policy-people.ts` when it is each person's own; the validation
+  entry goes in `src/core/settings-patch.ts`; the control goes in `Pages.tsx`. A value that both
+  processes must read at once, as the language does, also needs the setter called where settings
+  arrive (`src/core/index.ts`, `src/renderer/src/store.ts`, `src/main/index.ts`) and the field on the
+  `lang` message for the main process. Miss one and the setting saves and changes nothing.
+- A display decision that applies everywhere lands as one helper, with a test that every site goes
+  through it. Times were formatted in ten files and the shape came from the language, so one
+  conversation read `15:05` in one language and `3:05 PM` in the other; `src/shared/clock.ts` and
+  `test/clock-setting.test.ts` are the pattern to copy.
+- A classifier-driven feature is a job of Settings › Classifiers, never a card of its own. The list
+  is `CLASSIFIER_JOBS` in `src/shared/classifiers.ts`, with `jobLabel` and `jobAbout` beside it; a
+  switch that turns one of those jobs on is the last row of that card, and the surface it opens is a
+  button beside its switch while it is on.
+- A reply cut by a restart, a crash or a stop is continued, not restarted: `src/shared/run-progress.ts`
+  decides when there is work to go on with, and the core and the button both read that decision. Do
+  not fold it back into a single "try again", and do not continue a reply whose only step was
+  thinking.
+- Copy the harness in `test/no-monthly-limit.test.tsx` to render a settings surface: `linkedom`, a
+  mocked `useStore` over a `State` literal, `act` and a real `createRoot`. Assert on rendered text
+  and on the store actions a click reached, not on component internals.
+
+## Commit on the feature's own issue or PR
+
+Every change to a feature is committed on the original project, `eduwxyz/tucano` (the `upstream`
+remote in this checkout, where the issues and pull requests live), as part of that feature's issue or pull
+request. A commit that exists only on `next`, or only on a local branch, is not delivery: `origin/next` on
+the fork is integration and QA, so work that stops there cannot be reviewed, merged or found again by
+anyone but this machine.
+
+Look the feature up in the table below before opening anything:
+
+- a change in the domain of a feature that has an open pair, or any improvement to a still-open issue or
+  PR, is a **commit on that PR's branch**, pushed to the PR, with the body saying what changed since the
+  last review and a comment on the issue when the behaviour it describes has changed;
+- a new PR is for a feature with no pair, for genuinely new work, or for a branch that is someone else's
+  (another contributor's PR is theirs to change);
+- where a feature has a PR and no issue, the PR is the home; where it has an issue and no PR, the branch
+  that closes it is the home and the issue carries the decision.
+
+The pair is also where the reasoning lives: a follow-up commit with a one-line subject on the PR says more
+to a reviewer than a second PR that has to be read against the first.
+
+| Feature | Issue | PR |
+| --- | --- | --- |
+| English labels and hints across Settings and Wiki | 409 | 410 |
+| Skills: filter and group an agent's tab | 228 | 244 |
+| Skills: read a Hermes library as it is | 102 | 311 |
+| Skills: every harness on the computer | 306 | |
+| Skills: the Tuca sets a bot's skills | 318 | 319 |
+| Thinking streamed as dim live text | 235 | 245 |
+| Model-facing language in an English workspace | 242 | 310 |
+| Settings › Models: thinking under the model | 312 | 313 |
+| Settings › Accounts: another Grok login | 415 | 416 |
+| Asks: one section above Approvals | 240 | 247 |
+| Asks: the open question stays next to the field | 241 | 248 |
+| Approval card: action, target, and what became of it | 252 | 334 |
+| Clear a conversation's history | 234 | 249 |
+| Reorder agents and DMs in the sidebar | 239 | 250 |
+| Send modes: parallel, queued, steer, interrupt | 260 | 261 |
+| Prompt sits above the session it started | 286 | 290 |
+| Work drawer above the field | 287 | 288 |
+| Follow up a finished reply | 337 | 338 |
+| Try again in a direction you write | 320 | 321 |
+| Continue a reply the app cut | 390 | 401 |
+| Continue a reply the app cut, cut from `main` for upstream | 390 | 412 |
+| Kill and restart in the middle of a reply (check) | 390 | 402 |
+| Resume interrupted replies after a restart | 389 | 391 |
+| Steps: all, the latest few, or an expandable line | 314 | 322 |
+| Steps: fold them from the line beside them | 326 | 327 |
+| Steps: remember them folded | 328 | 329 |
+| Steer a working reply from the bottom of its steps | 331 | 332 |
+| Reply in thread stays in the corner while steps scroll | 270 | 275 |
+| Channels: mention mode | 269 | 272 |
+| Team-ups: an agent calls one outside the room | 273 | 274 |
+| Channels: Jev's listen mode | 278 | 279 |
+| Jev marks the option it would pick | 285 | 284 |
+| Route each reply by what Jev reads (pools and roles) | | 333 |
+| Classifiers section | 378 | 379 |
+| Classifiers on all six jobs | 378 | 383 |
+| Next steps card, all ticked | 297 | 298 |
+| Next steps: nothing ticked, and the job that picks them | 384 | 385 |
+| Wiki: hand a missing page to an agent | 255 | 258 |
+| Wiki: hand orphan pages to an agent | 256 | 259 |
+| Wiki: a resolver for findings the review can't settle | 267 | 268 |
+| Wiki: a tool card with a level that writes pages | 354 | 355 |
+| Wiki: recheck permissions during running replies | | 373 |
+| Wiki: a date that opens a sentence is not a page | | 392 |
+| Wiki: the map fitted to the window it mounted in | 418 | 419 |
+| The toast in the app's orange, in both themes | 421 | 422 |
+| Usage and limits: the quota each provider has left | 304, 309 | 305 |
+| Right-click a picture: save, copy, back in the prompt | 335 | 336 |
+| A reply's pictures as one album | 302 | 303 |
+| A connector wears the picture you give it | | 353 |
+| A routine with nothing to report says nothing | 365 | 366 |
+| Memory: the bot tabs stay inside the bar | 396 | 397 |
+| Times as a 12-hour or a 24-hour clock | 393 | 395 |
+| Isolated UI checks without taking focus | | 372 |
+| Emit fake sign-in output before resolving the exit | | 386 |
+| Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
+| A hand-off answer comes back however the reply ends | 376 | 377 |
+| Delete a session from the room, in two presses | 374 | 375 |
+
+The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
+what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR
+closed without a merge, a number that no longer exists) and which of your open pull requests have no row
+at all. `--write` drops the shipped rows, `--check` exits non-zero when a row is stale so a scheduled run
+can say so, and `--all-authors` widens the "no row" list past your own PRs, which is off by default
+because another contributor's PR is theirs.
+
+Refresh the table from origin, not from memory:
+
+```bash
+gh pr list -R eduwxyz/tucano --state open --json number,title,body \
+  --jq '.[] | "\(.number)\t\(.title)"'
+gh issue list -R eduwxyz/tucano --state open --json number,title
+```
+
+Add the row when a feature gets its pair, and drop it when the PR merges: the rule above is only as good
+as this index, and a feature missing from it is one an agent will open a second PR for.
 
 ## Public PRs and writing
 
-Open focused product PRs against `eduwxyz/tucano:main`, never against the fork. Reproduce new
+Open focused product PRs against `eduwxyz/tucano:main`, never against the fork, and cut the branch
+from `upstream/main`. A branch based on `origin/main` carries fork commits upstream does not have, so
+it turns CONFLICTING as soon as the base moves: rebase onto `upstream/main`, run the checks there, and
+force-push with the lease named. What this account may and may not do on the project, and what each
+refusal means, is in [Working where you have no admin rights](#working-where-you-have-no-admin-rights).
+
+Leave other contributors' PRs alone: no rebase, review, comment or close unless the user asks for that
+PR by number. Their conflicts are theirs, and a comment in their thread speaks for the maintainer. Reproduce new
 upstream defects on current upstream main and document stack dependencies and validation.
 `next` is private integration and QA context. Keep its importance and personal workflow out
 of upstream issues, PR descriptions, and review comments. Use upstream-main or feature-branch
@@ -343,3 +698,49 @@ evidence in public reports. Do not copy this fork-local guide into upstream feat
 Read `C:/git/self-profile/profile/operational.md` before substantial prose. Apply its supported
 writing habits while preserving facts, attribution, uncertainty, obligations, and exact syntax.
 The profile's examples and learning records remain private.
+
+## Working where you have no admin rights
+
+The work happens in repositories this account only reads. Measured, not assumed:
+
+~~~powershell
+$q = '.permissions | to_entries | map(select(.value)) | map(.key) | join(",")'
+gh api repos/eduwxyz/tucano --jq $q          # pull
+gh api repos/apoapostolov/tucano --jq $q     # admin,maintain,pull,push,triage
+gh api repos/NousResearch/hermes-agent --jq $q   # pull
+~~~
+
+`pull` is read: it opens an issue, comments, opens a pull request from the fork, and reads checks. Every
+change to the repository's own state needs `write`, and this account has none on `eduwxyz/tucano` or on
+`NousResearch/hermes-agent`. Expect the refusal rather than treating it as a failure to fix.
+
+Authorship is the one exception, and it is worth knowing precisely: an issue or pull request you opened
+stays yours to edit, close and reopen without `write`, so a decision you took can be recorded on your own
+thread. Someone else's is read-only.
+
+GitHub's wording for these refusals is misleading. Adding a label to an issue answered `Must have admin
+rights to Repository.`, which is the same sentence a failed workflow re-run gives; read the operation, not
+the sentence, to know what was missing.
+
+| What is out of reach | How it shows up | What to do instead |
+| --- | --- | --- |
+| Re-running a failed workflow | `run <id> cannot be rerun; Must have admin rights to Repository.` | Push an empty commit that says why (`Re-run the checks: the Linux job failed in the test that does not touch this`), and check the new run |
+| Merging a pull request | The merge button is a maintainer's | Keep the PR body standing on its own and wait, or ask in the thread |
+| Approving, or dismissing a review | `write` is required, and GitHub refuses a self-approval anyway | Say what was tested in the body and let a maintainer approve |
+| Labels, milestones, assignees, projects, a pinned comment, on any issue | `Must have admin rights to Repository.` (403), or the control is missing in the UI | Name the triage you want in the first lines of the body |
+| Repository settings: default branch, merge strategy, required checks, secrets, environments, webhooks | Refused (403) | A change that needs one is described in the PR, with the value it needs, not attempted |
+| Pushing a branch, a tag or a release to the project | `403`, or `! [remote rejected]` | Push to the fork and open the cross-repo PR; the fork's own tag is the `next-v<version>` one |
+| Editing or deleting someone else's comment or description | The edit control is absent | Your own comments and threads stay editable: correct yourself there |
+| Deleting a branch after merge, or closing someone else's issue | Refused (403) | Say which branch is now dead; the threads you opened are yours to close |
+| Installing hooks, a release script, or a secret the checks need | Nothing to install them on, or the job fails where you cannot look | Run the checks locally before pushing, and state in the PR which check cannot pass and why |
+| Capping the open-PR queue | `hermes-agent` has refused a sixth open PR from this account, and neither project lets it clean up after itself | Land or withdraw one of your own before opening another, and close the stale ones you opened: nobody else will |
+
+A pull request that comes from a fork runs on a **read-only token and without the project's secrets**, so a
+job that comments, pushes or calls a keyed service fails for that reason alone. Read the log before
+changing code: the failure is the token, not the change, and the run on the maintainer's branch is the one
+that proves it.
+
+Two habits keep this cheap. Ask for nothing that can be worked around (an empty commit costs a minute;
+asking for `write` costs a day). And when something genuinely needs an administrator, put the exact
+setting, value and reason in the PR body, once, so the person with the permission can act on it without
+reading a conversation.

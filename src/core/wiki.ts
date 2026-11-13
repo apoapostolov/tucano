@@ -247,7 +247,7 @@ export interface WikiDeps {
 }
 
 // What someone may read of the wiki: everything but the pages held for someone else (see `inherit`).
-export type WikiView = Pick<Wiki, 'count' | 'list' | 'kinds' | 'page' | 'search' | 'indexText' | 'graph' | 'log' | 'recent'>
+export type WikiView = Pick<Wiki, 'count' | 'list' | 'kinds' | 'page' | 'search' | 'indexText' | 'graph' | 'log' | 'recent' | 'findings'>
 
 export class Wiki {
   dir: string
@@ -722,6 +722,8 @@ export class Wiki {
         return p && { ...p, backlinks: p.backlinks.filter(shown), missing: [...new Set([...p.missing, ...p.links.filter((t) => !shown(t))])] }
       },
       search: (q, limit = 8) => this.search(q, limit, hidden),
+      // A finding about a page held from this person isn't theirs to see, or to close.
+      findings: () => this.findings().filter((f) => f.pages.every(shown)),
       indexText: () => this.indexFor(list()),
       graph: () => {
         const g = this.graph()
@@ -1253,18 +1255,26 @@ export class Wiki {
 
   // A new review's findings take the place of the old ones; what was dismissed, or still waits, isn't said again.
   setFindings(list: (Omit<WikiFinding, 'id' | 'at' | 'change'> & { key: string; ops?: WikiOp[]; reason?: string })[]): void {
+    // A dismissed finding the review no longer finds is a problem fixed some other way (the page got
+    // written, the link repaired): its row goes, so the key isn't carried as a silence forever.
+    const produced = new Set(list.map((f) => f.key))
+    const stale = this.db.prepare("SELECT id, key FROM findings WHERE state = 'dismissed' AND change_id IS NULL AND kind IN ('broken', 'orphan', 'missing', 'log')").all() as { id: string; key: string }[]
+    for (const r of stale) if (!produced.has(r.key)) this.db.prepare('DELETE FROM findings WHERE id = ?').run(r.id)
     // a fix refused counts as "leave it"
     const keep = new Set((this.db.prepare("SELECT key FROM findings WHERE state = 'dismissed' OR change_id IN (SELECT id FROM changes WHERE state = 'refused')").all() as { key: string }[]).map((r) => r.key))
     // What the resolver said about it, which is about the same finding however many times it's reviewed.
     const notes = new Map((this.db.prepare('SELECT key, note FROM findings WHERE note IS NOT NULL').all() as { key: string; note: string }[]).map((r) => [r.key, r.note]))
     for (const f of this.findings()) if (f.change) keep.add((this.db.prepare('SELECT key FROM findings WHERE id = ?').get(f.id) as { key: string }).key)
+    // A finding that stays open keeps its id across reviews: an agent handed one holds that id until it
+    // closes it, and a new one each review would make the id it was given the answer "no such finding".
+    const openIds = new Map((this.db.prepare("SELECT key, id FROM findings WHERE state = 'open' AND kind != 'git'").all() as { key: string; id: string }[]).map((r) => [r.key, r.id]))
     this.db.prepare("DELETE FROM findings WHERE state = 'open' AND kind != 'git' AND (change_id IS NULL OR change_id NOT IN (SELECT id FROM changes WHERE state IN ('pending', 'conflict')))").run()
     const at = Date.now()
     for (const f of list) {
       if (keep.has(f.key)) continue
       keep.add(f.key)
       const change = f.ops?.length ? this.addChange({ ops: f.ops, by: 'review', ...(f.reason ? { reason: f.reason } : {}) }) : undefined
-      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)").run(sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null, change ? null : (notes.get(f.key) ?? null))
+      this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)").run(openIds.get(f.key) ?? sha(f.key + at + Math.random()), f.key, at, f.kind, JSON.stringify(f.pages), f.text, f.name ?? null, change?.id ?? null, change ? null : (notes.get(f.key) ?? null))
     }
     this.onChange()
   }
@@ -1274,6 +1284,28 @@ export class Wiki {
   addNotice(n: { key: string; pages: string[]; text: string }): void {
     if (this.db.prepare("SELECT 1 FROM findings WHERE key = ? AND state = 'open'").get(n.key)) return
     this.db.prepare("INSERT INTO findings (id, key, at, kind, pages, text, name, change_id, state) VALUES (?, ?, ?, 'git', ?, ?, NULL, NULL, 'open')").run(sha(n.key + Date.now() + Math.random()), n.key, Date.now(), JSON.stringify(n.pages), n.text)
+    this.onChange()
+  }
+
+  // An agent closing a finding it confirmed settled (the tool wiki_fechar). It leaves the list like a
+  // dismissal, and the note says who closed it and what changed, where the resolver's note would sit: so
+  // a later review that finds the same thing again still says what was done about it the last time.
+  closeFinding(id: string, answer: { byName: string; note?: string }): boolean {
+    const r = this.db.prepare('SELECT change_id, state FROM findings WHERE id = ?').get(id) as { change_id: string | null; state: string } | undefined
+    if (!r || r.state !== 'open') return false
+    const note = (answer.note ?? '').trim()
+    const said = `${L('Fechado por', 'Closed by')} @${answer.byName}${note ? `: ${note}` : ''}`
+    this.db.prepare("UPDATE findings SET state = 'dismissed', note = ? WHERE id = ?").run(said, id)
+    if (r.change_id) this.refuseChange(r.change_id)
+    this.onChange()
+    return true
+  }
+
+  // A finding handed to an agent stays in the list until that agent closes it, and says whose hands it
+  // is in meanwhile: the card going away used to leave nobody to ask, and the problem unaccounted for.
+  handOffFinding(id: string, handle: string): void {
+    const at = new Date().toLocaleDateString(locale())
+    this.db.prepare("UPDATE findings SET note = ? WHERE id = ? AND state = 'open'").run(`${L('Com', 'With')} @${handle}, ${L('desde', 'since')} ${at}`, id)
     this.onChange()
   }
 
@@ -1501,12 +1533,33 @@ export const WIKI_LER: ToolDef = {
     return { type: 'object' as const, properties: { pagina: { type: 'string', description: L('O título da página, como no índice.', 'The page title, as in the index.') } }, required: ['pagina'] }
   }
 }
-export const WIKI_TOOLS = [WIKI_INDICE, WIKI_BUSCAR, WIKI_LER]
+export const WIKI_AVISOS: ToolDef = {
+  name: 'wiki_avisos',
+  get description() {
+    return L(
+      'Lista os avisos abertos da revisão da wiki, com o id de cada um, o tipo e o que apontam. Use o id com wiki_fechar quando conferir que o problema foi resolvido.',
+      "Lists the wiki review's open findings, with each one's id, its kind and what it points at. Use the id with wiki_fechar once you have confirmed the problem is fixed."
+    )
+  },
+  inputSchema: { type: 'object', properties: {} }
+}
+export const WIKI_TOOLS = [WIKI_INDICE, WIKI_BUSCAR, WIKI_LER, WIKI_AVISOS]
 export const WIKI_TOOL_NAMES = new Set(WIKI_TOOLS.map((t) => t.name))
 const MAX_READ = 24_000
 
 // One call: the text for the agent, and the step the reply shows.
-export function wikiCall(wiki: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count'>, name: string, args: Record<string, unknown>): { text: string; error?: boolean; step: { label: string; detail: string } } {
+export function wikiCall(wiki: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'findings'>, name: string, args: Record<string, unknown>): { text: string; error?: boolean; step: { label: string; detail: string } } {
+  if (name === WIKI_AVISOS.name) {
+    const list = wiki.findings()
+    const step = { label: L('Leu os avisos da wiki', "Read the wiki's findings"), detail: list.length === 1 ? L('1 aviso', '1 finding') : L(`${list.length} avisos`, `${list.length} findings`) }
+    if (!list.length) return { text: L('Nenhum aviso aberto: a revisão não aponta nada agora.', 'No open finding: the review points at nothing now.'), step }
+    return {
+      text: list
+        .map((f) => `- ${f.id} (${f.kind}): ${f.text.replace(/\s+/g, ' ')}${f.pages.length ? ` · ${f.pages.map((t) => `[[${t}]]`).join(', ')}` : ''}${f.note ? ` · ${f.note}` : ''}`)
+        .join('\n'),
+      step
+    }
+  }
   if (name === WIKI_INDICE.name) {
     const text = wiki.indexText()
     return { text: text.length > MAX_READ ? `${text.slice(0, MAX_READ)}\n…` : text, step: { label: L('Leu o índice da wiki', "Read the wiki's index"), detail: L(`${wiki.count()} páginas`, `${wiki.count()} pages`) } }
@@ -1576,7 +1629,28 @@ export const WIKI_EDITAR: ToolDef = {
     }
   }
 }
-export const WIKI_WRITE_TOOLS = [WIKI_ESCREVER, WIKI_EDITAR]
+// Closing a finding is what an agent does with the problem it was handed, after the pages are right:
+// without it the finding stayed in the list, and the same card was read again as if nothing happened.
+export const WIKI_FECHAR: ToolDef = {
+  name: 'wiki_fechar',
+  get description() {
+    return L(
+      'Fecha um aviso da wiki depois de conferir que o problema foi resolvido: ele sai da lista, e a nota diz o que você mudou. Use só quando as páginas já estiverem certas. O id vem do pedido que trouxe o aviso, ou de wiki_avisos.',
+      "Closes a wiki finding once you have confirmed the problem is fixed: it leaves the list, and the note says what you changed. Only use it once the pages are right. The id comes from the request that brought the finding, or from wiki_avisos."
+    )
+  },
+  get inputSchema() {
+    return {
+      type: 'object' as const,
+      properties: {
+        aviso: { type: 'string', description: L('O id do aviso, como em wiki_avisos ou no pedido que trouxe ele.', 'The finding id, as in wiki_avisos or in the request that brought it.') },
+        nota: { type: 'string', description: L('Em uma linha, o que foi feito: o que mudou, ou por que não havia o que mudar.', 'In one line, what was done: what changed, or why there was nothing to change.') }
+      },
+      required: ['aviso']
+    }
+  }
+}
+export const WIKI_WRITE_TOOLS = [WIKI_ESCREVER, WIKI_EDITAR, WIKI_FECHAR]
 export const WIKI_WRITE_TOOL_NAMES = new Set(WIKI_WRITE_TOOLS.map((t) => t.name))
 
 // The tools an agent gets for its level: the three that read, and the two that write on top of them.
@@ -1587,6 +1661,21 @@ export function wikiToolsFor(access: WikiAccess): ToolDef[] {
 
 // One write: the text for the agent, and the step the reply shows. `canSee` is what this conversation
 // may read: a page held for someone else isn't written either, and isn't even named.
+// The closing call, kept apart from the page writes: it takes a finding's id, not a title.
+export function wikiClose(
+  wiki: Pick<Wiki, 'closeFinding'>,
+  author: { name: string },
+  args: Record<string, unknown>
+): { text: string; error?: boolean; step: { label: string; detail: string } } {
+  const id = typeof args['aviso'] === 'string' ? args['aviso'].trim() : ''
+  const nota = typeof args['nota'] === 'string' ? args['nota'].trim() : ''
+  const step = { label: L('Fechou um aviso da wiki', 'Closed a wiki finding'), detail: nota }
+  if (!id) return { text: L('Faltou o id do aviso: veja com wiki_avisos.', 'The finding id is missing: see them with wiki_avisos.'), error: true, step }
+  if (!wiki.closeFinding(id, { byName: author.name, ...(nota ? { note: nota } : {}) }))
+    return { text: L(`Não há aviso aberto com o id "${id}". Veja com wiki_avisos.`, `There's no open finding with the id "${id}". See them with wiki_avisos.`), error: true, step }
+  return { text: L(`Aviso fechado${nota ? `: ${nota}` : '.'}`, `Finding closed${nota ? `: ${nota}` : '.'}`), step }
+}
+
 export function wikiWrite(
   wiki: Pick<Wiki, 'page' | 'save' | 'readOnly'>,
   author: { id: string; name: string },

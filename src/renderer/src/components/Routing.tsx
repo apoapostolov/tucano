@@ -100,15 +100,17 @@ const readerHasKey = (settings: { classifierKeys?: Record<string, boolean>; jevK
   !!reader && (settings.classifierKeys?.[reader.id] ?? false)
 const readerWarning = (reader: ClassifierConfig | undefined, hasKey: boolean): string =>
   !reader
-    ? L('Nenhum classificador lê os pedidos: escolha um em Classifiers, no trabalho “Qual modelo responde”, ou o roteamento não escolhe modelo nenhum.', 'No classifier reads the prompts: pick one in Classifiers, under “Which model answers”, or routing picks no model at all.')
+    ? L('Nenhum classificador lê os pedidos: escolha um em Classifiers, no trabalho “Qual modelo responde”, ou o roteamento não escolhe modelo nenhum.', "Assign a classifier in Classifiers › Model routing to enable routing.")
     : hasKey
       ? ''
       : L(`Falta a chave do ${providerSpec(reader.provider).label} pra começar a rotear.`, `Add the ${providerSpec(reader.provider).label} key to start routing.`)
 
-// ---------- the switch, in the Jev block ----------
+// ---------- the switch, one more row of the Classifiers card ----------
 
-// One switch turns the feature on and reveals the tab; it never opts an agent in by itself.
-export function SmartRoutingSwitch(): ReactNode {
+// One switch turns the feature on and reveals the tab; it never opts an agent in by itself. It reads
+// as the last line of Settings › Classifiers, where the job it serves ("Which model answers") is
+// chosen: the routing it opens is a couple of clicks away, and only offered while it is on.
+export function SmartRoutingRow(): ReactNode {
   const settings = useStore((s) => s.settings)
   const routing = settings.routing?.enabled === true
   const reader = readerOf(settings)
@@ -118,22 +120,35 @@ export function SmartRoutingSwitch(): ReactNode {
   const on = settings.routing ?? defaultRouting()
   const set = (enabled: boolean, rest: Partial<RoutingConfig> = {}): void => updateSettings({ routing: normalizeRouting({ ...on, ...rest, enabled }) })
   return (
-    <div className="field">
-      <div className="row row--between">
-        <span className="field__label">{L('Roteamento inteligente', 'Smart model routing')}</span>
-        <Toggle on={routing} onChange={(v) => set(v)} />
-      </div>
-      <span className="hint">
-        {routing
+    <Field
+      group
+      label={L('Roteamento inteligente', 'Smart model routing')}
+      hint={
+        routing
           ? L(
-              'Um classificador lê cada pedido e escolhe o modelo nos seus pools, pra todo agente que não tiver a própria chave em Ligado ou Desligado. Um agente em Desligado na página dele usa o próprio modelo. Quem lê é escolhido em Classifiers.',
-              'A classifier reads each prompt and picks the model from your pools, for every agent that hasn’t set its own switch to On or Off. An agent set to Off on its page uses its own model. Which one reads is chosen in Classifiers.'
+              'Um classificador lê cada pedido e escolhe o modelo nos seus pools, pra todo agente que não tiver a própria chave em Ligado ou Desligado. Um agente em Desligado na página dele usa o próprio modelo. Quem lê é o classificador de “Qual modelo responde”, aqui em cima.',
+              "Route prompts through model pools by default. Per-agent On/Off overrides this setting; choose the classifier under Model routing."
             )
           : L(
               'Desligado: cada agente usa o próprio modelo, menos os que estiverem em Ligado na página deles.',
-              'Off: every agent uses its own model, except the ones set to On on their own page.'
-            )}
-      </span>
+              "Off: agents use their own models unless routing is enabled on their page."
+            )
+      }
+    >
+      <div className="row row--end">
+        {routing && (
+          <button
+            className="btn btn--primary btn--sm"
+            onClick={() => {
+              navigate({ kind: 'settings' })
+              setTab('settings', 'roteamento')
+            }}
+          >
+            <Icon name="sliders" size={13} /> {L('Configurar as rotas', 'Configure routing')}
+          </button>
+        )}
+        <Toggle on={routing} onChange={(v) => set(v)} />
+      </div>
       {routing && onTheirOwn > 0 && (
         <span className="hint">
           {onTheirOwn === 1
@@ -141,23 +156,8 @@ export function SmartRoutingSwitch(): ReactNode {
             : L(`${onTheirOwn} agentes estão ligados só pra si e continuam roteando com isto desligado.`, `${onTheirOwn} agents are set to on by themselves and keep routing with this off.`)}
         </span>
       )}
-      {(routing || onTheirOwn > 0) && (
-        <p className="small">
-          <a
-            className="link"
-            href="#routing"
-            onClick={(ev) => {
-              ev.preventDefault()
-              navigate({ kind: 'settings' })
-              setTab('settings', 'roteamento')
-            }}
-          >
-            {L('Configurar as rotas', 'Configure routing')}
-          </a>
-        </p>
-      )}
       {routing && !readerReady && <p className="hint hint--warn">{readerWarning(reader, readerReady)}</p>}
-    </div>
+    </Field>
   )
 }
 
@@ -217,7 +217,7 @@ export function RoutingPane(): ReactNode {
       </div>
 
       {active && !readerReady && (
-        <Card title={L('Quem lê os pedidos', 'Who reads the requests')} lead={L('O roteamento inteligente é uma pergunta fechada por resposta, e quem a responde é o classificador escolhido em Classifiers, no trabalho “Qual modelo responde”.', 'Smart routing is one closed question per reply, and the classifier chosen in Classifiers, under “Which model answers”, is what answers it.')}>
+        <Card title={L('Quem lê os pedidos', "Routing classifier")} lead={L('O roteamento inteligente é uma pergunta fechada por resposta, e quem a responde é o classificador escolhido em Classifiers, no trabalho “Qual modelo responde”.', "Classify each reply using the provider assigned in Classifiers › Model routing.")}>
           <p className="hint hint--warn">{readerWarning(reader, readerReady)}</p>
         </Card>
       )}
@@ -295,9 +295,11 @@ export function RoutingPane(): ReactNode {
               pool={pool}
               setting={config.pools[pool]}
               policy={config.free.policy}
+              allowTier4={config.allowTier4}
               allowTier5={config.allowTier5}
               onDescriptor={(descriptor) => setPoolSetting(pool, { descriptor })}
               onPolicy={(policy) => save({ ...config, free: { policy } })}
+              onAllowTier4={(allowTier4) => save({ ...config, allowTier4 })}
               onAllowTier5={(allowTier5) => save({ ...config, allowTier5 })}
             />
           )}
@@ -306,8 +308,8 @@ export function RoutingPane(): ReactNode {
             label={role ? L(`Modelos só do papel ${roleName(role)}`, `Models for ${roleName(role)} only`) : L(`Modelos do ${poolName(pool)}`, `${poolName(pool)} models`)}
             note={
               role
-                ? L('Tentados antes dos do pool, quando o pedido cai num tier igual ou acima do piso do papel.', 'Tried before the pool’s, when the prompt lands on a tier at or above the role’s floor.')
-                : L('Na ordem. O primeiro que existir e estiver logado responde.', 'In order. The first that exists and is signed in answers.')
+                ? L('Tentados antes dos do pool, quando o pedido cai num tier igual ou acima do piso do papel.', "Try these before pool models at or above the role’s minimum tier.")
+                : L('Na ordem. O primeiro que existir e estiver logado responde.', "Try in order; use the first available, signed-in model.")
             }
             chain={chain}
             onChange={setChain}
@@ -323,23 +325,27 @@ function PoolEditor({
   pool,
   setting,
   policy,
+  allowTier4,
   allowTier5,
   onDescriptor,
   onPolicy,
+  onAllowTier4,
   onAllowTier5
 }: {
   pool: Pool
   setting: PoolSetting
   policy: FreePolicy
+  allowTier4: boolean
   allowTier5: boolean
   onDescriptor: (v: string) => void
   onPolicy: (v: FreePolicy) => void
+  onAllowTier4: (v: boolean) => void
   onAllowTier5: (v: boolean) => void
 }): ReactNode {
   const [draft, setDraft] = useState<string | null>(null)
   return (
     <div className="routing__pool-editor">
-      <Field label={L('Descrição', 'Descriptor')} hint={L('Para que serve este pool, nas suas palavras. É só pra você: quem decide é o tier do Jev.', 'What this pool is for, in your words. It’s for you: Jev’s tier is what decides.')}>
+      <Field label={L('Descrição', 'Descriptor')} hint={L('Para que serve este pool, nas suas palavras. É só pra você: quem decide é o tier do Jev.', "A note for you. The classifier’s tier determines routing.")}>
         <input
           value={draft ?? setting.descriptor}
           maxLength={400}
@@ -355,7 +361,7 @@ function PoolEditor({
           label={L('Quando usar os grátis', 'When to use free')}
           hint={L(
             'Os grátis ficam fora dos tiers: o tier que o Jev pediu continua registrado, mesmo quando um grátis responde.',
-            'Free sits outside the tiers: the tier Jev asked for stays on the record even when a free model answers.'
+            "Free models have a separate pool. The requested tier remains recorded."
           )}
         >
           <Select
@@ -369,24 +375,38 @@ function PoolEditor({
           />
         </Field>
       )}
+      {pool === 't4' && (
+        <div className="field">
+          <div className="row row--between">
+            <span className="field__label">{L('Deixar o Jev chegar ao tier 4 sozinho', "Allow automatic tier 4")}</span>
+            <Toggle on={allowTier4} onChange={onAllowTier4} />
+          </div>
+          <span className="hint">
+            {L(
+              'Ligado, um pedido que o Jev julgar caro o bastante pode rodar aqui sem perguntar, e é também o que deixa a leitura chegar ao tier 5. Desligado, a leitura para no tier 3; o piso de um papel ainda pode trazer a resposta para cá.',
+              "Allow automatic tier 4 and unlock tier 5. When off, classification caps at tier 3; role minimums can still select tier 4."
+            )}
+          </span>
+        </div>
+      )}
       {pool === 't5' && (
         <div className="field">
           <div className="row row--between">
-            <span className="field__label">{L('Deixar o Jev chegar aqui sozinho', 'Let Jev reach tier 5 on its own')}</span>
+            <span className="field__label">{L('Deixar o Jev chegar aqui sozinho', "Allow automatic tier 5")}</span>
             <Toggle on={allowTier5} onChange={onAllowTier5} />
           </div>
           <span className="hint">
             {L(
-              'Desligado, o tier 5 só existe se você escolher. Ligado, um pedido que o Jev julgar no máximo e sobre o qual ele estiver seguro pode rodar aqui sem perguntar.',
-              'Off, tier 5 is only ever your own pick. On, a prompt Jev judges maximal, and is sure about, may run here without asking.'
+              'Desligado, o tier 5 só existe se você escolher. Ligado, um pedido que o Jev julgar no máximo e sobre o qual ele estiver seguro pode rodar aqui sem perguntar. Precisa do tier 4 ligado.',
+              "Allow tier 5 for high-confidence, maximum-demand requests. Requires tier 4. When off, select tier 5 manually."
             )}
           </span>
         </div>
       )}
       <p className="hint">
         {pool === 'free'
-          ? L('Os grátis ficam fora dos tiers: são um pool à parte, com corrente própria.', 'Free sits outside the tiers: its own pool, with a chain of its own.')
-          : L('Sem modelo que possa rodar aqui, a resposta desce para o tier de baixo. Nunca sobe.', 'When nothing here can run, the reply walks down to the tier below. It never walks up.')}
+          ? L('Os grátis ficam fora dos tiers: são um pool à parte, com corrente própria.', "Free models use a separate pool and model chain.")
+          : L('Sem modelo que possa rodar aqui, a resposta desce para o tier de baixo. Nunca sobe.', "If no model is available, try a lower tier. Never move to a higher tier.")}
       </p>
     </div>
   )
@@ -397,12 +417,12 @@ function RoleEditor({ role, setting, floor, pool, onDescriptor, onFloor }: { rol
   return (
     <div className="routing__pool-editor">
       <Field
-        label={L('O que é este papel', 'What this role is')}
-        hint={L('É o critério que o Jev lê para escolher este papel. Muda como ele classifica; não muda o preço.', 'This is the criterion Jev reads to pick the role. It changes how it classifies; not the price.')}
+        label={L('O que é este papel', "Role criteria")}
+        hint={L('É o critério que o Jev lê para escolher este papel. Muda como ele classifica; não muda o preço.', "The classifier uses this description to select a role. It does not set the price.")}
       >
         <textarea rows={2} value={draft ?? setting.descriptor} maxLength={400} onChange={(e) => setDraft(e.target.value)} onBlur={() => { if (draft !== null && draft !== setting.descriptor) onDescriptor(draft); setDraft(null) }} />
       </Field>
-      <Field label={L('Nunca abaixo de', 'Never below')} hint={L('Um piso para o tier deste papel: revisão e plano não descem de um modelo forte.', 'A floor for this role’s tier: review and planning don’t drop to a weak model.')}>
+      <Field label={L('Nunca abaixo de', "Minimum tier")} hint={L('Um piso para o tier deste papel: revisão e plano não descem de um modelo forte.', "Prevent this role from using a lower-tier model.")}>
         <Select
           value={floor ?? 'none'}
           onChange={(v) => onFloor(v === 'none' ? null : v)}
@@ -446,11 +466,13 @@ function ChainEditor({
   const set = (at: number, target: RoleCandidate): void => onChange(chain.map((t, i) => (i === at ? target : t)))
   return (
     <div className="routing__chain">
-      <div className="row row--between">
+      {/* The title and what the chain does are two lines of their own, each as wide as the column: side
+          by side, the note was cut to a narrow strip beside the title. */}
+      <div className="routing__chain-head">
         <strong>{label}</strong>
         <span className="muted small">{note}</span>
       </div>
-      {chain.length === 0 && <p className="hint">{L('Vazio. Acrescente o primeiro modelo abaixo.', 'Empty. Add the first model below.')}</p>}
+      {chain.length === 0 && <p className="hint">{L('Vazio. Acrescente o primeiro modelo abaixo.', "No models yet. Add one below.")}</p>}
       <ol className="route-list">
         {chain.map((t, i) => (
           <TargetRow
@@ -472,7 +494,7 @@ function ChainEditor({
           />
         ))}
       </ol>
-      <AddTarget onAdd={(t) => onChange([...chain, t])} />
+      <AddTarget onAdd={(t) => onChange([...chain, t])} taken={chain} />
     </div>
   )
 }
@@ -515,7 +537,23 @@ function TargetRow({
   }, [options, target.model])
   return (
     <li className="route-row">
-      <span className="route-row__n" aria-hidden="true">{ordinal}</span>
+      <div className="route-row__head">
+        <span className="route-row__n" aria-hidden="true">{ordinal}</span>
+        <span className="route-row__actions">
+          <button type="button" className="icon-btn" aria-label={L('Subir', 'Move up')} disabled={first} onClick={onUp}>
+            <Icon name="chevron" size={12} />
+          </button>
+          <button type="button" className="icon-btn route-row__down" aria-label={L('Descer', 'Move down')} disabled={last} onClick={onDown}>
+            <Icon name="chevron" size={12} />
+          </button>
+          <button type="button" className="icon-btn" aria-label={L('Tirar', 'Remove')} onClick={onRemove}>
+            <Icon name="x" size={12} />
+          </button>
+        </span>
+      </div>
+      {/* One under the other, each as wide as the card: a model's name and its note do not fit a third
+          of a row, and a list that cuts them off is a list of guesses. */}
+      <div className="route-row__fields">
       <Select
         className="route-row__engine"
         value={target.engine}
@@ -524,7 +562,7 @@ function TargetRow({
         onChange={(v) => v && onChange(withIdentity({ ...target, engine: v as EngineId }))}
       />
       <Select
-        className="route-row__model grow"
+        className="route-row__model"
         value={target.model}
         searchable
         aria-label={L('Modelo', 'Model')}
@@ -548,22 +586,12 @@ function TargetRow({
           onChange={(v) => onMinTier(v && v !== 'any' && isTier(v) ? v : undefined)}
         />
       )}
-      <span className="route-row__actions">
-        <button type="button" className="icon-btn" aria-label={L('Subir', 'Move up')} disabled={first} onClick={onUp}>
-          <Icon name="chevron" size={12} />
-        </button>
-        <button type="button" className="icon-btn route-row__down" aria-label={L('Descer', 'Move down')} disabled={last} onClick={onDown}>
-          <Icon name="chevron" size={12} />
-        </button>
-        <button type="button" className="icon-btn" aria-label={L('Tirar', 'Remove')} onClick={onRemove}>
-          <Icon name="x" size={12} />
-        </button>
-      </span>
+      </div>
     </li>
   )
 }
 
-function AddTarget({ onAdd }: { onAdd: (t: RouteTarget) => void }): ReactNode {
+function AddTarget({ onAdd, taken }: { onAdd: (t: RouteTarget) => void; taken: RouteTarget[] }): ReactNode {
   const usable = useStore((s) => usableEngines(s.settings))
   const engines = usable.length ? usable : (Object.keys(ENGINES) as EngineId[])
   const [engine, setEngine] = useState<EngineId>(engines[0]!)
@@ -572,14 +600,25 @@ function AddTarget({ onAdd }: { onAdd: (t: RouteTarget) => void }): ReactNode {
   const [effort, setEffort] = useState<Effort>('medium')
   const chosen = model || options[0]?.value || ''
   const models = options.length ? options.map((o) => ({ value: o.value, label: o.hint ? `${o.label} · ${o.hint}` : o.label })) : [{ value: chosen, label: chosen || L('Sem lista de modelos', 'No model list') }]
+  // The pick stays after an add, so a second model means changing the field rather than picking again
+  // from a form that quietly went back to the first model of the harness. A target already in the
+  // chain says so instead of taking the click and adding nothing.
+  const dupe = !!chosen && taken.some((t) => t.engine === engine && t.model === chosen && t.effort === effort)
   return (
     <div className="route-add">
+      <div className="route-add__fields">
       <Select value={engine} aria-label={L('Harness', 'Harness')} options={engines.map((e) => ({ value: e, label: engineLabel(e) }))} onChange={(v) => { if (v) { setEngine(v as EngineId); setModel('') } }} />
-      <Select className="grow" value={chosen || null} searchable aria-label={L('Modelo', 'Model')} options={models} placeholder={L('Escolha o modelo', 'Pick the model')} onChange={(v) => setModel(v ?? '')} />
+      <Select value={chosen || null} searchable aria-label={L('Modelo', 'Model')} options={models} placeholder={L('Escolha o modelo', 'Pick the model')} onChange={(v) => setModel(v ?? '')} />
       <Select value={effort} aria-label={L('Raciocínio', 'Thinking')} options={thinkingOptions()} onChange={(v) => v && setEffort(v as Effort)} />
-      <button type="button" className="btn btn--sm" disabled={!chosen} onClick={() => { onAdd(withIdentity({ id: '', engine, model: chosen, effort })); setModel('') }}>
+      </div>
+      <button type="button" className="btn btn--sm" disabled={!chosen || dupe} onClick={() => onAdd(withIdentity({ id: '', engine, model: chosen, effort }))}>
         {L('Acrescentar', 'Add')}
       </button>
+      {dupe && (
+        <span className="hint">
+          {L('Já está na lista: mude o modelo ou o raciocínio.', "Already in this chain. Choose another model or reasoning level.")}
+        </span>
+      )}
     </div>
   )
 }
@@ -632,7 +671,7 @@ export function RouteLine({ route }: { route: RouteTrace }): ReactNode {
         <div className="route-line__detail">
           {reading && (
             <div className="route-line__group">
-              <span className="route-line__label">{L('Julgamento', 'Judgment')}</span>
+              <span className="route-line__label">{L('Julgamento', "Classification")}</span>
               {/* The three criteria, each with its own bar, and the one weight they add up to. */}
               <Scores reading={reading} combined={route.rawDemand} />
               <ul>
@@ -650,7 +689,7 @@ export function RouteLine({ route }: { route: RouteTrace }): ReactNode {
                   ))}
                 {route.demand !== undefined && Math.abs(route.demand - route.rawDemand) > 0.05 && (
                   <li>
-                    {L('Exigência em vigor', 'Demand in force')}: {route.demand.toFixed(2)}/3
+                    {L('Exigência em vigor', "Effective demand")}: {route.demand.toFixed(2)}/3
                   </li>
                 )}
                 {reading.ms > 0 && <li className="muted small">{reading.ms} ms</li>}
@@ -661,13 +700,13 @@ export function RouteLine({ route }: { route: RouteTrace }): ReactNode {
             <span className="route-line__label">{L('Rota', 'Route')}</span>
             <ul>
               <li>{L('Tier julgado', 'Judged tier')}: {poolName(pool)}</li>
-              {route.policy !== pool && <li>{L('Tier aplicado', 'Tier in force')}: {poolName(route.policy)}</li>}
+              {route.policy !== pool && <li>{L('Tier aplicado', "Effective tier")}: {poolName(route.policy)}</li>}
               {route.effective && route.effective !== pool && (
                 <li>
-                  {L('De onde veio o modelo', 'Where the model came from')}: {poolName(route.effective)}
+                  {L('De onde veio o modelo', "Model source")}: {poolName(route.effective)}
                 </li>
               )}
-              {route.source === 'role' && <li>{L('Veio da corrente do papel', 'Came from the role’s own chain')}</li>}
+              {route.source === 'role' && <li>{L('Veio da corrente do papel', "Selected from the role’s model chain")}</li>}
               <li>
                 {L('Modelo', 'Model')}: {targetLabel(target)}
               </li>

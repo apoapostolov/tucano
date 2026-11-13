@@ -8,6 +8,18 @@ import type { WikiFinding, WikiPage } from '../shared/types'
 
 // The findings an agent can take: the two that add a page, and the one that adds the links.
 export const HAND_OFF_KINDS: readonly WikiFinding['kind'][] = ['broken', 'missing', 'orphan']
+// What the agent is told after the job itself: the finding stays in the list until it says it is done,
+// so it has to close it (the tool wiki_fechar), and the next person to read the list sees what came of it.
+export function handOffText(f: WikiFinding, look: (title: string) => WikiPage | undefined): string {
+  return (
+    handOffBody(f, look) +
+    L(
+      `\n\nQuando conferir que o problema acabou, feche este aviso com wiki_fechar, com o id "${f.id}" e uma nota de uma linha dizendo o que mudou. O aviso só sai da lista quando você fecha.`,
+      `\n\nWhen you have confirmed the problem is gone, close this finding with wiki_fechar, the id "${f.id}", and a one-line note saying what changed. The finding only leaves the list when you close it.`
+    )
+  )
+}
+
 export const canHandOff = (kind: WikiFinding['kind']): boolean => HAND_OFF_KINDS.includes(kind)
 
 const LINE_CHARS = 300
@@ -32,7 +44,7 @@ function linesOf(page: WikiPage, needles: string[]): string[] {
 const block = (page: WikiPage, lines: string[]): string => `- [[${page.title}]]\n${lines.map((l) => `  > ${l}`).join('\n')}`
 
 // What the agent reads. `look` is the wiki's own page lookup, so a held page says nothing here.
-export function handOffText(f: WikiFinding, look: (title: string) => WikiPage | undefined): string {
+function handOffBody(f: WikiFinding, look: (title: string) => WikiPage | undefined): string {
   if (f.kind === 'orphan') {
     const titles = f.pages.map((t) => `[[${t}]]`)
     const heads = f.pages.map((t) => {

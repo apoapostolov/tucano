@@ -82,7 +82,7 @@ export function AgentModelsPanel(): ReactNode {
               placeholder={L('Esforço: manter o de cada agente', 'Thinking: keep each agent’s own')}
             />
           </div>
-          <p className="hint">{L('Deixe o modelo em branco para mudar só o esforço. Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual.', 'Leave the model empty to change only the thinking. When switching harnesses, the agent uses its default login. The reserve model stays the same.')}</p>
+          <p className="hint">{L('Deixe o modelo em branco para mudar só o esforço. Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual.', "Leave the model blank to change only reasoning. Switching runtimes uses the default login; the fallback model stays unchanged.")}</p>
           <div className="row">
             <button type="button" className="btn btn--primary btn--sm" disabled={!targets.length || (!validModel && !effort)} onClick={() => void save(targets.map((a) => a.id), change)}>
               {L(`Aplicar aos selecionados (${targets.length})`, `Apply to selected (${targets.length})`)}

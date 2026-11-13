@@ -17,6 +17,7 @@ export const GENERAL_SETTINGS = [
   'runBudgetPct',
   'runStallMinutes',
   'chainDepth',
+  'resumeInterrupted',
   'teamUpDays',
   'actionRules',
   'autonomy',
@@ -24,7 +25,10 @@ export const GENERAL_SETTINGS = [
   'quietHours',
   'harnesses',
   'sounds',
+  'notice',
   'voice',
+  'thinkingSize',
+  'clock',
   'browserJev',
   'classifiers',
   'classifierJobs',
@@ -32,7 +36,8 @@ export const GENERAL_SETTINGS = [
   'wikiEdits',
   'wikiReview',
   'wikiResolve',
-  'wikiResolveModel'
+  'wikiResolveModel',
+  'wikiResolveBot'
 ] as const satisfies readonly (keyof Settings)[]
 // What a new workspace takes from another, each picked when creating it (a duplicate takes it all).
 // The wiki isn't copied: the new workspace uses the same one, and what one keeps the other reads.

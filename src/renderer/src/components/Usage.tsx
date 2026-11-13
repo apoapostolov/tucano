@@ -1,8 +1,9 @@
 // Uso e limites: this month at a glance (by day, by agent, by model), the
 // Claude subscription's windows, and where each agent will end the month.
 import { L, locale } from '../../../shared/lang'
-import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { agentById, amAdmin, countedTokens, ENGINES, isTeam, loadQuotas, loadUsage, messageById, modelInfo, navigate, receipts, useStore, type Agent, type EngineId, type EngineStatus, type ProviderQuota, type Quota, type QuotaWindow, type UsageReport } from '../store'
+import { timeOpts } from '../../../shared/clock'
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { agentById, amAdmin, countedTokens, ENGINES, isTeam, loadQuotas, refreshQuotas, loadUsage, messageById, modelInfo, navigate, receipts, useStore, type Agent, type EngineId, type EngineStatus, type ProviderQuota, type Quota, type QuotasSnapshot, type QuotaWindow, type UsageReport } from '../store'
 import { Sheet } from './Pages'
 import { AdminOnly } from './People'
 import { AgentAvatar, duration, Icon, tokens, usd } from './ui'
@@ -19,12 +20,12 @@ export const until = (at: number): string => {
   const m = total % 60
   if (h < 24) return L(`em ${h ? `${h} h ` : ''}${m} min`, `in ${h ? `${h} h ` : ''}${m} min`)
   const d = new Date(at)
-  return `${d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')}, ${d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}`
+  return `${d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')}, ${d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))}`
 }
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
 const shortTime = (at: number): string => {
   const d = new Date(at)
-  const hm = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   return d.toDateString() === new Date().toDateString() ? hm : `${d.toLocaleDateString(locale(), { day: '2-digit', month: '2-digit' })} ${hm}`
 }
 
@@ -90,8 +91,10 @@ export function UsagePage(): ReactNode {
       ) : (
         <>
           <Quotas />
-          <Month u={u} claude={billing.find((b) => b.id === 'claude')?.status} />
+          {/* The Codex subscription's own windows sit above the month's chart: they are what is left
+              right now, and the chart is the month's total. */}
           {codex?.route === 'plan' && <CodexQuota />}
+          <Month u={u} claude={billing.find((b) => b.id === 'claude')?.status} />
           <Agents u={u} />
           <div className="usage-grid">
             <Models u={u} />
@@ -245,14 +248,45 @@ const ROWS = [
 ] as const
 type Row = (typeof ROWS)[number]['key']
 
+// The number a window is left at, in its own unit: a fraction for a percentage, the count otherwise.
+export function leftValue(w: QuotaWindow): number {
+  if (w.unit !== '%') return w.remaining ?? 0
+  return w.used !== undefined ? (w.limit ? 1 - w.used : (w.remaining ?? 0)) : (w.remaining ?? 0)
+}
+
+// …and that number as the panel writes it. Split out so a value on its way to the next read is drawn
+// in the same words the settled one will be.
+export function leftText(w: QuotaWindow, value: number): string {
+  if (w.unit === '%') return value > 0 && value < 0.01 ? '<1%' : `${Math.round(value * 100)}%`
+  if (w.unit === 'usd') return usd(value)
+  return tokens(value)
+}
+
 // What the provider says is left, in its own unit.
 export function left(w: QuotaWindow): string {
-  if (w.unit === '%') {
-    const p = w.used !== undefined ? (w.limit ? 1 - w.used : (w.remaining ?? 0)) : (w.remaining ?? 0)
-    return p > 0 && p < 0.01 ? '<1%' : `${Math.round(p * 100)}%`
-  }
-  if (w.unit === 'usd') return usd(w.remaining ?? 0)
-  return tokens(w.remaining ?? 0)
+  return leftText(w, leftValue(w))
+}
+
+// A number on its way from the last read to the new one: the panel counts between them instead of
+// swapping the figure, so a refresh is something the eye can follow rather than a jump it has to spot.
+function useTween(value: number, ms = 520): number {
+  const [shown, setShown] = useState(value)
+  const from = useRef(value)
+  useEffect(() => {
+    if (value === from.current) return
+    const a = from.current
+    from.current = value
+    if (typeof requestAnimationFrame !== 'function') return setShown(value)
+    const started = performance.now()
+    let raf = requestAnimationFrame(function tick(now) {
+      const t = Math.min(1, (now - started) / ms)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setShown(t < 1 ? a + (value - a) * eased : value)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [value, ms])
+  return shown
 }
 export const share = (w: QuotaWindow): number | undefined => (w.limit && w.limit > 0 && w.remaining !== undefined ? Math.min(1, Math.max(0, w.remaining / w.limit)) : undefined)
 
@@ -274,24 +308,50 @@ function withReported(list: ProviderQuota[], reported: Quota | undefined): Provi
   })
 }
 
+// How often the open page asks for a new read: the core polls on its own every twenty minutes, so this
+// only keeps what is on screen in step with it.
+const QUOTA_POLL_MS = 20 * 60_000
+
 export function Quotas(): ReactNode {
   const reported = useStore((s) => s.settings.quota)
   const codexReported = useStore((s) => s.settings.engines?.codex?.route === 'plan' ? s.settings.codexQuota : undefined)
   // Whose logins these are: an admin's, like the rest of the page. A member's app never asks.
   const admin = useStore(amAdmin)
-  const [list, setList] = useState<ProviderQuota[] | null>(null)
+  const [snap, setSnap] = useState<QuotasSnapshot | null>(null)
   const [busy, setBusy] = useState(false)
-  const load = (): void => {
+  // The panel draws from the last read the core holds, so it is there on the first paint; the read
+  // behind it is what moves the numbers, and the tween makes that movement visible.
+  const load = (force: boolean): void => {
     setBusy(true)
-    loadQuotas()
-      .then((l) => setList(withReported(l, reported)))
-      .catch(() => setList(withReported([], reported)))
+    const answer = force ? refreshQuotas() : loadQuotas()
+    answer
+      .then((s) => setSnap(s))
+      .catch(() => setSnap((was) => was ?? { list: [], at: Date.now() }))
       .finally(() => setBusy(false))
   }
-  // Read once when the page opens: a look, not a poll.
   useEffect(() => {
-    if (admin) load()
+    if (!admin) return
+    let alive = true
+    loadQuotas()
+      .then((s) => {
+        if (!alive) return
+        setSnap(s)
+        // A snapshot from this second came from a read that just happened; an older one is followed
+        // by a new read, which lands on the tween.
+        if (Date.now() - s.at > 5_000) refreshQuotas().then((fresh) => alive && setSnap(fresh)).catch(() => {})
+      })
+      .catch(() => alive && setSnap({ list: [], at: Date.now() }))
+    const timer = setInterval(() => {
+      refreshQuotas()
+        .then((fresh) => alive && setSnap(fresh))
+        .catch(() => {})
+    }, QUOTA_POLL_MS)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
   }, [admin])
+  const list = snap ? withReported(snap.list, reported) : null
   const cols = (list ?? []).filter((p) => p.id !== 'openai-codex' || !codexReported?.windows.length)
   return (
     <section className="read-group usage-card">
@@ -303,10 +363,10 @@ export function Quotas(): ReactNode {
         {cols.length > 0 && (
           <span className="muted small">
             {L(`${cols.length} ${cols.length === 1 ? 'provedor' : 'provedores'}`, `${cols.length} ${cols.length === 1 ? 'provider' : 'providers'}`)}
-            {list && cols.length > 0 ? L(` · lido às ${shortTime(Date.now())}`, ` · read at ${shortTime(Date.now())}`) : ''}
+            {snap && cols.length > 0 ? L(` · lido às ${shortTime(snap.at)}`, ` · read at ${shortTime(snap.at)}`) : ''}
           </span>
         )}
-        <button className="btn btn--ghost btn--sm" onClick={load} disabled={busy}>
+        <button className="btn btn--ghost btn--sm" onClick={() => load(true)} disabled={busy}>
           {busy ? L('Lendo…', 'Reading…') : L('Ler de novo', 'Read again')}
         </button>
       </div>
@@ -346,11 +406,17 @@ export function Quotas(): ReactNode {
 
 function Cell({ id, row, w, error }: { id: string; row: Row; w?: QuotaWindow; error?: string }): ReactNode {
   if (!w) return <div className="usage-quota__cell is-empty" data-provider={id} data-row={row}>—</div>
+  return <CellBody id={id} row={row} w={w} error={error} />
+}
+
+function CellBody({ id, row, w, error }: { id: string; row: Row; w: QuotaWindow; error?: string }): ReactNode {
+  // The figure counted from the last read to this one; the bar follows it through its own transition.
+  const shown = useTween(leftValue(w))
   const s = share(w)
   const tone = s === undefined ? '' : s <= 0.1 ? 'is-danger' : s <= 0.3 ? 'is-warn' : ''
   return (
     <div className={`usage-quota__cell ${tone}`} data-provider={id} data-row={row} title={w.resetsAt ? L(`zera ${until(w.resetsAt)}`, `resets ${until(w.resetsAt)}`) : undefined}>
-      <strong>{left(w)}</strong>
+      <strong>{leftText(w, shown)}</strong>
       {s !== undefined && (
         <span className="usage-quota__track">
           <i style={{ width: `${Math.round(s * 100)}%` }} />
@@ -367,7 +433,7 @@ function Cell({ id, row, w, error }: { id: string; row: Row; w?: QuotaWindow; er
 function CodexQuota(): ReactNode {
   const q = useStore((s) => s.settings.codexQuota)
   if (!q?.windows.length) return null
-  const at = new Date(q.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const at = new Date(q.at).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   const plan = q.plan ? ` ${cap(q.plan)}` : ''
   return (
     <section className="read-group">

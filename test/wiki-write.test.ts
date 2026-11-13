@@ -28,10 +28,12 @@ describe('the level an agent has, and the tools that come with it', () => {
     expect(wikiAccess({ wiki: 'read_write', kind: 'tuca' })).toBe('none') // the Tuca belongs to the app, not the wiki
   })
 
-  it('hands out three tools for reading and five for reading and writing', () => {
+  it('hands out the reading tools, and the writing ones on top of them', () => {
     expect(wikiToolsFor('none').map((t) => t.name)).toEqual([])
-    expect(wikiToolsFor('read').map((t) => t.name)).toEqual(['wiki_indice', 'wiki_buscar', 'wiki_ler'])
-    expect(wikiToolsFor('read_write').map((t) => t.name)).toEqual(['wiki_indice', 'wiki_buscar', 'wiki_ler', 'wiki_escrever', 'wiki_editar'])
+    // Reading includes the review's open findings: a bot asked to fix one has to be able to see it.
+    expect(wikiToolsFor('read').map((t) => t.name)).toEqual(['wiki_indice', 'wiki_buscar', 'wiki_ler', 'wiki_avisos'])
+    // Closing a finding is a write: it takes a finding off everyone's list.
+    expect(wikiToolsFor('read_write').map((t) => t.name)).toEqual(['wiki_indice', 'wiki_buscar', 'wiki_ler', 'wiki_avisos', 'wiki_escrever', 'wiki_editar', 'wiki_fechar'])
     for (const t of WIKI_WRITE_TOOLS) expect(t.description.length).toBeGreaterThan(40)
   })
 })

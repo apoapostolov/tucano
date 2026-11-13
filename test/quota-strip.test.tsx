@@ -15,12 +15,14 @@ const { window, document } = parseHTML('<html><body><div id="root"></div></body>
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
 
 let reply: ProviderQuota[] = []
-const loadQuotas = vi.fn(async () => reply)
+const loadQuotas = vi.fn(async () => ({ list: reply, at: Date.now() }))
+const refreshQuotas = vi.fn(async () => ({ list: reply, at: Date.now() }))
 const navigate = vi.fn()
 vi.mock('../src/renderer/src/store', () => ({
   useStore: (select: (s: unknown) => unknown) => select({ settings: {} }),
   amAdmin: () => true,
   loadQuotas: () => loadQuotas(),
+  refreshQuotas: () => refreshQuotas(),
   navigate: (view: unknown) => navigate(view),
   agentById: () => undefined,
   countedTokens: () => 0,
@@ -56,6 +58,7 @@ const flush = async (): Promise<void> => {
 beforeEach(() => {
   reply = []
   loadQuotas.mockClear()
+  refreshQuotas.mockClear()
   navigate.mockClear()
   forgetQuotaStrip()
   root = createRoot(document.getElementById('root')!)

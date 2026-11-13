@@ -101,10 +101,82 @@ const rail = win.locator('.routing__rail').first()
 await shoot(win, '04-rail-free-selected', rail)
 await shoot(win, '05-routing-body', win.locator('.routing__body').first())
 
+// Each step of a chain is a card with its fields one under the other: the harness, the model and the
+// thinking get the card's whole width, so a model's name and its note are not cut to a third of it.
+const rows = () =>
+  win.evaluate(() => {
+    const card = document.querySelector('.route-row')
+    if (!card) return null
+    const box = card.getBoundingClientRect()
+    const fields = [...card.querySelectorAll('.route-row__fields > .select')]
+    const model = card.querySelector('.route-row__model')
+    const label = model?.querySelector('.select__value, .select__label, button')
+    return {
+      card: Math.round(box.width),
+      cardHeight: Math.round(box.height),
+      fields: fields.length,
+      widths: fields.map((f) => Math.round(f.getBoundingClientRect().width)),
+      stacked: fields.every((f, i) => i === 0 || f.getBoundingClientRect().top >= fields[i - 1].getBoundingClientRect().bottom - 1),
+      modelText: label?.textContent?.replace(/\s+/g, ' ').trim(),
+      modelClipped: label ? label.scrollWidth > label.clientWidth + 1 : null,
+      pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+    }
+  })
+console.log('chain rows:', JSON.stringify(await rows()))
+
+// The form that adds a step: its fields are stacked as well, and each keeps its own height, so the
+// model sits right above the thinking instead of leaving the space a stretched field leaves.
+const adds = () =>
+  win.evaluate(() => {
+    const form = document.querySelector('.route-add')
+    if (!form) return null
+    const fields = [...form.querySelectorAll('.route-add__fields > .select')]
+    if (!fields.length) return null
+    const gaps = fields.slice(1).map((f, i) => Math.round(f.getBoundingClientRect().top - fields[i].getBoundingClientRect().bottom))
+    return {
+      fields: fields.length,
+      heights: fields.map((f) => Math.round(f.getBoundingClientRect().height)),
+      gaps,
+      formHeight: Math.round(form.getBoundingClientRect().height)
+    }
+  })
+console.log('the add form:', JSON.stringify(await adds()))
+
+// The chain's title and its note are two lines of the column, not two labels on one row.
+const head = () =>
+  win.evaluate(() => {
+    const box = document.querySelector('.routing__chain-head')
+    if (!box) return null
+    const [title, note] = [...box.children]
+    const t = title.getBoundingClientRect()
+    const n = note.getBoundingClientRect()
+    return {
+      stacked: Math.round(n.top) >= Math.round(t.bottom) - 1,
+      widths: [Math.round(t.width), Math.round(n.width)],
+      column: Math.round(box.getBoundingClientRect().width),
+      noteText: note.textContent?.replace(/\s+/g, ' ').trim()
+    }
+  })
+console.log('the chain head:', JSON.stringify(await head()))
+
 await win.locator('.routing__pool', { hasText: 'Tier 3' }).first().click()
 await win.waitForTimeout(500)
 await shoot(win, '06-routing-tier3')
 await shoot(win, '07-rail-tier3-selected', rail)
+await win.locator('.routing__pool', { hasText: 'Tier 4' }).first().click()
+await win.waitForTimeout(500)
+await shoot(win, '07b-routing-tier4')
+console.log(
+  'tier 4 switch:',
+  JSON.stringify(
+    await win.evaluate(() => {
+      const label = [...document.querySelectorAll('.routing__pool-editor .field__label')].find((n) => /tier 4/i.test(n.textContent ?? ''))
+      const field = label?.closest('.field')
+      return { label: label?.textContent?.trim() ?? null, toggle: !!field?.querySelector('.toggle, [role="switch"], button') }
+    })
+  )
+)
+
 await win.locator('.routing__pool', { hasText: 'Tier 5' }).first().click()
 await win.waitForTimeout(500)
 await shoot(win, '08-routing-tier5')

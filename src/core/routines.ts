@@ -1,6 +1,7 @@
 // Routines (spec §14): a request scheduled for an agent, posted in a
 // conversation at a day and time. A tick every 30 s runs whatever is due, so
 // it also catches up after the Mac wakes or the app opens again.
+import { timeOpts } from '../shared/clock'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { L, locale } from '../shared/lang'
@@ -96,7 +97,7 @@ export function dateArg(v: string): { date: string; time?: string } | null {
 
 // "sáb, 18/10, 13:15"
 export const whenText = (at: number): string =>
-  new Date(at).toLocaleString(locale(), { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace('.', '')
+  new Date(at).toLocaleString(locale(), timeOpts({ weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })).replace('.', '')
 
 type ToolOutcome = { routine?: Routine; reply: string; error?: boolean }
 

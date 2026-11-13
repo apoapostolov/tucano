@@ -11,6 +11,8 @@ const { window, document } = parseHTML('<!doctype html><html><body><div id="root
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
 Object.assign(document, { oninput: null })
 Object.assign(window, { innerWidth: 1280, innerHeight: 800 })
+// The thinking block scrolls itself as it grows: linkedom lays nothing out, so the call is a no-op.
+window.HTMLElement.prototype.scrollTo = () => {}
 Object.assign(globalThis, {
   requestAnimationFrame: (f: () => void) => setTimeout(f, 0) as unknown as number,
   cancelAnimationFrame: (id: number) => clearTimeout(id),
@@ -26,7 +28,9 @@ vi.mock('../src/renderer/src/store', async (original) => {
   const real = await original<typeof import('../src/renderer/src/store')>()
   return {
     ...real,
-    useStore: <T,>(select: (s: unknown) => T): T => select({}),
+    // A reply that is working, with its reasoning showing: the block the pill has to sit under.
+    useStore: <T,>(select: (s: unknown) => T): T => select({ settings: { showThinking: true, thinkingSize: 'sm' } }),
+    useLiveThought: (): string => 'lendo o arquivo antes de responder',
     sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, mode?: string): void => {
       sent.push({ conversationId, text, mode })
     },
@@ -68,6 +72,11 @@ const draw = async (message: Message): Promise<void> => {
     )
   )
 }
+// The chain the way a working reply draws it, with nothing else around it.
+const drawChain = async (message: Message): Promise<void> => {
+  await act(async () => root.render(<RunSteps message={message} />))
+}
+
 const pill = (): HTMLElement | null => document.querySelector('.steps__ask-pill')
 const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__ask-note textarea')
 const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__ask-row button')] as HTMLElement[]
@@ -94,6 +103,12 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 }
 
 describe('the steer pill', () => {
+  it('sits under the thinking block, never above it', async () => {
+    await drawChain(reply('working'))
+    // Read off the drawing order: the reasoning first, the pill last, which is what the person sees.
+    expect([...document.querySelectorAll('.thought, .steps__ask')].map((el) => el.className.split(' ')[0])).toEqual(['thought', 'steps__ask'])
+  })
+
   it('sits at the bottom of the chain while the agent works, and gives way once it is done', async () => {
     await draw(reply('working'))
     expect(pill()?.textContent?.trim()).toBe('Orientar')

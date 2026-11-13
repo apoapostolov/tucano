@@ -1,15 +1,17 @@
 import { L, lang, locale } from '../../../shared/lang'
+import { hourStyle, timeOpts } from '../../../shared/clock'
 import { overMonthlyLimit } from '../../../shared/limits'
 import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
-import { createContext, memo, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
+import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
 import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
-import { saidAt } from '../../../shared/types'
+import { MAX_IMAGES_PER_MESSAGE, saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
+import { canContinue } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -54,6 +56,7 @@ import { canEditChannel,
   retryRun,
   continueRun,
   followUpRun,
+  deleteMessage,
   ACCESS_REQUEST,
   countedTokens,
   sendMessage,
@@ -69,16 +72,11 @@ import { canEditChannel,
   type Approval,
   type Artifact,
   type Conversation,
-  type ImageUpload,
   type Author,
   type DelegationRef,
   type Message,
   type SendMode,
   type Step,
-  IMAGE_MIMES,
-  MAX_IMAGES_PER_MESSAGE,
-  MAX_FILE_BYTES,
-  MAX_FILES_PER_MESSAGE,
   isTeam,
   cancelTranscribe,
   transcribe,
@@ -92,6 +90,7 @@ import { canEditChannel,
   teamMode,
   type Person
 } from '../store'
+import { AttachedList, isFile, pastedFiles, touchScreen, uploadsOf, useAttachments, type Attached } from './Attachments'
 import { AgentAvatar, Icon, MeAvatar, ago, ownColor, duration, time, tokens, usd, useJustEnded, type IconName } from './ui'
 import { PanelResize } from './SidebarResize'
 import { canRecord, NoSound, record, type Recording } from '../voice'
@@ -147,7 +146,7 @@ function argSummary(args: Record<string, unknown>): { shown: [string, string][];
 // "Vale até as 14:30." / "Good until 2:30 PM.", with the day when it isn't today.
 function until(at: number): string {
   const d = new Date(at)
-  const hm = d.toLocaleTimeString(locale(), lang() === 'en' ? { hour: 'numeric', minute: '2-digit' } : { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: hourStyle(), minute: '2-digit' }))
   if (d.toDateString() === new Date().toDateString()) return L(`Vale até as ${hm}.`, `Good until ${hm}.`)
   const day = d.toLocaleDateString(locale(), { day: 'numeric', month: 'short' }).replace('.', '')
   return L(`Vale até ${day}, às ${hm}.`, `Good until ${day}, ${hm}.`)
@@ -301,9 +300,6 @@ export function ConversationView({ id }: { id: string }): ReactNode {
 }
 
 const NO_REPLIES: Message[] = []
-// A phone or a tablet: focusing the message field there raises the keyboard over the
-// conversation, so it only takes the focus when the person taps it.
-const touchScreen = (): boolean => typeof matchMedia === 'function' && matchMedia('(hover: none) and (pointer: coarse)').matches
 
 // How a row brings a message to the top of the list: the button under "Reply in thread" goes back to
 // the prompt its reply answers. A context, rather than the scroller handed down through every row.
@@ -395,19 +391,40 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // Back to the prompt a reply answers, from that reply's own row: its first line at the top of the
   // list, and lit for a moment so it's clear where the jump landed. `held` keeps the list from
   // snapping back to the end while the jump lands (a scroll that ends near the bottom re-sticks).
+  // The prompt may not be in front of us — still further back than what's loaded, or gone with a
+  // session deleted from under it. A press then still goes somewhere real: the top of the session,
+  // and the page before is asked for so the prompt turns up under the press if it still exists.
   const held = useRef(0)
+  const [pendingJump, setPendingJump] = useState<string | null>(null)
   const jump = useMemo(
     () => (id: string) => {
       const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(id)}"]`)
-      if (!el) return
       stick.current = false
       held.current = Date.now() + 1200
+      if (!el) {
+        ref.current?.scrollTo({ top: 0 })
+        setPendingJump(id)
+        if (older && cut === 0) void loadOlder(conversationId, id)
+        return
+      }
       el.scrollIntoView({ block: 'start' })
       el.classList.add('is-flash')
       setTimeout(() => el.classList.remove('is-flash'), 1800)
     },
-    []
+    [conversationId, older, cut]
   )
+  // The page before came in and with it the prompt: land on it now, and let the press be done.
+  useEffect(() => {
+    if (!pendingJump) return
+    const el = ref.current?.querySelector<HTMLElement>(`:scope > [data-id="${CSS.escape(pendingJump)}"]`)
+    if (!el) return
+    setPendingJump(null)
+    stick.current = false
+    held.current = Date.now() + 1200
+    el.scrollIntoView({ block: 'start' })
+    el.classList.add('is-flash')
+    setTimeout(() => el.classList.remove('is-flash'), 1800)
+  }, [pendingJump, first])
   // Too little to scroll: the page before comes without waiting for a scroll (once per page, so a
   // failure doesn't ask again and again).
   const tried = useRef<string | undefined>(undefined)
@@ -575,6 +592,18 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           ))}
       </div>
       <div className="msg__body">
+        {/* The corner rides the message, not just its steps: a reply taller than the screen keeps its
+            thread button, its trash and the way back to the prompt at the top of the rail for as long as
+            any of the reply is on screen, and they leave with its last line. It starts at the body's own
+            top, before the head, so the rail has the whole message to travel down. The thread button
+            takes the first place; the trash and the way back follow it, or take the place themselves
+            when nothing is threaded. Without a run there is nothing to ride, and the corner stays in
+            ThreadLink. */}
+        {message.run ? <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+          {replies ? <ThreadButton message={message} /> : null}
+          {agent && <DeleteSession message={message} />}
+          {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
+        </div> : null}
         {!grouped && (
           <div className="msg__head">
             {agent ? (
@@ -593,21 +622,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           </div>
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
-        {/* A run is taller than the screen, so the way into the thread can't sit at its start: it rides the
-            top of the run here, in the same block, and leaves with the run's last line. Without threads, or
-            without a run, it stays where it was, at the corner of the message (ThreadLink). */}
-        {message.run ? (
-          replies ? (
-            <div className="msg__anchor">
-              <div className="msg__anchor-pin">
-                <ThreadButton message={message} />
-              </div>
-              <RunSteps message={message} />
-            </div>
-          ) : (
-            <RunSteps message={message} />
-          )
-        ) : null}
+        {message.run ? <RunSteps message={message} /> : null}
         {text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
@@ -672,6 +687,14 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             </button>
           </>
         )}
+        {/* A reply the app cut with work behind it goes on before it starts over: what it read,
+            wrote and ran is still true, and starting again would throw it away. With nothing but the
+            thinking step there is nothing to go on with, and only "Try again" is offered. */}
+        {message.run && message.run.status !== 'paused' && canContinue(message.run) && (
+          <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
+            {L('Continuar', 'Continue')}
+          </button>
+        )}
         {/* At the limit, trying again only helps once the limit went up: until then, the way out is raising it.
             With no monthly limit set, nothing is ever over it: the reply is just to be tried again. */}
         {message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit)))) && <TryAgain messageId={message.id} />}
@@ -690,7 +713,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
           </div>
         )}
-        {away && message.run?.replyTo && <PromptJump id={message.run.replyTo} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
       </div>
     </article>
@@ -795,6 +817,9 @@ function RoutineMessage({ message, replies }: { message: Message; replies?: Mess
         <div className="md">
           <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(message.text)}</MessageMarkdown>
         </div>
+        {/* The post can go from here: two presses, the same as a session's trash. The routine keeps
+            its slot and posts again next time; only this one lands out of the room. */}
+        <DeleteSession message={message} where="post" />
         {replies && <ThreadLink message={message} replies={replies} />}
       </div>
     </article>
@@ -848,6 +873,71 @@ function ThreadButton({ message }: { message: Message }): ReactNode {
   return (
     <button className="icon-btn icon-btn--sm msg__reply" title={label} aria-label={label} onClick={() => openThread(message.id)}>
       <Icon name="thread" size={13} />
+    </button>
+  )
+}
+
+// How long the first press of the trash counts: the second has to come while the glyph is still red.
+const ARM_MS = 4000
+
+// A session's reply can be deleted from the room: the trash under the thread button, in two presses.
+// The first arms it — the glyph goes red and says what the next press does — and the second deletes
+// the reply, with the thread it started and the answers it got there. A press anywhere else, Esc, or
+// four seconds without the second press disarms it. A reply still at work goes too: the press stops
+// it first, and the words it had written go with it, so the glyph says so.
+// `where`: at the corner of a reply ('corner'), or in the thread's own header ('head'), where it sits
+// in the row beside the summary and close buttons and the panel closes with the session it deleted.
+export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' }): ReactNode {
+  const head = where === 'head'
+  const post = where === 'post'
+  // A routine's post is not a session: nothing ran under it, and the routine goes on posting after
+  // it is gone. It says so, so the press reads as removing the post rather than ending an agent's work.
+  const routine = post || message.author.kind === 'routine'
+  // Stopping is part of it only when something is running under the row, so the wording says so.
+  const at = message.run?.status === 'working'
+  const label = routine ? L('Apagar esta publicação', 'Delete this post') : L('Apagar esta sessão', 'Delete this session')
+  const armedLabel = at
+    ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+    : routine
+      ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
+      : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+  const confirmLabel = routine ? L('Confirmar: apagar a publicação', 'Confirm: delete the post') : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), ARM_MS)
+    const away = (e: MouseEvent): void => {
+      if (!(e.target instanceof Element && e.target.closest('.msg__delete'))) setArmed(false)
+    }
+    const escape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setArmed(false)
+    }
+    window.addEventListener('mousedown', away)
+    window.addEventListener('keydown', escape)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('mousedown', away)
+      window.removeEventListener('keydown', escape)
+    }
+  }, [armed])
+  const press = (): void => {
+    if (!armed) {
+      setArmed(true)
+      return
+    }
+    deleteMessage(message.id)
+    // The header's trash takes the panel's own session away: nothing is left to read there.
+    if (head) openPanel(null)
+  }
+  return (
+    <button
+      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${armed ? 'is-armed' : ''}`}
+      title={armed ? armedLabel : label}
+      aria-label={armed ? confirmLabel : label}
+      aria-pressed={armed}
+      onClick={press}
+    >
+      <Icon name="trash" size={head ? 14 : 13} />
     </button>
   )
 }
@@ -985,6 +1075,10 @@ function ThreadPanel({ rootId, conv, title, members }: { rootId: string; conv: C
             <Icon name="book" size={14} />
           </button>
         )}
+        {/* The session this thread hangs off can go from here too, beside the button that closes it:
+            one press arms it, the second deletes the reply and the thread with it, and the panel
+            closes because there is nothing left in it. */}
+        {root && root.author.kind === 'agent' && root.run && <DeleteSession message={root} where="head" />}
         <button className="icon-btn" title={L('Fechar', 'Close')} aria-label={L('Fechar a thread', 'Close the thread')} onClick={() => openPanel(null)}>
           <Icon name="x" size={14} />
         </button>
@@ -1065,7 +1159,7 @@ function ThreadSummaryPanel({ root, replies, onClose }: { root: Message; replies
       at={s?.at}
       ready={since > 0}
       notYet={L('Nada novo desde o resumo.', 'Nothing new since the summary.')}
-      empty={L('Quando a thread ficar parada por alguns minutos, o que foi dito vira um resumo aqui, e as memórias sobre você saem dele.', 'Once the thread is quiet for a few minutes, what was said becomes a summary here, and the memories about you come from it.')}
+      empty={L('Quando a thread ficar parada por alguns minutos, o que foi dito vira um resumo aqui, e as memórias sobre você saem dele.', "After a few quiet minutes, this thread is summarized and personal memories are extracted.")}
       hint={L(
         `Os agentes de outras threads acham esta por ele, quando procuram. Aqui, eles recebem a thread inteira até ${SUMMARY_MAX_AFTER} respostas; passando disso, este resumo e as mais recentes.`,
         `Agents in other threads find this one by it when they search. Here, they get the whole thread up to ${SUMMARY_MAX_AFTER} replies; past that, this summary and the newest ones.`
@@ -1144,7 +1238,7 @@ function MemoryChip({ id }: { id: string }): ReactNode {
       <Icon name="book" size={13} />
       <span className="memory-chip__label">{label}:</span>
       <span className="memory-chip__text">{memory.text}</span>
-      {!scopePerson(memory.scope) && <span className="tag">{L('nota dele', 'its own note')}</span>}
+      {!scopePerson(memory.scope) && <span className="tag">{L('nota dele', "agent note")}</span>}
       {memory.state === 'active' && (
         <button className="link" onClick={() => forgetMemory(id)}>
           {L('Desfazer', 'Undo')}
@@ -1173,7 +1267,7 @@ function RequestNote({ at, from }: { at: DelegationRef; from?: string }): ReactN
     ? null
     : d.state === 'open'
       ? d.asking
-        ? { tone: 'is-warn', text: L('esperando uma resposta', 'waiting on an answer') }
+        ? { tone: 'is-warn', text: L('esperando uma resposta', "awaiting an answer") }
         : { tone: 'is-live', text: L('em andamento', 'under way') }
       : d.state === 'done'
         ? { tone: 'is-done', text: L('terminado', 'done') }
@@ -1190,7 +1284,7 @@ function RequestNote({ at, from }: { at: DelegationRef; from?: string }): ReactN
           {state.text}
         </span>
       )}
-      <span className="request-note__where">{from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', 'what this thread ends with goes back to whoever asked')}</span>
+      <span className="request-note__where">{from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', "The final result is returned to the requester.")}</span>
     </div>
   )
 }
@@ -1596,9 +1690,10 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
           </ol>
         </div>
       )}
-      {/* At the bottom of the chain: what the person writes while it works, handed over at its next tool call. */}
-      {working && <SteerPill message={message} />}
+      {/* What it is thinking, and under it the pill: what the person writes while it works, handed over
+          at its next tool call. The pill goes last, under the thinking block, never above it. */}
       <Thought message={message} working={working} />
+      {working && <SteerPill message={message} />}
     </div>
   )
 }
@@ -1608,7 +1703,9 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
 // next tool call, and the chain says so, in the person's words (send mode `steer`, src/core/runs.ts).
 // With the reply already over, the same text is an ordinary prompt: nothing here holds it back.
 function SteerPill({ message }: { message: Message }): ReactNode {
-  const steer = (text: string): void => sendMessage(message.conversationId, text, [], message.threadId, [], 'steer')
+  // This reply's steer: it carries the reply's id, so a second session of the same agent in this DM is
+  // not steered by what was written for this one.
+  const steer = (text: string): void => sendMessage(message.conversationId, text, [], message.threadId, [], 'steer', message.id)
   return (
     <PillPrompt
       icon="pointer"
@@ -1693,6 +1790,9 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
 // the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
 export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
   const on = useStore((s) => s.settings?.showThinking === true)
+  // How much of it shows before it scrolls: a line or two when it is only a hint, most of the
+  // window when the reasoning is the thing being read.
+  const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
   const thought = useLiveThought(message.id, STREAM_MS)
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -1700,7 +1800,7 @@ export function Thought({ message, working }: { message: Message; working: boole
   }, [thought, working])
   if (!on || !thought) return null
   return (
-    <div ref={box} className="thought" aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
+    <div ref={box} className={`thought thought--${size}`} aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
       <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
       <div className="thought__text">{thought}</div>
     </div>
@@ -2080,60 +2180,8 @@ function ApprovalRoute({ approval, agent, requester, decider, you }: { approval:
   )
 }
 
-// Images go to the models as they are when small; big ones are scaled down
-// (longest side MAX_SIDE) and re-encoded, so any screenshot or photo fits.
-const MAX_SIDE = 2000
-const MAX_RAW = 3_700_000 // base64 under the models' 5 MB
-
-// An image (with what shows it) or, in the app, any other file: `url` empty, its text goes to the agents.
-type Attached = ImageUpload & { url: string; size?: number }
-const isFile = (a: Attached): boolean => !a.url
-
-const dataUrlOf = (blob: Blob): Promise<string> =>
-  new Promise((ok, fail) => {
-    const r = new FileReader()
-    r.onload = () => ok(String(r.result))
-    r.onerror = () => fail(r.error)
-    r.readAsDataURL(blob)
-  })
-
-async function prepareFile(file: File): Promise<Attached | string> {
-  if (file.size === 0) return L(`${file.name} está vazio.`, `${file.name} is empty.`)
-  if (file.size > MAX_FILE_BYTES) return L(`${file.name} passa de ${MAX_FILE_BYTES / 1024 / 1024} MB.`, `${file.name} is over ${MAX_FILE_BYTES / 1024 / 1024} MB.`)
-  try {
-    const url = await dataUrlOf(file)
-    return { name: file.name || L('arquivo', 'file'), mime: file.type || 'application/octet-stream', data: url.slice(url.indexOf(',') + 1), url: '', size: file.size }
-  } catch {
-    return L(`Não deu pra abrir ${file.name}.`, `${file.name} couldn't be opened.`)
-  }
-}
-
-async function prepareImage(file: File): Promise<Attached | string> {
-  if (!file.type.startsWith('image/')) return L(`${file.name} não é imagem.`, `${file.name} isn't an image.`)
-  try {
-    const src = await dataUrlOf(file) // the page's CSP takes data: images, not blob:
-    const img = new Image()
-    img.src = src
-    await img.decode()
-    const side = Math.max(img.naturalWidth, img.naturalHeight)
-    let blob: Blob = file
-    if (!IMAGE_MIMES.includes(file.type) || side > MAX_SIDE || file.size > MAX_RAW) {
-      const k = Math.min(1, MAX_SIDE / side)
-      const canvas = document.createElement('canvas')
-      canvas.width = Math.round(img.naturalWidth * k)
-      canvas.height = Math.round(img.naturalHeight * k)
-      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
-      const encode = (type: string, q?: number): Promise<Blob | null> => new Promise((ok) => canvas.toBlob(ok, type, q))
-      blob = (file.type === 'image/png' && (await encode('image/png'))) || file
-      if (blob === file || blob.size > MAX_RAW) blob = (await encode('image/jpeg', 0.88)) ?? file
-    }
-    if (blob.size > MAX_RAW) return L(`${file.name} é grande demais.`, `${file.name} is too big.`)
-    const url = blob === file ? src : await dataUrlOf(blob)
-    return { name: file.name || L('imagem', 'image'), mime: blob.type, data: url.slice(url.indexOf(',') + 1), url }
-  } catch {
-    return L(`Não deu pra abrir ${file.name}. Tente salvar de novo ou mandar outra imagem.`, `${file.name} couldn't be opened. Try saving it again or send another image.`)
-  }
-}
+// The paste rule lives with the attachments now; the composer's tests still reach it from here.
+export { pastedFiles }
 
 // One draft per conversation (and per thread), kept while the app runs: leaving a
 // channel doesn't lose the message you were typing.
@@ -2394,17 +2442,6 @@ function RecordingClock({ since }: { since: number }): ReactNode {
 const FIELD_SIZING = typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content')
 const TYPE = ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'word-spacing', 'tab-size', 'text-transform', 'text-indent', 'padding']
 
-// What a paste attaches. Copying text from a spreadsheet, a page or a document often brings a
-// picture of it too: that pastes as the text, not as an image the person never meant to send.
-// A file copied in Finder or Explorer comes with its name as the text, and still attaches.
-export function pastedFiles(files: File[], text: string, server: boolean): File[] {
-  const usable = files.filter((f) => server || f.type.startsWith('image/'))
-  const typed = text.trim()
-  if (!usable.length || !typed) return usable
-  const names = new Set(files.map((f) => f.name))
-  return typed.split(/\r?\n/).every((line) => names.has(line.trim().split('/').pop() ?? '')) ? usable : []
-}
-
 // What the drawer keeps about one conversation while the app is open: whether it is open, and the
 // replies that ended here. Those stay as rows, marked with how they ended, until someone takes them
 // off the list. Per conversation, so each DM and channel keeps its own and coming back to one finds
@@ -2565,13 +2602,13 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
   // The field starts with the conversation's draft, not empty: StrictMode (in dev) unmounts
   // and mounts again at once, and saving an empty first render would wipe the draft.
   const [text, setText] = useState(() => drafts.get(key)?.text ?? '')
-  const [images, setImages] = useState<Attached[]>(() => drafts.get(key)?.images ?? [])
-  const [note, setNote] = useState('')
   const [dragging, setDragging] = useState(false)
   const picker = useRef<HTMLInputElement>(null)
   const [mention, setMention] = useState<{ query: string; start: number } | null>(null)
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLTextAreaElement>(null)
+  const focusField = useCallback((): void => void (touchScreen() || ref.current?.focus()), [])
+  const { items: images, setItems: setImages, note, setNote, add: addFiles } = useAttachments(focusField, setText, drafts.get(key)?.images)
   const mirror = useRef<HTMLDivElement>(null)
   const platform = useStore((s) => s.platform)
   const agents = useStore((s) => s.agents)
@@ -2637,39 +2674,6 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
       else drafts.delete(key)
     }
   }, [key])
-
-  const addFiles = async (all: File[]): Promise<void> => {
-    if (!all.length) return
-    // On a server, a file that isn't an image goes up to it (~/Enviados) and the message says where:
-    // an agent on that computer opens it there, and the link brings it back down.
-    const upload = window.tucano.upload
-    const files = upload ? all.filter((f) => IMAGE_MIMES.includes(f.type)) : all
-    const others = upload ? all.filter((f) => !IMAGE_MIMES.includes(f.type)) : []
-    if (others.length && upload) {
-      setNote(L(`Enviando ${others.length === 1 ? others[0]!.name : `${others.length} arquivos`}…`, `Sending ${others.length === 1 ? others[0]!.name : `${others.length} files`}…`))
-      const sent = await Promise.allSettled(others.map((f) => upload(f, 'message')))
-      const paths = sent.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []))
-      if (paths.length) setText((t) => `${t.trim() ? `${t.trimEnd()}\n` : ''}${paths.map((p) => L(`Arquivo enviado: \`${p}\``, `File sent: \`${p}\``)).join('\n')}`)
-      const failed = sent.find((r): r is PromiseRejectedResult => r.status === 'rejected')
-      setNote(failed ? String(failed.reason instanceof Error ? failed.reason.message : failed.reason) : '')
-      if (!files.length) return void (touchScreen() || ref.current?.focus())
-    }
-    if (!files.length) return
-    // In the app, a file that isn't an image goes with the message, and its text to the agents.
-    const done = await Promise.all(files.map((f) => (f.type.startsWith('image/') ? prepareImage(f) : prepareFile(f))))
-    const ok = done.filter((d): d is Attached => typeof d !== 'string')
-    const errors = done.filter((d): d is string => typeof d === 'string')
-    let over = ''
-    setImages((cur) => {
-      const all = [...cur, ...ok]
-      const pics = all.filter((a) => !isFile(a))
-      const docs = all.filter(isFile)
-      over = pics.length > MAX_IMAGES_PER_MESSAGE ? L(`Até ${MAX_IMAGES_PER_MESSAGE} imagens por mensagem.`, `Up to ${MAX_IMAGES_PER_MESSAGE} images per message.`) : docs.length > MAX_FILES_PER_MESSAGE ? L(`Até ${MAX_FILES_PER_MESSAGE} arquivos por mensagem.`, `Up to ${MAX_FILES_PER_MESSAGE} files per message.`) : ''
-      return [...pics.slice(0, MAX_IMAGES_PER_MESSAGE), ...docs.slice(0, MAX_FILES_PER_MESSAGE)]
-    })
-    setNote([...errors, over].filter(Boolean).join(' '))
-    if (!touchScreen()) ref.current?.focus()
-  }
 
   // A file dropped anywhere in the window comes here (and never opens in place of the app).
   // With a thread open there are two fields: a drop on the thread goes to its own.
@@ -2813,14 +2817,8 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
   // the modifier keys say the rest (see `send` in src/core/runs.ts). Nothing running: all the same.
   const submit = (mode?: SendMode): void => {
     if (!text.trim() && images.length === 0) return
-    sendMessage(
-      conversationId,
-      text,
-      images.filter((a) => !isFile(a)).map(({ name, mime, data }) => ({ name, mime, data })),
-      threadId,
-      images.filter(isFile).map(({ name, data }) => ({ name, data })),
-      (mode ?? sendMode) === 'parallel' ? undefined : (mode ?? sendMode)
-    )
+    const { images: pics, files } = uploadsOf(images)
+    sendMessage(conversationId, text, pics, threadId, files, (mode ?? sendMode) === 'parallel' ? undefined : (mode ?? sendMode))
     drafts.delete(key)
     live.current = { text: '', images: [] } // gone with the message, even if the field goes before it draws again
     setText('')
@@ -2901,28 +2899,7 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
       )}
       {!threadId && <WorkDrawer key={conversationId} conversationId={conversationId} {...(onJump ? { onJump } : {})} />}
       <div className="composer">
-        {images.length > 0 && (
-          <div className="composer__images">
-            {images.map((img, i) =>
-              isFile(img) ? (
-                <div key={i} className="composer__file" title={img.name}>
-                  <Icon name="clip" size={13} />
-                  <span className="composer__file-name">{img.name}</span>
-                  <button className="composer__file-x" title={L('Tirar', 'Remove')} onClick={() => setImages(images.filter((_, j) => j !== i))}>
-                    <Icon name="x" size={11} />
-                  </button>
-                </div>
-              ) : (
-              <div key={i} className="composer__image" title={img.name}>
-                <img src={img.url} alt={img.name} />
-                <button className="composer__image-x" title={L('Tirar', 'Remove')} onClick={() => setImages(images.filter((_, j) => j !== i))}>
-                  <Icon name="x" size={11} />
-                </button>
-              </div>
-              )
-            )}
-          </div>
-        )}
+        <AttachedList items={images} onRemove={(i) => setImages(images.filter((_, j) => j !== i))} />
         <div className="composer__field">
           <div ref={mirror} className="composer__mirror" aria-hidden>
             {painted}

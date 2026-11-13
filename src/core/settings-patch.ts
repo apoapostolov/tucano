@@ -29,6 +29,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   wikiReview: { kind: ['weekly', 'off'], max: 20, nullable: true },
   wikiResolve: { kind: 'boolean', max: 10, nullable: true },
   wikiResolveModel: { kind: 'string', max: 200, nullable: true },
+  wikiResolveBot: { kind: 'string', max: 80, nullable: true },
   wikiDir: { kind: 'string', max: 4_096, nullable: true },
   defaultLimit: { kind: 'number', max: 30 },
   approvalTtlHours: { kind: 'number', max: 30 },
@@ -36,6 +37,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   theme: { kind: ['system', 'light', 'dark'], max: 20 },
   language: { kind: ['pt', 'en'], max: 10 },
   openAtLogin: { kind: 'boolean', max: 10, nullable: true },
+  resumeInterrupted: { kind: 'boolean', max: 10 },
   runBudgetPct: { kind: 'number', max: 30, nullable: true },
   runStallMinutes: { kind: 'number', max: 30, nullable: true },
   chainDepth: { kind: 'number', max: 30, nullable: true },
@@ -56,10 +58,13 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   skillFoldersOff: { kind: 'array', max: 40_000, nullable: true },
   sounds: { kind: 'boolean', max: 10, nullable: true },
   showThinking: { kind: 'boolean', max: 10, nullable: true },
+  thinkingSize: { kind: ['sm', 'md', 'lg'], max: 10, nullable: true },
+  clock: { kind: ['24', '12'], max: 4, nullable: true },
   steps: { kind: ['all', 'latest', 'one-line'], max: 20, nullable: true },
   stepsLatest: { kind: 'number', max: 10, nullable: true },
   seenVersion: { kind: 'string', max: 100, nullable: true },
-  lastImageFolder: { kind: 'string', max: 4_096, nullable: true }
+  lastImageFolder: { kind: 'string', max: 4_096, nullable: true },
+  notice: { kind: 'object', max: 200, nullable: true }
 }
 
 const fits = (kind: Kind, v: unknown): boolean =>

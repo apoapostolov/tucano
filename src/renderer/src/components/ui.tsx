@@ -1,4 +1,5 @@
 import { L, lang, locale } from '../../../shared/lang'
+import { timeOpts } from '../../../shared/clock'
 import { hasMonthlyLimit } from '../../../shared/limits'
 import { examples, type AvatarDefinition } from 'open-bot-avatar'
 import { mountAvatar, type AvatarOptions, type MountedAvatar } from 'open-bot-avatar/dom'
@@ -323,7 +324,7 @@ export function ago(at: number, now = Date.now()): string {
 export function time(at: number): string {
   const d = new Date(at)
   const today = new Date()
-  const hm = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   if (d.toDateString() === today.toDateString()) return hm
   return `${d.toLocaleDateString(locale(), { day: '2-digit', month: 'short' })} · ${hm}`
 }
