@@ -18,6 +18,7 @@ import { createHash } from 'node:crypto'
 import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { dailyLaunch } from './self-build-launch.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const NAME = 'TucanoNext'
@@ -230,7 +231,8 @@ function install() {
 async function launch() {
   // No windowsHide here: it sets STARTUPINFO's SW_HIDE, and Windows applies that to the app's first
   // ShowWindow, so the window is created and never shown. A visible window is the whole point.
-  spawn(installedExe(), [], { detached: true, stdio: 'ignore' }).unref()
+  const plan = dailyLaunch(process.env)
+  spawn(installedExe(), plan.args, plan.options).unref()
   const title = await until(() => withWindow()[0]?.title, 90_000)
   if (title) return title
   const count = processCount()

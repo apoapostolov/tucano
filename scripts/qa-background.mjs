@@ -61,6 +61,18 @@ try {
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
+  const hasNotices = await window.evaluate(async () => {
+    if (!window.tucano.notice) return false
+    window.tucano.notice.demo()
+    window.tucano.notice.pick()
+    await window.tucano.updateState()
+    return true
+  })
+  if (hasNotices) {
+    await guard()
+    assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), 1, 'QA must not create notification or screen-picker windows')
+    report.checks.push('notification-actions-stay-background')
+  }
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
   await window.waitForSelector('.orgb')
   await capture('04-team')

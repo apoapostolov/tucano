@@ -1505,11 +1505,18 @@ export class Runner {
   // Every reply counts while it runs, wherever it came from. A hand-off that reached this agent meanwhile
   // is answered once, right after, when the reply ended well: otherwise the person acts on it anyway.
   // `reserved`: this reply was queued by handOff, which already holds its place.
-  private async execute(agent: Agent, conv: Conversation, opts: ReplyOpts & { reserved?: boolean }): Promise<Message> {
+  private async execute(agent: Agent, conv: Conversation, opts: ReplyOpts & { reserved?: boolean }): Promise<Message | undefined> {
     const threadId = opts.existing ? opts.existing.threadId : opts.threadId
     const key = replyKey(agent.id, conv.id, threadId)
     const { reserved, ...rest } = opts
     this.followups.start(key, reserved)
+    // A queued reply has no message to drop yet, but its deleted parent is marked.
+    if ((threadId && this.gone.has(threadId)) || (opts.existing && this.gone.has(opts.existing.id))) {
+      this.followups.end(key)
+      this.followups.take(key)
+      this.startWaiting(key)
+      return undefined
+    }
     let msg: Message
     try {
       msg = await this.reply(agent, conv, rest)
@@ -1777,14 +1784,17 @@ export class Runner {
     // even with no page yet: the first one is theirs). A page held for one person (see Wiki.inherit) is read
     // and written only in their own DM: anywhere else the reply reaches others.
     const wikiLevel = wikiAccess(agent)
-    const wikiShown = this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conv, db.ownerId())))
-    // The team, to look at: the prompt names only the agents of this conversation, so a DM's agent has
-    // no way to know who else there is (nor their handles) without asking.
+    const wikiNow = () => {
+      const current = db.agent(agent.id)
+      const conversation = db.conversation(conv.id)
+      if (!current || current.archived || !conversation || wikiAccess(current) === 'none') return undefined
+      return this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conversation, db.ownerId())))
+    }
+    const wikiShown = wikiNow()
+    // The team, to look at: a DM's prompt names only its own agent.
     const roster = !!this.deps.gateway && isTeam(agent)
     const wikiWritable = this.deps.gateway && wikiLevel === 'read_write' ? this.deps.wiki : undefined
     const wiki = this.deps.gateway && wikiShown && wikiLevel !== 'none' && (wikiShown.count() > 0 || !!wikiWritable) ? wikiShown : undefined
-    // What this conversation may read, for a write that must not touch a page held from it.
-    const wikiSees = (title: string): boolean => !!wikiShown?.page(title)
 
     const control: Control = { ctl: new AbortController(), msg }
     this.controllers.set(msg.id, control)
@@ -2357,19 +2367,23 @@ ${note}`,
         }
 
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
-          const r = wikiCall(wiki, name, args)
+          // A long reply must not keep access that changed after its prompt was built.
+          const current = wikiNow()
+          if (!current) return textResult(L('Você não tem acesso à wiki agora.', 'You do not have wiki access now.'), true)
+          const r = wikiCall(current, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: 'done' })
           return textResult(r.text, r.error)
         }
 
         if (wikiWritable && WIKI_WRITE_TOOL_NAMES.has(name)) {
           // Its level may have changed mid-turn: read again before a page is touched.
-          if (wikiAccess(db.agent(agent.id) ?? agent) !== 'read_write') return textResult(L('Você só lê a wiki agora.', 'You only read the wiki now.'), true)
-          // Closing a finding takes its id, not a page: the page writes below all take a title.
-          const r =
-            name === WIKI_FECHAR.name
-              ? wikiClose(wikiWritable, { name: agent.name }, args)
-              : wikiWrite(wikiWritable, { id: agent.id, name: agent.name }, name, args, wikiSees, { conversationId: conv.id })
+          const current = db.agent(agent.id)
+          const view = wikiNow()
+          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', 'You cannot write to the wiki now.'), true)
+          // Closing a finding takes its id; page writes use the current visible view.
+          const r = name === WIKI_FECHAR.name
+            ? wikiClose(wikiWritable, { name: current.name }, args)
+            : wikiWrite(wikiWritable, { id: current.id, name: current.name }, name, args, (title) => !!view.page(title), { conversationId: conv.id })
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)
         }
@@ -3873,6 +3887,9 @@ ${note}`,
   // the request ends as failed so whoever asked hears of it instead of waiting for good.
   private knockOn(d: Delegation, now: number): void {
     const { db } = this.deps
+    const key = replyKey(d.to, d.conversationId, d.rootId)
+    // No message yet can mean a real reply is queued behind occupied execution slots.
+    if (this.followups.busy(key)) return
     if (d.nudges) {
       if (now - d.createdAt >= GIVE_UP_MS) this.settle(d, 'failed')
       return
@@ -3882,12 +3899,7 @@ ${note}`,
     const conv = db.conversation(d.conversationId)
     if (!to || !conv || to.archived) return
     this.keep({ ...d, nudges: 1 })
-    const key = replyKey(to.id, conv.id, d.rootId)
-    this.followups.reserve(key)
-    this.enqueue(
-      () => this.execute(to, conv, { depth: 1, threadId: d.rootId, task: L('Seu turno anterior nesta thread não deixou nenhuma resposta: nenhum texto, nenhum erro, nada. Faça o pedido acima agora e escreva a resposta aqui, com o que fez, o que achou e o que falta.', 'Your previous turn in this thread left no reply at all: no text, no error, nothing. Do the request above now and write the answer here, with what you did, what you found and what is left.'), reserved: true }),
-      true
-    )
+    void this.startReply(to, conv, { depth: 1, threadId: d.rootId, task: L('Seu turno anterior nesta thread não deixou nenhuma resposta: nenhum texto, nenhum erro, nada. Faça o pedido acima agora e escreva a resposta aqui, com o que fez, o que achou e o que falta.', 'Your previous turn in this thread left no reply at all: no text, no error, nothing. Do the request above now and write the answer here, with what you did, what you found and what is left.') }, { urgent: true })
   }
 
   // An agent that mentions another agent of the conversation may hand it the turn,
@@ -3965,11 +3977,12 @@ ${note}`,
         kind: 'channel',
         name: teamUpName(guests, (n) => db.conversations().some((c) => c.kind === 'channel' && c.name === n), wanted),
         topic: teamUpTopic(agent.name, source),
+        createdBy: dmOwner(conv, db.ownerId()) ?? conv.createdBy ?? db.ownerId(),
         // Everyone who was here, plus the ones called in: the room continues the work, it doesn't restart it.
         members: [...new Set([...conv.members, agent.id, ...guests.map((g) => g.id)])],
         // What agents say while they work together is theirs, not the wiki's to read afterwards.
         wikiCapture: false,
-        teamUp: { from: conv.id, title: source, by: agent.id, at: now }
+        teamUp: { from: conv.id, title: source, by: agent.id, at: now, ...(dmOwner(conv, db.ownerId()) ? { privateTo: dmOwner(conv, db.ownerId()) } : {}) }
       })
       team = db.conversation(id)!
       emit({ type: 'conversation', conversation: team })

@@ -1,3 +1,4 @@
+import { teamUpAudiences } from '../shared/team-up-privacy'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type InitiativeWake, type NotifyMode } from '../shared/initiative'
@@ -720,11 +721,23 @@ export class Db {
   constructor(private file: string) {
     this.db = new DatabaseSync(file)
     this.keepStatements()
-    // A lock is waited for rather than failed on: the file has one writer, and a backup or a
-    // checkpoint overlapping a turn is a wait of milliseconds, not an error worth showing.
+    // Wait for short-lived external locks while preserving legacy private team-up audiences.
     this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;')
-    try { this.migrate(file) }
+    try { this.migrate(file); this.protectTeamUpPrivacy() }
     catch (error) { this.db.close(); throw error }
+  }
+
+  private protectTeamUpPrivacy(): void {
+    const rooms = this.conversations()
+    if (!rooms.some((room) => room.teamUp)) return
+    const audiences = teamUpAudiences(rooms, this.ownerId())
+    this.tx(() => {
+      for (const room of rooms) {
+        const person = audiences.get(room.id)
+        if (!room.teamUp || !person || room.teamUp.privateTo === person) continue
+        this.db.prepare('UPDATE conversations SET team_up = ? WHERE id = ?').run(JSON.stringify({ ...room.teamUp, privateTo: person }), room.id)
+      }
+    })
   }
 
   close(): void {
@@ -2516,7 +2529,7 @@ export class Db {
   // team's log. Returns the DMs deleted, their routines, and the files (artifacts) to delete from disk.
   purgePerson(personId: string, now = Date.now()): { dms: string[]; routines: { id: string; conversationId: string }[]; artifacts: { id: string; name: string }[] } {
     return this.tx(() => {
-      const dms = (this.db.prepare("SELECT id FROM conversations WHERE kind = 'dm' AND owner = ?").all(personId) as Row[]).map((r) => str(r['id']))
+      const dms = (this.db.prepare("SELECT id FROM conversations WHERE (kind = 'dm' AND owner = ?) OR json_extract(team_up, '$.privateTo') = ?").all(personId, personId) as Row[]).map((r) => str(r['id']))
       const inDms = `(${dms.map(() => '?').join(', ') || "''"})`
       const artifacts = (this.db.prepare(`SELECT id, name FROM artifacts WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), name: str(r['name']) }))
       const routines = (this.db.prepare(`SELECT id, conversation_id FROM routines WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), conversationId: str(r['conversation_id']) }))
