@@ -639,3 +639,16 @@ Source `7ada3b4` on `next`, tag and release `next-v0.2.28`, installed into
   backed by the message or file they came from; a delegation a check-in starts spends
   the specialist's own limit; and a check-in that resumes a session after a model or
   tool-set change has no test of its own.
+
+## Upstream
+
+The feature is proposed upstream as its own pair, cut from `main` rather than carried from
+`next`: issue `#434`, pull request `#435`, branch `feat/initiative-for-upstream`. The port
+kept the feature files whole and resolved nine shared files by behaviour, dropping what is
+only the fork's (a `hidden` reader that also filters `cleared_at`, the runner's newer
+options, the hidden-window QA launcher) and keeping the initiative's own. Rebuilt on
+`main`, the six initiative suites pass 85 tests, and all six CI jobs pass on the pull
+request.
+
+The check-in's day boundary now comes from the caller, which is why the daily cap test no
+longer depends on the hour the suite runs. The fork carries the same fix.
