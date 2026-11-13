@@ -69,8 +69,9 @@ const pressItem = async (label: string): Promise<void> => {
 
 beforeEach(() => {
   setLang('en')
-  // The page hands the picture's bytes over from the main process; here they are the same stub.
-  Object.assign(window, { tucano: { image: { read: async () => ({ mime: 'image/png', data: 'AAAA' }) } } })
+  // The installed app supplies Downloads before the first save, so the menu already offers
+  // a one-click destination as well as the dialog. Keep that path available in this fixture.
+  Object.assign(window, { tucano: { image: { folder: async () => ({ folder: 'C:/Users/someone/Downloads' }), read: async () => ({ mime: 'image/png', data: 'AAAA' }) } } })
 })
 afterEach(async () => {
   await act(async () => root.unmount())
@@ -82,13 +83,13 @@ it('opens the menu on a cell of the album, with every way out of it', async () =
   const cell = document.querySelector('.gallery__cell:not(.gallery__cell--hero)')!
   expect(cell, 'a cell beside the large one').toBeTruthy()
   await rightClick(cell)
-  expect(menuItems()).toEqual(['Save to…', 'Copy to clipboard', 'Send to prompt'])
+  expect(menuItems()).toEqual(['Save as…', 'Save to Downloads', 'Copy to clipboard', 'Send to prompt'])
 })
 
 it('offers the same menu on a picture that stands alone', async () => {
   await render([art('i1', 'Primeira')])
   await rightClick(document.querySelector('.artifact-image')!)
-  expect(menuItems()).toEqual(['Save to…', 'Copy to clipboard', 'Send to prompt'])
+  expect(menuItems()).toEqual(['Save as…', 'Save to Downloads', 'Copy to clipboard', 'Send to prompt'])
 })
 
 // The point of the last item: the picture arrives in the field of the conversation it came from, at
