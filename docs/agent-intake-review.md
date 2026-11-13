@@ -142,3 +142,16 @@ until the work finishes; no live data was edited and no foreground action was us
 
 The final combined run passed at application source `37d0c63`: 2,537 passed, 61 skipped,
 zero failed. Later record commits do not change the packaged application source.
+
+
+### Packaging preflight
+
+The first package from this worktree used the shared dependency junction. Electron-builder
+could not resolve transitive packages outside the checkout; the helper rejected the incomplete
+archive at its verification stage and no install occurred. No dependency installer was running,
+so the former error's diagnosis (an install running during packaging) was too narrow. The helper
+now rejects shared junctions before building and reports incomplete discovery without inventing
+its cause. The real CLI regression and two launch-policy tests pass. The junction was unlinked
+with its target preserved, and a separate locked `npm ci` completed with 718 packages. Source
+and public PR validation used the same lockfile and versions; the installer is being rebuilt
+from the worktree's own install. This maintenance helper stays in the fork.

@@ -15,7 +15,7 @@
 // 8 launch, 9 usage.
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } from 'node:fs'
+import { closeSync, existsSync, lstatSync, openSync, readFileSync, readSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { dailyLaunch } from './self-build-launch.mjs'
@@ -170,6 +170,9 @@ function preflight() {
   log(`${NAME} ${version()} in ${ROOT}`)
   if (manifest().name !== 'tucanonext') throw stop('this is not the TucanoNext checkout', 'preflight')
   if (!existsSync(join(ROOT, 'node_modules'))) throw stop('node_modules is missing: run npm ci, with nothing else running', 'preflight')
+  if ((command === 'build' || command === 'install') && lstatSync(join(ROOT, 'node_modules')).isSymbolicLink()) {
+    throw stop('Packaging requires a local node_modules directory. Unlink the shared junction without deleting its target, then run npm ci in this checkout.', 'preflight')
+  }
   const absent = Object.keys(manifest().dependencies ?? {}).filter((dep) => !existsSync(join(ROOT, 'node_modules', dep)))
   if (absent.length) throw stop(`node_modules is incomplete (${absent.join(', ')}): run npm ci alone, then this again`, 'preflight')
   if (!WIN && command !== 'build') throw stop(`installing on ${process.platform} is not this script: use scripts/install-app.sh on macOS`, 'preflight')
@@ -199,7 +202,7 @@ function checkPackage() {
   const missing = missingRuntimeDeps(index.names)
   log(`  asar ${(index.size / 1e6).toFixed(1)} MB, ${index.topLevel} packages at its root node_modules`)
   if (missing.length) {
-    throw stop(`the package is missing ${missing.join(', ')}: node_modules was being rewritten while it was packed. Run npm ci alone, then this again`, 'verify')
+    throw stop(`the package is missing ${missing.join(', ')}: dependency discovery was incomplete. Use a local node_modules directory and run npm ci alone before packaging.`, 'verify')
   }
   return index
 }

@@ -254,6 +254,11 @@ Branches are cut in a worktree, and the hazards there destroy work or waste a cy
   git worktree remove --force C:/path/wt
   ~~~
 
+  A shared junction is suitable for source builds and tests, but not for packaging: electron-builder
+  can omit transitive runtime dependencies when it resolves them outside the checkout. The self-build
+  helper rejects this before packaging. Unlink the junction without deleting its target, then run
+  `npm ci` in the packaging worktree and wait for it to finish before building the installer.
+
   Never remove a worktree whose `node_modules` is a real directory without confirming it is not the
   shared one. A wiped install is recovered by `npm ci` alone, never beside a build.
 - **Pass native tools `C:/…` paths, never `/c/…`.** Git Bash rewrites a leading `/c/tmp/...` argument
