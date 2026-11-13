@@ -46,7 +46,7 @@ let events: CoreEvent[]
 let settings: Settings
 let reply = ''
 let delay = 2
-let clock = 1_000_000
+let clock = Date.UTC(2026, 10, 13, 10, 0, 0)
 let dm: string
 let turns: string[] = []
 let told: { title: string; body: string }[] = []
@@ -70,7 +70,7 @@ beforeEach(async () => {
   events = []
   reply = ''
   delay = 2
-  clock = 1_000_000
+  clock = Date.UTC(2026, 10, 13, 10, 0, 0)
   turns = []
   told = []
   settings = {
@@ -117,7 +117,7 @@ const config = (over: Partial<InitiativeInput> = {}): InitiativeInput => ({
 
 // A config saved at `clock`, and a moment a cadence later, when its first check-in is due.
 const turnedOn = (over: Partial<InitiativeInput> = {}): { saved: ReturnType<Initiative['save']>; due: number } => {
-  const saved = initiative.save(db.owner(), config(over), 0)
+  const saved = initiative.save(db.owner(), config(over), 0, clock)
   return { saved, due: saved.updatedAt + (over.cadenceMinutes ?? 15) * 60_000 + 1 }
 }
 
