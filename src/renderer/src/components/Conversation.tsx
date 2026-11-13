@@ -589,24 +589,20 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           </div>
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
-        {/* A run is taller than the screen, so the way into the thread can't sit at its start: it rides the
-            top of the run here, in the same block, and leaves with the run's last line. Without threads, or
-            without a run, it stays where it was, at the corner of the message (ThreadLink). */}
+        {/* Every run keeps its corner on the rail: a run taller than the screen scrolls its buttons away,
+            so they ride the top of it here and leave with its last line. The thread button takes the first
+            place; the trash and the way back to the prompt follow it, or take the place themselves when
+            nothing is threaded. Without a run there is nothing to ride, and the corner stays in
+            ThreadLink. */}
         {message.run ? (
-          replies ? (
-            <div className="msg__anchor">
-              <div className="msg__anchor-pin">
-                <ThreadButton message={message} />
-                {/* The corner the thread button just took: the trash rides with it, and the way back
-                    to the prompt under that, so a long reply's three glyphs never land on each other. */}
-                {agent && <DeleteSession message={message} />}
-                {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
-              </div>
-              <RunSteps message={message} />
+          <div className="msg__anchor">
+            <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+              {replies ? <ThreadButton message={message} /> : null}
+              {agent && <DeleteSession message={message} />}
+              {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
             </div>
-          ) : (
             <RunSteps message={message} />
-          )
+          </div>
         ) : null}
         {text ? (
           <div className="md">
@@ -698,9 +694,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
           </div>
         )}
-        {away && message.run?.replyTo && !replies && <PromptJump id={message.run.replyTo} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
-        {agent && message.run && !replies && <DeleteSession message={message} />}
       </div>
     </article>
   )

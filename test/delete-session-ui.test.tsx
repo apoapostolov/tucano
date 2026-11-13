@@ -113,17 +113,24 @@ describe('the trash that deletes a session', () => {
     expect(trash()).toBeNull()
   })
 
-  it('rides the corner the thread button took, so a long reply never has one glyph over the other', async () => {
+  it("keeps every run's corner on the rail, with the trash in it, so a long reply never loses the glyph", async () => {
     // In a timeline with threads the thread button is pinned to the top of the run, not left at the
     // message's corner: the trash goes in that same pin, under it, or the two would share one 20px spot.
     await render([said('m1', 'corrige o login'), reply('r1')])
     const pin = trash()!.closest('.msg__anchor-pin')
     expect(pin).toBeTruthy()
     expect(pin!.querySelector('.msg__reply')).toBeTruthy() // the pinned thread button, above it
-    // Without threads nothing is pinned, and the trash stays at the message's own corner.
+    // Nothing threaded means nothing takes the first place, so the trash starts that same column.
     await renderFlat([said('m1', 'corrige o login'), reply('r1')])
-    expect(trash()!.closest('.msg__anchor-pin')).toBeNull()
+    expect(trash()!.closest('.msg__anchor-pin')).toBeTruthy()
+    expect(trash()!.closest('.msg__anchor-pin--alone')).toBeTruthy()
     expect(trash()!.closest('.msg')).toBeTruthy()
+    // The way back to the prompt rides the same pin: on a long run it stays reachable however far
+    // down the steps the reply has been scrolled.
+    await render([said('m1', 'corrige o login'), said('m2', 'e o logout?'), reply('r1')])
+    const jump = document.querySelector('.msg__reply--up')
+    expect(jump).toBeTruthy()
+    expect(jump!.closest('.msg__anchor-pin')).toBeTruthy()
   })
 
   it("sits in the thread's own header, beside close, and takes the panel away with the session", async () => {
