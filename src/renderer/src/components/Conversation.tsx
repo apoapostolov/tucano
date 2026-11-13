@@ -643,9 +643,9 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
     return () => seen.disconnect()
   }, [])
   const tight = height > 0 && height < 76
-  // Three glyphs on a prompt's left need 74 px of row to stand in a column. Below that they fan out
-  // instead, so a one-line prompt keeps them in a row rather than pushing one out of its own row.
-  const leftStack = height >= 78
+  // Three glyphs at 6, 30 and 54 from the row's top need 74 px to stand in a column without one hanging
+  // out of the row. A prompt that short or shorter fans them out instead, so nothing spills.
+  const leftStack = height >= 74
 
   const mineToEdit = !agent && !other && message.author.kind === 'person'
   const [editing, setEditing] = useState(false)
