@@ -661,6 +661,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
 | A hand-off answer comes back however the reply ends | 376 | 377 |
 | Delete a session from the room, in two presses | 374 | 375 |
+| Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
 
 The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
 what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR
