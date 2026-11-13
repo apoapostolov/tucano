@@ -12,15 +12,21 @@ import {
   commitmentError,
   inReach,
   initiativeError,
+  isClosed,
+  MAX_COMMITMENTS,
+  REMINDER_FLOOR_MINUTES,
+  STALL_AFTER,
   within,
   type Commitment,
   type CommitmentInput,
   type InitiativeConfig,
   type InitiativeInput,
-  type InitiativeView
+  type InitiativeView,
+  type LinkSnapshot
 } from '../shared/initiative'
 import { L } from '../shared/lang'
 import type { Person } from '../shared/types'
+import { dependencyOf, movedLinks, narrowScope, noteFrom, stateFrom, waitsOnPerson } from './initiative-links'
 import type { Db } from './db'
 import type { People } from './people'
 
@@ -82,8 +88,23 @@ export class Initiative {
     }
     this.pieces(person, clean)
     const now = Date.now()
-    const state = clean.state ?? prev?.state ?? 'open'
+    // A coordinator holds a plate, not a backlog.
+    const others = this.db.commitments(person.id).filter((c) => c.id !== prev?.id && !isClosed(c.state))
+    if (!prev && others.length >= MAX_COMMITMENTS) throw new Error(L('Já são responsabilidades demais. Feche uma antes de abrir outra.', 'That is as many responsibilities as one bot can keep. Close one before adding another.'))
+    // What the work behind it says now: a page shows the honest state from the first render, not only
+    // after the next check-in. A person's own state wins, and a closed one stays closed on an edit.
+    const links = (clean.links ?? []).map((l) => dependencyOf(this.db, l.kind, l.id)).filter((l): l is LinkSnapshot => l !== undefined)
+    const base = clean.state ?? prev?.state ?? 'open'
+    const state = clean.state ?? (isClosed(base) ? base : stateFrom(links, base))
     const closedAt = closedAtFor(state, now, prev?.closedAt)
+    // What the person changed is progress: the count of check-ins that found it exactly where it was
+    // starts again. Links they add are recorded as already seen, so a new one is not a wake.
+    const edited =
+      !prev ||
+      prev.state !== state ||
+      prev.description !== clean.description ||
+      (prev.note ?? '') !== (clean.note ?? '') ||
+      JSON.stringify(prev.links) !== JSON.stringify(clean.links ?? [])
     const saved: Commitment = {
       id: prev?.id ?? randomUUID(),
       personId: person.id,
@@ -98,12 +119,96 @@ export class Initiative {
       ...(clean.nextCheckAt ? { nextCheckAt: clean.nextCheckAt } : {}),
       evidence: clean.evidence ?? [],
       links: clean.links ?? [],
+      unchangedFor: edited ? 0 : (prev?.unchangedFor ?? 0),
       createdAt: prev?.createdAt ?? now,
       updatedAt: now,
       ...(closedAt ? { closedAt } : {})
     }
     this.db.saveCommitment(saved)
+    for (const l of saved.links) {
+      const d = dependencyOf(this.db, l.kind, l.id)
+      if (d) this.db.markResume(person.id, l.kind, l.id, d.version, now)
+    }
     return saved
+  }
+
+  // What the work behind each responsibility says now, read fresh on every tick. A link whose version
+  // moved is news for this person's coordinator, and reading it here writes nothing: the resume is
+  // recorded only once a check-in has actually run, so a pause or a failure cannot swallow it.
+  //
+  // A scope that lost a conversation is narrowed to what the person can still reach, and a
+  // responsibility nothing has moved in a long while is named as stalled, so a cycle with no progress
+  // is bounded instead of repeated.
+  refresh(
+    person: Person,
+    now = Date.now()
+  ): { due: LinkSnapshot[]; links: Map<string, LinkSnapshot[]>; waitingUser: boolean; stalled: Commitment[]; narrowed: Commitment[] } {
+    const config = this.db.initiative(person.id)
+    if (!config) return { due: [], links: new Map(), waitingUser: false, stalled: [], narrowed: [] }
+    const reachable = new Set([config.conversationId, ...config.observe.conversations, ...config.work.conversations])
+    const due: LinkSnapshot[] = []
+    const linksOf = new Map<string, LinkSnapshot[]>()
+    const stalled: Commitment[] = []
+    const narrowed: Commitment[] = []
+    let waitingUser = false
+    for (const c of this.db.commitments(person.id)) {
+      if (isClosed(c.state)) continue
+      const links = c.links.map((l) => dependencyOf(this.db, l.kind, l.id)).filter((l): l is LinkSnapshot => l !== undefined)
+      linksOf.set(c.id, links)
+      if (links.some(waitsOnPerson)) waitingUser = true
+      const moved = movedLinks(links, (kind, id) => this.db.resumeSeen(person.id, kind, id))
+      if (moved.length) due.push(...moved)
+      const state = stateFrom(links, c.state)
+      const note = noteFrom(links)
+      const { scope, dropped } = narrowScope(c, reachable)
+      if (dropped.length) narrowed.push(c)
+      // Evidence that can no longer be read is no longer evidence: what the person cannot see is not
+      // what the bot acts on. A file or message gone leaves the record without it.
+      const evidence = c.evidence.filter((e) => {
+        if (e.kind === 'message') return this.db.message(e.id) !== undefined
+        const a = this.db.artifact(e.id)
+        return a !== undefined && this.people.artifactVisible(person, a)
+      })
+      const lostEvidence = evidence.length !== c.evidence.length
+      if (state === c.state && (note ?? '') === (c.note ?? '') && dropped.length === 0 && !lostEvidence) continue
+      const next: Commitment = {
+        ...c,
+        state,
+        ...(note ? { note } : {}),
+        scope,
+        evidence,
+        // Where it moved is progress; a narrower scope did not move it.
+        unchangedFor: state === c.state && dropped.length > 0 ? c.unchangedFor : 0,
+        updatedAt: now
+      }
+      if (!note && c.note) delete next.note
+      this.db.saveCommitment(next)
+    }
+    // Read from what is stored now, so a state this refresh wrote is the one that counts. Something
+    // waiting on the person is not stalled: they are the one who has not moved.
+    for (const c of this.db.commitments(person.id)) {
+      if (!isClosed(c.state) && c.state !== 'waiting_user' && c.unchangedFor >= STALL_AFTER) stalled.push(c)
+    }
+    return { due, links: linksOf, waitingUser, stalled, narrowed }
+  }
+
+  // After a check-in: the work it read is recorded as seen, so the same news never wakes it twice, and
+  // each responsibility it found exactly where it was counts one more check-in without progress. A
+  // change the check-in itself made (a new note, a closed one) starts that count again.
+  settle(person: Person, since: number, links: LinkSnapshot[], now = Date.now()): void {
+    for (const l of links) this.db.markResume(person.id, l.kind, l.id, l.version, now)
+    for (const c of this.db.commitments(person.id)) {
+      if (isClosed(c.state)) continue
+      const unchangedFor = c.updatedAt > since ? 0 : Math.min(c.unchangedFor + 1, STALL_AFTER * 2)
+      if (unchangedFor === c.unchangedFor) continue
+      this.db.saveCommitment({ ...c, unchangedFor, updatedAt: c.updatedAt })
+    }
+  }
+
+  // How long this person's coordinator must wait before another check-in, when that is longer than its
+  // cadence: something of the bot's waits on the person, and asking again sooner helps no one.
+  floorMinutes(config: InitiativeConfig, waitingUser: boolean): number | undefined {
+    return waitingUser ? Math.max(config.cadenceMinutes, REMINDER_FLOOR_MINUTES) : undefined
   }
 
   // Who and where it works: a bot they can talk to, and their own DM with it, since a review resumes

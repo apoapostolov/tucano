@@ -96,6 +96,9 @@ export interface Commitment {
   nextCheckAt?: number
   evidence: EvidenceRef[]
   links: CommitmentLink[]
+  // How many check-ins in a row found this one exactly where it was: a cycle with no progress is
+  // bounded, not repeated forever.
+  unchangedFor: number
   createdAt: number
   updatedAt: number
   closedAt?: number
@@ -112,6 +115,18 @@ export interface InitiativeView {
 // before any work started (`why` says what changed).
 export const WAKE_OUTCOMES = ['quiet', 'reported', 'failed', 'skipped', 'interrupted'] as const
 export type WakeOutcome = (typeof WAKE_OUTCOMES)[number]
+
+// Where a responsibility rests on work running elsewhere: the link, and what that work last said. The
+// commitment keeps the link; the state below is read from the work itself, never stored twice.
+export const DEPENDENCY_STATES = ['working', 'waiting', 'answered', 'decided', 'done', 'failed', 'cancelled', 'gone'] as const
+export type DependencyState = (typeof DEPENDENCY_STATES)[number]
+export interface LinkSnapshot {
+  kind: LinkKind
+  id: string
+  state: DependencyState
+  version: string // everything that changes when the linked work moves: a resume fires on a new one
+  what?: string // how it reads in a sentence ("Clara, #clientes")
+}
 
 // Why a check-in was admitted and did not run. The record keeps it, so a person can later read that
 // their bot was ready and what stopped it.
@@ -183,6 +198,16 @@ export const INITIATIVE_LIMITS = {
   evidence: 20,
   links: 12
 }
+
+// How many responsibilities one coordinator holds at a time: enough for a person's plate, small enough
+// that every check-in can read them all.
+export const MAX_COMMITMENTS = 12
+// While a question of the coordinator's waits for the person, a check-in that asks it again helps no
+// one: the wait is at least this long, whatever the cadence says.
+export const REMINDER_FLOOR_MINUTES = 120
+// Check-ins in a row that may find a responsibility exactly where it was before the coordinator is
+// told to take a step or close it.
+export const STALL_AFTER = 6
 
 const line = (v: unknown, max: number): string => (typeof v === 'string' ? v.replace(/\r\n/g, '\n').trim().slice(0, max).trim() : '')
 // A person's own words are kept whole: a brief or a note is refused when it is too long, never cut.

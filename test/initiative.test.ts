@@ -93,6 +93,17 @@ describe('the record', () => {
     raw.close()
     const upgraded = new Db(old)
     expect(upgraded.initiative(upgraded.ownerId())).toBeUndefined()
+    // A build from before the link ledger: the table it reads is added on this open, and a
+    // responsibility saved here reads with a fresh progress count.
+    const peopleUp = new People(upgraded)
+    const initiativeUp = new Initiative(upgraded, peopleUp)
+    upgraded.saveAgent(agent('orion'))
+    upgraded.createConversation({ id: 'dm-orion', kind: 'dm', name: 'orion', members: ['orion'], owner: upgraded.ownerId() })
+    upgraded.createConversation({ id: 'clientes', kind: 'channel', name: 'clientes', members: ['orion'], createdBy: upgraded.ownerId() })
+    initiativeUp.save(peopleUp.owner(), config(), 0)
+    const saved = initiativeUp.saveCommitment(peopleUp.owner(), commitment())
+    expect(upgraded.commitment(saved.id)).toMatchObject({ state: 'open', unchangedFor: 0, evidence: [], links: [] })
+    expect(upgraded.resumeSeen(upgraded.ownerId(), 'delegation', 'nothing')).toBeUndefined()
     upgraded.close()
   })
 

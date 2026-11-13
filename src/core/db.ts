@@ -592,6 +592,18 @@ export const MIGRATIONS = [
     message_id TEXT
   );
   CREATE INDEX IF NOT EXISTS wakes_by_person ON initiative_wakes (person_id, at);
+  `,
+  // What a coordinator has already seen of the work its responsibilities rest on: one row per link,
+  // with the version it last saw. A new version is what wakes it, once.
+  `
+  CREATE TABLE IF NOT EXISTS initiative_resumes (
+    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+    link_kind TEXT NOT NULL,
+    link_id TEXT NOT NULL,
+    version TEXT NOT NULL,
+    at INTEGER NOT NULL,
+    PRIMARY KEY (person_id, link_kind, link_id)
+  );
   `
 ]
 
@@ -613,7 +625,11 @@ const COLUMNS: [string, string, string][] = [
   // A check-in stays out of the conversation while it works, and stays out of it for good when it
   // finds nothing to say: the column keeps it out of what a page reads (the reply's wake record keeps
   // what it did).
-  ['messages', 'hidden', 'INTEGER']
+  ['messages', 'hidden', 'INTEGER'],
+  // Check-ins in a row that found a responsibility exactly where it was: a cycle with no progress is
+  // bounded, not repeated forever. Added here rather than by a migration because a database from an
+  // older build may already hold the table this column completes.
+  ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0']
 ]
 
 
@@ -714,6 +730,7 @@ export class Db {
           DELETE FROM activity;
           DELETE FROM commitments;
           DELETE FROM initiative_wakes;
+          DELETE FROM initiative_resumes;
           UPDATE initiative SET enabled = 0, revision = revision + 1;
         `)
         target.keepOnly(parts)
@@ -1827,18 +1844,20 @@ export class Db {
       links: jsonOf(r['links']) as Commitment['links'],
       createdAt: Number(r['created_at']),
       updatedAt: Number(r['updated_at']),
-      ...(r['closed_at'] == null ? {} : { closedAt: Number(r['closed_at']) })
+      ...(r['closed_at'] == null ? {} : { closedAt: Number(r['closed_at']) }),
+      unchangedFor: Number(r['unchanged_for'] ?? 0)
     }
   }
 
   saveCommitment(c: Commitment): void {
     this.db
       .prepare(
-        `INSERT INTO commitments (id, person_id, agent_id, conversation_id, message_id, source_by, description, scope, state, note, next_check_at, evidence, links, created_at, updated_at, closed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO commitments (id, person_id, agent_id, conversation_id, message_id, source_by, description, scope, state, note, next_check_at, evidence, links, created_at, updated_at, closed_at, unchanged_for)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET agent_id = excluded.agent_id, conversation_id = excluded.conversation_id, message_id = excluded.message_id,
            source_by = excluded.source_by, description = excluded.description, scope = excluded.scope, state = excluded.state, note = excluded.note,
-           next_check_at = excluded.next_check_at, evidence = excluded.evidence, links = excluded.links, updated_at = excluded.updated_at, closed_at = excluded.closed_at`
+           next_check_at = excluded.next_check_at, evidence = excluded.evidence, links = excluded.links, updated_at = excluded.updated_at, closed_at = excluded.closed_at,
+           unchanged_for = excluded.unchanged_for`
       )
       .run(
         c.id,
@@ -1856,8 +1875,26 @@ export class Db {
         JSON.stringify(c.links),
         c.createdAt,
         c.updatedAt,
-        c.closedAt ?? null
+        c.closedAt ?? null,
+        c.unchangedFor
       )
+  }
+
+  // What the coordinator has already seen of the work its responsibilities rest on. A link's version
+  // is the whole of what changed in it: a new one is what a resume fires on, once.
+  resumeSeen(personId: string, kind: string, id: string): string | undefined {
+    const r = this.db.prepare('SELECT version FROM initiative_resumes WHERE person_id = ? AND link_kind = ? AND link_id = ?').get(personId, kind, id) as Row | undefined
+    return r ? str(r['version']) : undefined
+  }
+
+  markResume(personId: string, kind: string, id: string, version: string, at: number): void {
+    this.db
+      .prepare('INSERT INTO initiative_resumes (person_id, link_kind, link_id, version, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT (person_id, link_kind, link_id) DO UPDATE SET version = excluded.version, at = excluded.at')
+      .run(personId, kind, id, version, at)
+  }
+
+  forgetResumes(personId: string): void {
+    this.db.prepare('DELETE FROM initiative_resumes WHERE person_id = ?').run(personId)
   }
 
   // What a reply cost, in counted tokens: the receipts it wrote.
@@ -2225,6 +2262,7 @@ export class Db {
       // What they asked a bot to look after goes with the rest of their data.
       this.db.prepare('DELETE FROM commitments WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM initiative_wakes WHERE person_id = ?').run(personId)
+      this.db.prepare('DELETE FROM initiative_resumes WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM initiative WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM invites WHERE restore = ? AND used_at IS NULL').run(personId)
       this.db.prepare("UPDATE people SET purged_at = ?, prefs = '{}', about = '', delegate_to = NULL, delegate_until = NULL WHERE id = ? AND removed_at IS NOT NULL").run(now, personId)

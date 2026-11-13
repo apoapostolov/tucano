@@ -86,7 +86,7 @@ beforeEach(async () => {
   gateway = new Gateway()
   await gateway.start()
   runner = new Runner({ db, engines: engines(), settings: async () => settings, emit: (e) => events.push(e), workDir: mkdtempSync(join(tmpdir(), 'ad-init-work-')), gateway })
-  heartbeat = new Heartbeat({ db, runner, settings: () => settings, people: () => db.people(), now: () => clock })
+  heartbeat = new Heartbeat({ db, runner, initiative, settings: () => settings, people: () => db.people(), now: () => clock })
   return () => gateway.stop()
 })
 
@@ -214,18 +214,17 @@ describe('a check-in', () => {
     expect(db.wakes(db.ownerId())).toHaveLength(1)
   })
 
-  it('stops when the person edits the brief while it waits its turn', async () => {
-    const { due } = turnedOn()
+  it('starts the wait over when the person edits the brief, instead of running the old one', async () => {
+    turnedOn()
     reply = 'should never be sent'
-    clock = due
-    // Admitted under revision 1, then edited before it starts: the claim is taken with the row it read.
+    // Edited before its turn: the cadence counts from the edit, and the old brief's moment is not one.
     const edited = initiative.save(db.owner(), config({ brief: 'Something else entirely.' }), 1)
     expect(edited.revision).toBe(2)
-    const ran = await heartbeat.tick(due)
-    expect(ran).toEqual([])
-    // The heartbeat re-reads the row: a different revision than the one it would have admitted under
-    // is not admitted at all, so nothing ran and nothing was written.
+    clock = edited.updatedAt + 15 * 60_000 - 1
+    expect(await heartbeat.tick(clock)).toEqual([])
     expect(db.wakes(db.ownerId())).toEqual([])
+    // Its own moment, 15 minutes after the edit, still runs.
+    expect((await heartbeat.tick(edited.updatedAt + 15 * 60_000 + 1)).length).toBe(1)
   })
 
   it('does nothing at all while the app is paused', async () => {
@@ -270,6 +269,76 @@ describe('a check-in', () => {
     expect(shown.filter((m) => m.author.kind === 'person').map((m) => m.text)).toEqual(['quick question'])
     expect(db.wakes(db.ownerId()).map((w) => w.outcome)).toEqual(['quiet'])
     expect(typeof db.wakes(db.ownerId())[0]!.tokens).toBe('number')
+  })
+
+  it('wakes once when the work it handed out comes back, and reads what changed', async () => {
+    const { saved } = turnedOn()
+    db.saveDelegation({
+      id: 'del-1',
+      from: 'lia',
+      to: 'lia',
+      conversationId: dm,
+      rootId: 'r-1',
+      originConversationId: dm,
+      originMessageId: 'm-1',
+      requestedBy: db.ownerId(),
+      text: 'get the number from the client',
+      state: 'open',
+      createdAt: clock
+    })
+    initiative.saveCommitment(db.owner(), {
+      agentId: 'lia',
+      conversationId: dm,
+      by: 'person',
+      description: 'Send the client the number they asked for.',
+      scope: { conversations: [], kinds: [] },
+      links: [{ kind: 'delegation', id: 'del-1' }]
+    })
+    expect(db.commitments(db.ownerId())[0]).toMatchObject({ state: 'waiting_external' })
+    reply = '[[quiet]]'
+    // Inside the cadence: only news gets a check-in here, and being asked to wait is not news.
+    clock = saved.updatedAt + 60_000
+    expect(await heartbeat.tick(clock)).toEqual([])
+    db.saveDelegation({ ...db.delegation('del-1')!, state: 'done', result: 'm-9', endedAt: clock })
+    const ran = await heartbeat.tick(clock += 60_000)
+    expect(ran.map((w) => w.outcome)).toEqual(['quiet'])
+    expect(turns.at(-1)).toMatch(/Mudou desde|Changed since/)
+    expect(db.commitments(db.ownerId())[0]!.state).toBe('open')
+    // Read once: the next ticks have no news in them, and the cadence is what is left.
+    expect(await heartbeat.tick(clock += 60_000)).toEqual([])
+    expect(await heartbeat.tick(clock += 6 * 60_000)).toEqual([])
+  })
+
+  it('does not ask the person again while their answer is what it is waiting on', async () => {
+    const { saved } = turnedOn()
+    reply = '[[quiet]]'
+    clock = saved.updatedAt + 15 * 60_000 + 1
+    expect((await heartbeat.tick(clock)).length).toBe(1)
+    // During that check-in the bot asked the person something, and took the answer as what it waits on.
+    db.saveQuestion({
+      id: 'q-1',
+      conversationId: dm,
+      agentId: 'lia',
+      text: 'Which number do I send?',
+      askedTo: db.ownerId(),
+      requestedBy: db.ownerId(),
+      state: 'open',
+      deadlineAt: clock + 10 ** 9,
+      createdAt: clock
+    })
+    initiative.saveCommitment(db.owner(), {
+      agentId: 'lia',
+      conversationId: dm,
+      by: 'agent',
+      description: 'Send the client the number they asked for.',
+      scope: { conversations: [], kinds: [] },
+      links: [{ kind: 'question', id: 'q-1' }]
+    })
+    expect(db.commitments(db.ownerId())[0]!.state).toBe('waiting_user')
+    // The cadence alone would call it due in 30 minutes; an unanswered question of its own holds it to
+    // two hours, because asking a second time helps nobody.
+    expect(await heartbeat.tick(clock + 90 * 60_000)).toEqual([])
+    expect((await heartbeat.tick(clock + 121 * 60_000)).length).toBe(1)
   })
 
   it('keeps a failed one out of the conversation, and says so in its record', async () => {

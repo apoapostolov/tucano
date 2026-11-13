@@ -978,7 +978,7 @@ const runner = new Runner({
 runner.setPaused(!!settings().paused)
 // The clock behind initiative: one check-in at a time per person, admitted only while it is on, not
 // paused, due, and inside that person's reviews and allowance. Nothing runs until someone turns it on.
-const heartbeat = new Heartbeat({ db, runner, settings, people: () => db.people() })
+const heartbeat = new Heartbeat({ db, runner, initiative, settings, people: () => db.people() })
 // Installs from before the Tuca get him at the first start after the introduction.
 void enginesReady.then(() => {
   if (settings().onboarding?.done) ensureTuca()

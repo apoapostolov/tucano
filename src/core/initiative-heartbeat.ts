@@ -5,9 +5,10 @@
 // It decides nothing about permissions: a check-in runs through the runner as any reply does, with
 // the agent's own rules, the person's visibility and Autonomy's verdict on every tool call.
 import { randomUUID } from 'node:crypto'
-import { dayStartIn, MAX_QUIET_BACKOFF, type InitiativeConfig, type InitiativeWake, type WakeOutcome, type WakeWhy } from '../shared/initiative'
+import { dayStartIn, MAX_QUIET_BACKOFF, type Commitment, type InitiativeConfig, type InitiativeWake, type LinkSnapshot, type WakeOutcome, type WakeWhy } from '../shared/initiative'
 import { inQuietHours, type Person, type Settings } from '../shared/types'
 import type { Db } from './db'
+import type { Initiative } from './initiative'
 import type { Runner } from './runs'
 import { admit, dueAt, heartbeatTask, TICK_MS } from './initiative-state'
 
@@ -23,6 +24,7 @@ export class Heartbeat {
     private readonly deps: {
       db: Db
       runner: Runner
+      initiative: Initiative
       settings: () => Settings
       people: () => Person[]
       now?: () => number
@@ -57,6 +59,8 @@ export class Heartbeat {
       const quietStreak = this.streak(wakes)
       const today = dayStartIn(config.timezone, now)
       const todayRuns = attempts.filter((w) => w.at >= today)
+      // What the work behind each responsibility says now: a link that moved is what a resume is for.
+      const fresh = this.deps.initiative.refresh(person, now)
       const verdict = admit({
         config,
         now,
@@ -66,13 +70,15 @@ export class Heartbeat {
         tokensToday: todayRuns.reduce((n, w) => n + w.tokens, 0),
         busy: this.claims.has(person.id),
         paused: this.deps.runner.isPaused(),
-        quietHours
+        quietHours,
+        resume: fresh.due.length > 0,
+        floorMinutes: this.deps.initiative.floorMinutes(config, fresh.waitingUser)
       })
       if (!verdict.run) continue
       // The claim is taken here, before the first await: a second tick cannot pass this line.
       this.claims.add(person.id)
       try {
-        const wake = await this.run(person, config, settings, now)
+        const wake = await this.run(person, config, settings, now, fresh)
         if (wake) ran.push(wake)
       } finally {
         this.claims.delete(person.id)
@@ -81,11 +87,13 @@ export class Heartbeat {
     return ran
   }
 
-  // When this person's next check-in is due: what a page shows, and what a test reads.
+  // When this person's next check-in is due: what a page shows, and what a test reads. While something
+  // of the bot's waits on the person, that is the longer wait, not the cadence.
   dueAtFor(person: Person, config: InitiativeConfig): number | undefined {
     if (!config.enabled) return undefined
     const wakes = this.deps.db.wakes(person.id, { limit: 60 })
-    return dueAt(config, wakes.filter((w) => RAN.includes(w.outcome))[0]?.at, this.streak(wakes))
+    const fresh = this.deps.initiative.refresh(person, this.now())
+    return dueAt(config, wakes.filter((w) => RAN.includes(w.outcome))[0]?.at, this.streak(wakes), this.deps.initiative.floorMinutes(config, fresh.waitingUser))
   }
 
   // Quiet check-ins in a row, newest first: each one doubles the wait before the next.
@@ -106,7 +114,13 @@ export class Heartbeat {
     return wake
   }
 
-  private async run(person: Person, config: InitiativeConfig, settings: Settings, now: number): Promise<InitiativeWake | undefined> {
+  private async run(
+    person: Person,
+    config: InitiativeConfig,
+    settings: Settings,
+    now: number,
+    work: { due: LinkSnapshot[]; links: Map<string, LinkSnapshot[]>; stalled: Commitment[] }
+  ): Promise<InitiativeWake | undefined> {
     const { db, runner } = this.deps
     const agent = db.agent(config.agentId)
     if (!agent || agent.archived) return this.skip(person, config, 'agent', now)
@@ -127,9 +141,12 @@ export class Heartbeat {
       wake: id,
       agent,
       conversation,
-      task: heartbeatTask(fresh, db.commitments(person.id), me)
+      task: heartbeatTask(fresh, db.commitments(person.id), me, { links: work.links, moved: work.due, stalled: work.stalled.map((c) => c.description) })
     })
     if (result.outcome === 'skipped') return this.skip(person, config, result.why ?? 'error', now, id)
+    // What this check-in read is now seen, and what it found exactly where it was counts one more time
+    // without progress: news wakes the coordinator once, and a cycle with nothing in it is bounded.
+    this.deps.initiative.settle(person, now, [...work.links.values()].flat(), this.now())
     const message = result.message
     if (result.outcome === 'reported' && message) runner.reveal(message)
     const said = (message?.text.trim() || message?.run?.error?.trim() || '')
