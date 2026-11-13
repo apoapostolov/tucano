@@ -25,6 +25,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **The form under a chain keeps the model it just added, and refuses one already in the chain.** It went back to the harness's first model after every add, so a second click added that instead of the model the person had picked, and a model already in the chain took the click and added nothing. It now keeps the pick, and disables **Add** with a line saying the model is already in the chain.
 - **No gap between the model and the thinking in the form that adds a step.** The model field carried a stretching rule from when the fields sat side by side, so in the stacked form it grew to 180 px and left the thinking line a hundred pixels below it; the three fields are 36 px each now.
 
+- **The reasoning sizes read in the language the window speaks.** The three choices under **How much of the reasoning shows** said *Pequeno*, *Médio* and *Grande* in an English window, because the table that holds them was written once at startup, before the app knew which language it speaks.
+
 ## [0.2.28] - 2026-11-12
 
 > **Em português:**

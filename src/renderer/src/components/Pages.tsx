@@ -282,8 +282,10 @@ const CLOCK_CHOICES = (chosen: '24' | '12' | undefined): { value: '24' | '12'; l
     { value: '12', label: '12 h', hint: L('3:05 PM, com AM e PM.', '3:05 PM, with am and pm.'), on: inForce === '12' }
   ]
 }
-// How tall the reasoning preview is before it scrolls, chosen in Settings › The conversation.
-const THINKING_SIZES: { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] = [
+// How tall the reasoning preview is before it scrolls, chosen in Settings › The conversation. Written
+// as a function because `L()` reads the language when it is called: a table built at import is written
+// before the app knows which language it speaks, so it kept the Portuguese labels in an English window.
+export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
   { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines, the rest scrolling.') },
   { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines, the rest scrolling.') },
   { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines, the rest scrolling.') }
@@ -3399,7 +3401,7 @@ export function SettingsPage(): ReactNode {
                 </p>
               </div>
               <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', 'How much reasoning shows')}>
-                {THINKING_SIZES.map((c) => (
+                {THINKING_SIZES().map((c) => (
                   <button
                     key={c.value}
                     type="button"
