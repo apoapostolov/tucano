@@ -1716,14 +1716,17 @@ export class Runner {
     // even with no page yet: the first one is theirs). A page held for one person (see Wiki.inherit) is read
     // and written only in their own DM: anywhere else the reply reaches others.
     const wikiLevel = wikiAccess(agent)
-    const wikiShown = this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conv, db.ownerId())))
-    // The team, to look at: the prompt names only the agents of this conversation, so a DM's agent has
-    // no way to know who else there is (nor their handles) without asking.
+    const wikiNow = () => {
+      const current = db.agent(agent.id)
+      const conversation = db.conversation(conv.id)
+      if (!current || current.archived || !conversation || wikiAccess(current) === 'none') return undefined
+      return this.deps.wiki?.view(this.deps.wiki.heldTitles(dmOwner(conversation, db.ownerId())))
+    }
+    const wikiShown = wikiNow()
+    // The team, to look at: a DM's prompt names only its own agent.
     const roster = !!this.deps.gateway && isTeam(agent)
     const wikiWritable = this.deps.gateway && wikiLevel === 'read_write' ? this.deps.wiki : undefined
     const wiki = this.deps.gateway && wikiShown && wikiLevel !== 'none' && (wikiShown.count() > 0 || !!wikiWritable) ? wikiShown : undefined
-    // What this conversation may read, for a write that must not touch a page held from it.
-    const wikiSees = (title: string): boolean => !!wikiShown?.page(title)
 
     const control: Control = { ctl: new AbortController(), msg }
     this.controllers.set(msg.id, control)
@@ -2296,19 +2299,23 @@ ${note}`,
         }
 
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
-          const r = wikiCall(wiki, name, args)
+          // A long reply must not keep access that changed after its prompt was built.
+          const current = wikiNow()
+          if (!current) return textResult(L('Você não tem acesso à wiki agora.', 'You do not have wiki access now.'), true)
+          const r = wikiCall(current, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: 'done' })
           return textResult(r.text, r.error)
         }
 
         if (wikiWritable && WIKI_WRITE_TOOL_NAMES.has(name)) {
           // Its level may have changed mid-turn: read again before a page is touched.
-          if (wikiAccess(db.agent(agent.id) ?? agent) !== 'read_write') return textResult(L('Você só lê a wiki agora.', 'You only read the wiki now.'), true)
-          // Closing a finding takes its id, not a page: the page writes below all take a title.
-          const r =
-            name === WIKI_FECHAR.name
-              ? wikiClose(wikiWritable, { name: agent.name }, args)
-              : wikiWrite(wikiWritable, { id: agent.id, name: agent.name }, name, args, wikiSees, { conversationId: conv.id })
+          const current = db.agent(agent.id)
+          const view = wikiNow()
+          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', 'You cannot write to the wiki now.'), true)
+          // Closing a finding takes its id; page writes use the current visible view.
+          const r = name === WIKI_FECHAR.name
+            ? wikiClose(wikiWritable, { name: current.name }, args)
+            : wikiWrite(wikiWritable, { id: current.id, name: current.name }, name, args, (title) => !!view.page(title), { conversationId: conv.id })
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)
         }
