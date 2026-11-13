@@ -269,21 +269,25 @@ Result: commit `4370641` on `feat/autonomous-initiative`. See
 
 ### 5. Recover and integrate
 
-- [ ] Persist claim fencing and recover orphaned queued/running reviews. Reconcile
+- [x] Persist claim fencing and recover orphaned queued/running reviews. Reconcile
   linked work before permitting new actions; stale workers cannot finish a new claim.
-- [ ] Commit session/commitment progress before publishing a terminal completion
+- [x] Commit session/commitment progress before publishing a terminal completion
   that can admit a dependent wake. Separate delivery retry from execution retry.
-- [ ] Interrupt at each external-effect boundary in tests. Reconcile effects by
+- [x] Interrupt at each external-effect boundary in tests. Reconcile effects by
   tool identifiers where supported; ambiguous effects wait for inspection instead
   of automatic replay. Do not promise exactly-once external execution.
-- [ ] Exercise restart, sleep, simultaneous event delivery, quota failure, model
+- [x] Exercise restart, sleep, simultaneous event delivery, quota failure, model
   failure, permission changes, person removal, history clearing, and coordinator
   replacement. Disable/re-enable and restore never duplicate a scheduler owner.
-- [ ] Refresh upstream and next, merge intervening work normally, and repeat
+- [x] Refresh upstream and next, merge intervening work normally, and repeat
   affected checks against the final combined tree.
 
 Exit: recovery produces neither duplicate actions nor a flood of checks, questions,
 or notifications, and independent user work remains usable.
+
+Results: `b4074dd` (the merge of `origin/next`, 345 commits, and the behaviour it
+forced) and `5396d38` (recovery) on `feat/autonomous-initiative`. See
+[the completion record](#slice-5-what-the-app-did-not-survive).
 
 ### 6. Verify and deliver the feature
 
@@ -545,3 +549,46 @@ feature reachable: before it, a coordinator could only be turned on through the 
   not yet backed by the message or file they came from, and the narrow layout is a
   CSS rule nobody has measured. The screenshot harness in the last slice is where a
   rendered, measured check belongs.
+
+### Slice 5: what the app did not survive
+
+Commits `b4074dd` (the merge) and `5396d38` (recovery) on `feat/autonomous-initiative`.
+
+- The branch was 345 commits behind `next`, so it was merged before this work rather
+  than after, and the merge was resolved by behaviour on both sides: routines still
+  author messages, so their request is not unread while their answer is; paging
+  keeps both the tree's `cleared_at` rule and a check-in's `hidden`; saving a
+  message carries both columns; and the two runner notifications keep the message
+  id the tree now passes, still silent for a check-in.
+- The merge forced one behaviour and it is now explicit: the tree gives every
+  person's message its own session, so a due check-in could start beside an
+  exchange the person was in the middle of. A check-in steps back while the last
+  word in that DM is theirs and the bot has not answered, and the review happens
+  when the exchange is quiet again.
+- A check-in the app did not survive is closed as interrupted at the next start and
+  on every tick, and the linked work is read again at that moment, before anything
+  new is allowed. Before this, such a run left a record with no end and a page that
+  said "checking now" forever.
+- A late run cannot finish a claim the app already closed: what comes back from a
+  lost run changes nothing, appears nowhere and notifies no one.
+- Delivery is its own step after the record. A report is saved before it is shown,
+  so a window that goes away between the two leaves a report the next tick delivers
+  alone, with `delivered` as its flag. Execution is never repeated for delivery.
+- A check-in cut short does not settle the ledger: only a finished run marks news as
+  read, so what it came for can wake the coordinator again. The timer starts once,
+  whatever a person does to the switch.
+- Verification: `test/initiative-recovery.test.ts` (9 tests) covers an orphan closed
+  and a live run left alone, a late finish refused, a report delivered after the app
+  closed it, a reveal that throws and is delivered on the next tick with one turn
+  total, an interrupted run that leaves the ledger alone, one timer across a
+  disable and an enable, one check-in across two simultaneous ticks after a ten-hour
+  sleep, an archived bot, a person who left, and a replaced coordinator. Restart,
+  sleep, simultaneous delivery, model and quota failure, permission changes, history
+  clearing and person removal are covered across this file, the links file and the
+  heartbeat file; the merged tree passes 257 files and 2430 tests with 67 skipped and
+  none failed.
+- Honest about effects: this never promises exactly-once execution of anything
+  external. A check-in that was interrupted leaves whatever it did as it left it,
+  and a person inspects the record rather than an automatic replay happening. The
+  one effect that is reconciled by identifier is the work a responsibility links to,
+  whose own record says how it ended.
