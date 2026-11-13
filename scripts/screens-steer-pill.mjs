@@ -16,8 +16,11 @@ const HOLD = 15_000
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_FAKE_HOLD_MS: String(HOLD), TUCANO_LOCALE: 'en-US' }
 const errors = []
 
+// TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, in the
+// window the person actually opens.
 const launch = async () => {
-  const app = await electron.launch({ args: ['.'], env })
+  const installed = env.TUCANO_ELECTRON
+  const app = await electron.launch({ args: installed ? [] : ['.'], ...(installed ? { executablePath: installed } : {}), env })
   const win = await app.firstWindow()
   await win.setViewportSize({ width: 1280, height: 880 })
   await win.waitForSelector('.sidebar')
@@ -121,10 +124,12 @@ const chainLook = (win) =>
       rows: rows.length,
       steerAt: steer,
       labels: rows.map((r) => r.querySelector('.step__label')?.textContent ?? ''),
-      steerText: row?.querySelector('.step__said')?.textContent ?? null,
+      steerText: row?.querySelector('.step__input')?.textContent ?? null,
       steerLabel: row?.querySelector('.step__label')?.textContent ?? null,
-      iconBg: row ? getComputedStyle(row.querySelector('.step__icon')).backgroundColor : null,
-      stepsAfterSteer: steer >= 0 ? rows.length - steer - 1 : 0,
+      steerClass: row?.className ?? null,
+      steerRows: rows.filter((r) => r.classList.contains('step--steer')).length,
+      // The words as they are drawn: two lines clamped, and the row clicked open shows all of them.
+      clamp: row?.querySelector('.step__clamp')?.getBoundingClientRect().height ?? null,
       summary: steps?.querySelector('.steps__summary')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
       working: !!steps?.querySelector('.steps__stop')
     }
@@ -138,6 +143,9 @@ const lastReply = (win) =>
 
 // The replies in the conversation, so "the same row, not a second one" can be said with a number.
 const replies = (win) => win.evaluate(() => document.querySelectorAll('.msg--agent').length)
+// What the person's side of the conversation holds: a steer must not add anything to it.
+const mineCount = (win) => win.evaluate(() => document.querySelectorAll('.msg--me').length)
+const steerRows = (win) => win.evaluate(() => document.querySelectorAll('.step--steer').length)
 
 let { app, win } = await launch()
 await win.waitForSelector('.sidebar')
@@ -163,23 +171,54 @@ await win.waitForTimeout(150)
 console.log('typed:', JSON.stringify(await fieldLook(win)))
 await win.screenshot({ path: `${out}/03-what-they-write.png` })
 const repliesBefore = await replies(win)
+const mineBefore = await mineCount(win)
 await win.locator('.steps__ask-note button.btn--primary').click()
 await win.waitForTimeout(400)
 console.log('after sending, the field is', JSON.stringify(await fieldLook(win)))
 
-// The steer in the chain: it appears at the tool call after the pause, and the reply goes on.
+// It is the reply's own row from the moment it is given: nothing of it is posted in the conversation.
+console.log(
+  'straight after sending:',
+  JSON.stringify({ steerRows: await steerRows(win), personMessages: { before: mineBefore, after: await mineCount(win) }, replies: { before: repliesBefore, after: await replies(win) }, chain: await chainLook(win) })
+)
+await win.screenshot({ path: `${out}/04-the-steer-in-the-chain.png` })
+
+// The words as they are drawn: the part in two lines, and all of it once the row is clicked.
+const saidBefore = await win.evaluate(() => {
+  const box = document.querySelector('.step--steer .step__clamp')
+  return { px: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
+})
+await win.locator('.step--steer .step__input').first().click()
+await win.waitForTimeout(200)
+const saidAfter = await win.evaluate(() => {
+  const box = document.querySelector('.step--steer .step__clamp')
+  return { px: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
+})
+console.log('the words, clamped and whole:', JSON.stringify({ before: saidBefore, after: saidAfter }))
+
+// A second steer while it still works: two rows, and still no message of the person's.
+await win.locator('.steps__ask-pill').last().click()
+await win.locator('.steps__ask-note textarea').fill('segunda orientação: só o último commit')
+await win.locator('.steps__ask-note button.btn--primary').click()
+await win.waitForTimeout(300)
+console.log('two steers, before the next call:', JSON.stringify({ steerRows: await steerRows(win), personMessages: await mineCount(win), replies: await replies(win), chain: await chainLook(win) }))
+
+// Both turn read at the tool call that follows them, and the reply goes on.
 for (let i = 0; i < 140; i++) {
-  const has = await win.evaluate(() => !!document.querySelector('.step--steer'))
-  if (has) break
+  const done = await win.evaluate(() => {
+    const rows = [...document.querySelectorAll('.step--steer')]
+    return rows.length > 0 && rows.every((r) => r.classList.contains('step--done'))
+  })
+  if (done) break
   await win.waitForTimeout(250)
 }
-console.log('the steer in the chain:', JSON.stringify(await chainLook(win)))
-await win.screenshot({ path: `${out}/04-the-steer-in-the-chain.png` })
+console.log('the steers in the chain:', JSON.stringify(await chainLook(win)))
+await win.screenshot({ path: `${out}/05-the-steers-read.png` })
 
 await waitWorking(win, false)
 console.log('when it is done:', JSON.stringify({ ...(await chainLook(win)), pillsLeft: await win.evaluate(() => document.querySelectorAll('.steps__ask-pill').length) }))
-console.log('the reply it kept:', JSON.stringify({ before: repliesBefore, after: await replies(win), text: await lastReply(win) }))
-await win.screenshot({ path: `${out}/05-done-after-the-steer.png` })
+console.log('the reply it kept:', JSON.stringify({ before: repliesBefore, after: await replies(win), text: await lastReply(win), personMessages: { before: mineBefore, after: await mineCount(win) } }))
+await win.screenshot({ path: `${out}/06-done-after-the-steer.png` })
 
 // 420 px: the pill and the field inside the column, nothing sideways.
 await win.setViewportSize({ width: 420, height: 880 })
@@ -189,7 +228,7 @@ await win.waitForTimeout(1200)
 await win.locator('.steps__ask-pill').last().click()
 await win.waitForTimeout(300)
 console.log('at 420, the pill and the field:', JSON.stringify({ pill: await pillLook(win), field: await fieldLook(win) }))
-await win.screenshot({ path: `${out}/06-at-420.png` })
+await win.screenshot({ path: `${out}/07-at-420.png` })
 
 console.log('page errors:', JSON.stringify(errors.slice(0, 6)))
 await app.close()
