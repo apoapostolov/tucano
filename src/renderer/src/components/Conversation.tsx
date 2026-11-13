@@ -643,6 +643,9 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
     return () => seen.disconnect()
   }, [])
   const tight = height > 0 && height < 76
+  // Three glyphs at 6, 30 and 54 from the row's top need 74 px to stand in a column without one hanging
+  // out of the row. A prompt that short or shorter fans them out instead, so nothing spills.
+  const leftStack = height >= 74
 
   const mineToEdit = !agent && !other && message.author.kind === 'person'
   const [editing, setEditing] = useState(false)
@@ -686,7 +689,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const name = agent ? agent.name : (other ?? me.name)
   return (
     // Someone else's message reads like any other voice in the conversation: on the left, with their name.
-    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}${editing ? ' is-editing' : ''}`} data-id={message.id}>
+    <article ref={rowEl} className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}${editing ? ' is-editing' : ''}${leftStack ? ' is-left-stack' : ''}`} data-id={message.id}>
       <div className="msg__gutter">
         {!grouped &&
           (agent ? (
@@ -701,17 +704,22 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         {/* Mine to pick up again: the pencil sits in the space on the left of the bubble, quiet until the
             row is hovered, and opens the words where they stand. */}
         {mineToEdit && !editing && (
-          <button
-            className="msg__edit"
-            title={L('Editar este pedido', 'Edit this prompt')}
-            aria-label={L('Editar este pedido', 'Edit this prompt')}
-            onClick={() => {
-              setDraft(message.text)
-              setEditing(true)
-            }}
-          >
-            <Icon name="edit" size={13} />
-          </button>
+          <>
+            <button
+              className="msg__edit"
+              title={L('Editar este pedido', 'Edit this prompt')}
+              aria-label={L('Editar este pedido', 'Edit this prompt')}
+              onClick={() => {
+                setDraft(message.text)
+                setEditing(true)
+              }}
+            >
+              <Icon name="edit" size={13} />
+            </button>
+            {/* The ask can go, the same two presses as everywhere else. The reply it earned stays: that
+                is a message of its own, and it answered what was sent. */}
+            <DeleteSession message={message} where="prompt" />
+          </>
         )}
         {/* The corner rides the message, not just its steps: a reply taller than the screen keeps its
             thread button, its trash and the way back to the prompt at the top of the rail for as long as
@@ -1039,21 +1047,34 @@ const ARM_MS = 4000
 // it first, and the words it had written go with it, so the glyph says so.
 // `where`: at the corner of a reply ('corner'), or in the thread's own header ('head'), where it sits
 // in the row beside the summary and close buttons and the panel closes with the session it deleted.
-export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' }): ReactNode {
+export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' | 'prompt' }): ReactNode {
   const head = where === 'head'
   const post = where === 'post'
   // A routine's post is not a session: nothing ran under it, and the routine goes on posting after
   // it is gone. It says so, so the press reads as removing the post rather than ending an agent's work.
   const routine = post || message.author.kind === 'routine'
+  // My own prompt is not a session either: it is the ask, and the reply it earned is a message of its
+  // own that stays behind when the ask goes.
+  const mine = where === 'prompt'
   // Stopping is part of it only when something is running under the row, so the wording says so.
   const at = message.run?.status === 'working'
-  const label = routine ? L('Apagar esta publicação', 'Delete this post') : L('Apagar esta sessão', 'Delete this session')
-  const armedLabel = at
-    ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+  const label = mine
+    ? L('Apagar este pedido', 'Delete this prompt')
     : routine
-      ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
-      : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
-  const confirmLabel = routine ? L('Confirmar: apagar a publicação', 'Confirm: delete the post') : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
+      ? L('Apagar esta publicação', 'Delete this post')
+      : L('Apagar esta sessão', 'Delete this session')
+  const armedLabel = mine
+    ? L('Clique de novo para apagar o pedido', 'Click again to delete the prompt')
+    : at
+      ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+      : routine
+        ? L('Clique de novo para apagar a publicação', 'Click again to delete the post')
+        : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+  const confirmLabel = mine
+    ? L('Confirmar: apagar o pedido', 'Confirm: delete the prompt')
+    : routine
+      ? L('Confirmar: apagar a publicação', 'Confirm: delete the post')
+      : L('Confirmar: apagar a sessão', 'Confirm: delete the session')
   const [armed, setArmed] = useState(false)
   useEffect(() => {
     if (!armed) return
@@ -1083,7 +1104,7 @@ export function DeleteSession({ message, where = 'corner' }: { message: Message;
   }
   return (
     <button
-      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${armed ? 'is-armed' : ''}`}
+      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${post ? 'msg__delete--post' : ''} ${mine ? 'msg__delete--prompt' : ''} ${armed ? 'is-armed' : ''}`}
       title={armed ? armedLabel : label}
       aria-label={armed ? confirmLabel : label}
       aria-pressed={armed}

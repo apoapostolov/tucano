@@ -4003,9 +4003,11 @@ body.is-resizing webview {
 .msg__body {
   position: relative;
 }
-/* The pencil shares the strip on the left of my bubble with the reply-in-thread button, which is
-   anchored 6 px out from the bubble's edge: it takes the step beyond that button so neither sits in the
-   other's box. Both are anchored to the same edge, so they cannot drift apart. */
+/* The strip on the left of my bubble holds the prompt's own actions: reply in thread, edit, and the
+   trash that takes the ask out of the room. A short prompt fans them out to the left, and a prompt tall
+   enough to hold three in a column stands them up instead, so they stay beside the words they act on
+   rather than running away from them. Every offset is anchored to the bubble's edge, so the set cannot
+   drift when the bubble's width changes. */
 .msg__edit {
   position: absolute;
   top: 6px;
@@ -4013,6 +4015,18 @@ body.is-resizing webview {
   color: var(--text-2);
   opacity: 0;
   transition: var(--transition-ui);
+}
+.msg--me .msg__delete--prompt {
+  top: 6px;
+  right: calc(100% + 58px);
+}
+.msg--me.is-left-stack .msg__edit {
+  top: 30px;
+  right: calc(100% + 6px);
+}
+.msg--me.is-left-stack .msg__delete--prompt {
+  top: 54px;
+  right: calc(100% + 6px);
 }
 .msg:hover .msg__edit,
 .msg__edit:focus-visible {
