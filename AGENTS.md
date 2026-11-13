@@ -569,6 +569,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Follow up a finished reply | 337 | 338 |
 | Try again in a direction you write | 320 | 321 |
 | Continue a reply the app cut | 390 | 401 |
+| Continue a reply the app cut, cut from `main` for upstream | 390 | 412 |
 | Kill and restart in the middle of a reply (check) | 390 | 402 |
 | Resume interrupted replies after a restart | 389 | 391 |
 | Steps: all, the latest few, or an expandable line | 314 | 322 |
