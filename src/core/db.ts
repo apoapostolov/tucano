@@ -657,7 +657,9 @@ const COLUMNS: [string, string, string][] = [
   // older build may already hold the table this column completes.
   ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0'],
   // A check-in that said exactly what the last one said: kept as evidence, never delivered twice.
-  ['initiative_wakes', 'deduped', 'INTEGER']
+  ['initiative_wakes', 'deduped', 'INTEGER'],
+  // A report that reached the person, so a restart between the run and the delivery shows it once.
+  ['initiative_wakes', 'delivered', 'INTEGER']
 ,
   // A request that answered as far as it goes before stopping on an approval of mine, and how often
   // the one asked was knocked on after leaving no reply at all (src/core/delegations.ts).
@@ -2064,33 +2066,48 @@ export class Db {
   saveWake(w: InitiativeWake): void {
     this.db
       .prepare(
-        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id, deduped)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id, deduped, delivered)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET ended_at = excluded.ended_at, outcome = excluded.outcome, why = excluded.why,
-           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id, deduped = excluded.deduped`
+           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id,
+           deduped = excluded.deduped, delivered = COALESCE(excluded.delivered, initiative_wakes.delivered)`
       )
-      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null, w.deduped ? 1 : null)
+      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null, w.deduped ? 1 : null, w.delivered ? 1 : null)
   }
 
   // Newest first: what this person's coordinator did, and what it cost. `since`: only those after.
   wakes(personId: string, opts: { since?: number; limit?: number } = {}): InitiativeWake[] {
     const since = opts.since ?? 0
     const limit = opts.limit ?? 50
-    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE person_id = ? AND at >= ? ORDER BY at DESC LIMIT ?').all(personId, since, limit) as Row[]).map((r) => ({
-      id: str(r['id']),
-      personId: str(r['person_id']),
-      agentId: str(r['agent_id']),
-      revision: Number(r['revision']),
-      at: Number(r['at']),
-      ...(r['ended_at'] == null ? {} : { endedAt: Number(r['ended_at']) }),
-      outcome: str(r['outcome']) as InitiativeWake['outcome'],
-      ...(r['why'] ? { why: str(r['why']) as InitiativeWake['why'] } : {}),
-      ...(r['text'] ? { text: str(r['text']) } : {}),
-      tokens: Number(r['tokens']),
-      ...(r['message_id'] ? { messageId: str(r['message_id']) } : {}),
-      ...(r['deduped'] === 1 ? { deduped: true } : {})
-    }))
+    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE person_id = ? AND at >= ? ORDER BY at DESC LIMIT ?').all(personId, since, limit) as Row[]).map(this.toWake)
   }
+
+  initiativeWake(id: string): InitiativeWake | undefined {
+    const r = this.db.prepare('SELECT * FROM initiative_wakes WHERE id = ?').get(id) as Row | undefined
+    return r && this.toWake(r)
+  }
+
+  // Check-ins that started and never ended, older than `before`: a run the app did not survive. They are
+  // closed at the next start, so nothing stays "checking now" forever.
+  staleWakes(before: number): InitiativeWake[] {
+    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE ended_at IS NULL AND at <= ? ORDER BY at').all(before) as Row[]).map(this.toWake)
+  }
+
+  private toWake = (r: Row): InitiativeWake => ({
+    id: str(r['id']),
+    personId: str(r['person_id']),
+    agentId: str(r['agent_id']),
+    revision: Number(r['revision']),
+    at: Number(r['at']),
+    ...(r['ended_at'] == null ? {} : { endedAt: Number(r['ended_at']) }),
+    outcome: str(r['outcome']) as InitiativeWake['outcome'],
+    ...(r['why'] ? { why: str(r['why']) as InitiativeWake['why'] } : {}),
+    ...(r['text'] ? { text: str(r['text']) } : {}),
+    tokens: Number(r['tokens']),
+    ...(r['message_id'] ? { messageId: str(r['message_id']) } : {}),
+    ...(r['deduped'] === 1 ? { deduped: true } : {}),
+    ...(r['delivered'] === 1 ? { delivered: true } : {})
+  })
 
   // What is older than the record keeps: a month of check-ins is enough to see a rhythm.
   pruneWakes(personId: string, before: number): void {

@@ -161,6 +161,10 @@ export interface InitiativeWake {
   messageId?: string
   // It said what the last one said, word for word: nothing was delivered, and its record says why.
   deduped?: boolean
+  // A report reached the conversation and the person. A record without this and without `deduped` is a
+  // report whose delivery did not happen: the app closed between the two, and it is delivered later
+  // without running the check-in again.
+  delivered?: boolean
 }
 
 // The interval a person's coordinator waits before its next check-in: the brief's cadence, doubling

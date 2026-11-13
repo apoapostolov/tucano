@@ -20,6 +20,9 @@ export type WakeNotify = (title: string, body: string, conversationId?: string, 
 // A report that repeats the one before it, word for word, is not news: it stays out of the
 // conversation, and its record says why. A day is enough to tell a repeat from a new problem.
 const REPEAT_WINDOW = 24 * 3_600_000
+// A check-in that has been open longer than this is over, whatever happened: a reply's own stall limits
+// are shorter than this, and nothing is left "checking now" past it.
+const ORPHAN_MINUTES = 30
 
 export class Heartbeat {
   private claims = new Set<string>() // people with a check-in under way
@@ -42,8 +45,24 @@ export class Heartbeat {
 
   start(): void {
     if (this.timer) return
+    this.recover()
     this.timer = setInterval(() => void this.tick().catch((e: unknown) => console.error('[initiative]', e)), TICK_MS)
     this.timer.unref?.()
+  }
+
+  // Whatever the app did not survive: a check-in recorded as running with nothing to end it. It is closed
+  // as interrupted, and the work behind each responsibility is read again before anything new is allowed,
+  // so a stale run cannot leave a state nobody chose. Returns how many it closed.
+  recover(now = this.now()): number {
+    const stale = this.deps.db.staleWakes(now - ORPHAN_MINUTES * 60_000)
+    if (!stale.length) return 0
+    for (const w of stale) {
+      // Kept as what it was: it started and never ended, and nothing it may have done is replayed.
+      this.deps.db.saveWake({ ...w, endedAt: now, outcome: 'interrupted', why: 'error' })
+      const person = this.deps.db.person(w.personId)
+      if (person) this.deps.initiative.refresh(person, now)
+    }
+    return stale.length
   }
 
   stop(): void {
@@ -60,6 +79,13 @@ export class Heartbeat {
     for (const person of this.deps.people()) {
       const config = this.deps.db.initiative(person.id)
       if (!config) continue
+      // Delivery retries alone: a report recorded before the app closed is shown now, without running the
+      // check-in again. A run the app did not survive is closed for the same reason.
+      this.deliverPending(person, now)
+      for (const w of this.deps.db.staleWakes(now - ORPHAN_MINUTES * 60_000).filter((w) => w.personId === person.id)) {
+        this.deps.db.saveWake({ ...w, endedAt: now, outcome: 'interrupted', why: 'error' })
+        this.deps.initiative.refresh(person, now)
+      }
       const wakes = this.deps.db.wakes(person.id, { limit: 60 })
       const attempts = attemptsOf(wakes)
       const lastAt = attempts[0]?.at
@@ -179,18 +205,20 @@ export class Heartbeat {
       task: heartbeatTask(fresh, db.commitments(person.id), me, { links: work.links, moved: work.due, stalled: work.stalled.map((c) => c.description) })
     })
     if (result.outcome === 'skipped') return this.skip(person, config, result.why ?? 'error', now, id)
+    // The app may have closed this one while it was away (a restart, a kill): what came back is late, and
+    // it changes nothing. A stale run never finishes a claim somebody else already closed.
+    const closedByApp = this.deps.db.initiativeWake(id)
+    if (closedByApp?.endedAt) return closedByApp
     // What this check-in read is now seen, and what it found exactly where it was counts one more time
-    // without progress: news wakes the coordinator once, and a cycle with nothing in it is bounded.
-    this.deps.initiative.settle(person, now, [...work.links.values()].flat(), this.now())
+    // without progress: news wakes the coordinator once, and a cycle with nothing in it is bounded. Only a
+    // run that finished counts: one cut short has read nothing to the end, so the news it came for must
+    // still be able to wake the coordinator again.
+    if (result.outcome === 'quiet' || result.outcome === 'reported') this.deps.initiative.settle(person, now, [...work.links.values()].flat(), this.now())
     const message = result.message
     const said = (message?.text.trim() || message?.run?.error?.trim() || '').trim()
     // Saying the same thing twice is not an intervention: the report stays in its record, out of the
     // conversation, and a page can say why it was not delivered.
     const deduped = result.outcome === 'reported' && this.repeats(person, said, now)
-    if (result.outcome === 'reported' && message && !deduped) {
-      runner.reveal(message)
-      this.deps.notify?.(L(`${agent.name} conferiu`, `${agent.name} checked in`), said.replace(/[*_`#>]/g, '').slice(0, 240), conversation.id, [person.id])
-    }
     const wake: InitiativeWake = {
       id,
       personId: person.id,
@@ -210,7 +238,53 @@ export class Heartbeat {
     db.saveWake(wake)
     // A month of records is enough; older ones go as this one lands, so the table never grows without end.
     db.pruneWakes(person.id, now - 30 * 24 * 3_600_000)
+    // What it did is on the record before anything is shown: a failure from here is a delivery problem, and
+    // the next tick delivers this one again without asking the engine anything.
+    if (wake.outcome === 'reported' && !deduped) this.deliver(person, agent, conversation.id, wake)
     return wake
+  }
+
+  // A report the person has not seen yet is shown now. Nothing else happens: the check-in is not run
+  // again, and a message that no longer exists is simply marked as nothing left to deliver.
+  private deliverPending(person: Person, now: number): void {
+    for (const w of this.deps.db.wakes(person.id, { since: now - REPEAT_WINDOW, limit: 20 })) {
+      if (w.outcome !== 'reported' || w.deduped || w.delivered || !w.messageId) continue
+      const message = this.deps.db.message(w.messageId)
+      if (!message) {
+        this.deps.db.saveWake({ ...w, delivered: true })
+        continue
+      }
+      const agent = this.deps.db.agent(w.agentId)
+      if (!agent) continue
+      if (!message.hidden) {
+        // It is in the conversation already (a restart between the two steps): only the flag was missing.
+        this.deps.db.saveWake({ ...w, delivered: true })
+        continue
+      }
+      this.deliver(person, agent, message.conversationId, w)
+    }
+  }
+
+  // Showing it and telling the person: two steps that can fail on their own, and neither may take the
+  // record of what the check-in did with it.
+  private deliver(person: Person, agent: { name: string }, conversationId: string, w: InitiativeWake): void {
+    const message = w.messageId ? this.deps.db.message(w.messageId) : undefined
+    if (message) {
+      try {
+        this.deps.runner.reveal(message)
+      } catch (e) {
+        // Still hidden, still recorded, and the next tick tries the delivery again without re-running it.
+        console.error('[initiative] reveal failed', e)
+        return
+      }
+    }
+    this.deps.db.saveWake({ ...w, delivered: true })
+    try {
+      this.deps.notify?.(L(`${agent.name} conferiu`, `${agent.name} checked in`), (w.text ?? '').replace(/[*_`#>]/g, '').slice(0, 240), conversationId, [person.id])
+    } catch (e) {
+      // It is in the conversation either way: a phone that did not ring is not a lost finding.
+      console.error('[initiative] notify failed', e)
+    }
   }
 
   // The last thing it said, word for word. Compared without the markdown that wraps it, since the same
