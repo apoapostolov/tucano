@@ -56,6 +56,7 @@ import { canEditChannel,
   retryRun,
   continueRun,
   followUpRun,
+  deleteMessage,
   ACCESS_REQUEST,
   countedTokens,
   sendMessage,
@@ -588,20 +589,20 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           </div>
         )}
         {message.run?.route && <RouteLine route={message.run.route} />}
-        {/* A run is taller than the screen, so the way into the thread can't sit at its start: it rides the
-            top of the run here, in the same block, and leaves with the run's last line. Without threads, or
-            without a run, it stays where it was, at the corner of the message (ThreadLink). */}
+        {/* Every run keeps its corner on the rail: a run taller than the screen scrolls its buttons away,
+            so they ride the top of it here and leave with its last line. The thread button takes the first
+            place; the trash and the way back to the prompt follow it, or take the place themselves when
+            nothing is threaded. Without a run there is nothing to ride, and the corner stays in
+            ThreadLink. */}
         {message.run ? (
-          replies ? (
-            <div className="msg__anchor">
-              <div className="msg__anchor-pin">
-                <ThreadButton message={message} />
-              </div>
-              <RunSteps message={message} />
+          <div className="msg__anchor">
+            <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
+              {replies ? <ThreadButton message={message} /> : null}
+              {agent && <DeleteSession message={message} />}
+              {away && message.run.replyTo && <PromptJump id={message.run.replyTo} />}
             </div>
-          ) : (
             <RunSteps message={message} />
-          )
+          </div>
         ) : null}
         {text ? (
           <div className="md">
@@ -693,7 +694,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
           </div>
         )}
-        {away && message.run?.replyTo && <PromptJump id={message.run.replyTo} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
       </div>
     </article>
@@ -855,6 +855,65 @@ function ThreadButton({ message }: { message: Message }): ReactNode {
   )
 }
 
+// How long the first press of the trash counts: the second has to come while the glyph is still red.
+const ARM_MS = 4000
+
+// A session's reply can be deleted from the room: the trash under the thread button, in two presses.
+// The first arms it — the glyph goes red and says what the next press does — and the second deletes
+// the reply, with the thread it started and the answers it got there. A press anywhere else, Esc, or
+// four seconds without the second press disarms it. A reply still at work goes too: the press stops
+// it first, and the words it had written go with it, so the glyph says so.
+// `where`: at the corner of a reply ('corner'), or in the thread's own header ('head'), where it sits
+// in the row beside the summary and close buttons and the panel closes with the session it deleted.
+export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' }): ReactNode {
+  const head = where === 'head'
+  const [armed, setArmed] = useState(false)
+  const at = message.run?.status === 'working' // stopping is part of it, so say so before the second press
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), ARM_MS)
+    const away = (e: MouseEvent): void => {
+      if (!(e.target instanceof Element && e.target.closest('.msg__delete'))) setArmed(false)
+    }
+    const escape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setArmed(false)
+    }
+    window.addEventListener('mousedown', away)
+    window.addEventListener('keydown', escape)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('mousedown', away)
+      window.removeEventListener('keydown', escape)
+    }
+  }, [armed])
+  const press = (): void => {
+    if (!armed) {
+      setArmed(true)
+      return
+    }
+    deleteMessage(message.id)
+    // The header's trash takes the panel's own session away: nothing is left to read there.
+    if (head) openPanel(null)
+  }
+  return (
+    <button
+      className={`icon-btn ${head ? 'msg__delete--head' : 'icon-btn--sm'} msg__delete ${armed ? 'is-armed' : ''}`}
+      title={
+        armed
+          ? at
+            ? L('Clique de novo para parar e apagar a sessão', 'Click again to stop and delete the session')
+            : L('Clique de novo para apagar a sessão', 'Click again to delete the session')
+          : L('Apagar esta sessão', 'Delete this session')
+      }
+      aria-label={armed ? L('Confirmar: apagar a sessão', 'Confirm: delete the session') : L('Apagar esta sessão', 'Delete this session')}
+      aria-pressed={armed}
+      onClick={press}
+    >
+      <Icon name="trash" size={head ? 14 : 13} />
+    </button>
+  )
+}
+
 // The reply button on a short message, and, under a message with replies, a small pill: who took part,
 // how many replies and when the last came (or who's replying, or what waits on me). It opens the thread
 // on the side. With no reply yet, the system's note says what happened. `noReply` when the button is
@@ -988,6 +1047,10 @@ function ThreadPanel({ rootId, conv, title, members }: { rootId: string; conv: C
             <Icon name="book" size={14} />
           </button>
         )}
+        {/* The session this thread hangs off can go from here too, beside the button that closes it:
+            one press arms it, the second deletes the reply and the thread with it, and the panel
+            closes because there is nothing left in it. */}
+        {root && root.author.kind === 'agent' && root.run && <DeleteSession message={root} where="head" />}
         <button className="icon-btn" title={L('Fechar', 'Close')} aria-label={L('Fechar a thread', 'Close the thread')} onClick={() => openPanel(null)}>
           <Icon name="x" size={14} />
         </button>

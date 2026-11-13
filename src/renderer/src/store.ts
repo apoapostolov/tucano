@@ -613,6 +613,17 @@ function apply(e: CoreEvent): void {
         const here = s.view?.kind === 'conversation' && s.view.id === id
         return { ...s, messages, ...(here ? { panel: { kind: 'thread' as const, id: m.id } } : {}) }
       }
+      // A session's reply was deleted, with the thread it started: each id goes as its own event.
+      case 'message_removed': {
+        const { [e.id]: _seen, ...seen } = s.threadSeen
+        const list = messagesIn(s, e.conversationId)
+        return {
+          ...s,
+          messages: { ...s.messages, [e.conversationId]: list.some((m) => m.id === e.id) ? list.filter((m) => m.id !== e.id) : list },
+          threadSeen: seen,
+          panel: s.panel?.kind === 'thread' && s.panel.id === e.id ? null : s.panel
+        }
+      }
       case 'agent':
         return { ...s, agents: upsert(s.agents, e.agent) }
       case 'conversation': {
@@ -889,7 +900,7 @@ export const loginEngine = async (engine: keyof Settings['engines']): Promise<{ 
   if (r.screen) showLogin(r.screen)
   return r
 }
-// More logins of Claude Code and Codex, each signed into in a terminal.
+// More logins of Claude Code, Codex and Grok, each signed into in a terminal.
 export const addAccount = (engine: AccountEngine, name: string): Promise<Account> => call('addAccount', { engine, name })
 export const loginAccount = async (id: string): Promise<{ opened: boolean; command: string }> => {
   const r = await call('loginAccount', { id, screen: true })
@@ -911,7 +922,7 @@ export const useLoginShown = (): LoginScreen | null =>
 export const loginScreen = (): Promise<LoginScreen | null> => call('loginScreen')
 export const loginInput = (id: string, input: { text?: string; key?: LoginKey; enter?: boolean }): Promise<LoginScreen | null> => call('loginInput', { id, ...input })
 export const stopLogin = (id: string): void => void call('stopLogin', { id }).catch(() => {})
-export const removeAccount = (id: string): Promise<void> => call('removeAccount', { id })
+export const removeAccount = (id: string): Promise<{ folder: boolean }> => call('removeAccount', { id })
 export const installEngine = (engine: keyof Settings['engines']): Promise<{ opened: boolean; command: string; needsNode?: boolean }> => call('installEngine', { engine })
 // Codex or Claude Code with no terminal (the introduction): the CLI downloaded, then its own sign-in in the browser.
 export const setupEngine = (engine: SetupEngine): Promise<SetupState> => call('setupEngine', { engine })
@@ -1058,6 +1069,8 @@ export const retryRun = (messageId: string, note?: string): void =>
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })
 export const followUpRun = (messageId: string, text: string): void =>
   void fire(L('Não consegui seguir com essa resposta.', "I couldn't go on from that reply."), 'followUpRun', { messageId, text })
+// A session's reply goes: the reply itself, and the thread it started with the answers it got.
+export const deleteMessage = (messageId: string): void => void fire(L('Não consegui apagar a sessão.', "I couldn't delete the session."), 'deleteMessage', { messageId })
 
 // Returns whether the core acknowledged the decision: the card keeps its controls disabled until it
 // hears one, and when it doesn't hear one it says so instead of pretending the call went through.

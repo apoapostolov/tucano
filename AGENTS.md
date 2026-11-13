@@ -612,6 +612,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Thinking streamed as dim live text | 235 | 245 |
 | Model-facing language in an English workspace | 242 | 310 |
 | Settings › Models: thinking under the model | 312 | 313 |
+| Settings › Accounts: another Grok login | 415 | 416 |
 | Asks: one section above Approvals | 240 | 247 |
 | Asks: the open question stays next to the field | 241 | 248 |
 | Approval card: action, target, and what became of it | 252 | 334 |
@@ -623,6 +624,7 @@ to a reviewer than a second PR that has to be read against the first.
 | Follow up a finished reply | 337 | 338 |
 | Try again in a direction you write | 320 | 321 |
 | Continue a reply the app cut | 390 | 401 |
+| Continue a reply the app cut, cut from `main` for upstream | 390 | 412 |
 | Kill and restart in the middle of a reply (check) | 390 | 402 |
 | Resume interrupted replies after a restart | 389 | 391 |
 | Steps: all, the latest few, or an expandable line | 314 | 322 |
@@ -645,6 +647,8 @@ to a reviewer than a second PR that has to be read against the first.
 | Wiki: a tool card with a level that writes pages | 354 | 355 |
 | Wiki: recheck permissions during running replies | | 373 |
 | Wiki: a date that opens a sentence is not a page | | 392 |
+| Wiki: the map fitted to the window it mounted in | 418 | 419 |
+| The toast in the app's orange, in both themes | 421 | 422 |
 | Usage and limits: the quota each provider has left | 304, 309 | 305 |
 | Right-click a picture: save, copy, back in the prompt | 335 | 336 |
 | A reply's pictures as one album | 302 | 303 |

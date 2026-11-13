@@ -63,7 +63,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   steps: { kind: ['all', 'latest', 'one-line'], max: 20, nullable: true },
   stepsLatest: { kind: 'number', max: 10, nullable: true },
   seenVersion: { kind: 'string', max: 100, nullable: true },
-  lastImageFolder: { kind: 'string', max: 4_096, nullable: true }
+  lastImageFolder: { kind: 'string', max: 4_096, nullable: true },
+  notice: { kind: 'object', max: 200, nullable: true }
 }
 
 const fits = (kind: Kind, v: unknown): boolean =>

@@ -1,5 +1,6 @@
 // The contract between the renderer and the core, carried over a MessagePort.
 import type { Answer } from './questions'
+import type { NoticeFeed } from './notice'
 import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion } from './types'
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
 import type { Os, AskEntry, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, SendMode, ProviderQuota, QuotasSnapshot, LocalSkillFolder, Effort } from './types'
@@ -44,6 +45,7 @@ export interface Api {
   retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
   followUpRun(p: { messageId: string; text: string }): void // a finished reply goes on from where it stopped, in the same row
   continueRun(p: { messageId: string }): void // a reply that was cut goes on, with what it already did
+  deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the conversation, with the thread it started: the ids that went
   setAgentModels(p: { agentIds: string[]; modelId?: string; effort?: Effort }): number // modelId, effort or both: the agents changed, 0 when they already were
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string
@@ -81,7 +83,7 @@ export interface Api {
   stopLogin(p: { id: string }): void
   addAccount(p: { engine: AccountEngine; name: string }): Account
   loginAccount(p: { id: string; screen?: boolean }): { opened: boolean; command: string; screen?: LoginScreen }
-  removeAccount(p: { id: string }): void
+  removeAccount(p: { id: string }): { folder: boolean } // folder: its login left with it now; false: at the next launch
   installEngine(p: { engine: EngineId }): { opened: boolean; command: string; needsNode?: boolean } // needsNode: an npm install with no npm here
   setupEngine(p: { engine: EngineId }): SetupState // Codex or Claude Code with no terminal: downloaded, then the CLI's own sign-in in the browser
   engineSetupState(): SetupState | null
@@ -223,6 +225,9 @@ export interface Api {
   leave(): void // someone (not the owner) leaves on their own: access ends, and their DMs, memories and own routines go now
   activity(p: { personId?: string; kind?: string; before?: number }): ActivityEntry[] // admins: newest first, a page at a time (before: the last page's oldest `at`)
   inbox(): Inbox
+  // The window over every window (src/main/notice.ts) reads only this: how its cards are set, what
+  // waits on me with the buttons to decide it, and the names to say where each card happened.
+  noticeFeed(): NoticeFeed
   answerQuestion(p: { id: string; text: string }): void // a question an agent asked me (or someone I cover for)
   questionsHistory(p: { limit?: number }): AskEntry[] // answered and closed, newest first, from the conversations I can see
   confirmQuestion(p: { id: string; ok: boolean }): void // in my DM: may the agent ask that person?
@@ -239,6 +244,7 @@ export type Result<M extends Method> = Awaited<ReturnType<Api[M]>>
 export type CoreEvent =
   | { type: 'voice' } // dictation's model: downloading, done, removed
   | { type: 'message'; message: Message }
+  | { type: 'message_removed'; id: string; conversationId: string } // a session's reply, deleted: nothing of it says anything any more
   | { type: 'delta'; id: string; text: string } // appended to message text while streaming
   | { type: 'thinking'; id: string; text: string } // appended to what the model is thinking, shown apart from the reply
   | { type: 'agent'; agent: Agent }
@@ -264,7 +270,7 @@ export type CoreEvent =
   | { type: 'delegations'; delegations?: Delegation[] } // work handed down the tree changed (each gets what they may see)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'message', 'delta', 'thinking', 'agent', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
+export const CORE_EVENT_TYPES = ['voice', 'message', 'message_removed', 'delta', 'thinking', 'agent', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

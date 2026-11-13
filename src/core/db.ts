@@ -632,7 +632,7 @@ export class Db {
 
   // Snapshot the live DB, then sanitize only the copy. Publish it only after
   // VACUUM removes deleted history from its pages; no engine/browser files copy.
-  // The extra Claude Code and Codex logins stay too (their folders, and the Mac's keychain,
+  // The extra Claude Code, Codex and Grok logins stay too (their folders, and the Mac's keychain,
   // are the source's): the copy's agents use the usual login.
   // `wikiDir`: the source's wiki folder, which the copy uses too when the wiki comes along.
   duplicateTo(file: string, name: string, parts: WorkspaceParts = ALL_PARTS, wikiDir?: string): void {
@@ -1297,6 +1297,21 @@ export class Db {
     return r && this.toMessage(r)
   }
 
+  // A session's reply leaves the conversation: the message, the replies in the thread it started,
+  // and the approvals that were asked under it. What the session spent stays in the receipts — the
+  // tokens went out either way. The ids that went come back, so every screen can take them off.
+  deleteMessage(id: string): string[] {
+    return this.tx(() => {
+      const inThread = (this.db.prepare('SELECT id FROM messages WHERE thread_id = ?').all(id) as Row[]).map((r) => str(r['id']))
+      const gone = [id, ...inThread]
+      for (const one of gone) {
+        this.db.prepare('DELETE FROM approvals WHERE message_id = ?').run(one)
+        this.db.prepare('DELETE FROM messages WHERE id = ?').run(one)
+      }
+      return gone
+    })
+  }
+
   saveMessage(m: Message): void {
     this.db
       .prepare(
@@ -1653,6 +1668,11 @@ export class Db {
 
   artifacts(): Artifact[] {
     return (this.db.prepare('SELECT * FROM artifacts ORDER BY created_at').all() as Row[]).map((r) => this.toArtifact(r))
+  }
+
+  // What one reply showed: the card over the desktop shows its pictures.
+  artifactsOf(messageId: string): Artifact[] {
+    return (this.db.prepare('SELECT * FROM artifacts WHERE message_id = ? ORDER BY created_at').all(messageId) as Row[]).map((r) => this.toArtifact(r))
   }
 
   artifact(id: string): Artifact | undefined {

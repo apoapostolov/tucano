@@ -15,7 +15,8 @@ import { setClock, type Clock } from '../shared/clock'
 import { errorFor } from '../shared/errors'
 import type { Api, CoreEvent, Method, Params, Request, Wire } from '../shared/rpc'
 import { limitError, paramsError } from '../shared/rpc-shapes'
-import { ACCOUNT_ENGINES, applyOrder, proposalsOf, type Proposal, type ProposalsResult, channelName, ENGINES, inQuietHours, modelInfo, personScope, rememberModels, scopePerson, usable, WEBHOOK_PORT, wikiAccess, type Account, type AccountEngine, type Agent, type BrowserReply, type Message, type EngineId, type EngineStatus, type Person, type Routine, type Settings, type WikiChange, type WikiSource } from '../shared/types'
+import { ACCOUNT_ENGINES, applyOrder, artifactUrl, proposalsOf, type Proposal, type ProposalsResult, channelName, ENGINES, inQuietHours, modelInfo, personScope, rememberModels, scopePerson, usable, WEBHOOK_PORT, wikiAccess, type Account, type AccountEngine, type Agent, type BrowserReply, type Message, type EngineId, type EngineStatus, type Person, type Routine, type Settings, type WikiChange, type WikiSource } from '../shared/types'
+import { noticeOf, type NoticeArea, type NoticePicture } from '../shared/notice'
 import { agentOwner, channelEditError, cleanName, dmOwner, Hub, MAX_NAME, mayEditChannel, nameLongError, nameTakenError, People, routineDetail, stripInvisible, type Purged } from './people'
 import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-people'
 import { cleanRules, isAutonomy } from '../shared/actions'
@@ -31,10 +32,11 @@ import { opencodeEngine } from './engines/opencode'
 import { piEngine } from './engines/pi'
 import { antigravityAppDir, antigravityEngine } from './engines/antigravity'
 import { cursorAppDir, cursorEngine } from './engines/cursor'
-import { grokEngine } from './engines/grok'
+import { grokAccountEnv, grokEngine } from './engines/grok'
 import { clineAppDir, clineEngine, clineLoginDir, clineLoginEnv } from './engines/cline'
 import { hermesAppDir, hermesEngine } from './engines/hermes'
 import { accountDir, accountStatus, adoptLoginShellPath, detectEngines } from './engines/detect'
+import { dropAccountDir, sweepAccountDirs } from './account-folders'
 import { detectEngine, EngineCheck, type EngineFindings } from './engine-check'
 import { EngineSetup, SETUP_ENGINES, type SetupEngine, type SetupState } from './engine-setup'
 import { CATALOG, CATEGORIES, catalogInput, catalogView, entryOf, ownAppGuide } from '../shared/connector-catalog'
@@ -271,7 +273,11 @@ const loginTerminal = new LoginTerminal({
   env: (e, account) => {
     if (account) {
       const dir = accountDir(dataDir, account)
-      return e === 'claude' ? { ...process.env, CLAUDE_CONFIG_DIR: dir, DISABLE_AUTOUPDATER: '1' } : codexEnv(dir, engines.codex.path)
+      return e === 'claude'
+        ? { ...process.env, CLAUDE_CONFIG_DIR: dir, DISABLE_AUTOUPDATER: '1' }
+        : e === 'grok'
+          ? { ...grokAccountEnv(dir), DISABLE_AUTOUPDATER: '1' }
+          : codexEnv(dir, engines.codex.path)
     }
     return e === 'codex' ? codexEnv(codexHome, engines.codex.path) : e === 'cline' ? { ...process.env, ...clineLoginEnv(clineLogin) } : { ...process.env, DISABLE_AUTOUPDATER: '1' }
   },
@@ -337,10 +343,13 @@ const settings = (): Settings => {
   }
 }
 
-// More logins of Claude Code and Codex (Settings › Accounts): each in its own folder, checked with
-// the CLI's own status when the harnesses are, and every few seconds after a sign-in.
+// More logins of Claude Code, Codex and Grok (Settings › Accounts): each in its own folder, checked
+// with the CLI's own status when the harnesses are, and every few seconds after a sign-in.
 const accountLogins = new Map<string, { loggedIn: boolean; detail?: string }>(Object.entries(engineCheck.current.accounts ?? {}))
 const savedAccounts = (): Account[] => (db.getSettings(DEFAULTS).accounts ?? []).map(({ id, engine, name }) => ({ id, engine, name }))
+// Whatever a removal could not delete while its CLI was open: an account the settings no longer
+// know, so nobody's login. It goes here, at the next launch, before anything reads these folders.
+sweepAccountDirs(join(dataDir, 'accounts'), savedAccounts().map((a) => a.id))
 // `only`: that account; `engine`: that harness's accounts.
 async function checkAccounts(only?: string, engine?: EngineId): Promise<void> {
   await Promise.all(
@@ -503,11 +512,23 @@ const push = new Push({
 // Desktop notification, and the same on the phone.
 // `fullText`: the whole reply, for the phone; `page`: a click opens that screen instead of a conversation.
 // `to`: the people it's for; unset, everyone (but a DM's news only ever reaches its person).
-const notifyAll = (title: string, shortText: string, conversationId?: string, fullText?: string, more: { kind?: 'approval'; page?: 'skills'; threadId?: string; to?: string[] } = {}): void => {
+// `messageId`: the reply it's about, for the pictures the card over the window shows.
+const noticePictures = (messageId: string): NoticePicture[] =>
+  db
+    .artifactsOf(messageId)
+    .slice(0, 4)
+    .map((a) => ({ url: artifactUrl(a), title: a.title || a.name, kind: a.kind }))
+const notifyAll = (title: string, shortText: string, conversationId?: string, fullText?: string, more: { kind?: 'approval'; page?: 'skills'; threadId?: string; to?: string[]; messageId?: string } = {}): void => {
   const to = notifyTo(conversationId, more.to)
-  toMain({ type: 'notify', title, body: shortText, conversationId, ...more, ...(to ? { to } : {}), sound: settings().sounds !== false })
+  const pictures = more.messageId ? noticePictures(more.messageId) : []
+  toMain({ type: 'notify', title, body: shortText, conversationId, ...more, ...(to ? { to } : {}), ...(pictures.length ? { pictures } : {}), sound: settings().sounds !== false })
   void push.send({ title, body: shortText, ...(conversationId ? { conversationId } : {}), ...(more.threadId ? { threadId: more.threadId } : {}), ...(more.kind ? { kind: more.kind } : {}) }, to)
   if (!to || to.includes(db.ownerId())) void telegram?.notice(title, fullText ?? shortText)
+}
+// Whether the cards go over every window instead of the system's own notification (Settings).
+const noticePrefs = (): { on: boolean; area?: NoticeArea } => {
+  const rules = noticeOf(settings())
+  return { on: rules.on, ...(rules.area ? { area: rules.area } : {}) }
 }
 function notifyTo(conversationId: string | undefined, to: string[] | undefined): string[] | undefined {
   const c = conversationId ? db.conversationOwner(conversationId) : undefined
@@ -524,7 +545,8 @@ type ToMain =
   | { type: 'open_local'; path: string; how: 'open' | 'reveal' }
   | { type: 'wiki_dir'; path: string } // the wiki's folder, which the app may open
   | { type: 'restart' } // a server: start again, to restore a backup (src/server)
-  | { type: 'notify'; title: string; body: string; conversationId?: string; threadId?: string; kind?: 'approval' | 'question' | 'done'; page?: 'skills'; sound?: boolean; to?: string[] } // to: the people it's for (a server delivers it only to them); unset: everyone
+  | { type: 'notify'; title: string; body: string; conversationId?: string; threadId?: string; kind?: 'approval' | 'question' | 'done'; page?: 'skills'; sound?: boolean; to?: string[]; messageId?: string; pictures?: NoticePicture[] } // to: the people it's for (a server delivers it only to them); unset: everyone
+  | { type: 'notice-pref'; on: boolean; area?: NoticeArea } // the cards over every window (src/main/notice.ts), as the settings say now
   | { type: 'auth-result'; id: string; person?: Person; removed?: true } // removed: a key of someone removed since
   | { type: 'join-result'; id: string; data: { key?: string; person?: Person; error?: string } }
   | { type: 'device-key-result'; id: string; data: { key?: string; person?: Person } }
@@ -1020,10 +1042,11 @@ const runner = new Runner({
   wikiCurator: curator,
   models: () => availableModels(settings(), listed),
   // Approvals and questions reach the phone with their buttons, through toPhone; a finished reply stays on the Mac.
-  notify: (title, body, conversationId, kind, threadId, to) => {
-    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}) })
+  notify: (title, body, conversationId, kind, threadId, to, messageId) => {
+    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}), ...(messageId ? { messageId } : {}) })
     const who = notifyTo(conversationId, to)
-    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), sound: settings().sounds !== false })
+    const pictures = messageId ? noticePictures(messageId) : []
+    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), ...(messageId ? { messageId } : {}), ...(pictures.length ? { pictures } : {}), sound: settings().sounds !== false })
     void push.send({ title, body, ...(conversationId ? { conversationId } : {}), ...(threadId ? { threadId } : {}), kind }, who)
   },
   jev: fakeListen
@@ -1095,6 +1118,9 @@ hooks.on('error', (e) => console.error(`[gatilhos] porta ${runtimePorts.webhook}
 
 void ready.then(async () => {
   toMain({ type: 'ready' })
+  // How this workspace's notifications show, before the first one arrives (never a server's: it
+  // has no window to draw them in).
+  if (!serverMode) toMain({ type: 'notice-pref', ...noticePrefs() })
   workspaceSummary()
   await runner.expireApprovals()
   sweepTeamUps()
@@ -1569,6 +1595,22 @@ const api: Handlers = {
   followUpRun: ({ messageId, text }, ctx) => (reachMessage(ctx, messageId), runner.followUp(messageId, text)),
 
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), bg(runner.continue(messageId), 'continueRun')),
+
+  // The session behind a reply goes, and with it the thread that reply started (the answers it
+  // got) and any approval asked under it. Who may is whoever may manage the conversation: a DM's
+  // person, a channel's maker and the admins. A reply still at work is stopped first, and nothing
+  // it had written lands afterwards: it goes whole. What it spent stays in the receipts.
+  deleteMessage: ({ messageId }, ctx) => {
+    reachMessage(ctx, messageId)
+    const m = db.message(messageId)
+    if (!m || m.author.kind !== 'agent' || !m.run) return []
+    manage(ctx, m.conversationId)
+    if (m.run.status === 'working') runner.drop(messageId) // stopped here, so it isn't written to while it goes
+    const gone = db.deleteMessage(messageId)
+    for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
+    record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: m.author.id, went: gone.length })
+    return gone
+  },
 
   setAgentModels: ({ agentIds, modelId, effort }, ctx) => {
     // The model, the reasoning effort, or both: whichever is left out stays as the agent has it.
@@ -2068,6 +2110,7 @@ const api: Handlers = {
     if (patch.openAtLogin !== undefined) toMain({ type: 'login_item', open: patch.openAtLogin })
     if (patch.onboarding?.done) bg(enginesReady.then(() => ensureTuca()), 'ensureTuca') // skipping the introduction still gets the Tuca
     if (patch.language || 'clock' in patch) toMain({ type: 'lang', lang: patch.language ?? db.getSettings(DEFAULTS).language, clock: patch.clock ?? db.getSettings(DEFAULTS).clock })
+    if (!serverMode && patch.notice !== undefined) toMain({ type: 'notice-pref', ...noticePrefs() })
     emit({ type: 'settings', settings: settings() })
   },
 
@@ -2534,6 +2577,19 @@ const api: Handlers = {
   },
   activity: ({ personId, kind, before }) => db.activity({ personId, kind, before }),
   inbox: (_, ctx) => people.inbox(ctx.person),
+  // The window over every window (src/main/notice.ts) reads nothing else: its rules, what waits on
+  // this person with the buttons to decide it, and the names to say where each card happened.
+  noticeFeed: (_, ctx) => {
+    const mine = people.settingsFor(ctx.person, settings())
+    return {
+      rules: noticeOf(mine),
+      language: mine.language,
+      agents: db.agents().map((a) => ({ id: a.id, name: a.name, color: a.color, ...(a.customColor ? { customColor: a.customColor } : {}), ...(a.picture ? { picture: a.picture } : {}), ...(a.avatar ? { avatar: a.avatar } : {}) })),
+      // Only the conversations this person may see: a card never says the name of someone else's DM.
+      conversations: db.conversations().filter((c) => people.canSeeConversation(ctx.person, c)).map((c) => ({ id: c.id, name: c.name, kind: c.kind })),
+      inbox: people.inbox(ctx.person)
+    }
+  },
   answerQuestion: ({ id, text }, ctx) => runner.answer(id, text, ctx.person),
   questionsHistory: ({ limit }, ctx) => people.history(ctx.person, limit), // answered and closed, newest first: the Asks page's History
   confirmQuestion: ({ id, ok }, ctx) => runner.confirm(id, ok, ctx.person),
@@ -2582,11 +2638,13 @@ const api: Handlers = {
     engineSetup.cancel()
   },
 
-  // Another login of Claude Code or Codex: a folder of its own, signed into in a terminal like the first.
+  // Another login of Claude Code, Codex or Grok: a folder of its own, signed into in a terminal like
+  // the first.
   addAccount: ({ engine, name }) => {
-    if (!ACCOUNT_ENGINES.includes(engine)) throw new Error(L('Só dá pra ter outra conta do Claude Code ou do Codex.', 'Only Claude Code or Codex can have another account.'))
+    if (!ACCOUNT_ENGINES.includes(engine)) throw new Error(L('Só dá pra ter outra conta do Claude Code, do Codex ou do Grok.', 'Only Claude Code, Codex or Grok can have another account.'))
     const account: Account = { id: randomUUID().slice(0, 8), engine, name: name.trim() || ENGINES[engine].label }
-    mkdirSync(join(accountDir(dataDir, account.id), '.codex'), { recursive: true })
+    // Codex keeps its login in .codex inside the folder; Claude Code and Grok in the folder itself.
+    mkdirSync(engine === 'codex' ? join(accountDir(dataDir, account.id), '.codex') : accountDir(dataDir, account.id), { recursive: true })
     db.setSettings({ accounts: [...savedAccounts(), account] })
     bg(
       checkAccounts(account.id).then(() => {
@@ -2605,10 +2663,21 @@ const api: Handlers = {
     if (shown) return { opened: true, command: ENGINES[a.engine].login, screen: shown }
     const dir = accountDir(dataDir, a.id)
     watchAccount(a.id)
-    return openLogin(a.engine, a.engine === 'claude' ? { CLAUDE_CONFIG_DIR: dir } : { HOME: dir, CODEX_HOME: join(dir, '.codex'), ...asdfEnv(engines.codex.path) })
+    return openLogin(
+      a.engine,
+      a.engine === 'claude'
+        ? { CLAUDE_CONFIG_DIR: dir }
+        : a.engine === 'grok'
+          ? { GROK_HOME: dir, GROK_AUTH_PATH: join(dir, 'auth.json') }
+          : { HOME: dir, CODEX_HOME: join(dir, '.codex'), ...asdfEnv(engines.codex.path) }
+    )
   },
   // Its agents go back to the harness's usual login; the folder, with the login in it, goes away.
+  // The settings change first, so an account the person removed never comes back because its folder
+  // was busy: a CLI left open on that login holds the folder on Windows, and that is reported rather
+  // than thrown, with the folder swept at the next launch.
   removeAccount: ({ id }) => {
+    const dir = accountDir(dataDir, id)
     db.setSettings({ accounts: savedAccounts().filter((a) => a.id !== id) })
     accountLogins.delete(id)
     for (const agent of db.agents().filter((x) => x.accountId === id || x.fallbackAccountId === id)) {
@@ -2618,8 +2687,10 @@ const api: Handlers = {
       db.saveAgent(rest)
       emit({ type: 'agent', agent: db.agent(agent.id)! })
     }
-    rmSync(accountDir(dataDir, id), { recursive: true, force: true })
+    // A sign-in screen still showing this account has nothing left to sign into.
+    if (loginTerminal.current()?.account === id) loginTerminal.stop()
     emit({ type: 'settings', settings: settings() })
+    return { folder: dropAccountDir(dir) }
   },
 
   // The harness's own installer, in a terminal the person sees: its progress, its
