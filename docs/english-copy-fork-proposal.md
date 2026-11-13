@@ -114,3 +114,31 @@ This supplements the upstream-main proposal for controls supplied by open featur
 | Came from the role’s own chain | Selected from the role’s model chain |
 | `Off by default. On, every agent question with two or more options goes to ${recommendClassifier ? recommendClassifier.name : 'this job’s classifier'} with its text and options, and comes back with a suggestion. It is only a suggestion: you still choose, and "Something else" is never suggested.` | `Off by default. Send questions and options to ${recommendClassifier ? recommendClassifier.name : 'the classifier'} for suggestions. You choose; “Something else” is never suggested.` |
 | `Off by default. On, every step of a next-steps card goes to ${stepsClassifier ? stepsClassifier.name : 'this job’s classifier'} with what the agent said before it, and only the ones it would do now start ticked; the rest waits in the card, one click away. It never empties the list: if none is picked, all of them stay ticked.` | `Send steps and reply context to ${stepsClassifier ? stepsClassifier.name : 'the classifier'} to check suggested tasks. Others stay available; if none is chosen, all stay checked. Off by default.` |
+
+## Remaining measured hints and newer resolver controls
+
+| Current | Proposed |
+| --- | --- |
+| A new prompt while a reply is running | Send mode while replying |
+| In parallel, other agents and threads can reply together; the same agent finishes its current reply in that thread first. Shift+Enter waits for the whole conversation, Alt+Enter hands it over mid-work, Shift+Alt+Enter interrupts. Ctrl+Enter breaks the line. | With Enter: Shift queues; Alt steers; Shift+Alt restarts; Ctrl adds a line. |
+| Alongside, in parallel | Parallel replies |
+| Queued, after the reply ends | Queue until replies finish |
+| Handed to the running reply | Steer current reply |
+| Interrupts and starts with this one | Interrupt and restart |
+| Where skills come from | Skill folders |
+| The folders Tucano reads. The ones the harnesses already keep on this computer come by themselves; one more folder can be added here. Everything that is on shows up together in each bot’s list of skills. | Use detected harness folders or add a folder. Enabled folders appear in every agent’s skill list. |
+| A new harness shows up here when its folder exists: there is nothing to set up. Claude Code’s folder and Codex’s are read as they always were. | New harness folders are detected automatically, including Claude Code and Codex. |
+|  · the x takes it off the list |  · remove with × |
+| Team-ups agents put together | Agent team-ups |
+| When an agent calls another one that is not in the conversation (writing @handle), the conversation becomes a team-up channel, with what was already done carried along. Those channels are work, not conversations that stay: they close themselves. | Calling an outside agent with @handle creates a team-up channel with the current context. Team-ups close automatically. |
+| Close on its own after (days quiet) | Auto-close after (inactive days) |
+| Counted from the channel’s last message. 0 keeps every one of them. You can also close one now: right-click the channel, “Close team-up…”. | Since last message. 0 keeps team-ups. Right-click to close. |
+| Who settles it | Resolver |
+| The app's resolver reads on the model chosen below. A bot brings its own instructions, written for this job, and its own model and effort. | Use the built-in resolver with the model below, or an agent’s own instructions, model, and effort. |
+| The app's resolver | Built-in resolver |
+| Who settles the finding | Finding resolver |
+| Leave the model empty to change only the thinking. When switching harnesses, the agent uses its default login. The reserve model stays the same. | Leave the model blank to change only reasoning. Switching runtimes uses the default login; the fallback model stays unchanged. |
+
+## Resolver model layout
+
+The expanded resolver with a custom model leaves only 55.5 px for its 34-character fallback hint, producing five lines and overflowing controls. Put the model picker below the label and hint, let its selects flex inside the available width, and retain the reset button. This change belongs on the existing resolver PR #268. The two-line target is checked with the custom model selected as well as with defaults.

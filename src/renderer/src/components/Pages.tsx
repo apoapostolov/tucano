@@ -3226,10 +3226,10 @@ function SkillFoldersCard(): ReactNode {
   const on = shown.filter((f) => f.on).length
   return (
     <Card
-      title={L('De onde vêm as skills', 'Where skills come from')}
+      title={L('De onde vêm as skills', "Skill folders")}
       lead={L(
         'As pastas que o Tucano lê. As que os harnesses já mantêm neste computador entram sozinhas; uma pasta a mais pode ser adicionada aqui. Tudo o que está ligado aparece junto na lista de skills de cada bot.',
-        'The folders Tucano reads. The ones the harnesses already keep on this computer come by themselves; one more folder can be added here. Everything that is on shows up together in each bot’s list of skills.'
+        "Use detected harness folders or add a folder. Enabled folders appear in every agent’s skill list."
       )}
     >
       {shown.length === 0 && <p className="muted small">{folders ? L('Nenhuma pasta de skills encontrada.', 'No skills folder found.') : L('Procurando…', 'Looking…')}</p>}
@@ -3242,7 +3242,7 @@ function SkillFoldersCard(): ReactNode {
               {f.path}
               {' · '}
               {f.on ? (f.count === 1 ? L('1 skill', '1 skill') : L(`${f.count} skills`, `${f.count} skills`)) : L('desligada', 'off')}
-              {!f.detected && !f.on && L(' · some da lista no x', ' · the x takes it off the list')}
+              {!f.detected && !f.on && L(' · some da lista no x', " · remove with ×")}
             </p>
           </div>
           <Toggle on={f.on} onChange={(v) => turn(f, v)} />
@@ -3265,7 +3265,7 @@ function SkillFoldersCard(): ReactNode {
       <p className="hint">
         {L(
           'Um harness novo aparece aqui quando a pasta dele existe: não há nada para configurar. A pasta do Claude Code e a do Codex são lidas como sempre foram.',
-          'A new harness shows up here when its folder exists: there is nothing to set up. Claude Code’s folder and Codex’s are read as they always were.'
+          "New harness folders are detected automatically, including Claude Code and Codex."
         )}
       </p>
     </Card>
@@ -3736,20 +3736,20 @@ export function SettingsPage(): ReactNode {
                 />
               </Field>
               <Field
-                label={L('Um novo prompt com uma resposta em curso', 'A new prompt while a reply is running')}
+                label={L('Um novo prompt com uma resposta em curso', "Send mode while replying")}
                 hint={L(
                   'Em paralelo, outros agentes e threads podem responder juntos; o mesmo agente termina a resposta atual naquela thread primeiro. Shift+Enter espera a conversa inteira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe. Ctrl+Enter quebra a linha.',
-                  'In parallel, other agents and threads can reply together; the same agent finishes its current reply in that thread first. Shift+Enter waits for the whole conversation, Alt+Enter hands it over mid-work, Shift+Alt+Enter interrupts. Ctrl+Enter breaks the line.'
+                  "With Enter: Shift queues; Alt steers; Shift+Alt restarts; Ctrl adds a line."
                 )}
               >
                 <Select
                   value={settings.sendMode ?? 'parallel'}
                   onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
                   options={[
-                    { value: 'parallel', label: L('Junto, em paralelo', 'Alongside, in parallel') },
-                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queued, after the reply ends') },
-                    { value: 'steer', label: L('Entregue à resposta em curso', 'Handed to the running reply') },
-                    { value: 'interrupt', label: L('Interrompe e começa com esta', 'Interrupts and starts with this one') }
+                    { value: 'parallel', label: L('Junto, em paralelo', "Parallel replies") },
+                    { value: 'queue', label: L('Na fila, quando a resposta acabar', "Queue until replies finish") },
+                    { value: 'steer', label: L('Entregue à resposta em curso', "Steer current reply") },
+                    { value: 'interrupt', label: L('Interrompe e começa com esta', "Interrupt and restart") }
                   ]}
                   placeholder={L('Escolha', 'Pick')}
                 />
@@ -3772,18 +3772,18 @@ export function SettingsPage(): ReactNode {
 
         {pane('agentes') && (
           <Card
-            title={L('Equipes montadas por agentes', 'Team-ups agents put together')}
+            title={L('Equipes montadas por agentes', "Agent team-ups")}
             lead={L(
               'Quando um agente chama outro que não está na conversa (escrevendo @handle), a conversa vira um canal de equipe, com o que já foi feito levado junto. Esses canais são trabalho, não conversas que ficam: eles fecham sozinhos.',
-              'When an agent calls another one that is not in the conversation (writing @handle), the conversation becomes a team-up channel, with what was already done carried along. Those channels are work, not conversations that stay: they close themselves.'
+              "Calling an outside agent with @handle creates a team-up channel with the current context. Team-ups close automatically."
             )}
           >
             <div className="grid2">
               <Field
-                label={L('Fechar sozinho depois de (dias parado)', 'Close on its own after (days quiet)')}
+                label={L('Fechar sozinho depois de (dias parado)', "Auto-close after (inactive days)")}
                 hint={L(
                   'Contados da última mensagem do canal. 0 mantém todos. Também dá pra fechar na hora: botão direito no canal, "Fechar equipe…".',
-                  'Counted from the channel’s last message. 0 keeps every one of them. You can also close one now: right-click the channel, “Close team-up…”.'
+                  "Since last message. 0 keeps team-ups. Right-click to close."
                 )}
               >
                 <NumberInput min={0} value={settings.teamUpDays ?? TEAM_UP_DAYS} onChange={(n) => updateSettings({ teamUpDays: Math.max(0, Math.round(n)) })} />
