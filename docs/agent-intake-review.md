@@ -1,19 +1,21 @@
 # Concurrent-agent intake review
 
-Updated 13 November 2026. Private audit context; this is not an upstream feature brief.
+Updated 14 November 2026. Private audit context; this is not an upstream feature brief.
 
 The earlier intake reviewed `74ed877..ec6f95f` (18 commits, seven integration groups).
 Its baseline passed typecheck and the full suite: 2,233 passed, 66 skipped, zero failed.
-The current intake is `2af4407`; upstream remains `73b724b` (0.2.28). The latest metadata
-lists 79 authored PRs: 57 open, 12 merged, 10 closed. Refresh the full inventory before
-using these counts for a later report.
+The November 14 intake started at `8c2d098`, then included sidebar visibility `8025930`
+and per-bot initiative `8d8342d`. Upstream remains `73b724b` (0.2.28); no additional
+upstream commits or unaccounted fork-main commits were found. The refreshed inventory
+contains 83 authored PRs: 61 open, 12 merged and 10 closed. Ancestry in the generated
+report uses the named local ref and is not a semantic feature audit.
 
 ## Confirmed findings and repairs
 
 - [x] **P1, #377:** a delegated reply legitimately queued behind six active replies was nudged,
   duplicated and marked failed. The watchdog called `execute` directly. The new public
   Runner/Gateway regression fails before the repair and passes when reservations are respected
-  and recovery uses `startReply`. Repair committed in candidate `c172181`; public PR update pending.
+  and recovery uses `startReply`. Public repair is `d696bdf` on #377; a fresh pushed-SHA worktree passed typecheck and 27 focused tests.
 - [x] **P1, self-build helper:** launch inherited scratch data/fake-engine/update-feed variables
   and omitted `--background`. Sanitized child environment and inactive launch are committed
   in candidate `bfe8fa1`; two regressions pass. Integration and installed validation pending.
@@ -24,18 +26,18 @@ using these counts for a later report.
   change. Regression fails before the request-order guard and passes afterward. Candidate
   `e97e47d`; existing feature PR update and integration pending.
 - [x] **P1, #375:** deleting a completed parent while a thread reply runs lets the child recreate
-  deleted messages. A real-core API regression failed on `0121733`. The uncommitted repair
-  worktree was subsequently removed; reconstruct and validate against current head `32d8ddc`.
-- [ ] **Privacy lead, #274:** a DM team-up copies private conversation text into a channel without
-  an explicit private audience. Reproduce through the team visibility contract before deciding
-  the repair; do not count this as verified runtime evidence yet.
+  deleted messages. A real-core API regression failed on `0121733`. The active/queued repairs were published through `3398044` and passed 16 focused tests in a fresh pushed-SHA worktree; #375 has since advanced and needs renewed review.
+- [x] **P1, #274:** a real-core multi-person test reproduced private DM text reaching another
+  person through a team-up. Public repair `0605a11` preserves the originating audience,
+  migrates identifiable legacy rooms, denies unresolved provenance and purges the context
+  with its person. Existing recipients' knowledge cannot be recalled.
 - [ ] **Doctor limitation:** no titled window does not establish a dead process. Healthy tray-only
   operation and hidden QA need distinguishing before trusting automatic process termination.
 
 ## Intake checklist
 
 - [x] Fetch current upstream, fork branches and PR metadata; preserve concurrent source work.
-- [ ] Refresh full inventory after the large GitHub file-list query failed.
+- [x] Refresh the inventory using separately cached per-head file lists.
 - [ ] Reconcile candidate repairs with the latest integration and interface-copy rules.
 - [ ] Review Classifiers #379/#383 and next-step selection #385 as overlapping stacks.
 - [ ] Review #391/#401/#402/#412 restart recovery and manual continuation together.
@@ -47,7 +49,7 @@ using these counts for a later report.
 - [ ] Run the final combined suite, hidden UI checks, self-install and installed verification.
 - [ ] Update per-head evidence, public PR bodies and the user-facing findings.
 
-The original 43-PR cohort remains 4 targeted repairs and zero complete feature audits.
+The original 43-PR cohort has 5 targeted repairs (11.6%) and zero complete feature audits.
 Ancestry, a passing baseline and this intake review do not establish a full feature signoff.
 
 
@@ -64,3 +66,35 @@ is not part of this security-fix delivery until end-to-end enforcement and UI va
 - [ ] Add room controls, Tuca proposals and explicit widening-of-visibility confirmation.
 - [ ] Verify inherited team-up privacy, client revocation, artifacts, purge/export and restart.
 - [ ] Measure copy at 900/1280, capture synthetic screenshots and check installed scaling.
+
+
+## November 14 reconciliation and retention audit
+
+- [x] Read the current checkout, worktrees, upstream and fork refs before editing. The main
+  checkout was detached with concurrent edits; all work here uses `codex/audit-nov14-intake`.
+- [x] Review the last five hours: initiative lifecycle and per-bot controls (#435), retention
+  (#432), database maintenance (#437), sidebar order/visibility, quota columns, prompt actions
+  and their screenshot harnesses. Intake is not full behavioral signoff for those groups.
+- [x] Restore the prior audit candidate `c16933d`, whose published privacy/concurrency fixes
+  were absent from the current integration. Preserve busy-timeout maintenance and all newer
+  initiative/settings/sidebar fields. The first restored batch passed typecheck and 35 tests.
+- [x] Reproduce two automatic-retention defects: deleting an old root also deleted active
+  descendants and bypassed a child's keep-forever override. Both tests failed before repair.
+- [x] Repair automatic selection at `47d9cce`: retain ancestors of any ineligible descendant,
+  including recent messages, active work, pending questions and longer per-bot periods.
+- [x] Reproduce active history returning after a wipe through the real core API. Repair at
+  `d15cd5e` marks every removed active run deleted and rejects queued replies whose root is
+  missing. The cancellation primitive matches #375's purpose; integration retains one method,
+  uses current database existence for queued work, and avoids an unbounded tombstone set.
+- [x] Pass public retention typecheck and 27 focused tests; the combined deletion/retention
+  interaction passes 19 focused tests. UI strings and layouts were unchanged by these repairs.
+- [ ] Complete the final full suites on both the public branch and final combined tree.
+- [ ] Push #432's revision, verify its pushed SHA in a fresh worktree and update its description.
+- [ ] Run built hidden QA, install through the helper and verify the installed app and hash.
+- [ ] Refresh current-head review evidence and publish the reconciled integration without
+  overwriting intervening work.
+
+Room sharing #424 remains a draft. Its access policy must also constrain initiative observation
+and work scopes. The new per-bot configuration does not authorize bypassing the requesting
+person's source-room visibility. Implement this alongside every other retrieval path before
+turning on the feature.

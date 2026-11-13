@@ -1,8 +1,21 @@
 # Tucano audit development plan
 
-Updated: 12 November 2026. This is private fork workflow context, not an upstream PR brief.
+Updated: 14 November 2026. This is private fork workflow context, not an upstream PR brief.
 
 ## Current priority and progress
+
+### Current intake, 14 November 2026
+
+- [x] Preserve concurrent edits and review new work through per-bot initiative `8d8342d`.
+- [x] Refresh the PR inventory: 83 authored, 61 open, 12 merged, 10 closed.
+- [x] Confirm upstream is still `73b724b` and restore previously published audit repairs.
+- [x] Reproduce and repair retention cascades that bypass active/recent/keep-forever messages.
+- [x] Reproduce and repair active and queued replies returning after a history wipe.
+- [ ] Finish full-suite, public revision, hidden runtime and installed-app verification.
+- [ ] Continue room sharing #423/#424 with persistence, enforcement and Tuca proposals.
+
+See [the current intake record](agent-intake-review.md) for exact source revisions and remaining
+checks. These are targeted repairs; fully audited features remain **0/43**.
 
 ### English copy delivery, 13 November 2026
 
@@ -23,8 +36,8 @@ unverified because duplicate accessibility names prevent a safe background click
 currently open profiles, with Open DM as a separate action; this differs from the older smoke
 check wording and was not silently changed.
 
-The original audit cohort contains 43 open feature/fix PRs. Four have received targeted repairs
-and browser or core checks: **4/43 (9.3%)**. None has yet passed every audit dimension below:
+The original audit cohort contains 43 open feature/fix PRs. Five have received targeted repairs
+and browser or core checks: **5/43 (11.6%)**. None has yet passed every audit dimension below:
 **0/43 fully audited (0%)**. Three additional standalone upstream PRs, #367, #368 and #372, were opened
 with upstream-based validation. #367 and #368 are now merged. These figures distinguish useful progress from a release signoff.
 
