@@ -2756,7 +2756,7 @@ export function SettingsPage(): ReactNode {
                 <p className="muted small">
                   {L(
                     'Desligado por padrão. Ligado, cada passo de um card de próximos passos vai pro TypeSafe com o que o agente disse antes, e só os que ele consideraria pra agora começam marcados; o resto espera no card, a um clique. Nunca deixa a lista vazia: se nenhum for marcado, todos ficam.',
-                    'Off by default. On, every step of a next-steps card goes to TypeSafe with what the agent said before it, and only the ones it would do now start ticked; the rest waits in the card, one click away. It never empties the list: if none is picked, all of them stay ticked.'
+                    'Off by default. Sends steps and reply context to TypeSafe to check suggested tasks. Others stay available; if none is chosen, all stay checked.'
                   )}
                 </p>
               </div>
