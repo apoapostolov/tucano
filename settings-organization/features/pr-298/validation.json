@@ -1,0 +1,45 @@
+{
+  "pr": 298,
+  "base": "f15d1b69f53d794b4d0c7fb705dbff399ad1edda",
+  "changed": true,
+  "actions": [
+    "Move Agents’ browser to Models beside provider setup.",
+    "Move Jev as a classifier to Models beside provider setup.",
+    "Shorten 3 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Models",
+      "title": "Agents’ browser",
+      "absentFrom": "Agents"
+    },
+    {
+      "tab": "Models",
+      "title": "Jev as a classifier",
+      "absentFrom": "Agents"
+    }
+  ],
+  "controls": 138,
+  "settingWrites": 26,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/next-steps",
+  "head": "6d53ca358d07a56e35929197f905e62e62191c17",
+  "tests": 23,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/jev-recommend-ui.test.tsx",
+    "test/next-steps-ui.test.tsx",
+    "test/next-steps.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-298-ui/report.json",
+  "pushed": "6d53ca358d07a56e35929197f905e62e62191c17",
+  "remoteVerification": {
+    "head": "6d53ca358d07a56e35929197f905e62e62191c17",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-298",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-298-remote-ui/report.json"
+}

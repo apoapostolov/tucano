@@ -1,0 +1,19 @@
+{
+  "dirty": false,
+  "source": "160df9277ebdc9199fce2a145ba943b4fe7b066f",
+  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-6b5XGd",
+  "measurements": [],
+  "captures": [
+    "1280-Models-order.png",
+    "900-Models-order.png"
+  ],
+  "errors": [],
+  "copy": [],
+  "targets": [
+    {
+      "tab": "Models",
+      "routingAdjacent": true
+    }
+  ],
+  "passed": true
+}

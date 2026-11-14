@@ -1,0 +1,177 @@
+[
+  {
+    "pr": 261,
+    "head": "fa687b67dc0d2ec09b1aef2ef696966755f90f82",
+    "tests": 109,
+    "skipped": 0,
+    "placement": [
+      "Move send mode from Limits to Agents / Agent replies.",
+      "Shorten 6 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 274,
+    "head": "7ced57d2ddc975a7d8aa68758266271e9b940463",
+    "tests": 25,
+    "skipped": 0,
+    "placement": [
+      "Place team-up retention after routines, before skill setup and limits."
+    ]
+  },
+  {
+    "pr": 284,
+    "head": "4aa97a7d092181c3e933532b96040072e168ba28",
+    "tests": 13,
+    "skipped": 0,
+    "placement": [
+      "Move Agents’ browser to Models beside provider setup.",
+      "Move Jev as a classifier to Models beside provider setup."
+    ]
+  },
+  {
+    "pr": 288,
+    "head": "99f6f02812507b2bbb77cc0e2abf76a6b5012bfb",
+    "tests": 31,
+    "skipped": 0,
+    "placement": [
+      "Move send mode from Limits to Agents / Agent replies.",
+      "Shorten 5 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 298,
+    "head": "6d53ca358d07a56e35929197f905e62e62191c17",
+    "tests": 23,
+    "skipped": 0,
+    "placement": [
+      "Move Agents’ browser to Models beside provider setup.",
+      "Move Jev as a classifier to Models beside provider setup.",
+      "Shorten 3 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 311,
+    "head": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+    "tests": 25,
+    "skipped": 0,
+    "placement": [
+      "Place skill folder setup after agent behavior and safety controls.",
+      "Shorten 1 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 332,
+    "head": "a49b1dff58a05bdd31917ce551bcfd7b53bc413a",
+    "tests": 29,
+    "skipped": 0,
+    "placement": [
+      "Move send mode from Limits to Agents / Agent replies.",
+      "Shorten 6 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 333,
+    "head": "160df9277ebdc9199fce2a145ba943b4fe7b066f",
+    "tests": 84,
+    "skipped": 0,
+    "placement": [
+      "Keep legacy Routing immediately after Models until section navigation is accepted."
+    ]
+  },
+  {
+    "pr": 338,
+    "head": "b8c9654583851ccf6bf9801e403bbfb9b689a304",
+    "tests": 31,
+    "skipped": 0,
+    "placement": [
+      "Move send mode from Limits to Agents / Agent replies.",
+      "Shorten 6 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 379,
+    "head": "e69a256d7397dbde8fd2235eabdf9619731c7099",
+    "tests": 12,
+    "skipped": 0,
+    "placement": [
+      "Move Agents’ browser to Models beside provider setup.",
+      "Shorten 1 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 383,
+    "head": "e7eadfde276b6f5f4cf69957cf8373b8941ed0e4",
+    "tests": 30,
+    "skipped": 0,
+    "placement": [
+      "Move Agents’ browser to Models beside provider setup.",
+      "Move Agent suggestions to Models beside provider setup.",
+      "Shorten 1 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 385,
+    "head": "a41a36225dd635f198f32c473700ce0d3e8bfebc",
+    "tests": 23,
+    "skipped": 0,
+    "placement": [
+      "Move Agents’ browser to Models beside provider setup.",
+      "Move Jev as a classifier to Models beside provider setup.",
+      "Shorten 3 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 391,
+    "head": "8920a3c9b5efd5dbcbba9426501e9d694ec9822f",
+    "tests": 8,
+    "skipped": 0,
+    "placement": [
+      "Move restart recovery to Agents / Recovery."
+    ]
+  },
+  {
+    "pr": 395,
+    "head": "845a63bc6b9f46abb0a9a8696d4442d7ef1c3a89",
+    "tests": 4,
+    "skipped": 0,
+    "placement": [
+      "Group time format under General / Appearance, available to owner and members."
+    ]
+  },
+  {
+    "pr": 411,
+    "head": "779ef8ec3a80072942e4a6713c74a7c53914cd1c",
+    "tests": 3,
+    "skipped": 0,
+    "placement": [
+      "Keep the shortcut in Conversations and shorten its hint."
+    ]
+  },
+  {
+    "pr": 417,
+    "head": "b1be987356c661830a059910a500f1667164d1b1",
+    "tests": 16,
+    "skipped": 0,
+    "placement": [
+      "Shorten 3 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 432,
+    "head": "81ac4bbd68256878bb68385deb649aaff0edef79",
+    "tests": 10,
+    "skipped": 0,
+    "placement": [
+      "Shorten 2 English labels/hints without changing their source-language interpolation."
+    ]
+  },
+  {
+    "pr": 437,
+    "head": "c91c7d41a8d38982d1ed8604d3d3e3fcb88e7a4e",
+    "tests": 11,
+    "skipped": 0,
+    "placement": [
+      "Shorten 5 English labels/hints without changing their source-language interpolation."
+    ]
+  }
+]

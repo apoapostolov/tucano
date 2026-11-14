@@ -1,0 +1,36 @@
+{
+  "pr": 411,
+  "base": "b1f853788ffe48eae7ca4e041608b4ebacc52cb9",
+  "changed": true,
+  "actions": [
+    "Keep the shortcut in Conversations and shorten its hint."
+  ],
+  "targets": [
+    {
+      "tab": "General",
+      "title": "Conversations"
+    }
+  ],
+  "controls": 137,
+  "settingWrites": 25,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/reply-shortcut-stacked",
+  "head": "779ef8ec3a80072942e4a6713c74a7c53914cd1c",
+  "tests": 3,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/reply-shortcut.test.ts",
+    "test/replies.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-411-ui/report.json",
+  "pushed": "779ef8ec3a80072942e4a6713c74a7c53914cd1c",
+  "remoteVerification": {
+    "head": "779ef8ec3a80072942e4a6713c74a7c53914cd1c",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-411",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-411-remote-ui/report.json"
+}

@@ -1,0 +1,36 @@
+{
+  "pr": 391,
+  "base": "ba9626929913d9091c61d7b74f2fc5796dcedc07",
+  "changed": true,
+  "actions": [
+    "Move restart recovery to Agents / Recovery."
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Recovery",
+      "absentFrom": "General"
+    }
+  ],
+  "controls": 144,
+  "settingWrites": 26,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "codex/resume-interrupted",
+  "head": "8920a3c9b5efd5dbcbba9426501e9d694ec9822f",
+  "tests": 8,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/restart-runs.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-391-ui/report.json",
+  "pushed": "8920a3c9b5efd5dbcbba9426501e9d694ec9822f",
+  "remoteVerification": {
+    "head": "8920a3c9b5efd5dbcbba9426501e9d694ec9822f",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-391",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-391-remote-ui/report.json"
+}

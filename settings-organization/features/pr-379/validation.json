@@ -1,0 +1,37 @@
+{
+  "pr": 379,
+  "base": "4f1d014adc5d58d3c12bf2f9c788cf5ed6c9927a",
+  "changed": true,
+  "actions": [
+    "Move Agents’ browser to Models beside provider setup.",
+    "Shorten 1 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Models",
+      "title": "Agents’ browser",
+      "absentFrom": "Agents"
+    }
+  ],
+  "controls": 149,
+  "settingWrites": 26,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/classifiers",
+  "head": "e69a256d7397dbde8fd2235eabdf9619731c7099",
+  "tests": 12,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/classifiers.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-379-ui/report.json",
+  "pushed": "e69a256d7397dbde8fd2235eabdf9619731c7099",
+  "remoteVerification": {
+    "head": "e69a256d7397dbde8fd2235eabdf9619731c7099",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-379",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-379-remote-ui/report.json"
+}

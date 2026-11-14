@@ -1,0 +1,392 @@
+{
+  "dirty": false,
+  "source": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-RZDDTa",
+  "measurements": [],
+  "captures": [
+    "1280-Agents-Skill-folders.png",
+    "900-Agents-Skill-folders.png"
+  ],
+  "errors": [],
+  "copy": [
+    {
+      "width": 1280,
+      "title": "Skill folders",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": "#placement-target .hint, #placement-target .card__head p, #placement-target .key-row p.muted.small, #placement-target .workspace-danger__section > p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Runtime skill folders are detected automatically. Add other folders here. Enabled skills appear on agent profiles.",
+              "characters": 114,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.claude\\skills · 14 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.codex\\skills · 37 skills",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.agents\\skills · 73 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.pi\\agent\\skills · 1 skill",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.pi\\skills · 1 skill",
+              "characters": 35,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\AppData\\Local\\hermes\\skills · 387 skills",
+              "characters": 55,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.hermes\\skills · 27 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.config\\opencode\\skills · 5 skills",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.copilot\\skills · 4 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.gemini\\skills · 2 skills",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 556,
+              "height": 18.59375,
+              "contentWidth": 556,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "A new harness shows up here when its folder exists: there is nothing to set up. Claude Code’s folder and Codex’s are read as they always were.",
+              "characters": 142,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 37.1875,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "width": 900,
+      "title": "Skill folders",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": "#placement-target .hint, #placement-target .card__head p, #placement-target .key-row p.muted.small, #placement-target .workspace-danger__section > p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Runtime skill folders are detected automatically. Add other folders here. Enabled skills appear on agent profiles.",
+              "characters": 114,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.claude\\skills · 14 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.codex\\skills · 37 skills",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.agents\\skills · 73 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.pi\\agent\\skills · 1 skill",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.pi\\skills · 1 skill",
+              "characters": 35,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\AppData\\Local\\hermes\\skills · 387 skills",
+              "characters": 55,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.hermes\\skills · 27 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.config\\opencode\\skills · 5 skills",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.copilot\\skills · 4 skills",
+              "characters": 41,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "C:\\Users\\theap\\.gemini\\skills · 2 skills",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 416,
+              "height": 18.59375,
+              "contentWidth": 416,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "A new harness shows up here when its folder exists: there is nothing to set up. Claude Code’s folder and Codex’s are read as they always were.",
+              "characters": 142,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 37.1875,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Skill folders"
+    }
+  ],
+  "passed": true
+}

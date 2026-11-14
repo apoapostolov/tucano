@@ -1,0 +1,39 @@
+{
+  "pr": 338,
+  "base": "0576c66430374012d7576f49f77383552f0edbe7",
+  "changed": true,
+  "actions": [
+    "Move send mode from Limits to Agents / Agent replies.",
+    "Shorten 6 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Agent replies"
+    }
+  ],
+  "controls": 137,
+  "settingWrites": 25,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/steer-followup",
+  "head": "b8c9654583851ccf6bf9801e403bbfb9b689a304",
+  "tests": 31,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/steer-followup.test.tsx",
+    "test/steer-pill.test.tsx",
+    "test/send-modes.test.ts",
+    "test/followup-footer.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-338-ui/report.json",
+  "pushed": "b8c9654583851ccf6bf9801e403bbfb9b689a304",
+  "remoteVerification": {
+    "head": "b8c9654583851ccf6bf9801e403bbfb9b689a304",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-338",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-338-remote-ui/report.json"
+}

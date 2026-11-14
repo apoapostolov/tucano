@@ -1,0 +1,43 @@
+{
+  "pr": 284,
+  "base": "7d7fa9c93dbe7e35f3208c93d3e68472140f8f13",
+  "changed": true,
+  "actions": [
+    "Move Agents’ browser to Models beside provider setup.",
+    "Move Jev as a classifier to Models beside provider setup."
+  ],
+  "targets": [
+    {
+      "tab": "Models",
+      "title": "Agents’ browser",
+      "absentFrom": "Agents"
+    },
+    {
+      "tab": "Models",
+      "title": "Jev as a classifier",
+      "absentFrom": "Agents"
+    }
+  ],
+  "controls": 137,
+  "settingWrites": 25,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/jev-recommended",
+  "head": "4aa97a7d092181c3e933532b96040072e168ba28",
+  "tests": 13,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/jev-recommend-ui.test.tsx",
+    "test/jev-recommend.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-284-ui/report.json",
+  "pushed": "4aa97a7d092181c3e933532b96040072e168ba28",
+  "remoteVerification": {
+    "head": "4aa97a7d092181c3e933532b96040072e168ba28",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-284",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-284-remote-ui/report.json"
+}

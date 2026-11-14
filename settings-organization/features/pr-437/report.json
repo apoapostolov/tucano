@@ -1,0 +1,140 @@
+{
+  "dirty": false,
+  "source": "c91c7d41a8d38982d1ed8604d3d3e3fcb88e7a4e",
+  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-gt2Pga",
+  "measurements": [],
+  "captures": [
+    "1280-General-Danger-zone.png",
+    "900-General-Danger-zone.png"
+  ],
+  "errors": [],
+  "copy": [
+    {
+      "width": 1280,
+      "title": "Danger zone",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": "#placement-target .hint, #placement-target .card__head p, #placement-target .key-row p.muted.small, #placement-target .workspace-danger__section > p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Make a copy before deleting data. Automatic backup keeps the last 7 daily copies.",
+              "characters": 81,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Chat history and workspace records are stored in this database. Deleted data can leave unused space. 0.3 MB; no unused pages. The file is sound.",
+              "characters": 144,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 37.1875,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Reclaim unused space without deleting records. Available while agents are idle; the app waits until maintenance finishes.",
+              "characters": 121,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "width": 900,
+      "title": "Danger zone",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": "#placement-target .hint, #placement-target .card__head p, #placement-target .key-row p.muted.small, #placement-target .workspace-danger__section > p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Make a copy before deleting data. Automatic backup keeps the last 7 daily copies.",
+              "characters": 81,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Chat history and workspace records are stored in this database. Deleted data can leave unused space. 0.3 MB; no unused pages. The file is sound.",
+              "characters": 144,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 37.1875,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Reclaim unused space without deleting records. Available while agents are idle; the app waits until maintenance finishes.",
+              "characters": 121,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 37.1875,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ],
+  "targets": [
+    {
+      "tab": "General",
+      "title": "Danger zone"
+    }
+  ],
+  "passed": true
+}

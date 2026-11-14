@@ -1,0 +1,38 @@
+{
+  "pr": 311,
+  "base": "066dba0e4da53f478d6903cb45c5ce9f346a25e5",
+  "changed": true,
+  "actions": [
+    "Place skill folder setup after agent behavior and safety controls.",
+    "Shorten 1 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Skill folders"
+    }
+  ],
+  "controls": 146,
+  "settingWrites": 28,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/hermes-skill-layout",
+  "head": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+  "tests": 25,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/hermes-skills.test.ts",
+    "test/local-skills.test.ts",
+    "test/skill-folders.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-311-ui/report.json",
+  "pushed": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+  "remoteVerification": {
+    "head": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-311",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-311-remote-ui/report.json"
+}

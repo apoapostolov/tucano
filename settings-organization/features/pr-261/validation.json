@@ -1,0 +1,39 @@
+{
+  "pr": 261,
+  "base": "fa43abd9567aa0fcb9b6f1ea8e91a1c4f2de6b1b",
+  "changed": true,
+  "actions": [
+    "Move send mode from Limits to Agents / Agent replies.",
+    "Shorten 6 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Agent replies"
+    }
+  ],
+  "controls": 144,
+  "settingWrites": 26,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/send-modes",
+  "head": "fa687b67dc0d2ec09b1aef2ef696966755f90f82",
+  "tests": 109,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/composer-enter-keys.test.ts",
+    "test/runner.test.ts",
+    "test/send-modes.test.ts",
+    "test/team-stress.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-261-current-ui/report.json",
+  "pushed": "fa687b67dc0d2ec09b1aef2ef696966755f90f82",
+  "remoteVerification": {
+    "head": "fa687b67dc0d2ec09b1aef2ef696966755f90f82",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-261",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-261-remote-ui/report.json"
+}

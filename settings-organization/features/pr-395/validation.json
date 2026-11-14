@@ -1,0 +1,35 @@
+{
+  "pr": 395,
+  "base": "a22c588663663d3c08d5adca509dd08f9e5e3238",
+  "changed": true,
+  "actions": [
+    "Group time format under General / Appearance, available to owner and members."
+  ],
+  "targets": [
+    {
+      "tab": "General",
+      "title": "Appearance"
+    }
+  ],
+  "controls": 144,
+  "settingWrites": 26,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/clock-setting",
+  "head": "845a63bc6b9f46abb0a9a8696d4442d7ef1c3a89",
+  "tests": 4,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/clock-setting.test.ts"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-395-ui/report.json",
+  "pushed": "845a63bc6b9f46abb0a9a8696d4442d7ef1c3a89",
+  "remoteVerification": {
+    "head": "845a63bc6b9f46abb0a9a8696d4442d7ef1c3a89",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-395",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-395-remote-ui/report.json"
+}

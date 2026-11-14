@@ -1,0 +1,37 @@
+{
+  "pr": 288,
+  "base": "10448f6b4c713db88f38e53e724dae5bce34b0f3",
+  "changed": true,
+  "actions": [
+    "Move send mode from Limits to Agents / Agent replies.",
+    "Shorten 5 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "Agents",
+      "title": "Agent replies"
+    }
+  ],
+  "controls": 137,
+  "settingWrites": 25,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/work-drawer",
+  "head": "99f6f02812507b2bbb77cc0e2abf76a6b5012bfb",
+  "tests": 31,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/send-modes.test.ts",
+    "test/work-drawer-ui.test.tsx"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-288-ui/report.json",
+  "pushed": "99f6f02812507b2bbb77cc0e2abf76a6b5012bfb",
+  "remoteVerification": {
+    "head": "99f6f02812507b2bbb77cc0e2abf76a6b5012bfb",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-288",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-288-remote-ui/report.json"
+}

@@ -1,0 +1,35 @@
+{
+  "pr": 417,
+  "base": "40bacfeb9626fda3e73fafe24959ec8ac99c0c20",
+  "changed": true,
+  "actions": [
+    "Shorten 3 English labels/hints without changing their source-language interpolation."
+  ],
+  "targets": [
+    {
+      "tab": "General",
+      "title": "Notifications"
+    }
+  ],
+  "controls": 145,
+  "settingWrites": 24,
+  "controlPropsUnchanged": true,
+  "settingPayloadsUnchanged": true,
+  "branch": "feat/notification-center",
+  "head": "b1be987356c661830a059910a500f1667164d1b1",
+  "tests": 16,
+  "skipped": 0,
+  "focusedFiles": [
+    "test/notice.test.tsx"
+  ],
+  "ui": "C:/tmp/tucano-settings-overhaul/pr-417-ui/report.json",
+  "pushed": "b1be987356c661830a059910a500f1667164d1b1",
+  "remoteVerification": {
+    "head": "b1be987356c661830a059910a500f1667164d1b1",
+    "worktree": "C:/tmp/tucano-settings-verify/pr-417",
+    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "typecheck": true,
+    "tests": true
+  },
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-417-remote-ui/report.json"
+}
