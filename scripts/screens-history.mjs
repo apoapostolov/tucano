@@ -2,27 +2,38 @@
 // the confirm window says before anything goes. Run after `npm run build`:
 //   node scripts/screens-history.mjs [out-dir]
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { DatabaseSync } from 'node:sqlite'
+import { dirname, join } from 'node:path'
 import { _electron as electron } from 'playwright'
 
 const out = process.argv[2] ?? 'frames/history'
 mkdirSync(out, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-history-'))
-const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en' }
+// Refuse before launching a build that cannot keep its window hidden. Background QA support
+// is proposed separately in #372; passing its flag to an older build alone does not hide it.
+const installed = process.env.TUCANO_ELECTRON
+const bundle = installed ? join(dirname(installed), 'resources', 'app.asar') : 'out/main/index.js'
+assert.ok(readFileSync(bundle).includes(Buffer.from('--qa-background')), 'Build with background QA support (#372) before running this harness')
+const reservations = await Promise.all([0, 1].map(async () => {
+  const server = createServer()
+  await new Promise((yes, no) => { server.once('error', no); server.listen(0, '127.0.0.1', yes) })
+  return { server, port: server.address().port }
+}))
+const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en', TUCANO_WEBHOOK_PORT: String(reservations[0].port), TUCANO_GIT_PORT: String(reservations[1].port) }
+delete env.ELECTRON_RUN_AS_NODE
+delete env.ELECTRON_RENDERER_URL
+await Promise.all(reservations.map(({ server }) => new Promise((yes, no) => server.close((error) => error ? no(error) : yes()))))
 const errors = []
 
 async function open() {
-  // TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, in the
-  // package Apo actually opens.
-  const installed = env.TUCANO_ELECTRON
   const app = await electron.launch({
     ...(installed ? { executablePath: installed } : {}),
-    args: [...(installed ? [] : ['.']), `--user-data-dir=${join(data, 'electron')}`],
-    env
+    args: [...(installed ? [] : ['.']), '--qa-background'], env
   })
+  const hidden = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().every((w) => !w.isVisible() && !w.isFocused() && !w.isFocusable()))
+  assert.ok(hidden, 'History QA must remain hidden and unfocusable')
   const win = await app.firstWindow()
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
@@ -31,35 +42,18 @@ async function open() {
   return { app, win }
 }
 
-// 1. A first run, only to create the database and the starter team.
-let app1 = await open()
-await app1.win.waitForTimeout(900)
-await app1.app.close()
-
-// 2. Three weeks of history in a channel and in a bot's DM, and one bot that keeps everything.
-let lia = ''
-{
-  const db = new DatabaseSync(join(data, 'tucano.db'))
-  const now = Date.now()
-  const me = db.prepare("SELECT id FROM people WHERE role = 'owner' LIMIT 1").get().id
-  const agents = db.prepare('SELECT id, name FROM agents ORDER BY created_at').all()
-  lia = agents[0].id
-  const channel = db.prepare("SELECT id FROM conversations WHERE kind = 'channel' ORDER BY created_at LIMIT 1").get()
-  const dm = db.prepare("SELECT id FROM conversations WHERE kind = 'dm' ORDER BY created_at LIMIT 1").get()
-  db.prepare('UPDATE agents SET retention_days = 0 WHERE id = ?').run(lia)
-  const say = db.prepare('INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at) VALUES (?, ?, ?, ?, ?, ?)')
-  const day = 86_400_000
-  for (let i = 0; i < 24; i++) {
-    const at = now - (40 - i) * day
-    say.run(`h-${i}`, channel.id, i % 3 === 0 ? 'agent' : 'person', i % 3 === 0 ? agents[i % agents.length].id : me, `Message ${i} of the channel's old history.`, at)
-    if (dm) say.run(`d-${i}`, dm.id, i % 2 === 0 ? 'agent' : 'person', i % 2 === 0 ? lia : me, `Message ${i} of the private history.`, at)
-  }
-  db.close()
-}
-
+// Use the fake-engine demo in one fresh hidden instance. Age/override behavior is tested
+// against real databases in retention-core.test.ts; this flow exercises the visible wipe controls.
 // 3. Settings › General, at the danger area: Backups, the history, and the workspace delete.
 const { app, win } = await open()
-const shot = (name) => win.screenshot({ path: `${out}/${name}.png` })
+const checks = []
+const shot = async (name) => {
+  const hidden = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().every((w) => !w.isVisible() && !w.isFocused() && !w.isFocusable()))
+  assert.ok(hidden, 'History QA exposed a window')
+  await win.screenshot({ path: `${out}/${name}.png` })
+  checks.push(name)
+}
+try {
 
 await win.locator('.nav-item', { has: win.locator('.nav-item__label') }).filter({ hasText: /^Settings$/ }).first().click()
 await win.waitForSelector('.tabs')
@@ -98,6 +92,7 @@ await shot('05-bot-wipe-asks')
 const title = await win.locator('.modal [role="dialog"]').first().getAttribute('aria-label')
 assert.ok(/history/i.test(title ?? ''), `the bot's window names its history, got ${title}`)
 await win.locator('.modal .btn--ghost').click()
-await app.close()
-
-console.log(errors.length ? `page errors: ${errors.join(' | ')}` : 'ok, no page errors')
+assert.deepEqual(errors, [])
+writeFileSync(join(out, 'report.json'), JSON.stringify({ checks, errors, passed: true, data, executable: installed ?? 'source Electron' }, null, 2))
+console.log('ok, no page errors; all history captures stayed hidden')
+} finally { await app.close() }

@@ -1090,7 +1090,7 @@ const heartbeat = new Heartbeat({
 // Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
 // for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
 const retention = new Retention(db, settings, {
-  stop: (id) => runner.stop(id),
+  deleted: (ids) => ids.forEach((id) => runner.drop(id)),
   forgetSessions: (of) => runner.forgetSessions(of),
   cleared: (conversationIds) => {
     emit({ type: 'history_wiped', conversationIds })
@@ -1671,8 +1671,9 @@ const api: Handlers = {
     const prompt = m?.author.kind === 'person'
     if (!m || (!run && !routine && !prompt)) return []
     manage(ctx, m.conversationId)
-    if (m.run?.status === 'working') runner.drop(messageId) // stopped here, so it isn't written to while it goes
     const gone = db.deleteMessage(messageId)
+    // A completed parent may still have replies running in its thread.
+    for (const id of gone) runner.drop(id)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     const who = m.author.kind === 'agent' || m.author.kind === 'routine' ? m.author.id : undefined
     record(ctx, 'session.deleted', m.conversationId, { message: messageId, agent: who, routine, prompt, went: gone.length })

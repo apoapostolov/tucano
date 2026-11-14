@@ -20,7 +20,7 @@ function world(first: Partial<Settings> = {}) {
     db,
     () => settings,
     {
-      stop: (id) => calls.stopped.push(id),
+      deleted: (ids) => calls.stopped.push(...ids),
       forgetSessions: (of) => calls.forgotten.push(of),
       cleared: (ids) => calls.cleared.push(ids)
     },
@@ -184,7 +184,53 @@ describe('the two wipes a person asks for', () => {
     const w = twoBots()
     w.db.saveMessage({ id: 'a1-working', conversationId: 'ch', author: { kind: 'agent', id: 'a1' }, text: 'x', at: NOW, run: { status: 'working', steps: [] } })
     expect(w.retention.wipe('a1')).toBe(4)
-    expect(w.calls.stopped).toEqual(['a1-working'])
+    expect(w.calls.stopped).toContain('a1-working')
     expect(w.db.message('a1-working')).toBeUndefined()
   })
+})
+
+
+it.each(['working', 'waiting_approval', 'waiting_input'] as const)('keeps an old root while a descendant is %s', (status) => {
+  const w = world({ retentionDays: 30 })
+  w.db.saveAgent(w.agent('a1'))
+  w.db.createConversation({ id: 'ch', kind: 'channel', name: 'ch', members: ['a1'], threads: true })
+  w.said('old-root', 'ch', NOW - 40 * DAY)
+  w.said('live-child', 'ch', NOW, 'a1', { threadId: 'old-root', run: { status, steps: [] } })
+  expect(w.retention.sweep()).toBe(0)
+  expect(w.db.message('old-root')).toBeTruthy()
+  expect(w.db.message('live-child')).toBeTruthy()
+})
+
+it("does not bypass a bot's keep-forever override by sweeping its thread root", () => {
+  const w = world({ retentionDays: 30 })
+  w.db.saveAgent(w.agent('keeper', { retentionDays: 0 }))
+  w.db.createConversation({ id: 'ch', kind: 'channel', name: 'ch', members: ['keeper'], threads: true })
+  w.said('old-root', 'ch', NOW - 40 * DAY)
+  w.said('kept-child', 'ch', NOW - 39 * DAY, 'keeper', { threadId: 'old-root' })
+  expect(w.retention.sweep()).toBe(0)
+  expect(w.db.message('old-root')).toBeTruthy()
+  expect(w.db.message('kept-child')).toBeTruthy()
+})
+
+
+it('keeps recent descendants and their ancestors, but still sweeps an eligible sibling', () => {
+  const w = world({ retentionDays: 30 })
+  w.db.saveAgent(w.agent('a1'))
+  w.db.createConversation({ id: 'ch', kind: 'channel', name: 'ch', members: ['a1'], threads: true })
+  w.said('root', 'ch', NOW - 40 * DAY)
+  w.said('middle', 'ch', NOW - 39 * DAY, 'a1', { threadId: 'root' })
+  w.said('recent', 'ch', NOW - DAY, 'a1', { threadId: 'middle' })
+  w.said('old-sibling', 'ch', NOW - 39 * DAY, 'a1', { threadId: 'root' })
+  expect(w.retention.sweep()).toBe(1)
+  for (const id of ['root', 'middle', 'recent']) expect(w.db.message(id)).toBeTruthy()
+  expect(w.db.message('old-sibling')).toBeUndefined()
+})
+
+it('keeps an old reply awaiting a person even without a thread', () => {
+  const w = world({ retentionDays: 30 })
+  w.db.saveAgent(w.agent('a1'))
+  w.db.createConversation({ id: 'ch', kind: 'channel', name: 'ch', members: ['a1'] })
+  w.said('waiting', 'ch', NOW - 40 * DAY, 'a1', { run: { status: 'waiting_input', steps: [] } })
+  expect(w.retention.sweep()).toBe(0)
+  expect(w.db.message('waiting')).toBeTruthy()
 })

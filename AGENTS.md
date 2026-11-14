@@ -268,6 +268,11 @@ Branches are cut in a worktree, and the hazards there destroy work or waste a cy
   git worktree remove --force C:/path/wt
   ~~~
 
+  A shared junction is suitable for source builds and tests, but not for packaging: electron-builder
+  can omit transitive runtime dependencies when it resolves them outside the checkout. The self-build
+  helper rejects this before packaging. Unlink the junction without deleting its target, then run
+  `npm ci` in the packaging worktree and wait for it to finish before building the installer.
+
   Never remove a worktree whose `node_modules` is a real directory without confirming it is not the
   shared one. A wiped install is recovered by `npm ci` alone, never beside a build.
 - **Pass native tools `C:/…` paths, never `/c/…`.** Git Bash rewrites a leading `/c/tmp/...` argument
@@ -570,6 +575,17 @@ For a major feature, after the install and the smoke check:
 
 ## Integrate and report completion
 
+**A pull request is not delivery.** Every PR produced or revised for this project (our own on
+`eduwxyz/tucano`, a commit added to an existing PR's branch, a contributor's head being ingested)
+is merged into `next` and built into the installed **TucanoNext** in the same session. The person
+checks a feature by opening the app, not by reading the diff, so the merge, the install
+(`node scripts/self-build.mjs install`), a launch and a look at the changed surface in that
+installed window all belong to the same piece of work. The report names the PR link, the `next`
+commit, the installed `asarBytes` and what the smoke run showed; a reply carrying the PR link alone
+reads as finished while the screen still shows the previous build. The single exception is the one
+stated above: a change confined to agent instructions, documentation or development-only scripts
+leaves the packaged app byte-identical.
+
 Commit only task-related source and evidence. Bring the tested candidate into local `next` by
 ordinary merge or fast-forward, preserving intervening work, then push to `origin/next` and read the
 remote head back before reporting: a commit that exists only on this machine has not been delivered.
@@ -657,7 +673,9 @@ Look the feature up in the table below before opening anything:
   that closes it is the home and the issue carries the decision.
 
 The pair is also where the reasoning lives: a follow-up commit with a one-line subject on the PR says more
-to a reviewer than a second PR that has to be read against the first.
+to a reviewer than a second PR that has to be read against the first. The PR is the review half only:
+the merge into `next` and the installed build described in *Integrate and report completion* are the
+other half, and they belong to the same session.
 
 | Feature | Issue | PR |
 | --- | --- | --- |
@@ -714,12 +732,15 @@ to a reviewer than a second PR that has to be read against the first.
 | Memory: the bot tabs stay inside the bar | 396 | 397 |
 | Times as a 12-hour or a 24-hour clock | 393 | 395 |
 | Isolated UI checks without taking focus | | 372 |
+| Notifications over every window | | 417 |
 | Emit fake sign-in output before resolving the exit | | 386 |
 | Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
 | A hand-off answer comes back however the reply ends | 376 | 377 |
 | Delete a session from the room, in two presses | 374 | 375 |
 | Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
 | Give the file its space back, and say whether it is sound | 433 | 437 |
+| Control room visibility and cross-room agent read access | 423 | 424 |
+| Per-bot initiative and bounded responsibilities | 434 | 435 |
 
 The table is audited by a script, not by eye: `node scripts/feature-map-sync.mjs` reads it, asks GitHub
 what became of every number, and prints what is live, what shipped and can go, what needs a look (a PR

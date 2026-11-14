@@ -19,8 +19,8 @@ export class Retention {
     // The settings as they are now, not as they were when the core started.
     private settings: () => Omit<Settings, 'engines'>,
     private hooks: {
-      // A reply at work is stopped before what it wrote goes, never deleted under its own feet.
-      stop: (messageId: string) => void
+      // Cancel active replies and invalidate queued replies for every removed message.
+      deleted: (messageIds: string[]) => void
       // The harnesses keep a session per conversation and per agent: without this the model goes on from
       // words that are gone.
       forgetSessions: (of: { agentId?: string; conversationId?: string }) => void
@@ -51,7 +51,7 @@ export class Retention {
       if (ownCutoff === undefined) continue
       for (const m of this.db.botMessagesBefore(agent.id, ownCutoff)) took.set(m.id, m.conversationId)
     }
-    const gone = this.take([...took.keys()])
+    const gone = this.take([...took.keys()], false)
     this.db.setMeta(LAST, String(this.now()))
     return gone
   }
@@ -61,17 +61,16 @@ export class Retention {
   wipe(botId?: string): number {
     const rows = this.db.historyOf(botId)
     if (!rows.length) return 0
-    // What's at work in there is stopped first: a reply deleted mid-turn would come back as it finished.
     const going = new Set(rows.map((r) => r.id))
-    for (const m of this.db.messagesWithRun(['working', 'waiting_approval'])) if (going.has(m.id)) this.hooks.stop(m.id)
     const gone = this.take([...going])
     if (botId) this.hooks.forgetSessions({ agentId: botId })
     return gone
   }
 
-  private take(ids: string[]): number {
+  private take(ids: string[], cascade = true): number {
     if (!ids.length) return 0
-    const { conversations, gone } = this.db.forget(ids)
+    const { conversations, gone, ids: removed } = this.db.forget(ids, cascade)
+    this.hooks.deleted(removed)
     // The sessions that saw those words go with them, so the next reply doesn't go on from them.
     for (const id of conversations) this.hooks.forgetSessions({ conversationId: id })
     this.hooks.cleared(conversations)

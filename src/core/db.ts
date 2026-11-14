@@ -1,3 +1,4 @@
+import { teamUpAudiences } from '../shared/team-up-privacy'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { cleanRules, isAutonomy } from '../shared/actions'
 import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type InitiativeWake, type NotifyMode } from '../shared/initiative'
@@ -5,6 +6,7 @@ import { isStepsMode } from '../shared/steps'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import { cleanRetentionDays } from '../shared/retention'
+import { retentionSelection } from './retention-selection'
 import { ALL_PARTS, GENERAL_SETTINGS, WORKSPACE_PARTS, type WorkspaceParts } from '../shared/workspaces'
 import { dirname, join } from 'node:path'
 import {
@@ -726,7 +728,7 @@ export type Said = { id: string; conversationId: string }
 const said = (r: Row): Said => ({ id: str(r['id']), conversationId: str(r['conversation_id']) })
 
 // Still a run writing into it, or one waiting on the person: never taken away from under either.
-const AT_WORK = `(run IS NULL OR json_extract(run, '$.status') NOT IN ('working', 'waiting_approval'))`
+const AT_WORK = `(run IS NULL OR json_extract(run, '$.status') NOT IN ('working', 'waiting_approval', 'waiting_input'))`
 // node:sqlite takes a bounded number of parameters, so a bulk delete goes a chunk at a time.
 const CHUNK = 400
 const marks = (chunk: readonly unknown[]): string => chunk.map(() => '?').join(', ')
@@ -747,11 +749,23 @@ export class Db {
   constructor(private file: string) {
     this.db = new DatabaseSync(file)
     this.keepStatements()
-    // A lock is waited for rather than failed on: the file has one writer, and a backup or a
-    // checkpoint overlapping a turn is a wait of milliseconds, not an error worth showing.
+    // Wait for short-lived external locks while preserving legacy private team-up audiences.
     this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;')
-    try { this.migrate(file) }
+    try { this.migrate(file); this.protectTeamUpPrivacy() }
     catch (error) { this.db.close(); throw error }
+  }
+
+  private protectTeamUpPrivacy(): void {
+    const rooms = this.conversations()
+    if (!rooms.some((room) => room.teamUp)) return
+    const audiences = teamUpAudiences(rooms, this.ownerId())
+    this.tx(() => {
+      for (const room of rooms) {
+        const person = audiences.get(room.id)
+        if (!room.teamUp || !person || room.teamUp.privateTo === person) continue
+        this.db.prepare('UPDATE conversations SET team_up = ? WHERE id = ?').run(JSON.stringify({ ...room.teamUp, privateTo: person }), room.id)
+      }
+    })
   }
 
   close(): void {
@@ -1439,6 +1453,10 @@ export class Db {
 
   // ---------- history: what a period no longer keeps, and what a wipe takes away ----------
 
+  historyRevision(conversationId: string): number {
+    return Number(this.meta(`history:revision:${conversationId}`) ?? 0)
+  }
+
   // Everything said before `cutoff`, with its conversation: what the Tucano's period takes away. A reply
   // still at work or waiting on an approval stays — its run would write into a row that's gone — and so
   // does every word of a bot that has a period of its own (`own`), which decides for its DMs too.
@@ -1483,31 +1501,48 @@ export class Db {
   // notifications follow by foreign key. What a reply spent stays in the receipts, which is what Usage
   // and the monthly limit count, and the artifacts stay too (their files are on disk). A question waiting
   // in a thread whose first message went is closed: there's nothing left to show it under.
-  forget(ids: string[]): { conversations: string[]; gone: number } {
-    if (!ids.length) return { conversations: [], gone: 0 }
+  forget(ids: string[], cascade = true): { conversations: string[]; gone: number; ids: string[] } {
+    if (!ids.length) return { conversations: [], gone: 0, ids: [] }
     return this.tx(() => {
       // id → the conversation it was said in, grown until no reply is left hanging under a thread.
       const gone = new Map<string, string>()
+      const parents = new Map<string, string | undefined>()
       for (const chunk of inChunks(ids)) {
-        for (const r of this.db.prepare(`SELECT id, conversation_id FROM messages WHERE id IN (${marks(chunk)})`).all(...chunk) as Row[]) gone.set(str(r['id']), str(r['conversation_id']))
+        for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
+          gone.set(str(r['id']), str(r['conversation_id']))
+          parents.set(str(r['id']), r['thread_id'] ? str(r['thread_id']) : undefined)
+        }
       }
       for (let roots = [...gone.keys()]; roots.length; ) {
         const replies = new Map<string, string>()
         for (const chunk of inChunks(roots)) {
-          for (const r of this.db.prepare(`SELECT id, conversation_id FROM messages WHERE thread_id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
+          for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE thread_id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
             const id = str(r['id'])
+            parents.set(id, str(r['thread_id']))
             if (!gone.has(id)) replies.set(id, str(r['conversation_id']))
           }
         }
         for (const [id, conversationId] of replies) gone.set(id, conversationId)
         roots = [...replies.keys()]
       }
+      if (!cascade) {
+        const eligible = retentionSelection(new Set(ids), parents)
+        for (const id of gone.keys()) if (!eligible.has(id)) gone.delete(id)
+      }
       for (const chunk of inChunks([...gone.keys()])) {
         this.db.prepare(`DELETE FROM approvals WHERE message_id IN (${marks(chunk)})`).run(...chunk)
         this.db.prepare(`DELETE FROM messages WHERE id IN (${marks(chunk)})`).run(...chunk)
       }
+      const conversations = [...new Set(gone.values())]
+      for (const id of conversations) {
+        // Summaries can contain removed words too. Invalidate pending model output before it
+        // can save those words again; future summaries use only the surviving history.
+        this.setMeta(`history:revision:${id}`, String(this.historyRevision(id) + 1))
+        this.db.prepare('UPDATE conversations SET summary = NULL, summary_until = NULL, summary_at = NULL WHERE id = ?').run(id)
+        this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ? AND thread_summary IS NOT NULL').run(id)
+      }
       this.db.prepare(`UPDATE questions SET state = 'closed' WHERE state = 'open' AND thread_id IS NOT NULL AND thread_id NOT IN (SELECT id FROM messages)`).run()
-      return { conversations: [...new Set(gone.values())], gone: gone.size }
+      return { conversations, gone: gone.size, ids: [...gone.keys()] }
     })
   }
 
@@ -2557,7 +2592,7 @@ export class Db {
   // team's log. Returns the DMs deleted, their routines, and the files (artifacts) to delete from disk.
   purgePerson(personId: string, now = Date.now()): { dms: string[]; routines: { id: string; conversationId: string }[]; artifacts: { id: string; name: string }[] } {
     return this.tx(() => {
-      const dms = (this.db.prepare("SELECT id FROM conversations WHERE kind = 'dm' AND owner = ?").all(personId) as Row[]).map((r) => str(r['id']))
+      const dms = (this.db.prepare("SELECT id FROM conversations WHERE (kind = 'dm' AND owner = ?) OR json_extract(team_up, '$.privateTo') = ?").all(personId, personId) as Row[]).map((r) => str(r['id']))
       const inDms = `(${dms.map(() => '?').join(', ') || "''"})`
       const artifacts = (this.db.prepare(`SELECT id, name FROM artifacts WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), name: str(r['name']) }))
       const routines = (this.db.prepare(`SELECT id, conversation_id FROM routines WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), conversationId: str(r['conversation_id']) }))

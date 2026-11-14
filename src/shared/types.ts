@@ -132,6 +132,7 @@ export interface TeamUp {
   title: string // that conversation's name at the time: "#ops", or the agent of a DM
   by: string // the agent that called the others in
   at: number
+  privateTo?: string // a room derived from a private conversation keeps that person's audience
 }
 
 export interface Conversation {
@@ -178,6 +179,8 @@ export interface Step {
   ms?: number
   // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran, between
   // two calls; `followup` is the instruction a finished reply goes on with (runs.ts, followUp).
+  // `steer`: what the person steered while it worked — a row of the chain like a call's, carrying
+  // their words in `input`. `followup`: the instruction a finished reply goes on with.
   kind?: 'steer' | 'followup'
 }
 
