@@ -25,6 +25,7 @@ export const GENERAL_SETTINGS = [
   'quietHours',
   'harnesses',
   'sounds',
+  'stepsOpen',
   'notice',
   'voice',
   'thinkingSize',

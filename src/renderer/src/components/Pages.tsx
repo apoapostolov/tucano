@@ -3601,6 +3601,14 @@ export function SettingsPage(): ReactNode {
         {pane('geral') && (
           <Card title={L('A conversa', "Conversation")}>
             <div className="key-row">
+              <Icon name="layers" />
+              <div className="grow">
+                <strong>{L('Mostrar os passos enquanto o agente trabalha', 'Open steps automatically')}</strong>
+                <p className="muted small">{L('Abre a lista do que o agente está fazendo embaixo da resposta. Desligado, fica só a linha com o que ele faz agora; um clique nela abre os passos. Muda só pra você.', 'Open working replies by default. You can still expand or collapse them yourself.')}</p>
+              </div>
+              <Toggle on={settings.stepsOpen !== false} onChange={(v) => updateSettings({ stepsOpen: v })} />
+            </div>
+            <div className="key-row">
               <Icon name="spark" />
               <div className="grow">
                 <strong>{L('O que o modelo pensa', "Show reasoning")}</strong>

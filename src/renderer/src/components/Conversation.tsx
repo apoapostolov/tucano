@@ -1742,6 +1742,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // agent's own setting over the workspace's (src/shared/steps.ts).
   const mode = useStore((s) => stepsModeFor(s.settings, message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
   const keep = useStore((s) => s.settings?.stepsLatest)
+  const stepsOpen = useStore((s) => s.settings.stepsOpen) !== false
   // A manual choice lasts through completion: finishing must not close what someone is reading.
   // A conversation that was left folded stays folded, and a run that starts in it opens folded too.
   const memory = stepsMemory(message.conversationId)
@@ -1751,7 +1752,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
   // the reply itself has no text at all.
   const silent = run.silent === true
-  const open = toggled ?? (working && mode !== 'one-line' && !silent && !remembered)
+  const open = toggled ?? (working && stepsOpen && mode !== 'one-line' && !silent && !remembered)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'

@@ -18,6 +18,7 @@ export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'sounds',
   'notice',
   'showThinking',
+  'stepsOpen',
   'thinkingSize',
   'clock',
   'steps',
