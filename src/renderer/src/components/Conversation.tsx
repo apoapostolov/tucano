@@ -1959,6 +1959,16 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
   )
 }
 
+// How close to the end of the block counts as reading its end: a little over one line, so a wheel's
+// fraction of a line and a subpixel scroll still count as the end.
+const THOUGHT_END = 24
+
+// Whether the block sits at the end of what it shows: the place a person is reading, not where the
+// stream stopped. Content arriving below it does not move that place.
+export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; clientHeight: number }): boolean {
+  return box.scrollHeight - box.scrollTop - box.clientHeight < THOUGHT_END
+}
+
 // What the model is thinking, dim and small, as it arrives: not what it said, and not a step.
 // It stays after the reply ends (the window keeps it in memory) so it can be read back. Off unless
 // the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
@@ -1969,12 +1979,24 @@ export function Thought({ message, working }: { message: Message; working: boole
   const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
   const thought = useLiveThought(message.id, STREAM_MS)
   const box = useRef<HTMLDivElement>(null)
+  // The block follows what arrives only while the person is at its end. Someone who scrolled up to
+  // read an earlier passage keeps that place as the rest streams in below it, and the block takes
+  // the stream up again by itself once they are back at the end.
+  const follow = useRef(true)
   useEffect(() => {
-    if (working) box.current?.scrollTo({ top: box.current.scrollHeight })
+    const el = box.current
+    if (working && follow.current && el) el.scrollTop = el.scrollHeight
   }, [thought, working])
   if (!on || !thought) return null
   return (
-    <div ref={box} className={`thought thought--${size}`} aria-label={L('O que o agente está pensando', "What the agent is thinking")}>
+    <div
+      ref={box}
+      className={`thought thought--${size}`}
+      aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
+      onScroll={(e) => {
+        follow.current = followsTheEnd(e.currentTarget)
+      }}
+    >
       <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
       <div className="thought__text">{thought}</div>
     </div>
