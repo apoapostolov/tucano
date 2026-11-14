@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-14T08:25:00.566Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-14T08:31:51.507Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 84 total: 56 open, 18 merged, 10 closed.
 
-Upstream main: `68cf5da1cb5a1f589926ac819c46d9ffd7645988`. Daily driver HEAD: `28ad4f2078e8393f1515c1a34cdb1ee2fe05e72e`. Upstream main is contained: yes.
+Upstream main: `68cf5da1cb5a1f589926ac819c46d9ffd7645988`. Daily driver HEAD: `7fbc377070b5ab64c4379c8b300390e64f2cdb1a`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -29,7 +29,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#275](https://github.com/eduwxyz/tucano/pull/275) | OPEN | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | 0 | 5 | not reviewed |
 | [#279](https://github.com/eduwxyz/tucano/pull/279) | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | 5 | 10 | not reviewed |
 | [#282](https://github.com/eduwxyz/tucano/pull/282) | CLOSED | A drawer above the field: the sessions running right now, and the prompts still queued | object unavailable | 2 | 6 | not reviewed |
-| [#284](https://github.com/eduwxyz/tucano/pull/284) | OPEN | An agent's question can mark the option Jev would pick | yes | 2 | 5 | not reviewed |
+| [#284](https://github.com/eduwxyz/tucano/pull/284) | OPEN | An agent's question can mark the option Jev would pick | no: inspect patch equivalence | 2 | 5 | not reviewed |
 | [#288](https://github.com/eduwxyz/tucano/pull/288) | OPEN | Attach a work drawer above the field: the replies running now, and the prompts queued behind them | no: inspect patch equivalence | 2 | 11 | not reviewed |
 | [#289](https://github.com/eduwxyz/tucano/pull/289) | CLOSED | Two tests that only fail on a real developer's machine: the git hooks folder and the case of PATH | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#290](https://github.com/eduwxyz/tucano/pull/290) | OPEN | Keep each prompt above the session it started, and add a glyph that goes back to it | yes | 2 | 4 | not reviewed |
@@ -71,9 +71,9 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#373](https://github.com/eduwxyz/tucano/pull/373) | MERGED | Recheck wiki permissions and private pages during running replies | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#375](https://github.com/eduwxyz/tucano/pull/375) | OPEN | Delete a session from the room: a trash under its thread button, in two presses | no: inspect patch equivalence | 6 | 9 | not reviewed |
 | [#377](https://github.com/eduwxyz/tucano/pull/377) | OPEN | Bring a hand-off answer back however it ends, and knock on a request nobody answered | no: inspect patch equivalence | 3 | 5 | not reviewed |
-| [#379](https://github.com/eduwxyz/tucano/pull/379) | OPEN | Expand Jev into a Classifiers section: TypeSafe, OpenRouter, OpenAI and Google | yes | 1 | 2 | not reviewed |
+| [#379](https://github.com/eduwxyz/tucano/pull/379) | OPEN | Expand Jev into a Classifiers section: TypeSafe, OpenRouter, OpenAI and Google | no: inspect patch equivalence | 1 | 2 | not reviewed |
 | [#383](https://github.com/eduwxyz/tucano/pull/383) | OPEN | Classifiers on all six jobs: the section, stacked on #279, #284, #298 and #333 | no: inspect patch equivalence | 16 | 0 | not reviewed |
-| [#385](https://github.com/eduwxyz/tucano/pull/385) | OPEN | Next steps open with every box clear; the classifier that ticks the ones worth doing now is a job in Classifiers | yes | 7 | 6 | not reviewed |
+| [#385](https://github.com/eduwxyz/tucano/pull/385) | OPEN | Next steps open with every box clear; the classifier that ticks the ones worth doing now is a job in Classifiers | no: inspect patch equivalence | 7 | 6 | not reviewed |
 | [#386](https://github.com/eduwxyz/tucano/pull/386) | MERGED | Emit fake sign-in output before resolving its exit | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#391](https://github.com/eduwxyz/tucano/pull/391) | OPEN | Resume interrupted replies after restart and fix older retries | no: inspect patch equivalence | 2 | 1 | not reviewed |
 | [#392](https://github.com/eduwxyz/tucano/pull/392) | OPEN | Stop reading a date that opens a sentence as a missing wiki page | no: inspect patch equivalence | 1 | 0 | not reviewed |
@@ -90,18 +90,15 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#419](https://github.com/eduwxyz/tucano/pull/419) | MERGED | Draw the wiki map in its first frame, and fit it again when the window changes size | no: inspect patch equivalence | 0 | 2 | not reviewed |
 | [#422](https://github.com/eduwxyz/tucano/pull/422) | MERGED | Skin the toast in the app's orange instead of the primary that inverts to white | no: inspect patch equivalence | 1 | 4 | not reviewed |
 | [#424](https://github.com/eduwxyz/tucano/pull/424) | OPEN | Control room visibility and agent read access | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | yes | 7 | 5 | targeted safety repairs verified; full feature audit remains |
+| [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 7 | 5 | targeted safety repairs verified; full feature audit remains (stale) |
 | [#435](https://github.com/eduwxyz/tucano/pull/435) | OPEN | A bot can look after something for you between conversations | no: inspect patch equivalence | 8 | 3 | not reviewed |
-| [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | yes | 2 | 3 | migration-compatible counter assertion repaired; full feature audit remains |
+| [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 2 | 3 | migration-compatible counter assertion repaired; full feature audit remains (stale) |
 | [#445](https://github.com/eduwxyz/tucano/pull/445) | OPEN | Give the two core-boot tests the budget Windows already has | no: inspect patch equivalence | 2 | 0 | not reviewed |
 
 ## Commit dependencies
 
 - #258 → #259
-- #284 → #298
-- #284 → #385
 - #327 → #329
-- #379 → #385
 
 ## Shared files among open PRs
 
