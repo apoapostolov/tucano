@@ -4,6 +4,7 @@
 // He sees settings, statuses and error messages, never what was said in a conversation.
 import { L } from '../shared/lang'
 import { channelName, dateAt, ENGINES, modelInfo, nextRun, skillApplies, validTime, type Schedule, type Agent, type AgentChanges, type Approval, type Connector, type Conversation, type Effort, type GrantLevel, type Routine, type Settings, type Proposal, type AgentDraft, type Skill, proposalsOf } from '../shared/types'
+import { safeLimit } from '../shared/limits'
 import { usedShare } from '../shared/limits'
 import { RECOMMENDED_INSTRUCTION_LENGTH } from '../shared/instructions'
 import type { ToolDef } from './gateway'
@@ -344,8 +345,10 @@ export function proposalFrom(tool: string, args: Record<string, unknown>, ctx: P
       if (JSON.stringify(g.grants) !== JSON.stringify(agent.grants)) changes.grants = g.grants!
     }
     if (args['limite'] !== undefined) {
-      const n = Math.round(Number(args['limite']))
-      if (!Number.isFinite(n) || n < 0) return { error: L('O limite é em tokens: no mínimo 1000, ou 0 para sem limite.', 'The limit is in tokens: at least 1000, or 0 for no limit.') }
+      const asked = Math.round(Number(args['limite']))
+      // A number too large to be a limit is someone asking for none: 0 (safeLimit).
+      const n = safeLimit(asked)
+      if (!Number.isFinite(asked) || asked < 0 || (n > 0 && n < 1000)) return { error: L('O limite é em tokens: no mínimo 1000, ou 0 para sem limite.', 'The limit is in tokens: at least 1000, or 0 for no limit.') }
       if (n !== agent.limit) changes.limit = n
     }
     // The whole list of skills it follows: the names it keeps, or "*" for every active skill.
