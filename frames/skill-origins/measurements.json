@@ -1,0 +1,405 @@
+{
+  "source": "35e98635fad7a560d417877cbb8dcffbaf16b6c4",
+  "measurements": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".skill-line__meta",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Agents",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Claude Code",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Codex",
+              "characters": 43,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Copilot",
+              "characters": 45,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Gemini",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Hermes",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your OpenCode",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Pi",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 612,
+              "height": 18.59375,
+              "contentWidth": 612,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".skill-line__meta",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Agents",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Claude Code",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Codex",
+              "characters": 43,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Copilot",
+              "characters": 45,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Gemini",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Hermes",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your OpenCode",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Pi",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 536,
+              "height": 18.59375,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "viewport": {
+        "width": 420,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".skill-line__meta",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Agents",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Claude Code",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Codex",
+              "characters": 43,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Copilot",
+              "characters": 45,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Gemini",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Hermes",
+              "characters": 44,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your OpenCode",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "all agents \u00c2\u00b7 not read yet \u00c2\u00b7 from your Pi",
+              "characters": 40,
+              "lines": 1,
+              "visible": true,
+              "width": 312,
+              "height": 18.59375,
+              "contentWidth": 312,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ],
+  "captures": [
+    "origins-1280.png",
+    "origins-900.png",
+    "origins-420.png",
+    "hermes-detail.png"
+  ],
+  "errors": [],
+  "passed": true,
+  "interactions": [
+    "import-eight-harnesses",
+    "open-detail",
+    "edit-linked-skill",
+    "cancel-edit",
+    "archive",
+    "reactivate"
+  ]
+}
