@@ -18,7 +18,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#247](https://github.com/eduwxyz/tucano/pull/247) | OPEN | Add a Questions section above Approvals, with every agent's question in one place | no: inspect patch equivalence | 7 | 23 | not reviewed |
 | [#248](https://github.com/eduwxyz/tucano/pull/248) | OPEN | Keep the open question next to the field, not only where it was asked | no: inspect patch equivalence | 1 | 3 | not reviewed |
 | [#249](https://github.com/eduwxyz/tucano/pull/249) | OPEN | Clear a conversation's history without deleting the conversation | no: inspect patch equivalence | 2 | 4 | not reviewed |
-| [#250](https://github.com/eduwxyz/tucano/pull/250) | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 5 | 9 | reviewed; browser checks pass; platform coverage remains (stale) |
+| [#250](https://github.com/eduwxyz/tucano/pull/250) | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 5 | 9 | not reviewed |
 | [#251](https://github.com/eduwxyz/tucano/pull/251) | MERGED | Stop the guide's Portuguese from leaking into what agents write (dates by locale, guide labelled) | object unavailable | 1 | 0 | not reviewed |
 | [#258](https://github.com/eduwxyz/tucano/pull/258) | OPEN | Wiki: let "Write the page" hand a missing page to an agent you pick | no: inspect patch equivalence | 7 | 3 | reviewed; stack repaired; load follow-up remains (stale) |
 | [#259](https://github.com/eduwxyz/tucano/pull/259) | OPEN | Wiki: let "Nothing links to them" hand the orphan pages to an agent that links them | no: inspect patch equivalence | 7 | 3 | reviewed; stack repaired; suite follow-up remains (stale) |
@@ -65,7 +65,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#353](https://github.com/eduwxyz/tucano/pull/353) | OPEN | Give a connector the picture it wears, instead of a black terminal | no: inspect patch equivalence | 2 | 9 | not reviewed |
 | [#355](https://github.com/eduwxyz/tucano/pull/355) | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | no: inspect patch equivalence | 6 | 3 | reviewed; prospective DM privacy repaired; further privacy review remains (stale) |
 | [#366](https://github.com/eduwxyz/tucano/pull/366) | OPEN | Let a routine say nothing when it has nothing to report | no: inspect patch equivalence | 2 | 4 | not reviewed |
-| [#367](https://github.com/eduwxyz/tucano/pull/367) | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | reviewed; upstream PR opened (stale) |
+| [#367](https://github.com/eduwxyz/tucano/pull/367) | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#368](https://github.com/eduwxyz/tucano/pull/368) | MERGED | Update the locked runtime packages past their security advisories | no: inspect patch equivalence | 0 | 0 | not reviewed |
 | [#372](https://github.com/eduwxyz/tucano/pull/372) | OPEN | Run isolated UI checks without taking desktop focus | no: inspect patch equivalence | 1 | 2 | not reviewed |
 | [#373](https://github.com/eduwxyz/tucano/pull/373) | MERGED | Recheck wiki permissions and private pages during running replies | no: inspect patch equivalence | 1 | 0 | not reviewed |

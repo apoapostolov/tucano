@@ -2178,7 +2178,7 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
         ?.map(ruleTool)
         .map(({ tool, account }) => accountLabel(tool, account))
     : undefined
-  // Hold to approve: CSS fills a 3px track in 1.5s (.is-holding) (.is-holding) and this timer approves, so the
+  // Hold to approve: CSS fills a 3px track in 1.5s (.is-holding) and this timer approves, so the
   // approval no longer depends on a transitionend that a re-render or a throttled window can drop.
   // Letting go drains the fill back and clears the timer. Space or Enter hold too.
   const [holding, setHolding] = useState(false)

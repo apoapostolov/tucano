@@ -2783,7 +2783,7 @@ export function BackupCard(): ReactNode {
             )
           : L(
               'Tudo deste Tucano num arquivo .zip: agentes, conversas, memórias, wiki e arquivos, pra levar pra um Tucano num servidor (como o Tucano Pro). As senhas dos conectores e os logins de IA não vão: eles ficam presos a este computador.',
-              "Everything of this Tucano in one .zip: agents, conversations, memories, wiki and files, to take to a Tucano on a server (such as Tucano Pro). Connector passwords and AI logins don't go: they're tied to this computer."
+              "Export agents, chats, memory, Wiki, and files as a ZIP for another Tucano. Connector passwords and AI logins stay on this computer."
             )
       }
     >
@@ -3802,7 +3802,8 @@ export function SettingsPage(): ReactNode {
                         onChange={(n) => updateSettings({ runBudgetPct: Math.min(100, Math.max(1, Math.round(n))) })}
                       />
                     </Field></div>
-      </Card>
+      <p className="hint">{L('Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', 'For agents without a monthly limit, percentages use a base of 10 million tokens.')}</p>
+</Card>
     ),
     'agents-automation': (
       <Card title={L('Automação', 'Automation')} lead={L('As rotinas rodam enquanto o app está aberto, mesmo com a janela fechada.', "Routines require Tucano to keep running, even with its window closed.")}>

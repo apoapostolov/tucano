@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { measureCopy } from './copy-layout.mjs'
+import { electronCopyViewport } from './electron-copy-viewport.mjs'
 
 const fixtures = [
   ['.hermes/skills/tools/hermes-audit/SKILL.md', 'Hermes'],
@@ -29,9 +30,11 @@ for (const [relative, harness] of fixtures) {
   return { APPDATA: appData, LOCALAPPDATA: localAppData, HOME: home, USERPROFILE: home, HERMES_HOME: join(home, '.hermes'), CODEX_HOME: join(home, '.codex'), CLAUDE_CONFIG_DIR: join(home, '.claude'), OPENCODE_CONFIG_DIR: join(home, '.config/opencode'), AGENTS_HOME: join(home, '.agents'), PI_HOME: join(home, '.pi') };
 }
 
-export async function checkSkillOrigins(page, output, guard = async () => {}) {
+export async function checkSkillOrigins(page, output, guard = async () => {}, resize) {
   const report = { measurements: [], captures: [], interactions: [] };
-  await page.setViewportSize({ width: 1280, height: 900 });
+  const original = page.viewportSize();
+  const viewport = resize ? await electronCopyViewport(page, resize) : { set: async width => { if (width) await page.setViewportSize({ width, height: 900 }); }, restore: async () => { if (original) await page.setViewportSize(original); } };
+  await viewport.set(1280);
   await page.locator('.sidebar .nav-item').filter({ hasText: 'Skills' }).first().click();
   for (const [, harness] of fixtures) {
     await page.getByRole('button', { name: 'Find existing skills', exact: true }).click();
@@ -39,11 +42,9 @@ export async function checkSkillOrigins(page, output, guard = async () => {}) {
     await page.locator('.skill-add__step').getByRole('button', { name: 'Use', exact: true }).click();
     await page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).waitFor();
   }
-  const metrics = await page.context().newCDPSession(page);
-  await metrics.send('Emulation.clearDeviceMetricsOverride');
-  await metrics.detach();
+  await viewport.restore();
   for (const width of [null, 1280, 900, 420]) {
-    if (width) await page.setViewportSize({ width, height: 900 });
+    await viewport.set(width);
     for (const [, harness] of fixtures) {
       const meta = page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).locator('.skill-line__meta');
       assert.ok((await meta.innerText()).includes(`from your ${harness}`), `${harness} source label missing`);
@@ -58,7 +59,7 @@ export async function checkSkillOrigins(page, output, guard = async () => {}) {
     await page.screenshot({ path: join(output, name) });
     report.captures.push(name);
   }
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await viewport.set(1280);
   await page.locator('.skill-line').filter({ hasText: 'hermes-audit-skill' }).click();
   await page.locator('.skill-facts').waitFor();
   assert.ok((await page.locator('.skill-facts').innerText()).includes('from your Hermes'));
@@ -73,6 +74,7 @@ export async function checkSkillOrigins(page, output, guard = async () => {}) {
   await page.getByRole('button', { name: 'Reactivate', exact: true }).click();
   await page.locator('.skill-line').filter({ hasText: 'hermes-audit-skill' }).waitFor();
   report.interactions = ['import-eight-harnesses', 'open-detail', 'edit-linked-skill', 'cancel-edit', 'archive', 'reactivate'];
+  await viewport.restore();
   await guard();
   return report;
 }

@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { measureCopy } from './copy-layout.mjs'
+import { electronCopyViewport } from './electron-copy-viewport.mjs'
 
 // Reuse the hidden Electron session, including the installed executable and its display scaling.
-export async function checkSettingsCopy(page, output, guard) {
-  const originalViewport = page.viewportSize() ?? { width: 1280, height: 900 }
+export async function checkSettingsCopy(page, output, guard, resize) {
+  const viewport = await electronCopyViewport(page, resize)
   const measurements = []
-  for (const width of [null, 1280, 900, 760]) {
-    if (width) await page.setViewportSize({ width, height: 900 })
+  for (const width of [null, 1280, 900]) {
+    await viewport.set(width)
     await page.locator('#settings-tab-app').click()
     await page.locator('.settings-sections a[href="#settings-app-conversation"]').click()
     const copy = await measureCopy(page, [
@@ -21,7 +22,7 @@ export async function checkSettingsCopy(page, output, guard) {
     await page.screenshot({ path: join(output, screenshot) })
     measurements.push({ ...copy, screenshot, display: await page.evaluate(() => ({ devicePixelRatio, screenWidth: screen.width, screenHeight: screen.height })) })
   }
-  await page.setViewportSize(originalViewport)
+  await viewport.restore()
   const preference = page.locator('#settings-app-conversation .key-row').filter({ has: page.getByText('Expand steps while working', { exact: true }) }).getByRole('switch')
   assert.equal(await preference.getAttribute('aria-checked'), 'true')
   await preference.click()
