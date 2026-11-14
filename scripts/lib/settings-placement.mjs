@@ -1,6 +1,6 @@
 import { parse } from '@babel/parser';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 
 const children = node => Object.entries(node).filter(([key]) => !['loc', 'extra', 'comments', 'leadingComments', 'trailingComments', 'typeAnnotation', 'returnType', 'typeParameters'].includes(key)).flatMap(([, value]) =>
   Array.isArray(value) ? value.filter(n => n && typeof n.type === 'string') : value && typeof value.type === 'string' ? [value] : []);
@@ -17,11 +17,15 @@ export function inspectSettingsPlacement(workspace) {
     const source = readFileSync(file, 'utf8');
     const ast = parse(source, { sourceType: 'module', plugins: ['typescript', 'jsx'] });
     const functions = new Map(ast.program.body.map(n => n.declaration || n).filter(n => n.type === 'FunctionDeclaration').map(n => [n.id.name, n]));
+    for (const declaration of ast.program.body.map(n => n.declaration || n).filter(n => n.type === 'VariableDeclaration')) {
+      for (const variable of declaration.declarations) if (variable.id.type === 'Identifier' && ['ArrowFunctionExpression', 'FunctionExpression'].includes(variable.init?.type)) functions.set(variable.id.name, variable.init);
+    }
     const imports = new Map();
     for (const declaration of ast.program.body.filter(n => n.type === 'ImportDeclaration' && n.source.value.startsWith('.'))) {
       const path = resolve(dirname(file), declaration.source.value);
       const target = [path + '.tsx', path + '.ts', join(path, 'index.tsx'), join(path, 'index.ts')].find(existsSync);
       if (!target) continue;
+      if (!target.startsWith(join(root, 'src') + sep)) throw new Error('Review settings imports outside src: ' + target);
       for (const specifier of declaration.specifiers.filter(n => n.type === 'ImportSpecifier' && n.importKind !== 'type')) imports.set(specifier.local.name, { file: target, name: specifier.imported.name });
     }
     const result = { source, ast, functions, imports };

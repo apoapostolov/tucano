@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-13T18:30:25.651Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-13T23:41:49.564Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
-79 total: 57 open, 12 merged, 10 closed.
+83 total: 61 open, 12 merged, 10 closed.
 
-Upstream main: `73b724bec8a576d316a5dd5f46a07e3bf83cbe75`. Daily driver next: `a945d3c57e2889490810a82484f62af16289398f`. Upstream main is contained: yes.
+Upstream main: `e0a54964a2ed073024ddc2da9b698d840fdb2db8`. Daily driver next: `dca0d36d444e6ce8f2b791f83c79f91b967d923f`. Upstream main is contained: no: inspect patch equivalence.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -18,14 +18,14 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#247](https://github.com/eduwxyz/tucano/pull/247) | OPEN | Add a Questions section above Approvals, with every agent's question in one place | no: inspect patch equivalence | 7 | 23 | not reviewed |
 | [#248](https://github.com/eduwxyz/tucano/pull/248) | OPEN | Keep the open question next to the field, not only where it was asked | no: inspect patch equivalence | 1 | 3 | not reviewed |
 | [#249](https://github.com/eduwxyz/tucano/pull/249) | OPEN | Clear a conversation's history without deleting the conversation | no: inspect patch equivalence | 2 | 4 | not reviewed |
-| [#250](https://github.com/eduwxyz/tucano/pull/250) | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 3 | 3 | not reviewed |
+| [#250](https://github.com/eduwxyz/tucano/pull/250) | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 5 | 9 | not reviewed |
 | [#251](https://github.com/eduwxyz/tucano/pull/251) | MERGED | Stop the guide's Portuguese from leaking into what agents write (dates by locale, guide labelled) | object unavailable | 1 | 0 | not reviewed |
 | [#258](https://github.com/eduwxyz/tucano/pull/258) | OPEN | Wiki: let "Write the page" hand a missing page to an agent you pick | yes | 7 | 3 | not reviewed |
 | [#259](https://github.com/eduwxyz/tucano/pull/259) | OPEN | Wiki: let "Nothing links to them" hand the orphan pages to an agent that links them | yes | 7 | 3 | not reviewed |
 | [#261](https://github.com/eduwxyz/tucano/pull/261) | OPEN | A new prompt in a thread: parallel, queued, steer or interrupt, on a setting and on the keys | no: inspect patch equivalence | 4 | 14 | not reviewed |
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | no: inspect patch equivalence | 2 | 6 | not reviewed |
-| [#274](https://github.com/eduwxyz/tucano/pull/274) | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | yes | 5 | 11 | not reviewed |
+| [#274](https://github.com/eduwxyz/tucano/pull/274) | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | no: inspect patch equivalence | 7 | 11 | not reviewed |
 | [#275](https://github.com/eduwxyz/tucano/pull/275) | OPEN | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | 0 | 5 | not reviewed |
 | [#279](https://github.com/eduwxyz/tucano/pull/279) | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | 5 | 10 | not reviewed |
 | [#282](https://github.com/eduwxyz/tucano/pull/282) | CLOSED | A drawer above the field: the sessions running right now, and the prompts still queued | object unavailable | 2 | 6 | not reviewed |
@@ -52,7 +52,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#325](https://github.com/eduwxyz/tucano/pull/325) | MERGED | Stop a busy CI machine from reddening the core startup test | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#327](https://github.com/eduwxyz/tucano/pull/327) | OPEN | Let the line beside a run's steps fold them: a double-click, from wherever the run has scrolled to | yes | 1 | 12 | not reviewed |
 | [#329](https://github.com/eduwxyz/tucano/pull/329) | OPEN | Remember a conversation's steps folded, so coming back to it finds them folded (#328) | yes | 2 | 8 | not reviewed |
-| [#332](https://github.com/eduwxyz/tucano/pull/332) | OPEN | Steer a reply that's still working from the bottom of its steps (#331) | no: inspect patch equivalence | 3 | 18 | not reviewed |
+| [#332](https://github.com/eduwxyz/tucano/pull/332) | OPEN | Steer a reply that's still working from the bottom of its steps (#331) | no: inspect patch equivalence | 3 | 14 | not reviewed |
 | [#333](https://github.com/eduwxyz/tucano/pull/333) | OPEN | Route each reply by what Jev reads in the prompt: six pools, roles with their own specialists, and a thin line that says why | no: inspect patch equivalence | 3 | 25 | not reviewed |
 | [#334](https://github.com/eduwxyz/tucano/pull/334) | OPEN | Approval card: lead with the action and its target, and say what became of the call | no: inspect patch equivalence | 2 | 10 | not reviewed |
 | [#336](https://github.com/eduwxyz/tucano/pull/336) | OPEN | Right-click a picture: save it, copy it, or put it back in the prompt (#335) | no: inspect patch equivalence | 1 | 16 | not reviewed |
@@ -63,7 +63,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#351](https://github.com/eduwxyz/tucano/pull/351) | MERGED | Read 0 as no monthly limit on the screens too, not as spent | no: inspect patch equivalence | 1 | 13 | not reviewed |
 | [#352](https://github.com/eduwxyz/tucano/pull/352) | CLOSED | Let a configured MCP server wear the image the person gives it, from a file or an https address | yes | 1 | 7 | not reviewed |
 | [#353](https://github.com/eduwxyz/tucano/pull/353) | OPEN | Give a connector the picture it wears, instead of a black terminal | no: inspect patch equivalence | 2 | 9 | not reviewed |
-| [#355](https://github.com/eduwxyz/tucano/pull/355) | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | yes | 4 | 3 | not reviewed |
+| [#355](https://github.com/eduwxyz/tucano/pull/355) | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | no: inspect patch equivalence | 5 | 3 | not reviewed |
 | [#366](https://github.com/eduwxyz/tucano/pull/366) | OPEN | Let a routine say nothing when it has nothing to report | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#367](https://github.com/eduwxyz/tucano/pull/367) | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#368](https://github.com/eduwxyz/tucano/pull/368) | MERGED | Update the locked runtime packages past their security advisories | no: inspect patch equivalence | 0 | 0 | not reviewed |
@@ -86,9 +86,13 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#411](https://github.com/eduwxyz/tucano/pull/411) | OPEN | Reply to a message, and to the selected excerpt with ⌘L, stacked on #32 | no: inspect patch equivalence | 5 | 4 | not reviewed |
 | [#412](https://github.com/eduwxyz/tucano/pull/412) | OPEN | A killed reply with real work behind it offers Continue before Try again | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#416](https://github.com/eduwxyz/tucano/pull/416) | OPEN | Let a Grok login be another account, in Settings › Accounts | yes | 3 | 0 | not reviewed |
-| [#417](https://github.com/eduwxyz/tucano/pull/417) | OPEN | Notifications over every window | yes | 1 | 6 | not reviewed |
+| [#417](https://github.com/eduwxyz/tucano/pull/417) | OPEN | Notifications over every window | no: inspect patch equivalence | 1 | 6 | not reviewed |
 | [#419](https://github.com/eduwxyz/tucano/pull/419) | OPEN | Draw the wiki map in its first frame, and fit it again when the window changes size | no: inspect patch equivalence | 0 | 2 | not reviewed |
 | [#422](https://github.com/eduwxyz/tucano/pull/422) | OPEN | Skin the toast in the app's orange instead of the primary that inverts to white | no: inspect patch equivalence | 1 | 4 | not reviewed |
+| [#424](https://github.com/eduwxyz/tucano/pull/424) | OPEN | Control room visibility and agent read access | no: inspect patch equivalence | 1 | 0 | not reviewed |
+| [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 7 | 5 | not reviewed |
+| [#435](https://github.com/eduwxyz/tucano/pull/435) | OPEN | A bot can look after something for you between conversations | no: inspect patch equivalence | 8 | 3 | not reviewed |
+| [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 2 | 3 | not reviewed |
 
 ## Commit dependencies
 
@@ -104,31 +108,33 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 
 | File | PRs |
 | --- | --- |
-| src/renderer/src/styles.css | #244, #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #419, #422 |
-| src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #377, #379, #383, #385, #391, #395, #411, #416, #417 |
-| src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #377, #383, #385, #395, #401, #402, #410, #411, #412 |
-| src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #373, #375, #377, #379, #383, #385, #391, #395, #401, #402, #411, #412, #417 |
-| src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417 |
-| src/renderer/src/components/Pages.tsx | #244, #245, #247, #258, #259, #261, #274, #284, #288, #298, #310, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417 |
-| src/shared/rpc.ts | #245, #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #322, #332, #338, #353, #375, #379, #383, #385, #401, #402, #411, #416, #417 |
-| src/core/db.ts | #247, #249, #250, #258, #259, #261, #272, #274, #279, #288, #322, #332, #333, #334, #338, #353, #355, #366, #375, #377, #383, #391, #411, #416, #417 |
-| src/renderer/src/store.ts | #245, #247, #249, #261, #272, #279, #288, #305, #311, #313, #321, #322, #332, #334, #338, #353, #375, #379, #383, #385, #395, #411, #416 |
-| src/core/settings-patch.ts | #245, #247, #250, #261, #268, #274, #284, #288, #298, #311, #322, #332, #333, #336, #338, #379, #383, #385, #391, #395, #411, #417 |
-| src/shared/rpc-shapes.ts | #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #332, #338, #353, #375, #379, #383, #385, #411, #417 |
-| src/core/policy-people.ts | #245, #247, #249, #250, #258, #259, #268, #305, #311, #322, #336, #338, #353, #375, #379, #383, #385, #417 |
-| src/core/engines/fake.ts | #245, #258, #259, #268, #274, #298, #310, #319, #322, #332, #338, #355, #366, #383, #385, #402 |
-| CHANGELOG.md | #261, #288, #305, #332, #333, #338, #383, #392, #395, #397, #401, #402, #410, #412, #417 |
+| src/renderer/src/styles.css | #244, #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #419, #422, #432, #435 |
+| src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #377, #379, #383, #385, #391, #395, #411, #416, #417, #424, #432, #435 |
+| src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #377, #383, #385, #395, #401, #402, #410, #411, #412, #435 |
+| src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #373, #375, #377, #379, #383, #385, #391, #395, #401, #402, #411, #412, #417, #432, #435 |
+| src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417, #432, #435, #437 |
+| src/renderer/src/components/Pages.tsx | #244, #245, #247, #258, #259, #261, #274, #284, #288, #298, #310, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #435, #437 |
+| src/shared/rpc.ts | #245, #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #322, #332, #338, #353, #375, #379, #383, #385, #401, #402, #411, #416, #417, #432, #435, #437 |
+| src/core/db.ts | #247, #249, #250, #258, #259, #261, #272, #274, #279, #288, #322, #332, #333, #334, #338, #353, #355, #366, #375, #377, #383, #391, #411, #416, #417, #432, #435, #437 |
+| src/renderer/src/store.ts | #245, #247, #249, #261, #272, #279, #288, #305, #311, #313, #321, #322, #332, #334, #338, #353, #375, #379, #383, #385, #395, #411, #416, #432, #435, #437 |
+| src/shared/rpc-shapes.ts | #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #332, #338, #353, #375, #379, #383, #385, #411, #417, #432, #435, #437 |
+| src/core/settings-patch.ts | #245, #247, #250, #261, #268, #274, #284, #288, #298, #311, #322, #332, #333, #336, #338, #379, #383, #385, #391, #395, #411, #417, #432 |
+| src/core/policy-people.ts | #245, #247, #249, #250, #258, #259, #268, #305, #311, #322, #336, #338, #353, #375, #379, #383, #385, #417, #432, #435, #437 |
+| src/core/engines/fake.ts | #245, #258, #259, #268, #274, #298, #310, #319, #322, #332, #338, #355, #366, #383, #385, #402, #435 |
+| CHANGELOG.md | #261, #288, #305, #332, #333, #338, #383, #392, #395, #397, #401, #402, #410, #412, #417, #435 |
+| src/core/people.ts | #245, #247, #274, #284, #298, #322, #375, #383, #385, #432 |
 | src/shared/workspaces.ts | #268, #274, #379, #383, #385, #391, #395, #411, #417 |
-| src/core/people.ts | #245, #247, #284, #298, #322, #375, #383, #385 |
+| src/renderer/src/components/Dialogs.tsx | #247, #272, #279, #383, #410, #435 |
 | src/core/context.ts | #258, #259, #274, #355, #395, #411 |
 | src/core/jev.ts | #279, #284, #298, #379, #383, #385 |
-| src/renderer/src/components/Dialogs.tsx | #247, #272, #279, #383, #410 |
 | src/shared/questions.ts | #247, #298, #383, #385, #417 |
 | src/core/wiki.ts | #258, #259, #268, #355, #392 |
 | src/renderer/src/components/Wiki.tsx | #258, #259, #268, #410, #419 |
 | src/renderer/src/components/Decisions.tsx | #284, #298, #383, #385, #417 |
 | src/main/index.ts | #336, #353, #372, #395, #417 |
+| test/team-round3.test.ts | #245, #322, #375, #432 |
 | src/renderer/src/components/Sidebar.tsx | #247, #249, #250, #274 |
+| test/db-queries.test.ts | #258, #259, #411, #435 |
 | scripts/screens-send-modes.mjs | #261, #288, #332, #338 |
 | src/core/followups.ts | #261, #288, #332, #338 |
 | test/send-modes.test.ts | #261, #288, #332, #338 |
@@ -138,9 +144,8 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | test/jev-recommend.test.ts | #284, #298, #383, #385 |
 | src/renderer/src/components/Harness.tsx | #333, #383, #410, #416 |
 | src/renderer/src/components/Skills.tsx | #244, #311, #410 |
-| test/team-round3.test.ts | #245, #322, #375 |
+| src/renderer/src/components/ui.tsx | #250, #395, #411 |
 | scripts/screens-wiki-write.mjs | #258, #259, #355 |
-| test/db-queries.test.ts | #258, #259, #411 |
 | test/wiki-tools-card-ui.test.tsx | #258, #259, #355 |
 | test/wiki-write-core.test.ts | #258, #259, #355 |
 | test/wiki-write-privacy.test.ts | #258, #259, #355 |
@@ -168,6 +173,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/shared/run-progress.ts | #401, #402, #412 |
 | test/continue-button.test.tsx | #401, #402, #412 |
 | test/continue-killed.test.ts | #401, #402, #412 |
+| src/renderer/src/components/People.tsx | #410, #432, #437 |
 | scripts/screens-thinking.mjs | #245, #322 |
 | src/core/engines/pi.ts | #245, #322 |
 | src/core/engines/types.ts | #245, #322 |
@@ -195,8 +201,10 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/shared/routing.ts | #333, #383 |
 | test/model-routing-run.test.ts | #333, #383 |
 | test/model-routing.test.ts | #333, #383 |
+| test/wiki-live-permissions.test.ts | #355, #373 |
 | src/core/routines.ts | #366, #395 |
+| src/core/memory.ts | #391, #432 |
 | src/renderer/src/components/Routines.tsx | #395, #410 |
-| src/renderer/src/components/ui.tsx | #395, #411 |
 | src/renderer/src/components/Memory.tsx | #397, #410 |
 | src/renderer/src/components/WorkspaceManager.tsx | #410, #416 |
+| test/antigravity-migration.test.ts | #411, #435 |

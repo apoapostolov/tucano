@@ -27,7 +27,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'app-conversation', page: 'app', label: L('Conversa', 'Conversation'), keys: ['showThinking', 'thinkingSize', 'steps', 'stepsLatest'], scope: 'personal', visible: true },
     { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'app', label: L('Notificações', 'Notifications'), keys: ['sounds', 'notice'], scope: 'personal', visible: true },
-    { id: 'app-dictation', page: 'app', label: L('Ditado', 'Dictation'), keys: ['voice'], scope: 'computer', visible: admin },
+    { id: 'app-dictation', page: 'app', label: L('Ditado', 'Dictation'), keys: ['voice'], scope: 'mixed', visible: admin },
     { id: 'app-startup', page: 'app', label: L('Inicialização', 'Startup'), keys: ['openAtLogin'], scope: 'computer', visible: admin },
     { id: 'app-updates', page: 'app', label: L('Atualizações', 'Updates'), keys: [], scope: 'computer', visible: admin },
     { id: 'workspace-context', page: 'workspace', label: L('Contexto', 'Context'), keys: ['workspaceLabel', 'workspaceName', 'context', 'onboarding'], scope: 'workspace', visible: admin },
@@ -44,8 +44,8 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
     { id: 'models-agents', page: 'models', label: L('Modelos dos agentes', 'Agent models'), keys: [], scope: 'workspace', visible: admin },
-    { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses'], scope: 'computer', visible: admin },
-    { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'computer', visible: admin },
+    { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses'], scope: 'mixed', visible: admin },
+    { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'mixed', visible: admin },
     { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevRecommend', 'jevNextSteps'], scope: 'workspace', visible: admin },
     { id: 'models-routing', page: 'models', label: L('Roteamento', 'Routing'), keys: ['routing'], scope: 'workspace', visible: admin },
     { id: 'knowledge-memory', page: 'knowledge', label: L('Memória', 'Memory'), keys: ['memoryModel', 'memoryLearning'], scope: 'workspace', visible: admin },
@@ -80,6 +80,7 @@ const legacy: Readonly<Record<string, string>> = {
 export function settingsDestination(requested: string | undefined, sections: readonly SettingsSection[]) {
   const available = sections.filter(section => section.visible)
   const destination = legacy[requested ?? ''] ?? requested
-  const section = available.find(s => s.id === destination) ?? available.find(s => s.page === destination) ?? available[0]!
+  const relatedPage = sections.find(s => s.id === destination)?.page ?? settingsPages().find(([id]) => destination?.startsWith(id + '-'))?.[0]
+  const section = available.find(s => s.id === destination) ?? available.find(s => s.page === destination || s.page === relatedPage) ?? available[0]!
   return { page: section.page, section: section.id, explicit: available.some(s => s.id === destination) }
 }

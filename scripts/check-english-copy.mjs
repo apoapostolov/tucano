@@ -200,7 +200,7 @@ try {
   }
   if (!process.argv.includes('--baseline')) {
     for (const m of report.measurements) for (const row of m.rows) {
-      if (row.text.startsWith('Bringing the Tucano from your computer?')) continue;
+      if (row.text.startsWith('Export everything from Workspace')) continue; // replacement warning preserves all data consequences
       assert.ok(row.lines <= 2, m.surface + ' ' + m.viewport + 'px: ' + row.lines + ' lines: ' + row.text);
     }
   }

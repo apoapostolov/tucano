@@ -2651,10 +2651,10 @@ function WorkspaceFileSection(): ReactNode {
   const size = (n: number): string => (n >= 1024 ** 3 ? `${(n / 1024 ** 3).toFixed(2)} GB` : `${(n / 1024 ** 2).toFixed(1)} MB`)
   const now = health
     ? health.free >= 100_000
-      ? L(`${size(health.bytes)}, dos quais ${size(health.free)} são páginas livres que nada vai reaproveitar.`, `${size(health.bytes)}, of which ${size(health.free)} are free pages nothing will reuse.`)
-      : L(`${size(health.bytes)}, sem páginas livres presas.`, `${size(health.bytes)}, with no free pages held.`)
+      ? L(`${size(health.bytes)}, dos quais ${size(health.free)} são páginas livres que nada vai reaproveitar.`, `${size(health.bytes)}; ${size(health.free)} unused.`)
+      : L(`${size(health.bytes)}, sem páginas livres presas.`, `${size(health.bytes)}; no unused pages.`)
     : ''
-  const check = health ? (health.sound ? L('O arquivo está íntegro.', 'The file is sound.') : L(`O arquivo não passou na verificação: ${health.said}`, `The file did not pass its check: ${health.said}`)) : ''
+  const check = health ? (health.sound ? L('O arquivo está íntegro.', 'Integrity check passed.') : L(`O arquivo não passou na verificação: ${health.said}`, `Integrity check failed: ${health.said}`)) : ''
   const run = (): void => {
     setBusy(true)
     setNote(L('Reescrevendo o arquivo…', 'Rebuilding the file…'))
@@ -2669,9 +2669,9 @@ function WorkspaceFileSection(): ReactNode {
   }
   return (
     <div className="workspace-danger__section">
-      <h3>{L('O arquivo do workspace', 'The workspace file')}</h3>
+      <h3>{L('O arquivo do workspace', 'Database storage')}</h3>
       <p className="small muted">
-        {L('Tudo o que este Tucano sabe mora num arquivo só. Ele cresce a cada conversa e não devolve sozinho o espaço do que foi apagado.', 'Everything this Tucano knows lives in one file. It grows with every conversation, and it does not give back the space of what was deleted on its own.')}
+        {L('Tudo o que este Tucano sabe mora num arquivo só. Ele cresce a cada conversa e não devolve sozinho o espaço do que foi apagado.', 'Chat history and workspace records are stored in this database. Deleted data can leave unused space.')}
         {now ? ` ${now} ${check}` : ''}
       </p>
       <div className="row">
@@ -2683,7 +2683,7 @@ function WorkspaceFileSection(): ReactNode {
       <p className="small muted">
         {L(
           'Esvazia o log de escrita, reescreve o arquivo e atualiza as estatísticas do planejador: leva segundos e nada se perde. Não roda com uma resposta trabalhando, e o app fica ocupado até terminar.',
-          'Empties the write-ahead log, rebuilds the file and refreshes the planner’s statistics: it takes seconds and nothing is lost. It does not run while a reply is at work, and the app stays busy until it finishes.'
+          'Reclaim unused space without deleting records. Available while agents are idle; the app waits until maintenance finishes.'
         )}
       </p>
     </div>
@@ -2777,7 +2777,7 @@ export function BackupCard(): ReactNode {
         web
           ? L(
               'Trouxe o Tucano do seu computador? No app do computador, use Exportar tudo (Configurações › Geral) e envie o arquivo aqui: agentes, conversas, memórias, wiki e arquivos substituem os deste Tucano. Um backup diário (.db, da pasta de backups) também serve, só com o banco.',
-              "Bringing the Tucano from your computer? In the desktop app, use Export everything (Settings › General) and send the file here: agents, conversations, memories, wiki and files replace this Tucano's. A daily backup (.db, from the backups folder) works too, with the database only."
+              "Export everything from Workspace › Backups in the desktop app. Restore replaces agents, chats, memory, Wiki, and files. A .db backup restores only the database."
             )
           : L(
               'Tudo deste Tucano num arquivo .zip: agentes, conversas, memórias, wiki e arquivos, pra levar pra um Tucano num servidor (como o Tucano Pro). As senhas dos conectores e os logins de IA não vão: eles ficam presos a este computador.',
@@ -3439,10 +3439,10 @@ function WorkspaceHistorySection(): ReactNode {
       <h3>{L('Histórico', 'History')}</h3>
       <p className="small muted">{L('O que fica guardado do que foi dito e respondido neste workspace. O prazo é conferido uma vez por dia; apagar na hora é o botão abaixo.', 'What is kept of what was said and answered in this workspace. The period is checked once a day; the button below deletes at once.')}</p>
       <Field
-        label={L('Guardar por quantos dias', 'Keep for how many days')}
+        label={L('Guardar por quantos dias', 'History retention (days)')}
         hint={L(
           'Zero guarda tudo, para sempre. Com 30, o que foi dito ou respondido há mais de 30 dias sai do banco na limpeza diária. Um bot pode ter um prazo próprio, na página dele. As memórias, a wiki e os recibos de uso não entram nessa conta.',
-          'Zero keeps everything, for good. With 30, anything said or answered more than 30 days ago leaves the database in the daily cleanup. A bot can have its own period, on its page. Memories, the wiki and the usage receipts are not part of it.'
+          'Daily cleanup deletes older messages. 0 keeps all; agent overrides apply. Memory, Wiki, and usage records remain.'
         )}
       >
         <NumberInput min={0} max={MAX_RETENTION_DAYS} step={1} value={kept} onChange={(n) => updateSettings({ retentionDays: cleanRetentionDays(n) ?? 0 })} className="input--short" />
@@ -4011,10 +4011,10 @@ export function SettingsPage(): ReactNode {
 export function notifyHint(state: NotifyState | 'shown', mac: boolean): string | null {
   const elsewhere = L(
     'Pra ser avisado, use o app do Tucano no computador (Configurações › Servidores), o app do iPhone ou o Telegram (Configurações › Celular).',
-    "Alternatives: desktop, iPhone, or Telegram (Settings › Phone)."
+    "Other options: desktop, iPhone, or Telegram."
   )
   if (state === 'insecure') return L('O navegador não mostra notificações de um endereço sem HTTPS (como o do Tailscale, http://100.…). ', "Browser notifications require HTTPS. ") + elsewhere
-  if (state === 'blocked') return L('O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ', "Allow notifications in site settings and reload. ") + elsewhere
+  if (state === 'blocked') return L('O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ', "Allow site notifications and reload. ") + elsewhere
   if (state === 'unsupported') return L('Aqui não dá pra mostrar notificações. ', "Notifications are unavailable here. ") + elsewhere
   if (state === 'shown')
     return mac
@@ -4051,7 +4051,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               <p className="muted small">
                 {L(
                   'Arraste um retângulo na tela, com os cantos, pro canto onde os avisos devem chegar. Sem escolher, eles chegam no canto de baixo, à direita.',
-                  'Drag a rectangle on screen, by its corners, to the corner where notifications should arrive. Without choosing, they arrive in the bottom right corner.'
+                  'Choose the screen area for notifications. Default: bottom right.'
                 )}
               </p>
             </div>
@@ -4084,7 +4084,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               <p className="muted small">
                 {L(
                   'As cores do próprio sistema, no claro e no escuro, com o destaque do Windows, do Mac ou do Linux de agora. Sistema acompanha a troca do dia pra noite.',
-                  'The system’s own colors, light and dark, with the accent Windows, the Mac or Linux has now. System follows the day to night switch.'
+              'Use light, dark, or system appearance with the operating system’s accent color.'
                 )}
               </p>
             </div>
@@ -4122,7 +4122,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               <p className="muted small">
                 {L(
                   'Um aviso de cada vez, com os outros esperando atrás dele, na ordem do que mais importa: aprovações, perguntas e, por último, o que terminou. O de frente sai com um deslize e o próximo sobe.',
-                  'One notification at a time, the rest waiting behind it, in the order that matters most: approvals, questions, and last what finished. The one in front leaves with a swipe and the next comes up.'
+                  'Show one at a time: approvals, questions, then completions. Swipe to dismiss.'
                 )}
               </p>
             </div>

@@ -28,6 +28,7 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
     frame.current = null
     movingTo.current = null
+    root.current?.removeAttribute('data-settings-scrolling')
   }
 
   const showSection = (id: string, animated: boolean, focus: boolean): void => {
@@ -37,8 +38,9 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
     if (!scroller || !target) return
     setCurrent(id)
     const inset = (navigation.current?.getBoundingClientRect().height ?? 0) + 16
-    const top = Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
+    const destinationTop = (): number => Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
       scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset))
+    const top = destinationTop()
     if (focus) target.focus({ preventScroll: true })
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     const start = scroller.scrollTop
@@ -47,13 +49,14 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
       return
     }
     movingTo.current = id
+    root.current?.setAttribute('data-settings-scrolling', id)
     let began: number | null = null
     const step = (at: number): void => {
       began ??= at
       const progress = Math.min(1, (at - began) / SETTINGS_SCROLL_MS)
-      scroller.scrollTop = start + (top - start) * settingsEase(progress)
+      scroller.scrollTop = start + (destinationTop() - start) * settingsEase(progress)
       if (progress < 1) frame.current = requestAnimationFrame(step)
-      else { frame.current = null; movingTo.current = null }
+      else { frame.current = null; movingTo.current = null; root.current?.removeAttribute('data-settings-scrolling') }
     }
     frame.current = requestAnimationFrame(step)
   }

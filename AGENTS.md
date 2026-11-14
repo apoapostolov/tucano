@@ -83,6 +83,8 @@ another switch at the bottom of the nearest card.
   Run `npm run check:settings`: its source check follows literal settings writes through shared
   controls, checks declared ownership and catches missing or duplicate sections. Dynamic patches,
   RPC-only controls and access scopes still require the placement review and interaction tests.
+  On an older upstream branch without this structure or tool, use the proposal's legacy-tab
+  mapping and built-UI checks; do not copy fork-only workflow files into that feature's PR.
 - Place personal appearance/input under App; workspace identity, people and data under
   Workspace; execution, permissions, limits, automation and skill defaults under Agents;
   runtime/model/accounts/classifier setup under Models; Memory and Wiki under Knowledge;
