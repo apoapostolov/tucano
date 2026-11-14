@@ -99,9 +99,10 @@ another switch at the bottom of the nearest card.
   to, resolve overlaps before integration, and retain the union of compatible controls. On older
   upstream feature branches, use the documented legacy-tab mapping rather than make the feature
   depend on the unaccepted overhaul. Update the existing PR when its setting moves.
-- Present Settings as flat sections with headings, spacing and thin dividers. Do not introduce
-  rounded cards, elevated containers or shadows around settings groups. Preserve normal input
-  and button affordances, and verify the flat hierarchy in fresh screenshots.
+- Group logically connected settings in restrained rounded containers. Use spacing and thin
+  borders to clarify order, with no heavy elevation or shadows. Keep the danger zone in a red
+  bordered group. Preserve normal input/button affordances and verify the final hierarchy in
+  fresh screenshots.
 - Section navigation must remain keyboard-accessible, track manual scrolling and clear sticky
   headers. Use links for sections visible together, tabs for panels switched independently.
   Scrolling must be interruptible and immediate for keyboard/reduced-motion operation. Never

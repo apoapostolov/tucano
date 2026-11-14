@@ -18,7 +18,7 @@ Pointer activation uses an interruptible 280 ms ease-in-out scroll. Keyboard act
 
 Use stable section IDs rather than labels, translated text or DOM positions. Preserve legacy tab destinations (`geral`, `modelos`, `agentes`, `roteamento`, `integracoes`, `pessoas`, `atividade`, `servidores`) through an explicit mapping. Existing links must reach the appropriate new page/section even if a permission or capability removes a remembered destination. Navigation state remains UI state; it is not a new database preference.
 
-Use a flat presentation within each page: plain section headings, spacing and thin dividers. Settings sections and their nested groups do not use rounded cards, raised surfaces or shadows. Keep the existing input and button affordances.
+Group logically connected settings in understated rounded containers, separated by spacing and thin borders. Avoid deep elevation and heavy shadows. Keep the danger zone in a red bordered container. Preserve the existing input and button affordances.
 
 ## Canonical placement
 

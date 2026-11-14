@@ -13,11 +13,11 @@ export async function checkSettingsOverhaul(page, output, guard) {
       if (!(await tab.count())) continue
       await tab.click()
       await page.evaluate(() => document.fonts.ready)
-      const flat = await page.locator('.settings-content .card').evaluateAll(nodes => nodes.every(node => {
+      const grouped = await page.locator('.settings-content .card').evaluateAll(nodes => nodes.every(node => {
         const style = getComputedStyle(node)
-        return style.borderRadius === '0px' && style.boxShadow === 'none'
+        return style.borderRadius !== '0px' && style.boxShadow === 'none'
       }))
-      assert.ok(flat, 'Settings groups must be flat in the installed renderer')
+      assert.ok(grouped, 'Settings groups must have restrained rounded borders without shadows')
       const copy = await measureCopy(page, [
         { selector: '.settings-pages button, .settings-sections a', maxLines: 1 },
         { selector: '.settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible' }
