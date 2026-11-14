@@ -1273,8 +1273,8 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "Pause after this turn, preserving the session and completed work",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "replacement": "Pause before the next step, preserving the session and completed work",
+      "reason": "The current pause PR clarifies that work waits before the next tool call or turn; preserve its corrected timing."
     },
     {
       "id": 67,
@@ -2431,9 +2431,9 @@
       "syntax": "StringLiteral",
       "change": "new",
       "previous": null,
-      "decision": "replace",
+      "decision": "retain",
       "replacement": "Checking…",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "reason": "The existing English already uses the approved wording."
     },
     {
       "id": 128,
@@ -2450,9 +2450,9 @@
       "syntax": "StringLiteral",
       "change": "new",
       "previous": null,
-      "decision": "replace",
+      "decision": "retain",
       "replacement": "Checking…",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "reason": "The existing English already uses the approved wording."
     },
     {
       "id": 129,

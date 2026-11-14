@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path'
 import { createServer } from 'node:net'
 import { _electron as electron } from 'playwright'
 import { measureCopy } from './lib/copy-layout.mjs'
+import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
 
 const output = resolve(process.argv[2] || '.tucano-local/copy-round2/surfaces')
 mkdirSync(output, { recursive: true })
@@ -23,6 +24,7 @@ const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 
 let app
 try {
   await Promise.all(reservations.map(({ server }) => new Promise(resolve => server.close(resolve))))
+  assert.ok(supportsBackgroundCopyQA(env.TUCANO_ELECTRON), 'Refuse to launch a bundle without hidden QA support')
   app = await electron.launch({ args: [...(env.TUCANO_ELECTRON ? [] : ['.']), '--qa-background'], ...(env.TUCANO_ELECTRON ? { executablePath: env.TUCANO_ELECTRON } : {}), env })
   report.runtime = await app.evaluate(({ app, BrowserWindow }) => {
     globalThis.__copyExposure = []
@@ -94,6 +96,15 @@ try {
     ])
     await page.getByRole('button', { name: 'Cancel', exact: true }).click()
   }
+  await page.getByRole('button', { name: 'Switch workspace', exact: true }).click()
+  await page.getByRole('menuitem', { name: 'Manage workspaces', exact: true }).click()
+  await page.locator('.workspace-manager').getByRole('button', { name: /^Duplicate / }).first().click()
+  for (const width of [1280, 900]) {
+    await resize(mainId, width)
+    await page.locator('.workspace-manager__body > p').last().scrollIntoViewIfNeeded()
+    await capture(page, 'workspace-copy-exclusions', [{ selector: '.workspace-manager__body > p:last-of-type', maxLines: 8, reason: 'Must retain all excluded data, default sign-in, Telegram scope, and shared-folder consequences.' }])
+  }
+  await page.locator('.workspace-manager').getByRole('button', { name: 'Cancel', exact: true }).click()
   // A separately loaded built notification renderer uses a synthetic RPC feed. The normal
   // application's notification windows remain disabled in background QA.
   for (const pick of [false, true]) {

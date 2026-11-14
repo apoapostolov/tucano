@@ -1,6 +1,6 @@
 # English copy follow-up proposal
 
-Source: `cf9d34fa6fff1fe9a7042a6785c827bb081683b3`; comparison: `7ba091c217eb6e3dab28b637c555de0126e560b5`. This is the editorial proposal before source implementation. The accompanying [complete review](english-copy-round2-review.json) records all 380 candidates, including retained strings. 182 replacements are proposed.
+Source: `cf9d34fa6fff1fe9a7042a6785c827bb081683b3`; comparison: `7ba091c217eb6e3dab28b637c555de0126e560b5`. This is the editorial proposal before source implementation. The accompanying [complete review](english-copy-round2-review.json) records all 380 candidates, including retained strings. 180 replacements are proposed.
 
 ## Purpose and scope
 
@@ -53,7 +53,7 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 55 · src/renderer/src/components/Conversation.tsx:1214 | Delete this session | Delete session |
 | 63 · src/renderer/src/components/Conversation.tsx:2038 | Go on now, in the same session and on the same model | Resume with the same session and model |
 | 64 · src/renderer/src/components/Conversation.tsx:2039 | Let the reply go on | Resume reply |
-| 66 · src/renderer/src/components/Conversation.tsx:2050 | Stop at the end of this turn and wait: the session and what it has done stay | Pause after this turn, preserving the session and completed work |
+| 66 · src/renderer/src/components/Conversation.tsx:2050 | Stop at the end of this turn and wait: the session and what it has done stay | Pause before the next step, preserving the session and completed work |
 | 67 · src/renderer/src/components/Conversation.tsx:2051 | Pause the reply | Pause reply |
 | 70 · src/renderer/src/components/Harness.tsx:493 | That account’s sign-in did not leave now because its CLI was still open: close its window. It goes the next time Tucano opens. | Close the account’s CLI window to finish signing out. Otherwise, sign-out completes when Tucano restarts. |
 | 73 · src/renderer/src/components/Initiative.tsx:19 | open | Open |
@@ -104,8 +104,6 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 124 · src/renderer/src/components/Initiative.tsx:305 | On. | Enabled. |
 | 125 · src/renderer/src/components/Initiative.tsx:308 | Off: nothing runs. | Disabled. Check-ins are off. |
 | 126 · src/renderer/src/components/Initiative.tsx:315 | ${st.today.reviews} of ${draft.dailyReviews} check-ins today · ${tokens(st.today.tokens)} of ${tokens(draft.dailyTokens)} tokens · ${st.open} open, ${st.waitingOnPerson} waiting on you | ${st.today.reviews}/${draft.dailyReviews} check-ins · ${tokens(st.today.tokens)}/${tokens(draft.dailyTokens)} tokens today · ${st.open} open; ${st.waitingOnPerson} waiting for you |
-| 127 · src/renderer/src/components/Initiative.tsx:331 | Checking… | Checking… |
-| 128 · src/renderer/src/components/Initiative.tsx:337 | Checking… | Checking… |
 | 130 · src/renderer/src/components/Initiative.tsx:345 | Off. | Disabled. |
 | 131 · src/renderer/src/components/Initiative.tsx:349 | Turn off | Disable |
 | 132 · src/renderer/src/components/Initiative.tsx:353 | on | Enabled |
@@ -212,3 +210,5 @@ Labels should occupy one line and hints at most two. Character counts are estima
 At native 150% scaling, the 900px agent editor has a 249px text column. The original proposals for IDs 174, 180 and 181 used three lines; the 49-character side note had only 134px. Shorten the two explanations as recorded above and put the zero/forever override note below the input at full column width. Keep the same type size and all content visible.
 
 The screenshot also exposes wrapped neighboring labels and hints because the 260px profile summary squeezes the editor. Stack that summary below the form at 761–1100px viewports, retaining the existing mobile layout and wide desktop arrangement. Extend measurement to every visible editor label and hint, including the new Initiative controls.
+
+The current pause revision (`925c557a`) was integrated before installation. Its original Portuguese timing correction is preserved, and ID 66 now says “before the next step” in English. The copy-only syntax comparison remains evidence for the editorial patch; this subsequent integration also changes the Hold implementation and its regression coverage. Two unchanged “Checking…” occurrences are retained, giving 180 actual English replacements.

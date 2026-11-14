@@ -4,14 +4,15 @@
 // Scratch data, fake engines, reserved ports, and a window that never shows or takes focus
 // (src/main/background-qa.ts). Writes report.json beside the captures with the source SHA.
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { _electron as electron } from 'playwright'
+import { _electron as electron, chromium } from 'playwright'
 import { measureCopy } from './lib/copy-layout.mjs'
 import { electronCopyViewport } from './lib/electron-copy-viewport.mjs'
+import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
 
 const output = resolve(process.argv[2] ?? '.tucano-local/initiative/screens')
 mkdirSync(output, { recursive: true })
@@ -24,7 +25,7 @@ const reserve = async () => {
   })
   return { server, port: server.address().port }
 }
-const ports = await Promise.all([reserve(), reserve()])
+const ports = await Promise.all([reserve(), reserve(), reserve()])
 const env = {
   ...process.env,
   TUCANO_DATA: data,
@@ -49,16 +50,34 @@ const report = {
 }
 
 let app
+let browser
+let server
 try {
   await Promise.all(ports.map(({ server }) => new Promise((yes, no) => server.close((e) => (e ? no(e) : yes())))))
   // TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, against the
   // bundle a person would actually have.
   const installed = env.TUCANO_ELECTRON
-  app = await electron.launch({ args: [...(installed ? [] : ['.']), '--qa-background'], ...(installed ? { executablePath: installed } : {}), env })
-  report.runtime = await app.evaluate(({ app }) => ({ version: app.getVersion(), electron: process.versions.electron, executable: process.execPath, data: app.getPath('userData') }))
+  let window
+  if (supportsBackgroundCopyQA(installed)) {
+    app = await electron.launch({ args: [...(installed ? [] : ['.']), '--qa-background'], ...(installed ? { executablePath: installed } : {}), env })
+    report.runtime = await app.evaluate(({ app }) => ({ version: app.getVersion(), electron: process.versions.electron, executable: process.execPath, data: app.getPath('userData') }))
+    window = await app.firstWindow()
+  } else {
+    assert.ok(!installed, 'Refuse to launch an installed bundle without hidden QA support')
+    const url = `http://127.0.0.1:${ports[2].port}`
+    server = spawn(process.execPath, ['out/main/server.js'], { env: { ...env, TUCANO_HOST: '127.0.0.1', TUCANO_PORT: String(ports[2].port), TUCANO_TOKEN: 'initiative-copy-scratch' }, windowsHide: true, stdio: 'ignore' })
+    for (let i = 0; i < 100; i++) {
+      try { if ((await fetch(url)).ok) break } catch {}
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: process.env.TUCANO_BROWSER_CHANNEL || 'msedge' } : {}) })
+    window = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+    await window.goto(url + '/?token=initiative-copy-scratch')
+    report.runtime = { browser: await browser.version(), mode: 'headless browser, scratch server' }
+  }
 
   // Nothing this script does may show or focus a window: every capture proves it again.
-  await app.evaluate(({ BrowserWindow, app }) => {
+  if (app) await app.evaluate(({ BrowserWindow, app }) => {
     globalThis.__qaExposure = []
     const watch = (w) => {
       for (const event of ['show', 'focus']) w.on(event, () => globalThis.__qaExposure.push({ id: w.id, event }))
@@ -66,10 +85,10 @@ try {
     BrowserWindow.getAllWindows().forEach(watch)
     app.on('browser-window-created', (_e, w) => watch(w))
   })
-  const window = await app.firstWindow()
   window.setDefaultTimeout(30_000)
   window.on('pageerror', (e) => report.errors.push(String(e)))
   const guard = async () => {
+    if (!app) return
     const state = await app.evaluate(({ BrowserWindow }) => ({
       events: globalThis.__qaExposure,
       windows: BrowserWindow.getAllWindows().map((w) => ({ visible: w.isVisible(), focused: w.isFocused(), focusable: w.isFocusable() }))
@@ -77,7 +96,8 @@ try {
     assert.deepEqual(state.events, [], 'the initiative run exposed or focused a window')
     assert.ok(state.windows.length && state.windows.every((w) => !w.visible && !w.focused && !w.focusable), 'the window must stay hidden and unfocusable')
   }
-  const viewport = await electronCopyViewport(window, async ({ width, height }) => {
+  const browserViewport = window.viewportSize()
+  const viewport = app ? await electronCopyViewport(window, async ({ width, height }) => {
     await guard()
     await app.evaluate(({ BrowserWindow }, size) => {
       const target = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().includes('index.html'))
@@ -87,7 +107,7 @@ try {
         if (!w || w.isVisible() || w.isFocused() || w.isFocusable()) throw new Error('Only resize a hidden QA window')
       }
     }, { width, height })
-  })
+  }) : { native: { ...browserViewport, deviceScaleFactor: 1 }, set: width => window.setViewportSize({ width, height: 900 }), restore: () => window.setViewportSize(browserViewport) }
   report.nativeViewport = viewport.native
   const capture = async (name) => {
     await guard()
@@ -112,6 +132,7 @@ try {
   const runs = () => window.locator('.initiative__run').count()
 
   await window.waitForSelector('.sidebar')
+  if (await window.locator('.modal').count()) await window.keyboard.press('Escape')
   await capture('01-workspace')
 
   // A bot's DM, where a coordinator would live.
@@ -217,6 +238,8 @@ try {
     if (window) await window.context().tracing.stop({ path: join(output, 'trace.zip') }).catch(() => {})
     await app.close()
   }
+  await browser?.close()
+  server?.kill()
   for (const { server } of ports) if (server.listening) server.close()
   writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n')
   console.log(JSON.stringify(report, null, 2))

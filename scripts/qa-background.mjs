@@ -5,6 +5,8 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
+import { checkPause } from './lib/pause-check.mjs'
+import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 
@@ -25,6 +27,7 @@ const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 
 let app
 try {
   await Promise.all(reservations.map(({ server }) => new Promise((yes, no) => server.close((error) => error ? no(error) : yes()))))
+  assert.ok(supportsBackgroundCopyQA(env.TUCANO_ELECTRON), 'Refuse to launch a bundle without hidden QA support')
   app = await electron.launch({ args: [...(env.TUCANO_ELECTRON ? [] : ['.']), '--qa-background'], ...(env.TUCANO_ELECTRON ? { executablePath: env.TUCANO_ELECTRON } : {}), env })
   report.runtime = await app.evaluate(({ app, BrowserWindow }) => {
     globalThis.__qaExposure = []
@@ -71,6 +74,7 @@ try {
   await capture('03-settings')
   if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard, resize)
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
+  if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()
