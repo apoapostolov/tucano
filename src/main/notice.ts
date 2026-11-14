@@ -35,6 +35,8 @@ export class Notices {
   private cards = 0 // how many the page has on screen now
   private loaded = false
   private waiting: (NoticePush & { demo?: boolean })[] = [] // what arrived before the page could draw
+  private interactiveOn = false
+  private pollTimer: ReturnType<typeof setInterval> | null = null
 
   // `open`: brings the app's window back on a conversation (and its thread), or on a screen.
   constructor(private deps: { open: (conversationId?: string, page?: 'skills', threadId?: string) => void }) {
@@ -43,6 +45,14 @@ export class Notices {
     nativeTheme.on('updated', () => this.told())
     ipcMain.on('notice:hit', (e, inside: unknown) => {
       if (this.owns(e)) this.interactive(inside === true)
+    })
+    ipcMain.on('notice:focus', (e) => {
+      if (!this.owns(e)) return
+      const win = this.win
+      if (!win || win.isDestroyed()) return
+      win.setFocusable(true)
+      win.focus()
+      win.webContents.focus()
     })
     ipcMain.on('notice:count', (e, n: unknown) => {
       if (!this.owns(e)) return
@@ -118,7 +128,7 @@ export class Notices {
     else this.waiting.push(card)
   }
 
-  // Settings › Notifications › Test every kind: one card of each, drawn by the page itself, so the
+  // Settings › Notifications › Test notifications: one card of each, drawn by the page itself, so the
   // person sees how they look with the settings they chose.
   demo(): void {
     const win = this.ensure()
@@ -191,6 +201,7 @@ export class Notices {
   clear(): void {
     this.waiting = []
     this.cards = 0
+    this.stopPoll()
     if (this.win && !this.win.isDestroyed() && this.loaded) this.win.webContents.send('notice:clear')
     this.hide()
   }
@@ -230,6 +241,7 @@ export class Notices {
     })
     this.win = win
     this.loaded = false
+    this.interactiveOn = false
     // Everything that isn't a card lets the click through to the window behind it.
     win.setIgnoreMouseEvents(true, { forward: true })
     // Above the app's own windows, and above most of what the system draws over them.
@@ -239,6 +251,10 @@ export class Notices {
       if (this.win === win) this.win = null
       this.loaded = false
       this.cards = 0
+    })
+    win.on('blur', () => {
+      if (win.isDestroyed()) return
+      win.setFocusable(false)
     })
     win.webContents.on('did-finish-load', () => {
       this.loaded = true
@@ -303,11 +319,15 @@ export class Notices {
     // Wherever the app's window is now, the cards follow it: a second screen has its own corner.
     this.place()
     if (!win.isVisible()) win.showInactive()
+    win.setFocusable(true)
+    this.startPoll()
   }
 
   private hide(): void {
     const win = this.win
     if (!win || win.isDestroyed()) return
+    this.stopPoll()
+    win.setFocusable(false)
     if (win.isVisible()) win.hide()
     this.interactive(false)
   }
@@ -315,8 +335,41 @@ export class Notices {
   private interactive(on: boolean): void {
     const win = this.win
     if (!win || win.isDestroyed()) return
+    if (this.interactiveOn === on) return
+    this.interactiveOn = on
     // Still forwarding the pointer's moves while it passes through: that's how the page knows it
     // came back over a card.
     win.setIgnoreMouseEvents(!on, { forward: true })
+  }
+
+  // The page's pointer tracking is fast but misses the case where a card appears under a pointer
+  // that is not moving: the click then passes through to the window behind it. While cards are on
+  // screen, tell the page where the cursor is and let it run the same `elementFromPoint` test it runs
+  // on a move, so a card that arrived under a still pointer is reachable and the empty part of the
+  // rectangle keeps passing clicks through. `getCursorScreenPoint` and `getBounds` are both measured
+  // in DIP, so the difference is the point in the window's own coordinates and no scale factor
+  // applies; dividing by it puts the point in the display's top-left and answers "outside" for every
+  // cursor inside the window on a scaled display.
+  private startPoll(): void {
+    if (this.pollTimer) return
+    let last = ''
+    this.pollTimer = setInterval(() => {
+      const win = this.win
+      if (!win || win.isDestroyed()) return this.stopPoll()
+      const point = screen.getCursorScreenPoint()
+      const b = win.getBounds()
+      const at = { x: Math.round(point.x - b.x), y: Math.round(point.y - b.y) }
+      const here = `${at.x},${at.y}`
+      if (here === last) return
+      last = here
+      if (this.loaded) win.webContents.send('notice:cursor', at)
+    }, 80)
+  }
+  private stopPoll(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
+    }
+    this.interactive(false)
   }
 }
