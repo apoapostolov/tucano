@@ -1,0 +1,140 @@
+{
+  "source": "925c557a9583a5b5b67466cd206e947ada0be928",
+  "passed": true,
+  "states": [
+    {
+      "name": "working-1280",
+      "text": "Pause",
+      "disabled": false,
+      "questions": 0
+    },
+    {
+      "name": "pausing-1280",
+      "text": "Pausing\u2026",
+      "disabled": true,
+      "questions": 0
+    },
+    {
+      "name": "held-1280",
+      "text": "Resume",
+      "disabled": false,
+      "questions": 0
+    },
+    {
+      "name": "held-900",
+      "text": "Resume",
+      "disabled": false,
+      "questions": 0
+    },
+    {
+      "name": "held-420",
+      "text": "Resume",
+      "disabled": false,
+      "questions": 0
+    },
+    {
+      "name": "resumed-1280",
+      "questions": 1
+    }
+  ],
+  "captures": [
+    "working-1280.png",
+    "pausing-1280.png",
+    "held-1280.png",
+    "held-900.png",
+    "held-420.png",
+    "resumed-1280.png"
+  ],
+  "measurements": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".steps__hold-pill",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Resume",
+              "characters": 6,
+              "lines": 1,
+              "visible": true,
+              "width": 81.59375,
+              "height": 22,
+              "contentWidth": 60,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "11.5px",
+              "lineHeight": "17.825px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".steps__hold-pill",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Resume",
+              "characters": 6,
+              "lines": 1,
+              "visible": true,
+              "width": 81.59375,
+              "height": 22,
+              "contentWidth": 60,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "11.5px",
+              "lineHeight": "17.825px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "viewport": {
+        "width": 420,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".steps__hold-pill",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Resume",
+              "characters": 6,
+              "lines": 1,
+              "visible": true,
+              "width": 81.59375,
+              "height": 22,
+              "contentWidth": 60,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "11.5px",
+              "lineHeight": "17.825px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ]
+}
