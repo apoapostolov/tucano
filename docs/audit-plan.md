@@ -4,6 +4,25 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
+### Skills and revised PR intake, 14 November afternoon
+
+- [x] Refresh current upstream and the authored PR inventory: 89 total, 61 open, 18 merged, 10 closed at 13:04 UTC.
+- [x] Repair #311's source labels; preserve the latest folder-settings placement revision.
+- [x] Split the Skills UI into focused components without changing markup, permissions or complexity totals.
+- [x] Pass the current public branch's full suite: 1,769 passed, 60 skipped, zero failures; verify 49 focused cases from the pushed SHA in a fresh checkout.
+- [x] Publish new synthetic screenshots and copy measurements at 1280, 900 and 420 CSS pixels; update #311's stale description and validation.
+- [x] Correct #445's unsupported runner claim in source and description; test a clean current-main baseline. Keep the proposed budget increases unintegrated pending CI reproduction.
+- [x] Reproduce the skill diff's quadratic allocation on current main and open upstream #454 with an immutable reproduction script.
+- [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
+- [ ] Finish the final combined suite after the earlier 60-second wiki-Git test failure; do not raise its timeout.
+- [ ] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
+- [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
+
+See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
+complete the wider skills audit: large-history comparisons, import accessibility and large-library
+load checks remain distinct work.
+
+
 ### Upgrade to 0.2.29, 14 November 2026
 
 Starting refs: published integration `41d0979`, prior audit candidate `d0fc185`, local

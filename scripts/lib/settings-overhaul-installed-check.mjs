@@ -21,9 +21,9 @@ export async function checkSettingsOverhaul(page, output, guard) {
         { selector: '.settings-pages button, .settings-sections a', maxLines: 1 },
         { selector: '.settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible' }
       ])
-      const exceptions = copy.failures.filter(item => item.text?.startsWith('Export everything from Workspace'))
+      const exceptions = copy.failures.filter(item => item.text?.startsWith('Export everything from Workspace') || item.text?.startsWith('Everything of this Tucano in one .zip:'))
       copy.failures = copy.failures.filter(item => !exceptions.includes(item))
-      copy.exceptions = exceptions.map(item => ({ ...item, reason: 'Full restore replacement consequences and database-only distinction must stay visible.' }))
+      copy.exceptions = exceptions.map(item => ({ ...item, reason: item.text.startsWith('Everything of this Tucano') ? 'Privacy disclosure: full-backup scope and the exclusion of machine-bound connector credentials and AI logins must remain visible.' : 'Full restore replacement consequences and database-only distinction must stay visible.' }))
       copy.passed = copy.failures.length === 0
       assert.ok(copy.passed, JSON.stringify(copy.failures))
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))

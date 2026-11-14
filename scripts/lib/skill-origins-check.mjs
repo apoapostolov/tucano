@@ -22,7 +22,11 @@ for (const [relative, harness] of fixtures) {
   writeFileSync(file, `---\nname: ${harness} audit skill\ndescription: Review a synthetic example from ${harness}.\nversion: 1.0.0\n---\n# Audit\nRead the fixture and report the result.`);
 }
 
-  return { HOME: home, USERPROFILE: home, HERMES_HOME: join(home, '.hermes'), CODEX_HOME: join(home, '.codex'), CLAUDE_CONFIG_DIR: join(home, '.claude'), OPENCODE_CONFIG_DIR: join(home, '.config/opencode'), AGENTS_HOME: join(home, '.agents'), PI_HOME: join(home, '.pi') };
+  const appData = join(home, 'AppData', 'Roaming');
+  const localAppData = join(home, 'AppData', 'Local');
+  mkdirSync(appData, { recursive: true });
+  mkdirSync(localAppData, { recursive: true });
+  return { APPDATA: appData, LOCALAPPDATA: localAppData, HOME: home, USERPROFILE: home, HERMES_HOME: join(home, '.hermes'), CODEX_HOME: join(home, '.codex'), CLAUDE_CONFIG_DIR: join(home, '.claude'), OPENCODE_CONFIG_DIR: join(home, '.config/opencode'), AGENTS_HOME: join(home, '.agents'), PI_HOME: join(home, '.pi') };
 }
 
 export async function checkSkillOrigins(page, output, guard = async () => {}) {
@@ -35,16 +39,21 @@ export async function checkSkillOrigins(page, output, guard = async () => {}) {
     await page.locator('.skill-add__step').getByRole('button', { name: 'Use', exact: true }).click();
     await page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).waitFor();
   }
-  for (const width of [1280, 900, 420]) {
-    await page.setViewportSize({ width, height: 900 });
+  const metrics = await page.context().newCDPSession(page);
+  await metrics.send('Emulation.clearDeviceMetricsOverride');
+  await metrics.detach();
+  for (const width of [null, 1280, 900, 420]) {
+    if (width) await page.setViewportSize({ width, height: 900 });
     for (const [, harness] of fixtures) {
       const meta = page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).locator('.skill-line__meta');
       assert.ok((await meta.innerText()).includes(`from your ${harness}`), `${harness} source label missing`);
     }
     const copy = await measureCopy(page, [{ selector: '.skill-line__meta' }]);
     assert.ok(copy.passed, JSON.stringify(copy.failures));
+    copy.viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    copy.display = await page.evaluate(() => ({ devicePixelRatio, screenWidth: screen.width }));
     report.measurements.push(copy);
-    const name = `origins-${width}.png`;
+    const name = `origins-${width ?? "native"}.png`;
     await guard();
     await page.screenshot({ path: join(output, name) });
     report.captures.push(name);

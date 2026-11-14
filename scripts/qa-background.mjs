@@ -65,9 +65,9 @@ try {
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
-  if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard)
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard)
   if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard)
+  if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()
