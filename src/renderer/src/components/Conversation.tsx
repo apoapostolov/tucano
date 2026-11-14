@@ -851,8 +851,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           <>
             <button
               className="msg__edit"
-              title={L('Editar este pedido', 'Edit this prompt')}
-              aria-label={L('Editar este pedido', 'Edit this prompt')}
+              title={L('Editar este pedido', "Edit prompt")}
+              aria-label={L('Editar este pedido', "Edit prompt")}
               onClick={() => {
                 setDraft(message.text)
                 setEditing(true)
@@ -984,7 +984,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
           <>
             <div className="note">
               {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
-              <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', 'The ceiling per reply is set in Settings › Agents › Limits; it isn’t the agent’s monthly limit.')}</span>
+              <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', "Set the per-reply limit in Settings › Agents › Limits. It is separate from the monthly limit.")}</span>
             </div>
             <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
               {L('Continuar', 'Continue')}
@@ -1030,7 +1030,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
 // the row it sits on, not something further up the conversation.
 export function PromptJump({ id }: { id: string }): ReactNode {
   const jump = useContext(JumpTo)
-  const label = L('Ir para o começo desta resposta', 'Go to the start of this reply')
+  const label = L('Ir para o começo desta resposta', "Go to reply start")
   return (
     <button
       className="icon-btn icon-btn--sm msg__reply msg__reply--up"
@@ -1208,10 +1208,10 @@ export function DeleteSession({ message, where = 'corner' }: { message: Message;
   // Stopping is part of it only when something is running under the row, so the wording says so.
   const at = message.run?.status === 'working'
   const label = mine
-    ? L('Apagar este pedido', 'Delete this prompt')
+    ? L('Apagar este pedido', "Delete prompt")
     : routine
-      ? L('Apagar esta publicação', 'Delete this post')
-      : L('Apagar esta sessão', 'Delete this session')
+      ? L('Apagar esta publicação', "Delete post")
+      : L('Apagar esta sessão', "Delete session")
   const armedLabel = mine
     ? L('Clique de novo para apagar o pedido', 'Click again to delete the prompt')
     : at
@@ -2035,8 +2035,8 @@ function HoldButton({ message, paused, held }: { message: Message; paused: boole
       <button
         className="steps__ask-pill steps__ask-pill--go"
         onClick={() => resumeRun(message.id)}
-        title={L('Seguir agora, na mesma sessão e no mesmo modelo', 'Go on now, in the same session and on the same model')}
-        aria-label={L('Retomar a resposta', 'Let the reply go on')}
+        title={L('Seguir agora, na mesma sessão e no mesmo modelo', "Resume with the same session and model")}
+        aria-label={L('Retomar a resposta', "Resume reply")}
       >
         <Icon name="play" size={11} /> {L('Retomar', 'Resume')}
       </button>
@@ -2047,8 +2047,8 @@ function HoldButton({ message, paused, held }: { message: Message; paused: boole
       className="steps__ask-pill"
       disabled={held}
       onClick={() => pauseRun(message.id)}
-      title={L('Parar no fim desta volta e esperar: a sessão e o que ele já fez ficam', 'Stop at the end of this turn and wait: the session and what it has done stay')}
-      aria-label={L('Pausar a resposta', 'Pause the reply')}
+      title={L('Parar no fim desta volta e esperar: a sessão e o que ele já fez ficam', "Pause after this turn, preserving the session and completed work")}
+      aria-label={L('Pausar a resposta', "Pause reply")}
     >
       <Icon name="pause" size={11} /> {held ? L('Pausando…', 'Pausing…') : L('Pausar', 'Pause')}
     </button>

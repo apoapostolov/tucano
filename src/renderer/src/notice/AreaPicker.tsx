@@ -97,7 +97,7 @@ export function AreaPicker(): ReactNode {
       {rect && (
         <div className="pick__box" style={{ left: rect.x, top: rect.y, width: rect.w, height: rect.h }} onPointerDown={hold('move')}>
           <span className="pick__label" data-at={up(rect) ? 'bottom' : 'top'}>
-            {up(rect) ? L('Os avisos chegam aqui, de baixo pra cima', 'Notifications arrive here, from the bottom up') : L('Os avisos chegam aqui, de cima pra baixo', 'Notifications arrive here, from the top down')}
+            {up(rect) ? L('Os avisos chegam aqui, de baixo pra cima', "Notifications appear here, from bottom to top") : L('Os avisos chegam aqui, de cima pra baixo', "Notifications appear here, from top to bottom")}
           </span>
           {CORNERS.map((c) => (
             <span key={c} className={`pick__corner pick__corner--${c}`} onPointerDown={hold(c)} />
@@ -105,7 +105,7 @@ export function AreaPicker(): ReactNode {
         </div>
       )}
       <div className="pick__bar" onPointerDown={(e) => e.stopPropagation()}>
-        <p>{L('Arraste o retângulo, e os cantos pra mudar o tamanho. Os avisos aparecem aí.', 'Drag the rectangle, and its corners to resize it. Notifications appear there.')}</p>
+        <p>{L('Arraste o retângulo, e os cantos pra mudar o tamanho. Os avisos aparecem aí.', "Drag to move the notification area. Drag its corners to resize it.")}</p>
         <div className="row">
           <button className="btn btn--sm" onClick={() => window.tucano.notice.areaCancel()}>
             {L('Cancelar', 'Cancel')}

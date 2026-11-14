@@ -629,15 +629,15 @@ export function activityText(e: ActivityEntry, s: Pick<State, 'people' | 'agents
       return typeof d['before'] === 'number' && typeof d['after'] === 'number'
         ? L(
             `reescreveu o arquivo do Tucano (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`,
-            `rebuilt the Tucano's file (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
+            `optimized the database (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
           )
-        : L('reescreveu o arquivo do Tucano', "rebuilt the Tucano's file")
+        : L('reescreveu o arquivo do Tucano', "optimized the database")
     case 'history.wiped':
       return typeof d['agent'] === 'string'
         ? L(`apagou o histórico de ${String(d['agent'])}`, `deleted ${String(d['agent'])}’s history`)
-        : L('apagou o histórico de todos os bots', 'deleted every bot’s history')
+        : L('apagou o histórico de todos os bots', "deleted all message history")
     case 'history.swept':
-      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `history past its period went (${Number(d['messages'] ?? 0)} messages)`)
+      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `deleted expired messages (${Number(d['messages'] ?? 0)} messages)`)
   }
   const [thing, verb] = e.kind.split('.')
   const noun = ({ agent: L('o agente', 'agent'), connector: L('o conector', 'connector'), skill: L('a skill', 'skill'), routine: L('a rotina', 'routine'), channel: L('o canal', 'channel') } as Record<string, string>)[thing ?? ''] ?? thing

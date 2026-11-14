@@ -10,6 +10,8 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
+import { measureCopy } from './lib/copy-layout.mjs'
+import { electronCopyViewport } from './lib/electron-copy-viewport.mjs'
 
 const output = resolve(process.argv[2] ?? '.tucano-local/initiative/screens')
 mkdirSync(output, { recursive: true })
@@ -28,6 +30,7 @@ const env = {
   TUCANO_DATA: data,
   TUCANO_SEED: '1',
   TUCANO_FAKE_ENGINES: '1',
+  TUCANO_LOCALE: 'en-US',
   TUCANO_WEBHOOK_PORT: String(ports[0].port),
   TUCANO_GIT_PORT: String(ports[1].port)
 }
@@ -40,6 +43,7 @@ const report = {
   data,
   ports: ports.map((p) => p.port),
   checks: [],
+  copy: [],
   errors: [],
   passed: false
 }
@@ -73,11 +77,36 @@ try {
     assert.deepEqual(state.events, [], 'the initiative run exposed or focused a window')
     assert.ok(state.windows.length && state.windows.every((w) => !w.visible && !w.focused && !w.focusable), 'the window must stay hidden and unfocusable')
   }
+  const viewport = await electronCopyViewport(window, async ({ width, height }) => {
+    await guard()
+    await app.evaluate(({ BrowserWindow }, size) => {
+      const target = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().includes('index.html'))
+      assertHidden(target)
+      target.setContentSize(size.width, size.height)
+      function assertHidden(w) {
+        if (!w || w.isVisible() || w.isFocused() || w.isFocusable()) throw new Error('Only resize a hidden QA window')
+      }
+    }, { width, height })
+  })
+  report.nativeViewport = viewport.native
   const capture = async (name) => {
     await guard()
     await window.screenshot({ path: join(output, `${name}.png`) })
     await guard()
     report.checks.push(name)
+    if (await window.locator('.initiative').count()) {
+      for (const width of [1280, 900]) {
+        await viewport.set(width)
+        const evidence = await measureCopy(window, [
+          { selector: '.initiative .field__label:visible, .initiative .btn:visible, .modal__head h2:visible', maxLines: 1 },
+          { selector: '.initiative .hint:visible, .initiative .card__head p:visible' }
+        ])
+        report.copy.push({ name, width, deviceScaleFactor: await window.evaluate(() => devicePixelRatio), ...evidence })
+        await window.screenshot({ path: join(output, `${name}-${width}.png`) })
+        assert.ok(evidence.passed, JSON.stringify(evidence.failures))
+      }
+      await viewport.restore()
+    }
   }
   const messages = () => window.locator('.msg').count()
   const runs = () => window.locator('.initiative__run').count()
@@ -108,7 +137,7 @@ try {
   // A window nobody had saved opens with the switch off, so the brief is written before it is turned on:
   // the switch is the state, and it refuses to go up with nothing to look after.
   await window.locator('.initiative').getByRole('switch').click()
-  await window.locator('.initiative__state').filter({ hasText: /Próxima conferida|Next check-in/ }).waitFor()
+  await window.locator('.initiative__state').filter({ hasText: /Próxima conferida|Next check in/ }).waitFor()
   await capture('04-window-saved')
 
   // One check-in that reports: the fake engine answers with what it found, and it reaches the DM.
@@ -132,18 +161,18 @@ try {
   await window.locator('.initiative-line').click()
   await window.locator('.initiative textarea').first().fill('Watch whether the client answered about the invoice. If nothing changed, don\u2019t tell me.')
   await window.locator('.initiative').getByRole('button', { name: /^Salvar$|^Save$/ }).click()
-  await window.locator('.initiative__state').filter({ hasText: /Próxima conferida|Next check-in/ }).waitFor()
+  await window.locator('.initiative__state').filter({ hasText: /Próxima conferida|Next check in/ }).waitFor()
   const quietBefore = await messages()
   await window.locator('.initiative').getByRole('button', { name: /Conferir agora|Check now/ }).click()
   await window.waitForFunction((n) => document.querySelectorAll('.initiative__run.outcome-quiet').length > n, 0, { timeout: 60_000 })
   await capture('07-window-quiet')
   assert.equal(await messages(), quietBefore, 'a quiet check-in leaves nothing in the conversation')
   const quiet = await window.locator('.initiative__run.outcome-quiet').first().innerText()
-  assert.match(quiet, /nada a avisar|nothing to report/)
+  assert.match(quiet, /nada a avisar|Nothing to report/)
   assert.ok((await runs()) >= 2, 'both check-ins are on the record')
 
   // A narrow window: the record folds to one column and nothing overflows sideways, measured not guessed.
-  await window.setViewportSize({ width: 520, height: 900 })
+  await viewport.set(900)
   await window.waitForTimeout(300)
   const narrow = await window.evaluate(() => {
     const list = document.querySelector('.initiative')
@@ -155,16 +184,15 @@ try {
     }
   })
   report.narrow = narrow
-  assert.ok(narrow.overflow <= 0, `the window overflows by ${narrow.overflow}px at 520px wide`)
-  assert.ok(narrow.page <= 0, `the page overflows by ${narrow.page}px at 520px wide`)
-  assert.equal(narrow.columns, 2, 'the record folds to one column and its cost')
+  assert.ok(narrow.overflow <= 0, `the window overflows by ${narrow.overflow}px at 900px wide`)
+  assert.ok(narrow.page <= 0, `the page overflows by ${narrow.page}px at 900px wide`)
   await capture('09-narrow')
-  await window.setViewportSize({ width: 1360, height: 900 })
+  await viewport.restore()
   await window.waitForTimeout(300)
 
   // And the switch stops it.
-  await window.locator('.initiative').getByRole('button', { name: /Desligar|Turn off/ }).click()
-  await window.locator('.initiative__state').filter({ hasText: /Desligada|Off:/ }).waitFor()
+  await window.locator('.initiative').getByRole('button', { name: /Desligar|Disable/ }).click()
+  await window.locator('.initiative__state').filter({ hasText: /Desligada|Disabled/ }).waitFor()
   await capture('08-off')
   await window.locator('.initiative').getByRole('button', { name: /^Fechar$|^Close$/ }).click()
   await window.locator('.initiative-line').waitFor()

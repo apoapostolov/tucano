@@ -102,7 +102,7 @@ export function heartbeatTask(
     const due = c.nextCheckAt ? ` · ${L('conferir', 'check')} ${when(c.nextCheckAt)}` : ''
     const note = c.note ? ` (${c.note})` : ''
     const deps = (opts.links?.get(c.id) ?? []).filter((l) => l.state !== 'gone').map((l) => linkLine(l))
-    const rests = deps.length ? ` · ${L('depende de', 'rests on')}: ${deps.join('; ')}` : ''
+    const rests = deps.length ? ` · ${L('depende de', "depends on")}: ${deps.join('; ')}` : ''
     return `- [${c.state}] ${c.description}${note}${due}${rests}`
   })
   const moved = opts.moved ?? []

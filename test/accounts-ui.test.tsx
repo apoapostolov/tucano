@@ -117,5 +117,5 @@ it('says the sign-in goes at the next launch when its folder stayed', async () =
   await render()
   await press('Remove')
   await press('Remove')
-  expect(document.body.textContent).toContain('It goes the next time Tucano opens')
+  expect(document.body.textContent).toContain('sign-out completes when Tucano restarts')
 })

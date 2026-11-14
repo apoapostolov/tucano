@@ -3325,8 +3325,8 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "Agent replies and all DM messages. Your channel messages and saved memories stay; manage memories in Memory.",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "replacement": "Agent replies and all DM messages. Your channel posts and memories stay.",
+      "reason": "Native 900px check failed at a 249px column; shorten while preserving deletion scope. Retention note gets a full-width row."
     },
     {
       "id": 175,
@@ -3439,8 +3439,8 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "days; 0 keeps all, overriding workspace retention",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "replacement": "Days; 0 keeps all, overriding workspace retention.",
+      "reason": "Native 900px check failed at a 249px column; shorten while preserving deletion scope. Retention note gets a full-width row."
     },
     {
       "id": 181,
@@ -3458,8 +3458,8 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "Daily cleanup deletes messages older than this period. Deleted messages are unavailable to later replies.",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "replacement": "Daily cleanup deletes older messages and removes them from future replies.",
+      "reason": "Native 900px check failed at a 249px column; shorten while preserving deletion scope. Retention note gets a full-width row."
     },
     {
       "id": 182,

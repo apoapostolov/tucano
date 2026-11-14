@@ -69,7 +69,7 @@ export const noteFrom = (links: LinkSnapshot[]): string | undefined => {
   if (!failed) return undefined
   return failed.state === 'cancelled'
     ? L('O pedido foi cancelado.', 'The request was cancelled.')
-    : L('O pedido não terminou.', "The request didn't finish.")
+    : L('O pedido não terminou.', "The request did not complete.")
 }
 
 // The links that moved since the last check-in: what a resumed one reads first.

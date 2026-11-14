@@ -1212,7 +1212,7 @@ function WikiSettingsContent({ data, onClose, onImport, part }: { data: WikiData
                 <small>
                   {L(
                     `As instruções e o modelo são os de ${bot.name}. O modelo do resolvedor do app não é usado enquanto o bot estiver escolhido, e volta a valer quando ele sair.`,
-                    `Use ${bot.name}’s instructions, model, and effort. If unavailable or cleared, use the built-in resolver’s model.`
+                    `Use ${bot.name}’s instructions, model, and reasoning effort. If unavailable or cleared, use the built-in resolver’s model.`
                   )}
                 </small>
               </span>

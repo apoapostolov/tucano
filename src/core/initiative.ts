@@ -32,9 +32,9 @@ import { attemptsOf, dueAt, quietStreakOf } from './initiative-state'
 import type { Db } from './db'
 import type { People } from './people'
 
-const gone = (): string => L('Isso não existe mais.', 'That record no longer exists.')
+const gone = (): string => L('Isso não existe mais.', "This record no longer exists.")
 const staleRevision = (): string =>
-  L('Isso mudou enquanto a página estava aberta. Recarregue e tente de novo.', 'This changed while the page was open. Reload and try again.')
+  L('Isso mudou enquanto a página estava aberta. Recarregue e tente de novo.', "This record changed. Reload and try again.")
 
 export class Initiative {
   constructor(
@@ -111,24 +111,24 @@ export class Initiative {
     if (prev && prev.personId !== person.id) throw new Error(gone())
     const target = prev?.agentId ?? clean.agentId
     const config = (target ? this.db.initiative(person.id, target) : undefined) ?? this.db.initiatives(person.id)[0]
-    if (!config) throw new Error(L('Ligue a iniciativa de um bot primeiro.', 'Turn on initiative for a bot first.'))
+    if (!config) throw new Error(L('Ligue a iniciativa de um bot primeiro.', "Enable initiative for an agent first."))
     const why = commitmentError(clean)
     if (why) throw new Error(why)
     // A new one belongs to the coordinator; an old one stays with the bot that took it on, so a
     // replaced coordinator cannot inherit it or stop it being closed.
     const agentId = prev ? prev.agentId : config.agentId
-    if (!prev && clean.agentId !== agentId) throw new Error(L('Só o bot responsável pode assumir isso.', 'Only the bot looking after this can take this on.'))
+    if (!prev && clean.agentId !== agentId) throw new Error(L('Só o bot responsável pode assumir isso.', "Only the assigned agent can take on this responsibility."))
     // Where it came from is a conversation the coordinator may read, and its scope cannot pass what
     // the person authorized: on a new one, the brief's scope; on an old one, its own.
-    if (!inReach(config.observe, config.conversationId, clean.conversationId)) throw new Error(L('Isso veio de uma conversa fora do que o bot pode ler.', 'That came from a conversation outside what the bot may read.'))
+    if (!inReach(config.observe, config.conversationId, clean.conversationId)) throw new Error(L('Isso veio de uma conversa fora do que o bot pode ler.', "This conversation is outside the agent’s read access."))
     if (prev ? !within(prev.scope, clean.scope) : !within(config.work, clean.scope)) {
-      throw new Error(L('Isso passa do que você autorizou pro bot.', 'That goes beyond what you authorized for the bot.'))
+      throw new Error(L('Isso passa do que você autorizou pro bot.', "This action exceeds the agent’s authorized scope."))
     }
     this.pieces(person, clean)
     const now = Date.now()
     // A coordinator holds a plate, not a backlog.
     const others = this.mine(person, agentId).filter((c) => c.id !== prev?.id && !isClosed(c.state))
-    if (!prev && others.length >= MAX_COMMITMENTS) throw new Error(L('Já são responsabilidades demais. Feche uma antes de abrir outra.', 'That is as many responsibilities as one bot can keep. Close one before adding another.'))
+    if (!prev && others.length >= MAX_COMMITMENTS) throw new Error(L('Já são responsabilidades demais. Feche uma antes de abrir outra.', "Responsibility limit reached. Complete or dismiss one before adding another."))
     // What the work behind it says now: a page shows the honest state from the first render, not only
     // after the next check-in. A person's own state wins, and a closed one stays closed on an edit.
     const links = (clean.links ?? []).map((l) => dependencyOf(this.db, l.kind, l.id)).filter((l): l is LinkSnapshot => l !== undefined)
@@ -254,11 +254,11 @@ export class Initiative {
   // that conversation. Anything named to look at or act in must be theirs to reach already.
   private targets(person: Person, c: InitiativeInput): void {
     const agent = this.db.agent(c.agentId)
-    if (!agent || agent.archived) throw new Error(L('Esse bot não existe mais.', 'That bot no longer exists.'))
+    if (!agent || agent.archived) throw new Error(L('Esse bot não existe mais.', "This agent no longer exists."))
     const dm = this.db.conversation(c.conversationId)
     const owner = this.db.conversationOwner(c.conversationId)?.owner ?? this.db.ownerId()
     if (!dm || dm.kind !== 'dm' || !dm.members.includes(agent.id) || owner !== person.id) {
-      throw new Error(L('Escolha a conversa direta com esse bot.', 'Choose your direct conversation with that bot.'))
+      throw new Error(L('Escolha a conversa direta com esse bot.', "Choose your direct message with this agent."))
     }
     for (const id of [...c.observe.conversations, ...c.work.conversations]) {
       const why = this.people.conversationError(person, id)
@@ -286,7 +286,7 @@ export class Initiative {
         : l.kind === 'delegation' ? this.db.delegation(l.id) !== undefined
         : l.kind === 'question' ? this.db.question(l.id) !== undefined
         : this.db.approval(l.id) !== undefined
-      if (!there) throw new Error(L('O que isso acompanhava não existe mais.', 'What this was following no longer exists.'))
+      if (!there) throw new Error(L('O que isso acompanhava não existe mais.', "The linked item no longer exists."))
     }
   }
 }

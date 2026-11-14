@@ -33,6 +33,6 @@ export function retentionOf(bot: { retentionDays?: number } | undefined, tucanoD
 // A period in words, for the hint beside the field: "guardado para sempre", "30 dias".
 export function retentionLabel(days: number | undefined): string {
   const kept = cleanRetentionDays(days) ?? 0
-  if (!kept) return L('tudo, para sempre', 'everything, for good')
+  if (!kept) return L('tudo, para sempre', "Forever")
   return kept === 1 ? L('1 dia', '1 day') : L(`${kept} dias`, `${kept} days`)
 }

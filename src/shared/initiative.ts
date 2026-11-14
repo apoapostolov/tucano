@@ -302,31 +302,31 @@ export const knownTimeZone = (tz: string): boolean => {
   }
 }
 
-export const timeZoneError = (): string => L('Fuso horário desconhecido.', 'That time zone is not one this computer knows.')
+export const timeZoneError = (): string => L('Fuso horário desconhecido.', "This computer does not recognize that time zone.")
 
 // What is wrong with a configuration as a shape (a missing agent or home is the core's to check).
 export function initiativeError(c: InitiativeInput): string | undefined {
-  if (!c.agentId) return L('Escolha o bot que vai cuidar disso.', 'Choose the bot that will keep an eye on this.')
-  if (!c.conversationId) return L('Escolha a conversa em que ele trabalha.', 'Choose the conversation it works in.')
-  if (c.enabled && !c.brief) return L('Escreva o que ele deve cuidar.', 'Write what it should look after.')
-  if (c.brief.length > INITIATIVE_LIMITS.brief) return L(`O que ele deve cuidar vai até ${INITIATIVE_LIMITS.brief.toLocaleString('pt-BR')} caracteres.`, `What it should look after goes up to ${INITIATIVE_LIMITS.brief.toLocaleString('en-US')} characters.`)
+  if (!c.agentId) return L('Escolha o bot que vai cuidar disso.', "Choose an agent for initiative.")
+  if (!c.conversationId) return L('Escolha a conversa em que ele trabalha.', "Choose its working conversation.")
+  if (c.enabled && !c.brief) return L('Escreva o que ele deve cuidar.', "Add a brief.")
+  if (c.brief.length > INITIATIVE_LIMITS.brief) return L(`O que ele deve cuidar vai até ${INITIATIVE_LIMITS.brief.toLocaleString('pt-BR')} caracteres.`, `Briefs can contain up to ${INITIATIVE_LIMITS.brief.toLocaleString('en-US')} characters.`)
   if (!knownTimeZone(c.timezone)) return timeZoneError()
-  if (c.cadenceMinutes < MIN_CADENCE_MINUTES || c.cadenceMinutes > MAX_CADENCE_MINUTES) return L(`O intervalo vai de ${MIN_CADENCE_MINUTES} a ${MAX_CADENCE_MINUTES} minutos.`, `The interval goes from ${MIN_CADENCE_MINUTES} to ${MAX_CADENCE_MINUTES} minutes.`)
-  if (c.dailyReviews < 1 || c.dailyReviews > MAX_DAILY_REVIEWS) return L(`As revisões por dia vão de 1 a ${MAX_DAILY_REVIEWS}.`, `Reviews a day go from 1 to ${MAX_DAILY_REVIEWS}.`)
-  if (c.dailyTokens < 100_000 || c.dailyTokens > MAX_DAILY_TOKENS) return L('O limite diário de tokens é baixo ou alto demais.', 'That daily token limit is too low or too high.')
+  if (c.cadenceMinutes < MIN_CADENCE_MINUTES || c.cadenceMinutes > MAX_CADENCE_MINUTES) return L(`O intervalo vai de ${MIN_CADENCE_MINUTES} a ${MAX_CADENCE_MINUTES} minutos.`, `Set an interval from ${MIN_CADENCE_MINUTES} to ${MAX_CADENCE_MINUTES} minutes.`)
+  if (c.dailyReviews < 1 || c.dailyReviews > MAX_DAILY_REVIEWS) return L(`As revisões por dia vão de 1 a ${MAX_DAILY_REVIEWS}.`, `Set a daily check-in limit from 1 to ${MAX_DAILY_REVIEWS}.`)
+  if (c.dailyTokens < 100_000 || c.dailyTokens > MAX_DAILY_TOKENS) return L('O limite diário de tokens é baixo ou alto demais.', "The daily token limit is outside the allowed range.")
   // Acting somewhere means reading it: a conversation it may act in is one it may look at.
   const stray = c.work.conversations.find((id) => id !== c.conversationId && !c.observe.conversations.includes(id))
-  if (stray) return L('Só dá pra agir numa conversa que ele também pode ler.', 'It can only act in a conversation it may also read.')
+  if (stray) return L('Só dá pra agir numa conversa que ele também pode ler.', "The agent can only act in conversations it can read.")
   return undefined
 }
 
 // What is wrong with a responsibility as a shape. Where its targets are is the core's to check.
 export function commitmentError(c: CommitmentInput): string | undefined {
-  if (!c.description) return L('Escreva o que precisa ser feito.', 'Write what needs doing.')
-  if (c.description.length > INITIATIVE_LIMITS.description) return L(`Descreva em até ${INITIATIVE_LIMITS.description} caracteres.`, `Describe it in up to ${INITIATIVE_LIMITS.description} characters.`)
-  if ((c.note?.length ?? 0) > INITIATIVE_LIMITS.note) return L(`A nota vai até ${INITIATIVE_LIMITS.note} caracteres.`, `The note goes up to ${INITIATIVE_LIMITS.note} characters.`)
-  if (!c.agentId) return L('Escolha o bot responsável.', 'Choose the bot responsible.')
-  if (!c.conversationId) return L('Diga de onde isso veio.', 'Say where this came from.')
+  if (!c.description) return L('Escreva o que precisa ser feito.', "Describe the responsibility.")
+  if (c.description.length > INITIATIVE_LIMITS.description) return L(`Descreva em até ${INITIATIVE_LIMITS.description} caracteres.`, `Use up to ${INITIATIVE_LIMITS.description} characters.`)
+  if ((c.note?.length ?? 0) > INITIATIVE_LIMITS.note) return L(`A nota vai até ${INITIATIVE_LIMITS.note} caracteres.`, `Notes can contain up to ${INITIATIVE_LIMITS.note} characters.`)
+  if (!c.agentId) return L('Escolha o bot responsável.', "Choose the responsible agent.")
+  if (!c.conversationId) return L('Diga de onde isso veio.', "Specify the source.")
   if (c.nextCheckAt !== undefined && c.nextCheckAt <= 0) return L('Data de conferência inválida.', 'Invalid check time.')
   return undefined
 }

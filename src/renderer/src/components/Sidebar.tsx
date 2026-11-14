@@ -468,7 +468,7 @@ export function Sidebar(): ReactNode {
               linePressed.current = false
               if (hiddenNav.length) setOpenLine((v) => !v)
             }}
-            title={hiddenNav.length ? L('Mostrar as seções ocultas', 'Show the hidden sections') : undefined}
+            title={hiddenNav.length ? L('Mostrar as seções ocultas', "Show hidden sections") : undefined}
           >
             <i />
             <span className="nav-hide__label">

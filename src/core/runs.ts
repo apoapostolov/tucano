@@ -894,7 +894,7 @@ export class Runner {
   // place is the chain it was given to, not a prompt of its own.
   private steerLeftovers(control: Control, reply: Message): void {
     for (const note of control.steer?.splice(0) ?? [])
-      this.markSteer(reply, note.id, 'error', L('A resposta terminou antes de ler isto', 'The reply ended before it read this'))
+      this.markSteer(reply, note.id, 'error', L('A resposta terminou antes de ler isto', "The reply ended before reading this instruction."))
   }
 
   // An image I attached, kept in the artifact store with my message (no agent made it).
@@ -2441,7 +2441,7 @@ ${note}`,
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
           // A long reply must not keep access that changed after its prompt was built.
           const current = wikiNow()
-          if (!current) return textResult(L('Você não tem acesso à wiki agora.', 'You do not have wiki access now.'), true)
+          if (!current) return textResult(L('Você não tem acesso à wiki agora.', "You no longer have Wiki access."), true)
           const r = wikiCall(current, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: 'done' })
           return textResult(r.text, r.error)
@@ -2451,7 +2451,7 @@ ${note}`,
           // Its level may have changed mid-turn: read again before a page is touched.
           const current = db.agent(agent.id)
           const view = wikiNow()
-          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', 'You cannot write to the wiki now.'), true)
+          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', "You no longer have permission to edit the Wiki."), true)
           // Closing a finding takes its id; page writes use the current visible view.
           const r = name === WIKI_FECHAR.name
             ? wikiClose(wikiWritable, { name: current.name }, args)

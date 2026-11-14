@@ -699,8 +699,8 @@ ipcMain.on('server:update-install', (e) => {
     message: L(`Reiniciar pra instalar o Tucano ${state.next ?? ''}?`.replace(' ?', '?'), `Restart to install Tucano ${state.next ?? ''}?`.replace(' ?', '?')),
     detail:
       awakeBlocker !== null
-        ? L('Um agente deste computador ainda está trabalhando: reiniciar agora interrompe o que ele está fazendo. Se esperar, a atualização entra quando você fechar o Tucano.', 'An agent on this computer is still working: restarting now stops what it is doing. If you wait, the update goes in when you quit Tucano.')
-        : L('O app fecha e abre de novo na versão nova. O servidor continua rodando.', 'The app closes and opens again on the new version. The server keeps running.')
+        ? L('Um agente deste computador ainda está trabalhando: reiniciar agora interrompe o que ele está fazendo. Se esperar, a atualização entra quando você fechar o Tucano.', "An agent is running on this computer. Restarting interrupts its work. The update will install when you quit Tucano.")
+        : L('O app fecha e abre de novo na versão nova. O servidor continua rodando.', "Restart the desktop app to install this update. The server keeps running.")
   })
   if (answer === 0) updates.install()
 })

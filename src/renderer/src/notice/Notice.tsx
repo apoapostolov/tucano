@@ -180,7 +180,7 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
               <Icon name="shield" size={13} />
               {L('Esperando você', 'Waiting for you')}
             </span>
-            {approval.highRisk && <span className="tag tag--danger">{L('alto risco', 'high risk')}</span>}
+            {approval.highRisk && <span className="tag tag--danger">{L('alto risco', "High risk")}</span>}
           </div>
           {/* Who asks and why are already the card's title and body: here is what it would do. */}
           <div className="approval__call">
@@ -205,12 +205,12 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
             <HoldApprove onApprove={() => onDecide(card, 'approved')} />
           )}
           <button className="btn btn--xs" onClick={() => onDecide(card, 'refused')}>
-            {L('Recusar', 'Refuse')}
+            {L('Recusar', "Decline")}
           </button>
           {!approval.highRisk && (
             <button
               className="btn btn--xs btn--ghost"
-              title={L('Aprovar e daqui pra frente sem pedir, sempre que for esta ferramenta', 'Approve, and from now on without asking, whenever it is this tool')}
+              title={L('Aprovar e daqui pra frente sem pedir, sempre que for esta ferramenta', "Approve and allow future uses of this tool without asking")}
               onClick={() => onDecide(card, 'approved', true)}
             >
               {L('Sempre permitir', 'Always allow')}

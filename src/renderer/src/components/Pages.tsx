@@ -547,7 +547,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               title={L('Iniciativa', 'Initiative')}
               lead={L(
                 'O que este bot cuida pra você entre as conversas: um pedido seu, um intervalo, e o que ele pode olhar e fazer.',
-                'What this bot looks after for you between conversations: your brief, an interval, and what it may read and do.'
+                "Set this agent’s brief, check interval, read access, and allowed actions."
               )}
             >
               <InitiativeSwitch agentId={existing.id} />
@@ -975,24 +975,24 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           {pane('perfil') && !isNew && (
             <Card
               danger
-              title={L('Histórico deste bot', 'This bot’s history')}
+              title={L('Histórico deste bot', "Agent history")}
               lead={L(
                 'O que ele respondeu em qualquer conversa, e tudo o que foi dito nas DMs dele. O que você escreveu nos canais fica, e as memórias dele também: elas têm a aba Memória.',
-                'What it answered anywhere, and everything said in its DMs. What you wrote in channels stays, and so do its memories: they have their own Memory tab.'
+                "Agent replies and all DM messages. Your channel posts and memories stay."
               )}
             >
               <div className="field">
-                <span className="field__label">{L('Guardar o histórico dele por', 'Keep its history for')}</span>
-                <div className="segmented" role="radiogroup" aria-label={L('Guardar o histórico dele por', 'Keep its history for')}>
+                <span className="field__label">{L('Guardar o histórico dele por', "History retention")}</span>
+                <div className="segmented" role="radiogroup" aria-label={L('Guardar o histórico dele por', "History retention")}>
                   <button role="radio" aria-checked={draft.retentionDays === undefined} className={draft.retentionDays === undefined ? 'is-active' : ''} onClick={() => draft.retentionDays !== undefined && patch({ retentionDays: undefined })}>
-                    {L(`Como o Tucano (${retentionLabel(tucanoDays)})`, `Same as the Tucano (${retentionLabel(tucanoDays)})`)}
+                    {L(`Como o Tucano (${retentionLabel(tucanoDays)})`, `Workspace default (${retentionLabel(tucanoDays)})`)}
                   </button>
                   <button role="radio" aria-checked={draft.retentionDays !== undefined} className={draft.retentionDays !== undefined ? 'is-active' : ''} onClick={() => draft.retentionDays === undefined && patch({ retentionDays: tucanoDays || 30 })}>
-                    {L('Só pra este bot', 'Only this bot')}
+                    {L('Só pra este bot', "Custom")}
                   </button>
                 </div>
                 {draft.retentionDays !== undefined && (
-                  <div className="row">
+                  <div>
                     <NumberInput
                       min={0}
                       max={MAX_RETENTION_DAYS}
@@ -1002,13 +1002,13 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                       className="input--short"
                       aria-label={L('Dias', 'Days')}
                     />
-                    <span className="muted small">{L('dias; 0 guarda tudo, para sempre, mesmo que o Tucano guarde menos', 'days; 0 keeps everything, for good, even when the Tucano keeps less')}</span>
+                    <p className="hint">{L('dias; 0 guarda tudo, para sempre, mesmo que o Tucano guarde menos', "Days; 0 keeps all, overriding workspace retention.")}</p>
                   </div>
                 )}
                 <span className="hint">
                   {L(
                     'Cada mensagem conta da própria data, na limpeza diária: com 30, o que passou de 30 dias sai do banco e o próximo turno já não lê nada disso.',
-                    'Each message counts from its own date, in the daily cleanup: with 30, anything past 30 days leaves the database and the next turn reads none of it.'
+                    "Daily cleanup deletes older messages and removes them from future replies."
                   )}
                 </span>
               </div>
@@ -1021,7 +1021,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                       title: L(`Apagar o histórico de ${draft.name}?`, `Delete ${draft.name}’s history?`),
                       body: L(
                         `Saem as respostas dele em todos os canais e tudo o que foi dito nas DMs dele. ${draft.name} continua na equipe; as memórias e os recibos de uso ficam. Não dá pra desfazer.`,
-                        `Its replies in every channel go, and everything said in its DMs. ${draft.name} stays on the team; memories and usage receipts stay. This cannot be undone.`
+                        `Delete this agent’s replies in all channels and every message in its DMs. ${draft.name}, memories, and usage records stay. This cannot be undone.`
                       ),
                       confirm: L('Apagar histórico', 'Delete history'),
                       danger: true
@@ -1030,13 +1030,13 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                       setHistoryBusy(true)
                       setHistoryNote('')
                       void wipeHistory(draft.id)
-                        .then((gone) => setHistoryNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`)))
+                        .then((gone) => setHistoryNote(L(`${gone} mensagem(ns) apagadas.`, `Messages deleted: ${gone}.`)))
                         .catch((e: unknown) => setHistoryNote(e instanceof Error ? e.message : String(e)))
                         .finally(() => setHistoryBusy(false))
                     })
                   }}
                 >
-                  {L('Apagar o histórico deste bot', 'Delete this bot’s history')}
+                  {L('Apagar o histórico deste bot', "Delete agent history")}
                 </button>
                 {historyNote && (
                   <span className="muted small" role="status">
@@ -2659,12 +2659,12 @@ function WorkspaceFileSection(): ReactNode {
   const check = health ? (health.sound ? L('O arquivo está íntegro.', 'Integrity check passed.') : L(`O arquivo não passou na verificação: ${health.said}`, `Integrity check failed: ${health.said}`)) : ''
   const run = (): void => {
     setBusy(true)
-    setNote(L('Reescrevendo o arquivo…', 'Rebuilding the file…'))
+    setNote(L('Reescrevendo o arquivo…', "Optimizing database…"))
     optimizeDb()
       .then((r) => {
         setHealth({ bytes: r.after, free: r.free, sound: r.sound, said: r.said })
-        const went = r.before > r.after ? L(`${size(r.before)} → ${size(r.after)}.`, `${size(r.before)} → ${size(r.after)}.`) : L(`Continua em ${size(r.after)}, já estava compacto.`, `Still ${size(r.after)}, it was already compact.`)
-        setNote(`${went} ${r.sound ? L('O arquivo está íntegro.', 'The file is sound.') : L(`O arquivo não passou na verificação: ${r.said}`, `The file did not pass its check: ${r.said}`)}`)
+        const went = r.before > r.after ? L(`${size(r.before)} → ${size(r.after)}.`, `${size(r.before)} → ${size(r.after)}.`) : L(`Continua em ${size(r.after)}, já estava compacto.`, `Already compact: ${size(r.after)}.`)
+        setNote(`${went} ${r.sound ? L('O arquivo está íntegro.', "Integrity check passed.") : L(`O arquivo não passou na verificação: ${r.said}`, `Integrity check failed: ${r.said}`)}`)
       })
       .catch((e: unknown) => setNote(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e)))
       .finally(() => setBusy(false))
@@ -3416,12 +3416,12 @@ function WorkspaceHistorySection(): ReactNode {
   const [note, setNote] = useState('')
   const wipe = async (): Promise<void> => {
     const ok = await confirmDialog({
-      title: L('Apagar o histórico de todos os bots?', 'Delete every bot’s history?'),
+      title: L('Apagar o histórico de todos os bots?', "Delete all message history?"),
       body: L(
         'Saem todas as conversas de todos os canais e de todas as DMs: o que você escreveu e o que os bots responderam. Os canais, as DMs, os agentes, as memórias, a wiki e os recibos de uso ficam. Não dá pra desfazer.',
-        'Every conversation in every channel and every DM goes: what you wrote and what the bots answered. Channels, DMs, agents, memories, the wiki and the usage receipts stay. This cannot be undone.'
+        "Delete all messages in channels and DMs, including yours. Channels, DMs, agents, memories, Wiki, and usage records stay. This cannot be undone."
       ),
-      confirm: L('Apagar tudo', 'Delete everything'),
+      confirm: L('Apagar tudo', "Delete all messages"),
       danger: true
     })
     if (!ok) return
@@ -3429,7 +3429,7 @@ function WorkspaceHistorySection(): ReactNode {
     setNote('')
     try {
       const gone = await wipeHistory()
-      setNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`))
+      setNote(L(`${gone} mensagem(ns) apagadas.`, `Messages deleted: ${gone}.`))
     } catch (e) {
       setNote(e instanceof Error ? e.message : String(e))
     } finally {
@@ -3439,7 +3439,7 @@ function WorkspaceHistorySection(): ReactNode {
   return (
     <div className="workspace-danger__section">
       <h3>{L('Histórico', 'History')}</h3>
-      <p className="small muted">{L('O que fica guardado do que foi dito e respondido neste workspace. O prazo é conferido uma vez por dia; apagar na hora é o botão abaixo.', 'What is kept of what was said and answered in this workspace. The period is checked once a day; the button below deletes at once.')}</p>
+      <p className="small muted">{L('O que fica guardado do que foi dito e respondido neste workspace. O prazo é conferido uma vez por dia; apagar na hora é o botão abaixo.', "Set how long messages are kept. Cleanup runs daily; deleting history removes messages immediately.")}</p>
       <Field
         label={L('Guardar por quantos dias', 'History retention (days)')}
         hint={L(
@@ -3451,7 +3451,7 @@ function WorkspaceHistorySection(): ReactNode {
       </Field>
       <div className="row">
         <button className="btn btn--danger btn--sm" disabled={busy} onClick={() => void wipe()}>
-          {L('Apagar o histórico de todos os bots', 'Delete every bot’s history')}
+          {L('Apagar o histórico de todos os bots', "Delete all message history")}
         </button>
         {note && (
           <span className="muted small" role="status">
@@ -3876,7 +3876,7 @@ export function SettingsPage(): ReactNode {
         title={L('Contas', 'Accounts')}
         lead={L(
           'Mais de um login do Claude Code, do Codex ou do Grok, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
-          'Add Claude Code, Codex or Grok accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.'
+          "Add Claude Code, Codex, or Grok accounts and assign them to agents. Sign in through the CLI; Tucano never stores your password."
         )}
       >
         <AccountsCard />
@@ -4026,7 +4026,7 @@ export function notifyHint(state: NotifyState | 'shown', mac: boolean): string |
     "Other options: desktop, iPhone, or Telegram."
   )
   if (state === 'insecure') return L('O navegador não mostra notificações de um endereço sem HTTPS (como o do Tailscale, http://100.…). ', "Browser notifications require HTTPS. ") + elsewhere
-  if (state === 'blocked') return L('O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ', "Allow site notifications and reload. ") + elsewhere
+  if (state === 'blocked') return L('O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ', "Allow site notifications, then reload.") + elsewhere
   if (state === 'unsupported') return L('Aqui não dá pra mostrar notificações. ', "Notifications are unavailable here. ") + elsewhere
   if (state === 'shown')
     return mac
@@ -4044,11 +4044,11 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
       <div className="key-row">
         <Icon name="expand" />
         <div className="grow">
-          <strong>{L('Avisos por cima das janelas', 'Notifications over every window')}</strong>
+          <strong>{L('Avisos por cima das janelas', "Desktop notification overlays")}</strong>
           <p className="muted small">
             {L(
               'Os avisos chegam numa pilha no canto da tela, por cima das outras janelas, e somem sozinhos. Desligado, voltam os avisos do sistema.',
-              'Notifications arrive in a stack in the corner of the screen, over the other windows, and go away on their own. Off, the system’s own come back.'
+              "Show notifications above other windows and dismiss them automatically. When off, use system notifications."
             )}
           </p>
         </div>
@@ -4059,7 +4059,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
           <div className="key-row">
             <Icon name="expand" />
             <div className="grow">
-              <strong>{L('Onde aparecem', 'Where they appear')}</strong>
+              <strong>{L('Onde aparecem', "Position")}</strong>
               <p className="muted small">
                 {L(
                   'Arraste um retângulo na tela, com os cantos, pro canto onde os avisos devem chegar. Sem escolher, eles chegam no canto de baixo, à direita.',
@@ -4068,10 +4068,10 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               </p>
             </div>
             <button className="btn btn--sm" onClick={() => window.tucano.notice.pick()}>
-              {L('Escolher a área', 'Choose the area')}
+              {L('Escolher a área', "Choose area")}
             </button>
             {notice.area && (
-              <button className="btn btn--sm btn--ghost" title={L('Voltar pro canto de baixo, à direita', 'Back to the bottom right corner')} onClick={() => set({ area: undefined })}>
+              <button className="btn btn--sm btn--ghost" title={L('Voltar pro canto de baixo, à direita', "Reset to bottom right")} onClick={() => set({ area: undefined })}>
                 {L('Padrão', 'Default')}
               </button>
             )}
@@ -4079,11 +4079,11 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
           <div className="key-row">
             <Icon name="shield" />
             <div className="grow">
-              <strong>{L('Decidir pelo aviso', 'Decide from the notification')}</strong>
+              <strong>{L('Decidir pelo aviso', "Respond from notifications")}</strong>
               <p className="muted small">
                 {L(
                   'Aprovar, recusar e responder direto no aviso, sem abrir a conversa. Uma ação de alto risco pede que você segure o botão.',
-                  'Approve, refuse and answer right on the notification, without opening the conversation. A high-risk action asks you to hold the button.'
+                  "Approve, decline, or answer without opening the conversation. Hold to approve high-risk actions."
                 )}
               </p>
             </div>
@@ -4092,7 +4092,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
           <div className="key-row">
             <Icon name="sun" />
             <div className="grow">
-              <strong>{L('Aparência', 'Skin')}</strong>
+              <strong>{L('Aparência', "Appearance")}</strong>
               <p className="muted small">
                 {L(
                   'As cores do próprio sistema, no claro e no escuro, com o destaque do Windows, do Mac ou do Linux de agora. Sistema acompanha a troca do dia pra noite.',
@@ -4100,7 +4100,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
                 )}
               </p>
             </div>
-            <div className="segmented" role="radiogroup" aria-label={L('Aparência dos avisos', 'Notification skin')}>
+            <div className="segmented" role="radiogroup" aria-label={L('Aparência dos avisos', "Notification appearance")}>
               {(
                 [
                   ['light', L('Claro', 'Light')],
@@ -4121,7 +4121,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               <p className="muted small">
                 {L(
                   'Segundos até o aviso sumir. Depois disso ele desaparece aos poucos, com uma pausa curta pra você voltar o ponteiro.',
-                  'Seconds before a notification goes. After that it fades, with a short pause to bring the pointer back.'
+                  "Seconds before fading, followed by a short grace period to move the pointer back."
                 )}
               </p>
             </div>
@@ -4143,11 +4143,11 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
           <div className="key-row">
             <Icon name="hand" />
             <div className="grow">
-              <strong>{L('Fica com o ponteiro em cima', 'Stays under the pointer')}</strong>
+              <strong>{L('Fica com o ponteiro em cima', "Keep open on hover")}</strong>
               <p className="muted small">
                 {L(
                   'Com o ponteiro sobre o aviso, ele espera. A roda do mouse abre o aviso inteiro, e fecha de novo.',
-                  'With the pointer on a notification it waits. The mouse wheel opens it whole, and closes it again.'
+                  "Hover to keep notifications visible. Scroll to expand or collapse them."
                 )}
               </p>
             </div>
@@ -4169,10 +4169,10 @@ function NotifyTest(): ReactNode {
       <Icon name="spark" />
       <div className="grow">
         <p className="muted small">
-          {L('Um aviso de cada tipo: terminou, menção, pergunta, aprovação e alto risco.', 'One of each kind: done, mention, question, approval, and high risk.')}
+          {L('Um aviso de cada tipo: terminou, menção, pergunta, aprovação e alto risco.', "Preview completion, mention, question, approval, and high-risk notifications.")}
         </p>
       </div>
-      <button className="btn btn--sm" title={L('Uma notificação de cada tipo, como elas ficam.', 'One notification of each kind, as they look.')} onClick={() => window.tucano.notice.demo()}>
+      <button className="btn btn--sm" title={L('Uma notificação de cada tipo, como elas ficam.', "Preview each notification type.")} onClick={() => window.tucano.notice.demo()}>
         {L('Testar notificações', 'Test notifications')}
       </button>
     </div>

@@ -2031,7 +2031,7 @@ const api: Handlers = {
   // rebuild holds the core's only thread, and that is where the run is writing.
   optimizeDb: () => {
     if (db.messagesWithRun(['working', 'waiting_approval']).length) {
-      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', 'A reply is at work right now. Optimize when it finishes.'))
+      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', "A reply is running. Wait for it to finish before optimizing the database."))
     }
     const before = db.size()
     db.rebuild()
@@ -2766,7 +2766,7 @@ const api: Handlers = {
   // Another login of Claude Code, Codex or Grok: a folder of its own, signed into in a terminal like
   // the first.
   addAccount: ({ engine, name }) => {
-    if (!ACCOUNT_ENGINES.includes(engine)) throw new Error(L('Só dá pra ter outra conta do Claude Code, do Codex ou do Grok.', 'Only Claude Code, Codex or Grok can have another account.'))
+    if (!ACCOUNT_ENGINES.includes(engine)) throw new Error(L('Só dá pra ter outra conta do Claude Code, do Codex ou do Grok.', "Additional accounts are supported for Claude Code, Codex, and Grok."))
     const account: Account = { id: randomUUID().slice(0, 8), engine, name: name.trim() || ENGINES[engine].label }
     // Codex keeps its login in .codex inside the folder; Claude Code and Grok in the folder itself.
     mkdirSync(engine === 'codex' ? join(accountDir(dataDir, account.id), '.codex') : accountDir(dataDir, account.id), { recursive: true })

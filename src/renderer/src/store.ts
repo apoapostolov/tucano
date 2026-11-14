@@ -1129,15 +1129,15 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
 // A reply put on hold stops at the end of the turn it is in, keeping its session and its text, and
 // starts the next turn when it is let go: a limit passing without another model taking it over.
-export const pauseRun = (messageId: string): void => void fire(L('Não consegui pausar a resposta.', "I couldn't pause the reply."), 'pauseRun', { messageId })
-export const resumeRun = (messageId: string): void => void fire(L('Não consegui retomar a resposta.', "I couldn't let the reply go on."), 'resumeRun', { messageId })
+export const pauseRun = (messageId: string): void => void fire(L('Não consegui pausar a resposta.', "Could not pause the reply."), 'pauseRun', { messageId })
+export const resumeRun = (messageId: string): void => void fire(L('Não consegui retomar a resposta.', "Could not resume the reply."), 'resumeRun', { messageId })
 export const retryRun = (messageId: string, note?: string): void =>
   void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId, ...(note ? { note } : {}) })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })
 export const followUpRun = (messageId: string, text: string): void =>
   void fire(L('Não consegui seguir com essa resposta.', "I couldn't go on from that reply."), 'followUpRun', { messageId, text })
 // A session's reply goes: the reply itself, and the thread it started with the answers it got.
-export const deleteMessage = (messageId: string): void => void fire(L('Não consegui apagar a sessão.', "I couldn't delete the session."), 'deleteMessage', { messageId })
+export const deleteMessage = (messageId: string): void => void fire(L('Não consegui apagar a sessão.', "Could not delete the session."), 'deleteMessage', { messageId })
 
 // Returns whether the core acknowledged the decision: the card keeps its controls disabled until it
 // hears one, and when it doesn't hear one it says so instead of pretending the call went through.

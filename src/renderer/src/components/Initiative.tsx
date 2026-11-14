@@ -16,36 +16,36 @@ import { Icon } from './ui'
 
 const STATE = (s: CommitmentState): string =>
   s === 'open'
-    ? L('em aberto', 'open')
+    ? L('em aberto', "Open")
     : s === 'in_progress'
-      ? L('em andamento', 'in progress')
+      ? L('em andamento', "In progress")
       : s === 'waiting_external'
-        ? L('esperando outra pessoa', 'waiting on someone else')
+        ? L('esperando outra pessoa', "Waiting for others")
         : s === 'waiting_user'
-          ? L('esperando você', 'waiting on you')
+          ? L('esperando você', "Waiting for you")
           : s === 'done'
-            ? L('concluído', 'done')
-            : L('dispensado', 'dismissed')
+            ? L('concluído', "Done")
+            : L('dispensado', "Dismissed")
 
 const WHY = (w: InitiativeWake): string => {
-  if (w.outcome === 'quiet') return L('conferiu, nada a avisar', 'checked, nothing to report')
-  if (w.outcome === 'reported') return w.deduped ? L('repetia a conferida anterior, e não apareceu', 'repeated the check-in before it, so it stayed out') : L('escreveu na conversa', 'wrote in the conversation')
-  if (w.outcome === 'failed') return L('não terminou', "didn't finish")
-  if (w.outcome === 'interrupted') return L('interrompida pelo app', 'interrupted by the app')
+  if (w.outcome === 'quiet') return L('conferiu, nada a avisar', "Nothing to report")
+  if (w.outcome === 'reported') return w.deduped ? L('repetia a conferida anterior, e não apareceu', "Duplicate report suppressed") : L('escreveu na conversa', "Reported in conversation")
+  if (w.outcome === 'failed') return L('não terminou', "Did not complete")
+  if (w.outcome === 'interrupted') return L('interrompida pelo app', "Interrupted by the app")
   const why = w.why
   return why === 'revision'
-    ? L('pulada: você mudou o pedido', 'skipped: you changed the brief')
+    ? L('pulada: você mudou o pedido', "Skipped: brief changed")
     : why === 'paused'
-      ? L('pulada: o app está pausado', 'skipped: the app is paused')
+      ? L('pulada: o app está pausado', "Skipped: app paused")
       : why === 'agent'
-        ? L('pulada: o bot não existe mais', 'skipped: that bot is gone')
+        ? L('pulada: o bot não existe mais', "Skipped: agent unavailable")
         : why === 'dm'
-          ? L('pulada: a conversa não existe mais', 'skipped: that conversation is gone')
+          ? L('pulada: a conversa não existe mais', "Skipped: conversation unavailable")
           : why === 'off'
-            ? L('pulada: a iniciativa foi desligada', 'skipped: initiative was turned off')
+            ? L('pulada: a iniciativa foi desligada', "Skipped: initiative disabled")
             : why === 'error'
-              ? L('pulada por um erro', 'skipped by an error')
-              : L('pulada', 'skipped')
+              ? L('pulada por um erro', "Skipped: error")
+              : L('pulada', "Skipped")
 }
 
 const when = (at: number): string => new Date(at).toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -89,7 +89,7 @@ export function InitiativeLine({ conversationId, agentId }: { conversationId?: s
   if (!view || !mine) {
     // This bot has nothing to look after yet: its DM offers the way in, and every bot gets one.
     if (!views || !conversationId || !agentId) return null
-    const start = L('Ligar a iniciativa deste bot', "Turn on this bot's initiative")
+    const start = L('Ligar a iniciativa deste bot', "Set up this agent’s initiative")
     return (
       <button className="initiative-line is-off" title={start} aria-label={start} onClick={() => openDialog({ kind: 'initiative', agentId, conversationId })}>
         <span className="initiative-line__dot" aria-hidden="true" />
@@ -100,17 +100,17 @@ export function InitiativeLine({ conversationId, agentId }: { conversationId?: s
   const st = view.status
   const running = !!view.wakes[0] && !view.wakes[0]!.endedAt
   const says = st.paused
-    ? L('tudo pausado', 'everything paused')
+    ? L('tudo pausado', "App paused")
     : running
-      ? L('conferindo agora…', 'checking now…')
+      ? L('conferindo agora…', "Checking…")
       : !config!.enabled
-        ? L('iniciativa desligada', 'initiative off')
+        ? L('iniciativa desligada', "Initiative off")
         : st.waitingOnPerson > 0
-          ? L('espera você', 'waits on you')
+          ? L('espera você', "Waiting for you")
           : st.dueAt
-            ? L(`próxima em ${until(st.dueAt - Date.now())}`, `next in ${until(st.dueAt - Date.now())}`)
-            : L('ligada', 'on')
-  const full = L(`Iniciativa do seu bot: ${says}.`, `Your bot's initiative: ${says}.`) + ` ${L(`${st.open} em aberto, ${st.waitingOnPerson} esperando você.`, `${st.open} open, ${st.waitingOnPerson} waiting on you.`)}`
+            ? L(`próxima em ${until(st.dueAt - Date.now())}`, `Next check in ${until(st.dueAt - Date.now())}`)
+            : L('ligada', "Enabled")
+  const full = L(`Iniciativa do seu bot: ${says}.`, `Agent initiative: ${says}.`) + ` ${L(`${st.open} em aberto, ${st.waitingOnPerson} esperando você.`, `${st.open} open; ${st.waitingOnPerson} waiting for you.`)}`
   return (
     <button className={`initiative-line ${config!.enabled ? 'is-on' : ''} ${st.waitingOnPerson > 0 ? 'is-waiting' : ''}`} title={full} aria-label={full} onClick={() => openDialog({ kind: 'initiative', ...(agentId ? { agentId } : {}), ...(conversationId ? { conversationId } : {}) })}>
       <span className={`initiative-line__dot ${running ? 'is-live' : ''}`} aria-hidden="true" />
@@ -152,33 +152,33 @@ export function InitiativeSwitch({ agentId }: { agentId: string }): ReactNode {
   const st = view?.status
   const running = !!view?.wakes[0] && !view.wakes[0]!.endedAt
   const says = !config
-    ? L('sem pedido ainda', 'nothing yet')
+    ? L('sem pedido ainda', "Not configured")
     : st?.paused
-      ? L('tudo pausado', 'everything paused')
+      ? L('tudo pausado', "App paused")
       : running
-        ? L('conferindo agora…', 'checking now…')
+        ? L('conferindo agora…', "Checking…")
         : !config.enabled
-          ? L('desligada', 'off')
+          ? L('desligada', "Disabled")
           : st?.waitingOnPerson
-            ? L('espera você', 'waits on you')
+            ? L('espera você', "Waiting for you")
             : st?.dueAt
-              ? L(`próxima em ${until(st.dueAt - Date.now())}`, `next in ${until(st.dueAt - Date.now())}`)
-              : L('ligada', 'on')
+              ? L(`próxima em ${until(st.dueAt - Date.now())}`, `Next check in ${until(st.dueAt - Date.now())}`)
+              : L('ligada', "Enabled")
   return (
     <div className="initiative-setting">
       <div className="row">
         <Toggle on={!!config?.enabled} onChange={(on) => void flip(on)} />
         <span>{says}</span>
-        {busy && <span className="muted small">{L('salvando…', 'saving…')}</span>}
+        {busy && <span className="muted small">{L('salvando…', "Saving…")}</span>}
       </div>
       <p className="hint">
         {L(
           'Ligada, ele confere sozinho entre as conversas, no intervalo e dentro do que você autorizou, e só aparece quando tem algo que valha a pena.',
-          'Once on, it looks between conversations at the interval you set, inside what you allowed, and only appears when it found something worth saying.'
+          "Checks between conversations at your chosen interval, within its allowed scope. Reports only when needed."
         )}
       </p>
       <button className="btn btn--ghost btn--sm" onClick={open}>
-        {config ? L('Abrir a iniciativa', 'Open the initiative') : L('Preparar a iniciativa', 'Set up the initiative')}
+        {config ? L('Abrir a iniciativa', "Open initiative") : L('Preparar a iniciativa', "Set up initiative")}
       </button>
       {error && (
         <p className="initiative__error" role="alert">
@@ -260,7 +260,7 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
     try {
       const saved = await saveInitiative(inputOf(next), config?.revision ?? 0)
       setDraft({ ...saved })
-      setNote(saved.enabled ? L('Salvo.', 'Saved.') : L('Salvo. Está desligada: nada roda até você ligar.', 'Saved. It is off: nothing runs until you turn it on.'))
+      setNote(saved.enabled ? L('Salvo.', 'Saved.') : L('Salvo. Está desligada: nada roda até você ligar.', "Saved. Enable initiative to start check-ins."))
       if (close) onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message.replace(/^Error invoking.*?: /, '') : String(e))
@@ -277,7 +277,7 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
   const setEnabled = (on: boolean): void => {
     if (busy || !draft) return
     if (on && !draft.brief.trim()) {
-      setError(L('Escreva o que ele deve cuidar, e ligue depois.', 'Write what it should look after, then turn it on.'))
+      setError(L('Escreva o que ele deve cuidar, e ligue depois.', "Add a brief before enabling initiative."))
       return
     }
     setError(null)
@@ -290,29 +290,29 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
   const paused = !!st?.paused
 
   return (
-    <Modal title={L('Iniciativa do bot', "Your bot's initiative")} onClose={onClose} className="initiative-modal">
+    <Modal title={L('Iniciativa do bot', "Agent initiative")} onClose={onClose} className="initiative-modal">
       {!views || !draft ? (
-        <p className="muted">{L('Lendo…', 'Reading…')}</p>
+        <p className="muted">{L('Lendo…', "Loading…")}</p>
       ) : (
         <div className="initiative">
           <p className="initiative__state">
             {st?.paused ? (
-              <b>{L('O app está pausado: nada roda até você despausar.', 'The app is paused: nothing runs until you unpause it.')}</b>
+              <b>{L('O app está pausado: nada roda até você despausar.', "App paused. Resume it to allow check-ins.")}</b>
             ) : running ? (
-              <b>{L('Conferindo agora…', 'Checking now…')}</b>
+              <b>{L('Conferindo agora…', "Checking…")}</b>
             ) : config?.enabled ? (
               <b>
-                {st?.dueAt ? L(`Próxima conferida em ${until(st.dueAt - Date.now())}.`, `Next check-in in ${until(st.dueAt - Date.now())}.`) : L('Ligada.', 'On.')}
+                {st?.dueAt ? L(`Próxima conferida em ${until(st.dueAt - Date.now())}.`, `Next check in ${until(st.dueAt - Date.now())}.`) : L('Ligada.', "Enabled.")}
               </b>
             ) : (
-              <b>{L('Desligada: nada roda.', 'Off: nothing runs.')}</b>
+              <b>{L('Desligada: nada roda.', "Disabled. Check-ins are off.")}</b>
             )}
             {st && (
               <span className="muted">
                 {' '}
                 {L(
                   `${st.today.reviews} de ${draft.dailyReviews} conferidas hoje · ${tokens(st.today.tokens)} de ${tokens(draft.dailyTokens)} tokens · ${st.open} em aberto, ${st.waitingOnPerson} esperando você`,
-                  `${st.today.reviews} of ${draft.dailyReviews} check-ins today · ${tokens(st.today.tokens)} of ${tokens(draft.dailyTokens)} tokens · ${st.open} open, ${st.waitingOnPerson} waiting on you`
+                  `${st.today.reviews}/${draft.dailyReviews} check-ins · ${tokens(st.today.tokens)}/${tokens(draft.dailyTokens)} tokens today · ${st.open} open; ${st.waitingOnPerson} waiting for you`
                 )}
               </span>
             )}
@@ -328,13 +328,13 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
                 void checkInNow(agentId)
                   .then((r) => {
                     if (!r.started) setError(whyNot(r.why))
-                    else setNote(L('Conferindo…', 'Checking…'))
+                    else setNote(L('Conferindo…', "Checking…"))
                   })
                   .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
                   .finally(() => setBusy(null))
               }}
             >
-              <Icon name="zap" size={14} /> {running ? L('Conferindo…', 'Checking…') : L('Conferir agora', 'Check now')}
+              <Icon name="zap" size={14} /> {running ? L('Conferindo…', "Checking…") : L('Conferir agora', 'Check now')}
             </button>
             <button
               className="btn btn--ghost btn--sm"
@@ -342,15 +342,15 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
               onClick={() => {
                 setBusy('stop')
                 void save({ ...draft, enabled: false })
-                  .then(() => setNote(L('Desligada.', 'Off.')))
+                  .then(() => setNote(L('Desligada.', "Disabled.")))
                   .finally(() => setBusy(null))
               }}
             >
-              {L('Desligar', 'Turn off')}
+              {L('Desligar', "Disable")}
             </button>
             <span className="spacer" />
             <Toggle on={draft.enabled} onChange={setEnabled} />
-            <span className="small">{draft.enabled ? L('ligada', 'on') : L('desligada', 'off')}</span>
+            <span className="small">{draft.enabled ? L('ligada', "Enabled") : L('desligada', "Disabled")}</span>
           </div>
 
           {error && (
@@ -359,16 +359,16 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
             </p>
           )}
           {!error && !draft.enabled && !draft.brief.trim() && (
-            <p className="hint">{L('Escreva o pedido para poder ligar.', 'Write the brief, then you can turn it on.')}</p>
+            <p className="hint">{L('Escreva o pedido para poder ligar.', "Add a brief to enable initiative.")}</p>
           )}
           {!error && note && <p className="hint">{note}</p>}
 
-          <Field label={L('O que ele cuida pra você', 'What it looks after for you')} hint={L('Nas suas palavras. É o que ele lê em cada conferida.', 'In your words. It is what it reads on every check-in.')}>
+          <Field label={L('O que ele cuida pra você', "Brief")} hint={L('Nas suas palavras. É o que ele lê em cada conferida.', "Instructions the agent reads at each check-in.")}>
             <textarea className="input" rows={4} value={draft.brief} onChange={(e) => patch({ brief: e.target.value })} />
           </Field>
 
           <div className="initiative__grid">
-            <Field label={L('De quanto em quanto tempo', 'How often')}>
+            <Field label={L('De quanto em quanto tempo', "Check interval")}>
               <select className="input" value={draft.cadenceMinutes} onChange={(e) => patch({ cadenceMinutes: Number(e.target.value) })}>
                 {[5, 10, 15, 30, 60, 120, 240].map((m) => (
                   <option key={m} value={m}>
@@ -377,22 +377,22 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
                 ))}
               </select>
             </Field>
-            <Field label={L('Quando interromper você', 'When to interrupt you')}>
+            <Field label={L('Quando interromper você', "Notify me about")}>
               <select className="input" value={draft.notify} onChange={(e) => patch({ notify: e.target.value as NotifyMode })}>
-                <option value="material">{L('achados que importam', 'findings that matter')}</option>
-                <option value="decisions">{L('só o que precisa de decisão', 'only what needs a decision')}</option>
-                <option value="none">{L('nunca', 'never')}</option>
+                <option value="material">{L('achados que importam', "Important findings")}</option>
+                <option value="decisions">{L('só o que precisa de decisão', "Decisions only")}</option>
+                <option value="none">{L('nunca', "Never")}</option>
               </select>
             </Field>
-            <Field label={L('Conferidas por dia', 'Check-ins a day')}>
+            <Field label={L('Conferidas por dia', "Daily check-in limit")}>
               <input className="input" type="number" min={1} max={96} value={draft.dailyReviews} onChange={(e) => patch({ dailyReviews: Number(e.target.value) })} />
             </Field>
-            <Field label={L('Teto de tokens por dia', 'Token ceiling a day')}>
+            <Field label={L('Teto de tokens por dia', "Daily token limit")}>
               <input className="input" type="number" min={1000} step={100_000} value={draft.dailyTokens} onChange={(e) => patch({ dailyTokens: Number(e.target.value) })} />
             </Field>
           </div>
 
-          <Field label={L('Onde ele pode olhar', 'Where it may look')} hint={L('Só o que você já vê. Vazio: só esta conversa.', 'Only what you already see. Empty: this conversation alone.')} group>
+          <Field label={L('Onde ele pode olhar', "Read access")} hint={L('Só o que você já vê. Vazio: só esta conversa.', "Only conversations you can access. None selected: this DM only.")} group>
             <div className="initiative__pick">
               {reach.map((c) => (
                 <label key={c.id} className="initiative__check">
@@ -413,7 +413,7 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
             </div>
           </Field>
 
-          <Field label={L('O que ele pode fazer fora daqui', 'What it may do out there')} hint={L('A Autonomia do bot decide cada chamada; isto só estreita.', "The bot's Autonomy decides every call; this only narrows it.")} group>
+          <Field label={L('O que ele pode fazer fora daqui', "Allowed actions")} hint={L('A Autonomia do bot decide cada chamada; isto só estreita.', "Restricts the agent’s Autonomy; never grants additional permissions.")} group>
             <div className="initiative__pick">
               {ACTION_KINDS.map((k) => (
                 <label key={k} className="initiative__check">
@@ -451,16 +451,16 @@ export function InitiativeDialog({ onClose, agentId: fromAgent, conversationId: 
 // Why a check-in did not start, in words a person can act on.
 const whyNot = (why?: string): string =>
   why === 'paused'
-    ? L('O app está pausado.', 'The app is paused.')
+    ? L('O app está pausado.', "The app is paused.")
     : why === 'busy'
-      ? L('Já tem uma conferida rodando.', 'One is already running.')
+      ? L('Já tem uma conferida rodando.', "A check-in is already running.")
       : why === 'cap'
-        ? L('As conferidas de hoje acabaram.', "Today's check-ins are spent.")
+        ? L('As conferidas de hoje acabaram.', "Daily check-in limit reached.")
         : why === 'allowance'
-          ? L('O teto de tokens de hoje acabou.', "Today's token ceiling is spent.")
+          ? L('O teto de tokens de hoje acabou.', "Daily token limit reached.")
           : why === 'off'
-            ? L('Ligue a iniciativa primeiro.', 'Turn initiative on first.')
-            : L('Não deu pra começar agora.', "Couldn't start it now.")
+            ? L('Ligue a iniciativa primeiro.', "Enable initiative first.")
+            : L('Não deu pra começar agora.', "Could not start the check-in.")
 
 // ---------- what it holds ----------
 
@@ -468,7 +468,7 @@ function Commitments({ items, onSave, onOpen }: { items: Commitment[]; onSave: (
   const live = items.filter((c) => c.state !== 'dismissed' && c.state !== 'done')
   const closed = items.filter((c) => c.state === 'dismissed' || c.state === 'done')
   return (
-    <Card title={L('O que ele está tocando', "What it's carrying")} lead={live.length ? undefined : L('Nada em aberto.', 'Nothing open.')}>
+    <Card title={L('O que ele está tocando', "Responsibilities")} lead={live.length ? undefined : L('Nada em aberto.', "No open responsibilities.")}>
       <ul className="initiative__list">
         {[...live, ...closed].map((c) => (
           <li key={c.id} className={`initiative__item ${c.state === 'done' || c.state === 'dismissed' ? 'is-closed' : ''}`}>
@@ -479,7 +479,7 @@ function Commitments({ items, onSave, onOpen }: { items: Commitment[]; onSave: (
             {c.note && <p className="small muted">{c.note}</p>}
             {c.links.length > 0 && (
               <p className="small muted">
-                {L('depende de', 'rests on')}: {c.links.map((l) => `${l.kind} ${l.id.slice(0, 8)}`).join(', ')}
+                {L('depende de', "Depends on")}: {c.links.map((l) => `${l.kind} ${l.id.slice(0, 8)}`).join(', ')}
               </p>
             )}
             <div className="initiative__item-actions">
@@ -525,7 +525,7 @@ function Activity({ wakes }: { wakes: InitiativeWake[] }): ReactNode {
   const [open, setOpen] = useState(false)
   const shown = open ? wakes : wakes.slice(0, 6)
   return (
-    <Card title={L('O que ele fez', 'What it did')} lead={wakes.length ? L('As últimas conferidas, da mais nova pra mais velha.', 'The last check-ins, newest first.') : L('Ainda não conferiu nada.', "It hasn't checked yet.")}>
+    <Card title={L('O que ele fez', "Check-in history")} lead={wakes.length ? L('As últimas conferidas, da mais nova pra mais velha.', "Recent check-ins, newest first.") : L('Ainda não conferiu nada.', "No check-ins yet.")}>
       <ol className="initiative__runs">
         {shown.map((w) => (
           <li key={w.id} className={`initiative__run outcome-${w.outcome} ${w.deduped ? 'is-deduped' : ''}`}>

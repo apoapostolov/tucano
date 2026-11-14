@@ -490,7 +490,7 @@ export function AccountsCard(): ReactNode {
         <p className="hint hint--warn">
           {L(
             'O login dessa conta não saiu agora porque o CLI dela ainda estava aberto: feche a janela dele. Ele sai na próxima vez que o Tucano abrir.',
-            'That account’s sign-in did not leave now because its CLI was still open: close its window. It goes the next time Tucano opens.'
+            "Close the account’s CLI window to finish signing out. Otherwise, sign-out completes when Tucano restarts."
           )}
         </p>
       )}

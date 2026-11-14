@@ -138,13 +138,13 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 168 · src/renderer/src/components/Initiative.tsx:528 | It hasn't checked yet. | No check-ins yet. |
 | 172 · src/renderer/src/components/Pages.tsx:550 | What this bot looks after for you between conversations: your brief, an interval, and what it may read and do. | Set this agent’s brief, check interval, read access, and allowed actions. |
 | 173 · src/renderer/src/components/Pages.tsx:978 | This bot’s history | Agent history |
-| 174 · src/renderer/src/components/Pages.tsx:981 | What it answered anywhere, and everything said in its DMs. What you wrote in channels stays, and so do its memories: they have their own Memory tab. | Agent replies and all DM messages. Your channel messages and saved memories stay; manage memories in Memory. |
+| 174 · src/renderer/src/components/Pages.tsx:981 | What it answered anywhere, and everything said in its DMs. What you wrote in channels stays, and so do its memories: they have their own Memory tab. | Agent replies and all DM messages. Your channel posts and memories stay. |
 | 175 · src/renderer/src/components/Pages.tsx:985 | Keep its history for | History retention |
 | 176 · src/renderer/src/components/Pages.tsx:986 | Keep its history for | History retention |
 | 177 · src/renderer/src/components/Pages.tsx:988 | Same as the Tucano (${retentionLabel(tucanoDays)}) | Workspace default (${retentionLabel(tucanoDays)}) |
 | 178 · src/renderer/src/components/Pages.tsx:991 | Only this bot | Custom |
-| 180 · src/renderer/src/components/Pages.tsx:1005 | days; 0 keeps everything, for good, even when the Tucano keeps less | days; 0 keeps all, overriding workspace retention |
-| 181 · src/renderer/src/components/Pages.tsx:1011 | Each message counts from its own date, in the daily cleanup: with 30, anything past 30 days leaves the database and the next turn reads none of it. | Daily cleanup deletes messages older than this period. Deleted messages are unavailable to later replies. |
+| 180 · src/renderer/src/components/Pages.tsx:1005 | days; 0 keeps everything, for good, even when the Tucano keeps less | Days; 0 keeps all, overriding workspace retention. |
+| 181 · src/renderer/src/components/Pages.tsx:1011 | Each message counts from its own date, in the daily cleanup: with 30, anything past 30 days leaves the database and the next turn reads none of it. | Daily cleanup deletes older messages and removes them from future replies. |
 | 183 · src/renderer/src/components/Pages.tsx:1024 | Its replies in every channel go, and everything said in its DMs. ${draft.name} stays on the team; memories and usage receipts stay. This cannot be undone. | Delete this agent’s replies in all channels and every message in its DMs. ${draft.name}, memories, and usage records stay. This cannot be undone. |
 | 185 · src/renderer/src/components/Pages.tsx:1033 | ${gone} message(s) deleted. | Messages deleted: ${gone}. |
 | 186 · src/renderer/src/components/Pages.tsx:1039 | Delete this bot’s history | Delete agent history |
@@ -206,3 +206,7 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 349 · src/shared/initiative.ts:329 | Say where this came from. | Specify the source. |
 | 361 · src/shared/notice.ts:184 | The agent stopped, waiting for you. The conversation has the details. | The agent is waiting for your response. Open the conversation for details. |
 | 377 · src/shared/retention.ts:36 | everything, for good | Forever |
+
+## Rendered review amendment
+
+At native 150% scaling, the 900px agent editor has a 249px text column. The original proposals for IDs 174, 180 and 181 used three lines; the 49-character side note had only 134px. Shorten the two explanations as recorded above and put the zero/forever override note below the input at full column width. Keep the same type size and all content visible.
