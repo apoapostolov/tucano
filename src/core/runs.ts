@@ -955,7 +955,7 @@ export class Runner {
   }
 
   // A reply the person puts on hold keeps everything it has (its session, its steps, the text so far)
-  // and stops at the boundary between turns, where nothing of the model's is in flight. The next turn
+  // and stops at the boundary between turns, where nothing of the model's is in flight. The next work
   // starts when they let it go, on the same model and the same session: a quota window passing, say,
   // without the reserve model taking the reply over. Inside a turn there is nothing to hold.
   pause(messageId: string): void {
@@ -972,8 +972,8 @@ export class Runner {
     if (c.msg.run?.held) this.update(c.msg, { run: { ...c.msg.run, held: undefined } })
   }
 
-  // Where a held reply waits, between turns. Stopping it is the way out of a hold nobody lets go of:
-  // the abort wakes it, and the run goes on to be stopped like any other.
+  // Where a held reply waits, before a tool call and before the next turn. Stopping it is the way out
+  // of a hold nobody lets go of: the abort wakes it, and the run goes on to be stopped like any other.
   private async heldBetweenTurns(c: Control): Promise<void> {
     if (!c.hold.held) return
     if (c.msg.run && c.msg.run.status !== 'paused') this.update(c.msg, { run: { ...c.msg.run, status: 'paused' } })

@@ -43,8 +43,8 @@ export interface Api {
   sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: SendMode; steerTo?: string }): void // threadId: a reply in the thread that message started; mode: how it joins a reply already running there; steerTo: the running reply a steer is for, when more than one runs there
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
-  pauseRun(p: { messageId: string }): void // a running reply stops at the end of its turn and waits; nothing it did is lost
-  resumeRun(p: { messageId: string }): void // the held reply starts its next turn, on the same session and model
+  pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
+  resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
   retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
   followUpRun(p: { messageId: string; text: string }): void // a finished reply goes on from where it stopped, in the same row
   continueRun(p: { messageId: string }): void // a reply that was cut goes on, with what it already did

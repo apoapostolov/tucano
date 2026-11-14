@@ -2026,9 +2026,8 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   )
 }
 
-// The pause, beside the steer pill: the reply stops at the end of the turn it is in and keeps
-// everything it has (its session, its steps, the text so far), then starts the next turn when it is
-// let go. A limit that resets in an hour is waited out here instead of moving to the reserve model.
+// Pause and steering share the footer. A held reply waits before its next tool call or turn,
+// preserving its session and text until it is resumed.
 function HoldButton({ message, paused, held }: { message: Message; paused: boolean; held: boolean }): ReactNode {
   if (paused) {
     return (
