@@ -1589,6 +1589,32 @@ h3 {
     opacity: 1;
   }
 }
+/* The reply's last row while it is at work: the pause beside the steer pill. Both say something about
+   a reply that is running; under the thinking block the row keeps a gap from the box above it, as the
+   steer pill alone did. */
+.steps__hold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 4px 3px;
+  padding-left: 14px;
+}
+.thought + .steps__hold {
+  margin-top: 6px;
+}
+.steps__hold .steps__ask {
+  margin: 0;
+  padding: 0;
+}
+.steps__hold .steps__ask-pill[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+/* A paused reply: letting it go on is the one thing to do there, so it reads as the choice. */
+.steps__ask-pill--go {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .steps__ask-pill {
   justify-self: start;
   display: inline-flex;

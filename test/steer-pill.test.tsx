@@ -77,7 +77,8 @@ const drawChain = async (message: Message): Promise<void> => {
   await act(async () => root.render(<RunSteps message={message} />))
 }
 
-const pill = (): HTMLElement | null => document.querySelector('.steps__ask-pill')
+// The steer pill itself: the pause beside it wears the same clothes (test/pause-pill.test.tsx).
+const pill = (): HTMLElement | null => document.querySelector('.steps__ask .steps__ask-pill')
 const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__ask-note textarea')
 const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__ask-row button')] as HTMLElement[]
 // Typing as React sees it: the value set past React's own tracker, then the input event.
@@ -113,9 +114,10 @@ describe('the steer pill', () => {
     await draw(reply('working'))
     expect(pill()?.textContent?.trim()).toBe('Orientar')
     expect(document.querySelector('.steps__list')).not.toBeNull()
-    // Under the steps, not above them: it is the last thing in the block.
+    // Under the steps, not above them: the row it shares with the pause is the last thing in the block.
     const block = document.querySelector('.steps')!
-    expect(block.lastElementChild?.className).toBe('steps__ask steps__ask--pointer')
+    expect(block.lastElementChild?.className).toBe('steps__hold')
+    expect(document.querySelector('.steps__hold .steps__ask--pointer')).not.toBeNull()
     // Done, the chain carries no pill at all: steering is for a reply that's running. The same pill is
     // the follow up from there on, and it sits under the answer, not in the chain
     // (test/steer-followup.test.tsx).

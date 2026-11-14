@@ -82,7 +82,8 @@ const draw = async (message: Message): Promise<void> => {
 }
 // Where the pill's block sits in the reply, as an index among the body's children.
 const at = (el: Element | null): number => [...document.querySelector('.msg__body')!.children].indexOf(el as Element)
-const pill = (): HTMLElement | null => document.querySelector('.steps__ask-pill')
+// The steer pill itself: the pause beside it wears the same clothes (test/pause-pill.test.tsx).
+const pill = (): HTMLElement | null => document.querySelector('.steps__ask .steps__ask-pill')
 const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__ask-note textarea')
 const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__ask-row button')] as HTMLElement[]
 // Typing as React sees it: the value set past React's own tracker, then the input event.

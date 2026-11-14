@@ -64,6 +64,8 @@ import { canEditChannel,
   sendMessage,
   typing,
   setTab,
+  pauseRun,
+  resumeRun,
   stopRun,
   summarizeNow,
   summarizeThreadNow,
@@ -346,6 +348,7 @@ function glide(list: HTMLElement, to: number, done: () => void): void {
 }
 
 const JumpTo = createContext<(id: string) => void>(() => {})
+
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
 // jump to, and a reply with no prompt of its own (a routine's, one an agent called for) has none.
@@ -1872,8 +1875,42 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
       {/* What it is thinking, and under it the pill: what the person writes while it works, handed over
           at its next tool call. The pill goes last, under the thinking block, never above it. */}
       <Thought message={message} working={working} />
-      {working && <SteerPill message={message} />}
+      {(working || message.run?.status === 'paused') && (
+        <div className="steps__hold">
+          <HoldButton message={message} paused={message.run?.status === 'paused'} held={!!message.run?.held} />
+          {working && <SteerPill message={message} />}
+        </div>
+      )}
     </div>
+  )
+}
+
+// The pause, beside the steer pill: the reply stops at the end of the turn it is in and keeps
+// everything it has (its session, its steps, the text so far), then starts the next turn when it is
+// let go. A limit that resets in an hour is waited out here instead of moving to the reserve model.
+function HoldButton({ message, paused, held }: { message: Message; paused: boolean; held: boolean }): ReactNode {
+  if (paused) {
+    return (
+      <button
+        className="steps__ask-pill steps__ask-pill--go"
+        onClick={() => resumeRun(message.id)}
+        title={L('Seguir agora, na mesma sessão e no mesmo modelo', 'Go on now, in the same session and on the same model')}
+        aria-label={L('Retomar a resposta', 'Let the reply go on')}
+      >
+        <Icon name="play" size={11} /> {L('Retomar', 'Resume')}
+      </button>
+    )
+  }
+  return (
+    <button
+      className="steps__ask-pill"
+      disabled={held}
+      onClick={() => pauseRun(message.id)}
+      title={L('Parar no fim desta volta e esperar: a sessão e o que ele já fez ficam', 'Stop at the end of this turn and wait: the session and what it has done stay')}
+      aria-label={L('Pausar a resposta', 'Pause the reply')}
+    >
+      <Icon name="pause" size={11} /> {held ? L('Pausando…', 'Pausing…') : L('Pausar', 'Pause')}
+    </button>
   )
 }
 

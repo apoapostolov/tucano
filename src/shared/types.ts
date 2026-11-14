@@ -198,6 +198,7 @@ export type RunStatus = 'working' | 'waiting_input' | 'waiting_approval' | 'done
 export interface Run {
   status: RunStatus
   steps: Step[]
+  held?: boolean // the person put this reply on hold: it stops at the end of the turn it is in, and starts the next one when told to
   endedAt?: number // when this reply ended, however it ended: where the conversation shows it (saidAt)
   restartPending?: boolean // interrupted at shutdown, still eligible for startup recovery
   receipt?: Receipt

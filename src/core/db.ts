@@ -1631,11 +1631,12 @@ export class Db {
     return r ? this.toApproval(r) : undefined
   }
 
-  // Runs that were working when the app closed can't continue: their CLI process is gone.
+  // Runs that were working when the app closed can't continue: their CLI process is gone. One held by
+  // the person is the same: nothing is left to resume in the window that held it.
   interruptStaleRuns(): number {
     let n = 0
-    for (const m of this.messagesWithRun(['working'])) {
-      if (m.run?.status !== 'working') continue
+    for (const m of this.messagesWithRun(['working', 'paused'])) {
+      if (m.run?.status !== 'working' && m.run?.status !== 'paused') continue
       n++
       this.saveMessage({
         ...m,
