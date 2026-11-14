@@ -742,6 +742,7 @@ other half, and they belong to the same session.
 | Delete a session from the room, in two presses | 374 | 375 |
 | Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
 | Give the file its space back, and say whether it is sound | 433 | 437 |
+| Core boot test budgets, pending evidence review | | 445 |
 | Control room visibility and cross-room agent read access | 423 | 424 |
 | Per-bot initiative and bounded responsibilities | 434 | 435 |
 

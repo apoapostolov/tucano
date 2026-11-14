@@ -14,12 +14,25 @@ is on a feature branch; its work and the other worktrees remain untouched.
 - [x] Refresh authored PR heads, discussions, merge dispositions and cached diffs.
 - [x] Integrate upstream 0.2.29 while preserving fork behavior in conflicts.
 - [x] Review accepted PRs for duplicated settings, helpers, events, tests and UI controls.
-- [ ] Verify committed instructions, settings ownership guides and primary-checkout delivery.
-- [ ] Install locked dependencies in a dedicated packaging worktree; run typecheck and full suite.
-- [ ] Build and exercise the reconciled app with isolated, hidden QA and affected copy checks.
-- [ ] Package, install, launch and verify the installed 0.2.29 app and archive hash.
-- [ ] Publish the fork's 0.2.29 release after installed verification.
-- [ ] Resume the feature audit and record every new or revised PR disposition.
+- [x] Verify committed instructions, settings ownership guides and primary-checkout delivery.
+- [x] Install locked dependencies in a dedicated packaging worktree; run typecheck and full suite.
+- [x] Build and exercise the reconciled app with isolated, hidden QA and affected copy checks.
+- [x] Package, install, launch and verify the installed 0.2.29 app and archive hash.
+- [x] Publish the fork's 0.2.29 release after installed verification.
+- [x] Resume the feature audit and record every new or revised PR disposition.
+
+Upgrade checklist: **10/10 complete**. Installed and release source `28ad4f2`; 2,563 tests passed,
+61 skipped, zero failures. The [reconciliation record](upstream-reconciliation-0.2.29.md) lists
+conflict decisions, installed verification, release digests and the new intake. The wider audit
+remains **0/43 fully audited**; this checklist measures the upgrade only.
+
+Next audit checks:
+
+- [ ] Review the 13 revised heads captured at 08:25 UTC and distinguish rebases from behavior changes.
+- [ ] Correct #445's unsupported shared-runner claim and establish its base-branch timing evidence.
+- [ ] Finish #311's restored harness labels, rendered evidence and maintainability disposition.
+- [ ] Reconcile later Settings revision `7c583c8` with the verified installed arrangement.
+- [ ] Continue room-sharing persistence, access enforcement and confirmed Tuca proposals.
 
 Earlier checkpoints below describe their named source revisions; they do not verify this upgrade.
 
