@@ -2026,9 +2026,8 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   )
 }
 
-// The pause, beside the steer pill: the reply stops at the end of the turn it is in and keeps
-// everything it has (its session, its steps, the text so far), then starts the next turn when it is
-// let go. A limit that resets in an hour is waited out here instead of moving to the reserve model.
+// Pause and steering share the footer. A held reply waits before its next tool call or turn,
+// preserving its session and text until it is resumed.
 function HoldButton({ message, paused, held }: { message: Message; paused: boolean; held: boolean }): ReactNode {
   if (paused) {
     return (
@@ -2047,7 +2046,7 @@ function HoldButton({ message, paused, held }: { message: Message; paused: boole
       className="steps__ask-pill"
       disabled={held}
       onClick={() => pauseRun(message.id)}
-      title={L('Parar no fim desta volta e esperar: a sessão e o que ele já fez ficam', "Pause after this turn, preserving the session and completed work")}
+      title={L('Parar antes do próximo passo e esperar: a sessão e o que ele já fez ficam', 'Pause before the next step, preserving the session and completed work')}
       aria-label={L('Pausar a resposta', "Pause reply")}
     >
       <Icon name="pause" size={11} /> {held ? L('Pausando…', 'Pausing…') : L('Pausar', 'Pause')}

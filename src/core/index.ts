@@ -1646,7 +1646,7 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
-  // A reply put on hold keeps its session and its place; the next turn starts when it's let go.
+  // A reply put on hold keeps its session and its place; the next work starts when it's let go.
   pauseRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.pause(messageId)),
 
   resumeRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.resume(messageId)),
