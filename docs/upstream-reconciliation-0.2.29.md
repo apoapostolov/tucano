@@ -52,3 +52,33 @@ require rendered checks before delivery.
 - [ ] Install and verify the installed executable, workspace and archive hash.
 - [ ] Publish the fork release after installed verification.
 - [ ] Resume the per-head audit and update new/revised PR records.
+
+## Refreshed PR heads and audit intake
+
+At 08:03 UTC the authored inventory contains 83 PRs: 55 open, 18 merged and 10 closed.
+The overnight merged set is #244, #310, #373, #386, #419 and #422. This describes upstream
+acceptance, not complete quality review.
+
+| PR | Current head | Revision review |
+| --- | --- | --- |
+| #248 | `f32b6ec` | Rebased onto 0.2.29; range-diff shows the same AskStrip feature, with CSS context changes only. Existing composed integration remains. |
+| #249 | `acef2d7` | Rebased onto 0.2.29; three feature commits retain history boundaries, pending-work cleanup and summary deletion. Existing stronger cancellation and revision protections remain. |
+| #311 | `066dba0` | Rebase retains Hermes folders, versions and facets, but drops the broader harness-label helper in favor of upstream skillOrigin. OpenCode, Copilot, Gemini, Pi and Agents then lose their source labels; `.hermes` also fails the narrower Hermes predicate. Repair belongs on #311 and needs fresh UI evidence. The integration already retains the broader labels. |
+
+These comparisons use per-feature range-diff rather than whole-tree diffs, so upstream changes
+are not mistaken for feature changes. None is marked fully audited from CI or ancestry alone.
+
+## Evidence at the integrated source
+
+Source `4cf74d8` passes type checking, the settings placement check (33 sections, 54 owned keys,
+57 checked writes), 14 settings navigation/structure cases and 77 affected-feature cases.
+The built renderer passes 50 captures and 96 section-navigation checks at 1280, 900 and 760 CSS
+pixels, with zero copy failures. The background Electron smoke passes seven checks without
+visible or focusable QA windows. The screenshot of App / Conversation was reviewed for the
+new label and hint beside neighboring controls; installed-renderer measurements are separate.
+
+Entanglement compares reconstructed committed before-tree `417a90a` with `4cf74d8`: +979 NLOC,
++322 summed function CC and +269 CogC, largely the settings architecture and checks. This is
+not a pre-edit live-state baseline. Its gate is blocked by edited low-MI core/renderer files,
+including Pages, Conversation, People, Routing and Wiki; structural debt remains open. This
+upgrade does not claim maintainability or production-readiness signoff.

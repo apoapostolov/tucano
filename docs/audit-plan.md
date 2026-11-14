@@ -11,9 +11,9 @@ Starting refs: published integration `41d0979`, prior audit candidate `d0fc185`,
 is on a feature branch; its work and the other worktrees remain untouched.
 
 - [x] Identify the current branches, worktrees and unpublished audit work.
-- [ ] Refresh authored PR heads, discussions, merge dispositions and cached diffs.
-- [ ] Integrate upstream 0.2.29 while preserving fork behavior in conflicts.
-- [ ] Review accepted PRs for duplicated settings, helpers, events, tests and UI controls.
+- [x] Refresh authored PR heads, discussions, merge dispositions and cached diffs.
+- [x] Integrate upstream 0.2.29 while preserving fork behavior in conflicts.
+- [x] Review accepted PRs for duplicated settings, helpers, events, tests and UI controls.
 - [ ] Verify committed instructions, settings ownership guides and primary-checkout delivery.
 - [ ] Install locked dependencies in a dedicated packaging worktree; run typecheck and full suite.
 - [ ] Build and exercise the reconciled app with isolated, hidden QA and affected copy checks.
