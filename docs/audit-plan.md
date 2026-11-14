@@ -4,6 +4,25 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
+### Evening intake and pause safety, 14 November
+
+- [x] Set `apoapostolov/tucano`'s default branch to `next` and verify GitHub's returned value.
+- [x] Recover the removed audit worktree from surviving committed source; preserve newer pause/reasoning commits through `cf9d34fa`.
+- [x] Refresh authored inventory: 90 PRs, 62 open, 18 merged, 10 closed at 18:17 UTC.
+- [x] Reproduce three #457 defects: pre-aborted wait hangs, overwritten parallel waiters, and abort listeners retained after resume.
+- [x] Repair #457 in place; public full suite passes 1,756 tests with 60 skipped and zero failures. A fresh pushed-SHA checkout passes typecheck and 13 focused cases.
+- [x] Publish six public-branch pause captures and measurements; remove stale failure claims from the PR description.
+- [x] Preserve steering, follow-up, restart recovery and reading-position behavior; 41 focused combined checks pass.
+- [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
+- [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
+- [ ] Install, launch and verify the combined source in the installed executable.
+- [ ] Publish final integration and refresh the fork release, which currently predates the pause feature.
+
+The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
+files untouched and deliver this batch from the isolated audit worktree. See the
+[evening intake record](audit-evening-2026-11-14.md) for exact SHAs and evidence boundaries.
+
+
 ### Skills and revised PR intake, 14 November afternoon
 
 - [x] Refresh current upstream and the authored PR inventory: 89 total, 61 open, 18 merged, 10 closed at 13:04 UTC.
@@ -14,7 +33,7 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 - [x] Correct #445's unsupported runner claim in source and description; test a clean current-main baseline. Keep the proposed budget increases unintegrated pending CI reproduction.
 - [x] Reproduce the skill diff's quadratic allocation on current main and open upstream #454 with an immutable reproduction script.
 - [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
-- [ ] Finish the final combined suite after the earlier 60-second wiki-Git test failure; do not raise its timeout.
+- [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
 - [ ] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
 - [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
 

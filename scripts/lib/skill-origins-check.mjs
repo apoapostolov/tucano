@@ -43,7 +43,8 @@ export async function checkSkillOrigins(page, output, guard = async () => {}, re
     await page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).waitFor();
   }
   await viewport.restore();
-  for (const width of [null, 1280, 900, 420]) {
+  // The desktop window has a 900px minimum; the browser surface also supports 420px.
+  for (const width of resize ? [null, 1280, 900] : [null, 1280, 900, 420]) {
     await viewport.set(width);
     for (const [, harness] of fixtures) {
       const meta = page.locator('.skill-line').filter({ hasText: `${harness.toLowerCase().replaceAll(' ', '-')}-audit-skill` }).locator('.skill-line__meta');

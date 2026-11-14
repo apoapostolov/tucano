@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
 import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
+import { checkPause } from './lib/pause-check.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 
@@ -15,7 +16,7 @@ const reserve = async () => {
   await new Promise((yes, no) => { server.once('error', no); server.listen(0, '127.0.0.1', yes) })
   return { server, port: server.address().port }
 }
-const output = resolve(process.argv[2] ?? '.tucano-local/audit/background-qa')
+const output = resolve(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? '.tucano-local/audit/background-qa')
 mkdirSync(output, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
@@ -74,6 +75,7 @@ try {
   if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard, resize)
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
   if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
+  if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()
