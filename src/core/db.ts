@@ -1631,16 +1631,20 @@ export class Db {
     return r ? this.toApproval(r) : undefined
   }
 
-  // Runs that were working when the app closed can't continue: their CLI process is gone. One held by
-  // the person is the same: nothing is left to resume in the window that held it.
+  // Runs that were working when the app closed can't continue: their CLI process is gone. A reply held
+  // by the person is the same, and only that one: a reply paused at its spending ceiling had already
+  // ended, and still goes on from where it stopped.
   interruptStaleRuns(): number {
     let n = 0
     for (const m of this.messagesWithRun(['working', 'paused'])) {
-      if (m.run?.status !== 'working' && m.run?.status !== 'paused') continue
+      const run = m.run
+      if (!run) continue
+      const stale = run.status === 'working' || (run.status === 'paused' && run.held === true)
+      if (!stale) continue
       n++
       this.saveMessage({
         ...m,
-        run: { ...m.run, status: 'interrupted', restartPending: true, steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
+        run: { ...run, status: 'interrupted', restartPending: true, steps: run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
       })
     }
     return n
