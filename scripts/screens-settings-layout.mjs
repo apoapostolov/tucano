@@ -210,7 +210,37 @@ try {
   await page.locator('#settings-tab-app').click();
   await page.locator('.settings-sections a[href="#settings-app-updates"]').click();
   assert.equal(await page.evaluate(() => document.activeElement.id), 'settings-app-updates');
+  // Editor hints share the same copy rules, including the web layout below desktop minimum size.
+  report.agentCopy = [];
+  await page.locator('.nav-item', { has: page.locator('.nav-item__role') }).filter({ hasText: 'Lia' }).first().click();
+  await page.locator('.agent-form').waitFor();
+  await page.getByRole('radio', { name: 'Custom', exact: true }).click();
+  for (const width of [1280, 900, 760]) {
+    await page.setViewportSize({ width, height: 900 });
+    const copy = await measureCopy(page, [
+      { selector: '.agent-form .field__label:visible, .agent-form .card--danger button:visible', maxLines: 1 },
+      { selector: '.agent-form .hint:visible, .agent-form .card__head p:visible' }
+    ]);
+    report.agentCopy.push({ width, ...copy });
+    await page.getByText('Agent history', { exact: true }).scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(output, `agent-history-${width}.png`) });
+    assert.ok(copy.passed, JSON.stringify(copy.failures));
+  }
+  await page.getByRole('button', { name: 'Set up initiative', exact: true }).click();
+  report.initiativeCopy = [];
+  for (const width of [1280, 900, 760, 520]) {
+    await page.setViewportSize({ width, height: 900 });
+    const copy = await measureCopy(page, [
+      { selector: '.initiative .field__label:visible, .initiative .btn:visible', maxLines: 1 },
+      { selector: '.initiative .hint:visible, .initiative .card__head p:visible' }
+    ]);
+    report.initiativeCopy.push({ width, ...copy });
+    await page.screenshot({ path: join(output, `initiative-${width}.png`) });
+    assert.ok(copy.passed, JSON.stringify(copy.failures));
+  }
+  await page.locator('.initiative').getByRole('button', { name: 'Close', exact: true }).click();
   await page.setViewportSize({ width: 900, height: 900 });
+  await page.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click();
   await page.locator('#settings-tab-app').click();
   await page.getByRole('radio', { name: 'Português', exact: true }).click();
   await page.locator('#settings-tab-knowledge').filter({ hasText: 'Conhecimento' }).waitFor();

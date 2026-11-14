@@ -210,3 +210,5 @@ Labels should occupy one line and hints at most two. Character counts are estima
 ## Rendered review amendment
 
 At native 150% scaling, the 900px agent editor has a 249px text column. The original proposals for IDs 174, 180 and 181 used three lines; the 49-character side note had only 134px. Shorten the two explanations as recorded above and put the zero/forever override note below the input at full column width. Keep the same type size and all content visible.
+
+The screenshot also exposes wrapped neighboring labels and hints because the 260px profile summary squeezes the editor. Stack that summary below the form at 761–1100px viewports, retaining the existing mobile layout and wide desktop arrangement. Extend measurement to every visible editor label and hint, including the new Initiative controls.

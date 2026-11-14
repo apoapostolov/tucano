@@ -2401,6 +2401,16 @@ h3 {
   gap: 14px;
   max-width: 720px;
 }
+/* Keep the profile summary from squeezing the editor's labels and hints on small desktops. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .agent-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .agent-layout .agent-side {
+    position: static;
+    max-width: 720px;
+  }
+}
 .agent-side {
   position: sticky;
   top: 0;

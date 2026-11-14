@@ -84,8 +84,8 @@ try {
     await agent.getByRole('spinbutton', { name: 'Days', exact: true }).fill('3650')
     await agent.getByText('Agent history', { exact: true }).scrollIntoViewIfNeeded()
     await capture(page, 'agent-retention', [
-      { selector: '.agent-form .card--danger .field__label:visible, .agent-form .card--danger button:visible', maxLines: 1 },
-      { selector: '.agent-form .card--danger .hint:visible, .agent-form .card--danger .card__head p:visible, .agent-form .card--danger .row .muted.small:visible' }
+      { selector: '.agent-form .field__label:visible, .agent-form .card--danger button:visible', maxLines: 1 },
+      { selector: '.agent-form .hint:visible, .agent-form .card__head p:visible' }
     ])
     await agent.getByRole('button', { name: 'Delete agent history', exact: true }).click()
     await capture(page, 'agent-delete', [
@@ -115,10 +115,13 @@ try {
       BrowserWindow.fromId(id).webContents.send(pick ? 'notice:pick' : 'notice:demo', ...(pick ? [{ x: 480, y: 160, w: 372, h: 600, up: true }] : []))
     }, { id, pick })
     await target.locator(pick ? '.pick' : '.nc').first().waitFor()
-    if (pick) {
-      await capture(target, 'notification-area', [{ selector: '.pick button:visible', maxLines: 1 }, { selector: '.pick__bar p:visible, .pick__label:visible' }])
-    } else {
-      await capture(target, 'notification-cards', [{ selector: '.nc__actions .btn:visible, .ask__badge:visible, .tag--danger:visible', maxLines: 1 }])
+    for (const width of pick ? [1280, 900] : [372, 280]) {
+      await resize(id, width)
+      if (pick) {
+        await capture(target, 'notification-area', [{ selector: '.pick button:visible', maxLines: 1 }, { selector: '.pick__bar p:visible, .pick__label:visible' }])
+      } else {
+        await capture(target, 'notification-cards', [{ selector: '.nc__actions .btn:visible, .ask__badge:visible, .tag--danger:visible', maxLines: 1 }])
+      }
     }
     await app.evaluate(({ BrowserWindow }, id) => BrowserWindow.fromId(id).destroy(), id)
   }
