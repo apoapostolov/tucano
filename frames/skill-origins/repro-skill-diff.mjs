@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+const file = process.argv[2] || 'src/renderer/src/components/Skills.tsx';
+const source = fs.readFileSync(file, 'utf8');
+const component = source.slice(source.indexOf('function Diff('));
+let algorithm = component.slice(component.indexOf('  const a ='), component.indexOf('  return ('));
+algorithm = algorithm.replaceAll('Array<number>', 'Array').replace('const lcs: number[][]', 'const lcs').replace("const lines: { kind: ' ' | '-' | '+'; text: string }[]", 'const lines').replace(/(?<=[\w\]])!(?!=)/g, '');
+const context = {};
+vm.createContext(context);
+vm.runInContext('this.diff = function(before, after) {\n' + algorithm + '\nreturn lines; }', context, { filename: file });
+const lines = Number(process.argv[3] || 500);
+const before = 'a\n'.repeat(lines), after = 'b\n'.repeat(lines);
+console.log(JSON.stringify({ lines, beforeCharacters: before.length, afterCharacters: after.length, source: '04539404', cells: (lines + 2) ** 2 }));
+const start = performance.now();
+context.diff(before, after);
+console.log(JSON.stringify({ milliseconds: performance.now() - start, heapUsed: process.memoryUsage().heapUsed }));
