@@ -7,7 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { gsap } from 'gsap'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { L } from '../../../shared/lang'
+import { L, setLang } from '../../../shared/lang'
 import {
   NOTICE_MAX,
   NOTICE_MAX_FULL,
@@ -35,7 +35,7 @@ import { call } from '../rpc'
 import { AgentAvatar, Icon } from '../components/ui'
 import { AskCard } from '../components/Decisions'
 import { toolWords } from '../components/Conversation'
-import { startFeed } from './feed'
+import { link, startFeed } from './feed'
 
 const RULES: NoticeRules = { on: true, act: true, seconds: NOTICE_SECONDS, hover: true, skin: 'system', stack: false }
 
@@ -192,9 +192,18 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
         </div>
       )}
 
-      {act && card.kind === 'approval' && approval && (
+      {(act || card.preview) && card.kind === 'approval' && approval && (
         <div className="nc__actions" onClick={stop}>
-          <HoldApprove onApprove={() => onDecide(card, 'approved')} />
+          {/* A card from Settings' test decides nothing and keeps nothing, so it answers to a click:
+              the hold is what keeps a real approval from being given by a stray click on a card that
+              was about to fade. */}
+          {card.preview ? (
+            <button className="btn btn--xs btn--primary" onClick={() => onDecide(card, 'approved')}>
+              {L('Aprovar', 'Approve')}
+            </button>
+          ) : (
+            <HoldApprove onApprove={() => onDecide(card, 'approved')} />
+          )}
           <button className="btn btn--xs" onClick={() => onDecide(card, 'refused')}>
             {L('Recusar', 'Refuse')}
           </button>
@@ -210,7 +219,7 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
         </div>
       )}
 
-      {act && card.kind === 'ask' && card.ask?.decisions?.length ? (
+      {(act || card.preview) && card.kind === 'ask' && card.ask?.decisions?.length ? (
         <div className="nc__block nc__block--ask" onClick={stop}>
           {/* The app's own card: the decisions one at a time, its options, the arrows, and Send. */}
           <AskCard
@@ -220,6 +229,7 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
             recommended={card.ask.recommended}
             mode="answer"
             badge={L('Esperando você', 'Waiting for you')}
+            {...(card.preview ? { onSend: () => onDecide(card, 'approved') } : {})}
           />
         </div>
       ) : null}
@@ -290,9 +300,20 @@ export function NoticeWindow(): ReactNode {
       if (card) setPushed((was) => [card, ...was.filter((c) => c.id !== card.id)].slice(0, NOTICE_MAX))
     })
     window.tucano.notice.onClear(() => setPushed([]))
-    window.tucano.notice.onDemo(() =>
-      setPushed((was) => [...demoCards(), ...was].slice(0, NOTICE_MAX))
-    )
+    window.tucano.notice.onDemo(() => {
+      void (async () => {
+        try {
+          // The port may not be open yet on a window that was just made: wait for it, or the read
+          // fails and the page draws the cards in the language it was built with.
+          await link()
+          const feed = await call('noticeFeed')
+          setLang(feed.language)
+        } catch {
+          // keep whatever language the page already has
+        }
+        setPushed((was) => [...demoCards(), ...was].slice(0, NOTICE_MAX))
+      })()
+    })
     window.tucano.notice.onPlace((p) => {
       setUp(p.up !== false)
       setSystem({ dark: p.dark === true, accent: typeof p.accent === 'string' && p.accent ? p.accent : '#d9581a' })
@@ -353,12 +374,16 @@ export function NoticeWindow(): ReactNode {
   }, [])
 
   // The pointer: over a card the window takes the clicks (everywhere else they go through to what's
-  // behind it, which main arranges), and that card holds its place.
+  // behind it, which main arranges), and that card holds its place. The test runs on a move and on
+  // the position main polls, so a card that appears under a still pointer is reachable too.
+  const retest = useRef<() => void>(() => {})
   useEffect(() => {
     let inside = false
     let over: string | null = null
-    const move = (e: PointerEvent): void => {
-      const card = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest<HTMLElement>('.nc-wrap')
+    let at: { x: number; y: number } | null = null
+    const test = (x: number, y: number): void => {
+      at = { x, y }
+      const card = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>('.nc-wrap')
       const id = card?.dataset['card'] ?? null
       if (!!card !== inside) {
         inside = !!card
@@ -370,7 +395,9 @@ export function NoticeWindow(): ReactNode {
         over = id
       }
     }
+    const move = (e: PointerEvent): void => test(e.clientX, e.clientY)
     const leave = (): void => {
+      at = null
       if (inside) {
         inside = false
         window.tucano.notice.hit(false)
@@ -378,15 +405,24 @@ export function NoticeWindow(): ReactNode {
       if (over) held.current.delete(over)
       over = null
     }
+    // The stack changed under a pointer that has not moved: ask the same question again.
+    retest.current = (): void => {
+      if (at) test(at.x, at.y)
+    }
+    window.tucano.notice.onCursor((p) => test(p.x, p.y))
     window.addEventListener('pointermove', move)
     document.addEventListener('pointerleave', leave)
     window.addEventListener('blur', leave)
     return () => {
+      retest.current = () => {}
       window.removeEventListener('pointermove', move)
       document.removeEventListener('pointerleave', leave)
       window.removeEventListener('blur', leave)
     }
   }, [])
+  useEffect(() => {
+    retest.current()
+  }, [cards.length])
 
   // The wheel over a card opens it, and closes it again: the small card grows to the whole thing,
   // pictures and all, without leaving the stack.

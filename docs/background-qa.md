@@ -53,5 +53,19 @@ scratch data, reserved ports, hidden window, `report.json` with the source commi
 failure screenshot with the page text left behind. Use the installed executable when what
 is being checked is the bundle a person has, not the checkout's build.
 
+`scripts/screens-notices.mjs` is the exception to the hidden-window rule, because it checks the
+notification cards. `--qa-background` suppresses notifications on purpose, so this run starts an
+ordinary isolated instance, and its window is visible for the few seconds it takes. It sends a
+prompt in an agent's DM, leaves that conversation so the reply is not silently swallowed by the
+screen the person is looking at, waits for the app's own notify path to put a card over every
+window, and then checks the card is a real record rather than a Settings test card, that the page
+hit-tests it where it is drawn, that a click opens the conversation, and that the cards window
+hides afterwards.
+
+```
+node scripts/screens-notices.mjs [output directory]
+TUCANO_ELECTRON=<installed TucanoNext.exe> node scripts/screens-notices.mjs
+```
+
 The approach uses Electron's [hidden BrowserWindow support](https://www.electronjs.org/docs/latest/api/browser-window)
 and Playwright's [Electron automation](https://playwright.dev/docs/api/class-electron).

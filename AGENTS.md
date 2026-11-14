@@ -527,9 +527,21 @@ code names the stage that failed (`typecheck 2`, `build 3`, `package 4`, `verify
   dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
   and the processes left behind hold the single-instance lock, so every later launch, including the
   taskbar shortcut, does nothing at all. Run `npm ci` alone and wait for it to finish.
-- **Run it in the foreground.** A shell the runner moves to the background cannot answer the
-  installer's stdin: the run prints `stdin is not a tty` and ends without installing, leaving the
-  previous installer in `dist/` to be mistaken for a fresh one.
+- **A detached run installs, provided it starts in this checkout and its `node` is the real one.** The
+  installer is spawned as `setup.exe /S` with its stdin ignored, so nothing needs a terminal; seven
+  detached runs have completed here, each ending `Up: TucanoNext <version>, window "TucanoNext"`. Two
+  things still break a backgrounded attempt, and neither is the installer. A launcher that does not
+  carry this checkout as its working directory runs npm in the home directory and dies with
+  `Could not read package.json` before anything builds. A shell that resolves `node` to a `winpty`
+  alias aborts with `stdin is not a tty` and exit 1 before the script starts; `command node
+  scripts/self-build.mjs install` bypasses the alias and installs, so read what the shell resolves
+  before believing the install ran.
+- **In a harness that caps a foreground command, use that harness's background runner once, with the
+  cwd set.** pi's `pi-watch` refuses any single bash call over 120 s, which is shorter than this
+  build takes, so the foreground route does not exist there: start it once through the background
+  runner and wait for the watch. Do not repeat it, because a second attempt can start another
+  instance against the same `TUCANO_DATA` and its Electron cache creation then fails with `Access is
+  denied`.
 - **`node scripts/self-build.mjs doctor` after any launch that shows no window.** It names a
   package that cannot load and instances that run without a window; `doctor --fix` closes those
   instances so the next launch can start.
@@ -687,7 +699,7 @@ other half, and they belong to the same session.
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
-| Thinking streamed as dim live text | 235 | 245 |
+| Thinking streamed as dim live text | 235, 452 | 245 |
 | Model-facing language in an English workspace | 242 | 310 |
 | Settings › Models: thinking under the model | 312 | 313 |
 | Settings › Accounts: another Grok login | 415 | 416 |

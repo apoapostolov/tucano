@@ -82,6 +82,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Deciding from a notification.** An approval or a question is decided on the card itself, with the conversation's own cards: the options with the recommended one marked, "Something else", the arrows between decisions, and Send; approvals with the same hold-to-approve, which a stray click cannot trigger. A high-risk approval is never kept for good, the rest can be allowed from then on, and the card goes away as soon as the decision is made anywhere.
 - **The cards wear the system's skin.** Light, dark, or whatever the system is on, with Windows' own accent and surfaces (and the Mac's, and the Linux desktop's), followed as the system changes. Settings › Notifications also carries the seconds on screen, the pointer, where they appear, and a test that shows one of every kind.
 
+- **The reasoning block holds the place you are reading.** It pulled itself to the bottom on every
+  piece that arrived, so a passage read further up was taken away about twice a second and the block
+  could only be read once the reply had ended. It follows the stream while you are at its end, stays
+  where you are while you read above it, and takes the stream up again by itself when you scroll back
+  down.
+
 ## [0.2.29] - 2026-11-13
 
 > **Em português:**
