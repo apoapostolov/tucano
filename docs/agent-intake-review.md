@@ -175,3 +175,12 @@ hook left three additional tests unrun (64 skipped/unrun total). The timed-out w
 passes alone on the candidate (3 tests) and on a clean current-upstream worktree (3 tests).
 That does not prove a host cause. A full upstream baseline is running before the next final
 combined validation; timeouts and assertions remain unchanged.
+
+### 0.2.29 delivery supersedes the pending 0.2.28 install
+
+Upstream `68cf5da` is contained in installed and published `28ad4f2`. The final full suite passes
+2,563 tests, with 61 skipped and zero failures. Installed archive and packaged archive hashes
+match; seven hidden installed runtime checks and native 150%/1280/900/760 copy checks pass.
+The normal installed executable has a visible unfocused window. See the
+[0.2.29 reconciliation record](upstream-reconciliation-0.2.29.md) for exact receipts and the
+84-PR intake, including #445's unsupported CI explanation and the #311 source-label regression.
