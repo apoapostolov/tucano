@@ -1,0 +1,3069 @@
+{
+  "dirty": false,
+  "source": "ea0f090c2be51671ab71f71293100ce3ff6cb345",
+  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-oWDuJz",
+  "measurements": [],
+  "captures": [
+    "1280-settings-app-appearance.png",
+    "1280-settings-workspace-context.png",
+    "1280-settings-agents-replies.png",
+    "1280-settings-models-agents.png",
+    "1280-settings-knowledge-memory.png",
+    "1280-settings-connections-phone.png",
+    "900-settings-app-appearance.png",
+    "900-settings-app-conversation.png",
+    "900-settings-app-notifications.png",
+    "900-settings-app-dictation.png",
+    "900-settings-app-startup.png",
+    "900-settings-app-updates.png",
+    "900-settings-workspace-context.png",
+    "900-settings-workspace-people.png",
+    "900-settings-workspace-activity.png",
+    "900-settings-workspace-transfer.png",
+    "900-settings-workspace-backups.png",
+    "900-settings-workspace-danger.png",
+    "900-settings-agents-replies.png",
+    "900-settings-agents-recovery.png",
+    "900-settings-agents-permissions.png",
+    "900-settings-agents-limits.png",
+    "900-settings-agents-automation.png",
+    "900-settings-models-agents.png",
+    "900-settings-models-runtimes.png",
+    "900-settings-models-accounts.png",
+    "900-settings-models-classifiers.png",
+    "900-settings-knowledge-memory.png",
+    "900-settings-knowledge-wiki-capture.png",
+    "900-settings-knowledge-wiki-storage.png",
+    "900-settings-knowledge-wiki-import.png",
+    "900-settings-knowledge-wiki-rules.png",
+    "900-settings-connections-phone.png",
+    "760-settings-app-appearance.png",
+    "760-settings-workspace-context.png",
+    "760-settings-agents-replies.png",
+    "760-settings-models-agents.png",
+    "760-settings-knowledge-memory.png",
+    "760-settings-connections-phone.png",
+    "pt-900-app.png",
+    "pt-900-workspace.png",
+    "pt-900-agents.png",
+    "pt-900-models.png",
+    "pt-900-knowledge.png",
+    "pt-900-connections.png"
+  ],
+  "errors": [],
+  "navigation": [
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-appearance",
+      "label": "Appearance",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-conversation",
+      "label": "Conversation",
+      "top": 174.515625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-notifications",
+      "label": "Notifications",
+      "top": 174.484375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-dictation",
+      "label": "Dictation",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-startup",
+      "label": "Startup",
+      "top": 174.765625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "app",
+      "id": "settings-app-updates",
+      "label": "Updates",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-context",
+      "label": "Context",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-people",
+      "label": "People",
+      "top": 174.484375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-activity",
+      "label": "Activity",
+      "top": 174.390625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-transfer",
+      "label": "Import and export",
+      "top": 174.8125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-backups",
+      "label": "Backups",
+      "top": 174.78125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "id": "settings-workspace-danger",
+      "label": "Data and deletion",
+      "top": 174.75,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "id": "settings-agents-replies",
+      "label": "Replies",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "id": "settings-agents-recovery",
+      "label": "Recovery",
+      "top": 175.078125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "id": "settings-agents-permissions",
+      "label": "Permissions",
+      "top": 174.421875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "id": "settings-agents-limits",
+      "label": "Limits",
+      "top": 175.15625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "id": "settings-agents-automation",
+      "label": "Automation",
+      "top": 175.09375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "models",
+      "id": "settings-models-agents",
+      "label": "Agent models",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "models",
+      "id": "settings-models-runtimes",
+      "label": "Runtimes",
+      "top": 174.90625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "models",
+      "id": "settings-models-accounts",
+      "label": "Accounts",
+      "top": 174.5625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "models",
+      "id": "settings-models-classifiers",
+      "label": "Classifiers",
+      "top": 175.21875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "id": "settings-knowledge-memory",
+      "label": "Memory",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-capture",
+      "label": "Wiki capture",
+      "top": 174.53125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-storage",
+      "label": "Folder and Git",
+      "top": 174.484375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-import",
+      "label": "Import notes",
+      "top": 174.296875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-rules",
+      "label": "Page rules",
+      "top": 175.03125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 1280,
+      "category": "connections",
+      "id": "settings-connections-phone",
+      "label": "Phone and Telegram",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-appearance",
+      "label": "Appearance",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-conversation",
+      "label": "Conversation",
+      "top": 174.515625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-notifications",
+      "label": "Notifications",
+      "top": 174.484375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-dictation",
+      "label": "Dictation",
+      "top": 174.921875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-startup",
+      "label": "Startup",
+      "top": 174.953125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "id": "settings-app-updates",
+      "label": "Updates",
+      "top": 174.921875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-context",
+      "label": "Context",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-people",
+      "label": "People",
+      "top": 175.078125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-activity",
+      "label": "Activity",
+      "top": 175.125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-transfer",
+      "label": "Import and export",
+      "top": 174.546875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-backups",
+      "label": "Backups",
+      "top": 174.515625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "id": "settings-workspace-danger",
+      "label": "Data and deletion",
+      "top": 174.484375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "id": "settings-agents-replies",
+      "label": "Replies",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "id": "settings-agents-recovery",
+      "label": "Recovery",
+      "top": 175.078125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "id": "settings-agents-permissions",
+      "label": "Permissions",
+      "top": 174.421875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "id": "settings-agents-limits",
+      "label": "Limits",
+      "top": 174.296875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "id": "settings-agents-automation",
+      "label": "Automation",
+      "top": 174.828125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "models",
+      "id": "settings-models-agents",
+      "label": "Agent models",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "models",
+      "id": "settings-models-runtimes",
+      "label": "Runtimes",
+      "top": 174.640625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "models",
+      "id": "settings-models-accounts",
+      "label": "Accounts",
+      "top": 174.296875,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "models",
+      "id": "settings-models-classifiers",
+      "label": "Classifiers",
+      "top": 174.953125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "id": "settings-knowledge-memory",
+      "label": "Memory",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-capture",
+      "label": "Wiki capture",
+      "top": 175.125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-storage",
+      "label": "Folder and Git",
+      "top": 175.203125,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-import",
+      "label": "Import notes",
+      "top": 175.015625,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-rules",
+      "label": "Page rules",
+      "top": 174.75,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 900,
+      "category": "connections",
+      "id": "settings-connections-phone",
+      "label": "Phone and Telegram",
+      "top": 174.734375,
+      "navigationBottom": 158.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-appearance",
+      "label": "Appearance",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-conversation",
+      "label": "Conversation",
+      "top": 166.515625,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-notifications",
+      "label": "Notifications",
+      "top": 166.484375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-dictation",
+      "label": "Dictation",
+      "top": 166.328125,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-startup",
+      "label": "Startup",
+      "top": 166.359375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "id": "settings-app-updates",
+      "label": "Updates",
+      "top": 166.328125,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-context",
+      "label": "Context",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-people",
+      "label": "People",
+      "top": 167.140625,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-activity",
+      "label": "Activity",
+      "top": 166.296875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-transfer",
+      "label": "Import and export",
+      "top": 166.71875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-backups",
+      "label": "Backups",
+      "top": 166.6875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "id": "settings-workspace-danger",
+      "label": "Data and deletion",
+      "top": 166.65625,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "id": "settings-agents-replies",
+      "label": "Replies",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "id": "settings-agents-recovery",
+      "label": "Recovery",
+      "top": 167.1875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "id": "settings-agents-permissions",
+      "label": "Permissions",
+      "top": 166.640625,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "id": "settings-agents-limits",
+      "label": "Limits",
+      "top": 166.375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "id": "settings-agents-automation",
+      "label": "Automation",
+      "top": 166.421875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "models",
+      "id": "settings-models-agents",
+      "label": "Agent models",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "models",
+      "id": "settings-models-runtimes",
+      "label": "Runtimes",
+      "top": 166.75,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "models",
+      "id": "settings-models-accounts",
+      "label": "Accounts",
+      "top": 166.40625,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "models",
+      "id": "settings-models-classifiers",
+      "label": "Classifiers",
+      "top": 167.171875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "id": "settings-knowledge-memory",
+      "label": "Memory",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-capture",
+      "label": "Wiki capture",
+      "top": 166.53125,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-storage",
+      "label": "Folder and Git",
+      "top": 166.484375,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-import",
+      "label": "Import notes",
+      "top": 166.296875,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "id": "settings-knowledge-wiki-rules",
+      "label": "Page rules",
+      "top": 167.03125,
+      "navigationBottom": 150.734375
+    },
+    {
+      "width": 760,
+      "category": "connections",
+      "id": "settings-connections-phone",
+      "label": "Phone and Telegram",
+      "top": 166.734375,
+      "navigationBottom": 150.734375
+    }
+  ],
+  "copy": [
+    {
+      "width": 1280,
+      "category": "app",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Language for the interface; admins also set the workspace’s agent language.",
+              "characters": 75,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Keep active reply steps expanded. You can still open or close them manually.",
+              "characters": 76,
+              "lines": 1,
+              "visible": true,
+              "width": 606,
+              "height": 18.59375,
+              "contentWidth": 606,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Play a sound when agents need you or finish. Notifications remain visible when muted.",
+              "characters": 85,
+              "lines": 1,
+              "visible": true,
+              "width": 606,
+              "height": 18.59375,
+              "contentWidth": 606,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Send a test to check notification delivery.",
+              "characters": 43,
+              "lines": 1,
+              "visible": true,
+              "width": 559.53125,
+              "height": 18.59375,
+              "contentWidth": 560,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Click the mic or press ⌥ Space (Mac) / Ctrl+Space to start; click again to stop. Transcription stays offline for review before sending.",
+              "characters": 135,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 40.28125,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Start Tucano automatically so routines can run.",
+              "characters": 47,
+              "lines": 1,
+              "visible": true,
+              "width": 606,
+              "height": 18.59375,
+              "contentWidth": 606,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "You’re on version 0.2.29. Automatic updates are off.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 1280,
+      "category": "workspace",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Shared with every agent: your role, priorities, and rules.",
+              "characters": 58,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "The agents read this to know who they talk to.",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 333,
+              "height": 18.59375,
+              "contentWidth": 333,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use Tucano on an iPhone with your account here: your DMs, your approvals and the questions agents ask you.",
+              "characters": 106,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Manage workspace access and roles. Each person’s DMs remain private.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Workspace activity. Private DM content is excluded.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export agents, skills, channels, and routines as Markdown, without credentials or chats. Import OpenBot or Grok Bot agents with connectors and search off.",
+              "characters": 154,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 40.28125,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export everything from Workspace › Backups in the desktop app. Restore replaces agents, chats, memory, Wiki, and files. A .db backup restores only the database.",
+              "characters": 160,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 40.28125,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Back up before deleting data. Automatic backups retain the last 7 daily copies.",
+              "characters": 79,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 1280,
+      "category": "agents",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Allow 1–10 agent replies before waiting for you.",
+              "characters": 48,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Stop after no text or completed tools. Work that shows progress continues.",
+              "characters": 74,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval.",
+              "characters": 104,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "After reading external content, sending, publishing, paying, deleting, and risky clicks need approval, even if a rule allows them.",
+              "characters": 130,
+              "lines": 2,
+              "visible": true,
+              "width": 606,
+              "height": 37.1875,
+              "contentWidth": 606,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Pause at the limit and ask you whether to continue.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 333,
+              "height": 18.59375,
+              "contentWidth": 333,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "For agents without a monthly limit, percentages use a base of 10 million tokens.",
+              "characters": 80,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Routines require Tucano to keep running, even with its window closed.",
+              "characters": 69,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Defer routines and triggers until quiet hours end. Direct messages still get replies.",
+              "characters": 85,
+              "lines": 1,
+              "visible": true,
+              "width": 606,
+              "height": 18.59375,
+              "contentWidth": 606,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 1280,
+      "category": "models",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Change each agent’s model or apply one to several at once. Applies to future replies; replies already running continue as they are.",
+              "characters": 131,
+              "lines": 1,
+              "visible": true,
+              "width": 918,
+              "height": 20.140625,
+              "contentWidth": 918,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Switching runtimes uses the default login. The fallback model stays unchanged.",
+              "characters": 78,
+              "lines": 1,
+              "visible": true,
+              "width": 918,
+              "height": 18.59375,
+              "contentWidth": 918,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Bulk changes include selected agents outside the search. Archived agents are included only when the option above is checked.",
+              "characters": 124,
+              "lines": 1,
+              "visible": true,
+              "width": 918,
+              "height": 18.59375,
+              "contentWidth": 918,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Run agents through your existing plans, gateway, or providers. Tucano does not access or store harness credentials.",
+              "characters": 115,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 40.28125,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 616,
+              "height": 18.59375,
+              "contentWidth": 616,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Add Claude Code or Codex accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.",
+              "characters": 122,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 40.28125,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Choose who replies in channels. The router cannot grant permissions.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a fast model; it runs before each channel reply.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 18.59375,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find controls by page text at no cost. If no match is found, agents use element numbers.",
+              "characters": 88,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 1280,
+      "category": "knowledge",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Summarize older messages and extract lasting facts about you.",
+              "characters": 61,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Runs about every 20 messages in long conversations.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 333,
+              "height": 18.59375,
+              "contentWidth": 333,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Learns from your messages, not agent assumptions.",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 333,
+              "height": 18.59375,
+              "contentWidth": 333,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Save decisions, facts, and results to wiki pages. Disable per channel or DM in its menu.",
+              "characters": 88,
+              "lines": 1,
+              "visible": true,
+              "width": 506.0625,
+              "height": 18.125,
+              "contentWidth": 506,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "New pages save immediately. Automatic also applies pending edits. Undo from History.",
+              "characters": 84,
+              "lines": 2,
+              "visible": true,
+              "width": 458.46875,
+              "height": 36.25,
+              "contentWidth": 458,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find conflicts, outdated facts, and duplicates in Care.",
+              "characters": 55,
+              "lines": 1,
+              "visible": true,
+              "width": 309.546875,
+              "height": 18.125,
+              "contentWidth": 310,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a repository as your wiki. Changes sync both ways.",
+              "characters": 54,
+              "lines": 1,
+              "visible": true,
+              "width": 325.546875,
+              "height": 18.125,
+              "contentWidth": 326,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Upload a zipped vault to copy its notes, folders, links, and attachments.",
+              "characters": 73,
+              "lines": 1,
+              "visible": true,
+              "width": 414.9375,
+              "height": 18.125,
+              "contentWidth": 415,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Page types and writing rules for agents and the curator.",
+              "characters": 56,
+              "lines": 1,
+              "visible": true,
+              "width": 323.578125,
+              "height": 18.125,
+              "contentWidth": 324,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 1280,
+      "category": "connections",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Receive approvals, questions, and routine results in Telegram. Use buttons to approve, or reply to answer.",
+              "characters": 106,
+              "lines": 1,
+              "visible": true,
+              "width": 678,
+              "height": 20.140625,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Telegram receives approval details, questions, and routine replies. The token stays in the system vault. High-risk actions need two taps.",
+              "characters": 137,
+              "lines": 2,
+              "visible": true,
+              "width": 678,
+              "height": 37.1875,
+              "contentWidth": 678,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "app",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Language for the interface; admins also set the workspace’s agent language.",
+              "characters": 75,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Keep active reply steps expanded. You can still open or close them manually.",
+              "characters": 76,
+              "lines": 1,
+              "visible": true,
+              "width": 466,
+              "height": 18.59375,
+              "contentWidth": 466,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Play a sound when agents need you or finish. Notifications remain visible when muted.",
+              "characters": 85,
+              "lines": 2,
+              "visible": true,
+              "width": 466,
+              "height": 37.1875,
+              "contentWidth": 466,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Allow notifications in site settings and reload. Alternatives: desktop, iPhone, or Telegram (Settings › Phone).",
+              "characters": 111,
+              "lines": 2,
+              "visible": true,
+              "width": 419.53125,
+              "height": 37.1875,
+              "contentWidth": 420,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Click the mic or press ⌥ Space (Mac) / Ctrl+Space to start; click again to stop. Transcription stays offline for review before sending.",
+              "characters": 135,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Start Tucano automatically so routines can run.",
+              "characters": 47,
+              "lines": 1,
+              "visible": true,
+              "width": 466,
+              "height": 18.59375,
+              "contentWidth": 466,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "You’re on version 0.2.29. Automatic updates are off.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "workspace",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Shared with every agent: your role, priorities, and rules.",
+              "characters": 58,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "The agents read this to know who they talk to.",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 263,
+              "height": 18.59375,
+              "contentWidth": 263,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use Tucano on an iPhone with your account here: your DMs, your approvals and the questions agents ask you.",
+              "characters": 106,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Manage workspace access and roles. Each person’s DMs remain private.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Workspace activity. Private DM content is excluded.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export agents, skills, channels, and routines as Markdown, without credentials or chats. Import OpenBot or Grok Bot agents with connectors and search off.",
+              "characters": 154,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export everything from Workspace › Backups in the desktop app. Restore replaces agents, chats, memory, Wiki, and files. A .db backup restores only the database.",
+              "characters": 160,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Back up before deleting data. Automatic backups retain the last 7 daily copies.",
+              "characters": 79,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "agents",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Allow 1–10 agent replies before waiting for you.",
+              "characters": 48,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Stop after no text or completed tools. Work that shows progress continues.",
+              "characters": 74,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval.",
+              "characters": 104,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "After reading external content, sending, publishing, paying, deleting, and risky clicks need approval, even if a rule allows them.",
+              "characters": 130,
+              "lines": 2,
+              "visible": true,
+              "width": 466,
+              "height": 37.1875,
+              "contentWidth": 466,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Pause at the limit and ask you whether to continue.",
+              "characters": 51,
+              "lines": 2,
+              "visible": true,
+              "width": 263,
+              "height": 37.1875,
+              "contentWidth": 263,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "For agents without a monthly limit, percentages use a base of 10 million tokens.",
+              "characters": 80,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Routines require Tucano to keep running, even with its window closed.",
+              "characters": 69,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Defer routines and triggers until quiet hours end. Direct messages still get replies.",
+              "characters": 85,
+              "lines": 1,
+              "visible": true,
+              "width": 466,
+              "height": 18.59375,
+              "contentWidth": 466,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "models",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Change each agent’s model or apply one to several at once. Applies to future replies; replies already running continue as they are.",
+              "characters": 131,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Switching runtimes uses the default login. The fallback model stays unchanged.",
+              "characters": 78,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Bulk changes include selected agents outside the search. Archived agents are included only when the option above is checked.",
+              "characters": 124,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 37.1875,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Run agents through your existing plans, gateway, or providers. Tucano does not access or store harness credentials.",
+              "characters": 115,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 476,
+              "height": 18.59375,
+              "contentWidth": 476,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Add Claude Code or Codex accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.",
+              "characters": 122,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Choose who replies in channels. The router cannot grant permissions.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a fast model; it runs before each channel reply.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 18.59375,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find controls by page text at no cost. If no match is found, agents use element numbers.",
+              "characters": 88,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "knowledge",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Summarize older messages and extract lasting facts about you.",
+              "characters": 61,
+              "lines": 1,
+              "visible": true,
+              "width": 538,
+              "height": 20.140625,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Runs about every 20 messages in long conversations.",
+              "characters": 51,
+              "lines": 2,
+              "visible": true,
+              "width": 263,
+              "height": 37.1875,
+              "contentWidth": 263,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Learns from your messages, not agent assumptions.",
+              "characters": 49,
+              "lines": 2,
+              "visible": true,
+              "width": 263,
+              "height": 37.1875,
+              "contentWidth": 263,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Save decisions, facts, and results to wiki pages. Disable per channel or DM in its menu.",
+              "characters": 88,
+              "lines": 2,
+              "visible": true,
+              "width": 490,
+              "height": 36.25,
+              "contentWidth": 490,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "New pages save immediately. Automatic also applies pending edits. Undo from History.",
+              "characters": 84,
+              "lines": 2,
+              "visible": true,
+              "width": 318.46875,
+              "height": 36.25,
+              "contentWidth": 318,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find conflicts, outdated facts, and duplicates in Care.",
+              "characters": 55,
+              "lines": 1,
+              "visible": true,
+              "width": 309.546875,
+              "height": 18.125,
+              "contentWidth": 310,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a repository as your wiki. Changes sync both ways.",
+              "characters": 54,
+              "lines": 1,
+              "visible": true,
+              "width": 325.546875,
+              "height": 18.125,
+              "contentWidth": 326,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Upload a zipped vault to copy its notes, folders, links, and attachments.",
+              "characters": 73,
+              "lines": 1,
+              "visible": true,
+              "width": 414.9375,
+              "height": 18.125,
+              "contentWidth": 415,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Page types and writing rules for agents and the curator.",
+              "characters": 56,
+              "lines": 1,
+              "visible": true,
+              "width": 323.578125,
+              "height": 18.125,
+              "contentWidth": 324,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 900,
+      "category": "connections",
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Receive approvals, questions, and routine results in Telegram. Use buttons to approve, or reply to answer.",
+              "characters": 106,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 40.28125,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Telegram receives approval details, questions, and routine replies. The token stays in the system vault. High-risk actions need two taps.",
+              "characters": 137,
+              "lines": 2,
+              "visible": true,
+              "width": 538,
+              "height": 37.1875,
+              "contentWidth": 538,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "app",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Language for the interface; admins also set the workspace’s agent language.",
+              "characters": 75,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Keep active reply steps expanded. You can still open or close them manually.",
+              "characters": 76,
+              "lines": 1,
+              "visible": true,
+              "width": 582,
+              "height": 18.59375,
+              "contentWidth": 582,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Play a sound when agents need you or finish. Notifications remain visible when muted.",
+              "characters": 85,
+              "lines": 1,
+              "visible": true,
+              "width": 582,
+              "height": 18.59375,
+              "contentWidth": 582,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Allow notifications in site settings and reload. Alternatives: desktop, iPhone, or Telegram (Settings › Phone).",
+              "characters": 111,
+              "lines": 2,
+              "visible": true,
+              "width": 535.53125,
+              "height": 37.1875,
+              "contentWidth": 536,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Click the mic or press ⌥ Space (Mac) / Ctrl+Space to start; click again to stop. Transcription stays offline for review before sending.",
+              "characters": 135,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Start Tucano automatically so routines can run.",
+              "characters": 47,
+              "lines": 1,
+              "visible": true,
+              "width": 582,
+              "height": 18.59375,
+              "contentWidth": 582,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "You’re on version 0.2.29. Automatic updates are off.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "workspace",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Shared with every agent: your role, priorities, and rules.",
+              "characters": 58,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "The agents read this to know who they talk to.",
+              "characters": 46,
+              "lines": 1,
+              "visible": true,
+              "width": 321,
+              "height": 18.59375,
+              "contentWidth": 321,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use Tucano on an iPhone with your account here: your DMs, your approvals and the questions agents ask you.",
+              "characters": 106,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Manage workspace access and roles. Each person’s DMs remain private.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Workspace activity. Private DM content is excluded.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export agents, skills, channels, and routines as Markdown, without credentials or chats. Import OpenBot or Grok Bot agents with connectors and search off.",
+              "characters": 154,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Export everything from Workspace › Backups in the desktop app. Restore replaces agents, chats, memory, Wiki, and files. A .db backup restores only the database.",
+              "characters": 160,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Back up before deleting data. Automatic backups retain the last 7 daily copies.",
+              "characters": 79,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "agents",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Allow 1–10 agent replies before waiting for you.",
+              "characters": 48,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Stop after no text or completed tools. Work that shows progress continues.",
+              "characters": 74,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval.",
+              "characters": 104,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "After reading external content, sending, publishing, paying, deleting, and risky clicks need approval, even if a rule allows them.",
+              "characters": 130,
+              "lines": 2,
+              "visible": true,
+              "width": 582,
+              "height": 37.1875,
+              "contentWidth": 582,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Pause at the limit and ask you whether to continue.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 321,
+              "height": 18.59375,
+              "contentWidth": 321,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "For agents without a monthly limit, percentages use a base of 10 million tokens.",
+              "characters": 80,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Routines require Tucano to keep running, even with its window closed.",
+              "characters": 69,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Defer routines and triggers until quiet hours end. Direct messages still get replies.",
+              "characters": 85,
+              "lines": 1,
+              "visible": true,
+              "width": 582,
+              "height": 18.59375,
+              "contentWidth": 582,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "models",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Change each agent’s model or apply one to several at once. Applies to future replies; replies already running continue as they are.",
+              "characters": 131,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Switching runtimes uses the default login. The fallback model stays unchanged.",
+              "characters": 78,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Bulk changes include selected agents outside the search. Archived agents are included only when the option above is checked.",
+              "characters": 124,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 37.1875,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Run agents through your existing plans, gateway, or providers. Tucano does not access or store harness credentials.",
+              "characters": 115,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Or paste in PowerShell:",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 592,
+              "height": 18.59375,
+              "contentWidth": 592,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Add Claude Code or Codex accounts, then assign them to agents. Sign in through the CLI; Tucano never stores your password.",
+              "characters": 122,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 40.28125,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Choose who replies in channels. The router cannot grant permissions.",
+              "characters": 68,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a fast model; it runs before each channel reply.",
+              "characters": 52,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 18.59375,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find controls by page text at no cost. If no match is found, agents use element numbers.",
+              "characters": 88,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "knowledge",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Summarize older messages and extract lasting facts about you.",
+              "characters": 61,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Runs about every 20 messages in long conversations.",
+              "characters": 51,
+              "lines": 1,
+              "visible": true,
+              "width": 321,
+              "height": 18.59375,
+              "contentWidth": 321,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Learns from your messages, not agent assumptions.",
+              "characters": 49,
+              "lines": 1,
+              "visible": true,
+              "width": 321,
+              "height": 18.59375,
+              "contentWidth": 321,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Save decisions, facts, and results to wiki pages. Disable per channel or DM in its menu.",
+              "characters": 88,
+              "lines": 1,
+              "visible": true,
+              "width": 506.0625,
+              "height": 18.125,
+              "contentWidth": 506,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "New pages save immediately. Automatic also applies pending edits. Undo from History.",
+              "characters": 84,
+              "lines": 2,
+              "visible": true,
+              "width": 434.46875,
+              "height": 36.25,
+              "contentWidth": 434,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Find conflicts, outdated facts, and duplicates in Care.",
+              "characters": 55,
+              "lines": 1,
+              "visible": true,
+              "width": 309.546875,
+              "height": 18.125,
+              "contentWidth": 310,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Use a repository as your wiki. Changes sync both ways.",
+              "characters": 54,
+              "lines": 1,
+              "visible": true,
+              "width": 325.546875,
+              "height": 18.125,
+              "contentWidth": 326,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Upload a zipped vault to copy its notes, folders, links, and attachments.",
+              "characters": 73,
+              "lines": 1,
+              "visible": true,
+              "width": 414.9375,
+              "height": 18.125,
+              "contentWidth": 415,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Page types and writing rules for agents and the curator.",
+              "characters": 56,
+              "lines": 1,
+              "visible": true,
+              "width": 323.578125,
+              "height": 18.125,
+              "contentWidth": 324,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    },
+    {
+      "width": 760,
+      "category": "connections",
+      "viewport": {
+        "width": 760,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Receive approvals, questions, and routine results in Telegram. Use buttons to approve, or reply to answer.",
+              "characters": 106,
+              "lines": 1,
+              "visible": true,
+              "width": 654,
+              "height": 20.140625,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Telegram receives approval details, questions, and routine replies. The token stays in the system vault. High-risk actions need two taps.",
+              "characters": 137,
+              "lines": 2,
+              "visible": true,
+              "width": 654,
+              "height": 37.1875,
+              "contentWidth": 654,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true,
+      "exceptions": []
+    }
+  ],
+  "dependentStates": [],
+  "importFlow": true,
+  "schemaFlow": true,
+  "localeNavigation": true,
+  "passed": true
+}

@@ -1,7 +1,7 @@
 # Settings organization evidence
 
-Synthetic workspace captures from the upstream proposal at `c3ee668e48c78ec520b1717489e38c5e89ffa897`.
+The current proposal uses understated rounded groups with thin borders and no heavy shadows. The danger zone retains its red border. The earlier flat-section captures are retained as historical evidence and are superseded by `upstream-ready`.
 
-The report records the source, fonts, available widths, character counts, rendered lines and overflow checks. Captures cover 1280, 900 and 760 CSS pixels, section scrolling and Portuguese navigation. Import and schema entry points were exercised. Sections use flat headings, spacing and dividers.
+`upstream-ready` is captured from `ea0f090c2be51671ab71f71293100ce3ff6cb345`: 45 screenshots, 81 section-navigation checks, English hint measurements at 1280, 900 and 760 CSS pixels, Portuguese navigation, Wiki import and schema entry points. Settings order and ownership are covered by 14 passing navigation and structure cases. Full restore consequences remain the documented two-line exception.
 
-The complete Windows suite passed: 1,744 tests, 60 skipped, zero failed. Typecheck, build and 14 settings ownership/navigation tests passed. Restore replacement warnings retain their full consequences and are the documented two-line exception.
+`features` records 18 individually tested published settings-placement revisions. The recorded hashes are the versions checked; a later rebase does not make those captures evidence for a newer head.
