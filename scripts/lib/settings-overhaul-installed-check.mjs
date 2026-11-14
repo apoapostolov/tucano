@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
 import { join } from 'node:path'
 import { measureCopy } from './copy-layout.mjs'
+import { electronCopyViewport } from './electron-copy-viewport.mjs'
 
 export async function checkSettingsOverhaul(page, output, guard) {
-  const original = page.viewportSize()
+  const viewport = await electronCopyViewport(page)
   const measurements = []
   const failures = []
   for (const width of [null, 1280, 900, 760]) {
-    if (width) await page.setViewportSize({ width, height: 900 })
+    await viewport.set(width)
     for (const id of ['app', 'workspace', 'agents', 'models', 'knowledge', 'connections']) {
       const tab = page.locator('#settings-tab-' + id)
       if (!(await tab.count())) continue
@@ -36,7 +37,7 @@ export async function checkSettingsOverhaul(page, output, guard) {
       measurements.push({ ...copy, screenshot, display })
     }
   }
-  if (original) await page.setViewportSize(original)
+  await viewport.restore()
   assert.deepEqual(failures, [], JSON.stringify(failures))
   return measurements
 }
