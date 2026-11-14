@@ -5,6 +5,7 @@ import { measureCopy } from './copy-layout.mjs'
 export async function checkSettingsOverhaul(page, output, guard) {
   const original = page.viewportSize()
   const measurements = []
+  const failures = []
   for (const width of [null, 1280, 900, 760]) {
     if (width) await page.setViewportSize({ width, height: 900 })
     for (const id of ['app', 'workspace', 'agents', 'models', 'knowledge', 'connections']) {
@@ -25,7 +26,7 @@ export async function checkSettingsOverhaul(page, output, guard) {
       copy.failures = copy.failures.filter(item => !exceptions.includes(item))
       copy.exceptions = exceptions.map(item => ({ ...item, reason: 'Full restore replacement consequences and database-only distinction must stay visible.' }))
       copy.passed = copy.failures.length === 0
-      assert.ok(copy.passed, JSON.stringify(copy.failures))
+      failures.push(...copy.failures.map(failure => ({ width: width ?? 'native', page: id, ...failure })))
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
       const display = await page.evaluate(() => ({ devicePixelRatio, width: innerWidth, screenWidth: screen.width, screenHeight: screen.height }))
       const screenshot = `installed-settings-${width ?? 'native'}-${id}.png`
@@ -36,5 +37,6 @@ export async function checkSettingsOverhaul(page, output, guard) {
     }
   }
   if (original) await page.setViewportSize(original)
+  assert.deepEqual(failures, [], JSON.stringify(failures))
   return measurements
 }
