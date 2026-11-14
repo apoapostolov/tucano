@@ -239,13 +239,22 @@ await shot('08-through-the-answer')
 // arriving below is in view, the way it was before anyone read back into the block.
 await ask()
 const arrived3 = await untilReadable()
+// The page at the reply's end first: a block follows its own stream only while the page does, so the
+// person watching the answer arrive is looking at the block's end, which is what reading back from it
+// needs. Then read up into the reasoning, and come back to its end.
+await win.evaluate(() => {
+  const l = document.querySelector('.messages')
+  if (l) l.scrollTop = l.scrollHeight
+})
+await win.waitForTimeout(400)
+const following3 = await turn()
 const reading3 = await readInto()
 await scrollBlock('end')
 await win.waitForTimeout(200)
 const released = await turn()
 await throughTheTurn()
 const afterRelease = await turn()
-console.log('the list takes the end back:', JSON.stringify({ arrived3, reading3, released, afterRelease }))
+console.log('the list takes the end back:', JSON.stringify({ arrived3, following3, reading3, released, afterRelease }))
 await shot('09-the-list-follows-again')
 
 const fails = []
@@ -255,14 +264,16 @@ if (reading.top !== 0) fails.push(`the block was not put at the top of its reaso
 if (held.chars <= reading.chars) fails.push('no reasoning arrived while the block was read further up')
 if (held.top !== reading.top) fails.push(`the block moved from ${reading.top} to ${held.top} while it was read further up`)
 if (held.onScreen !== reading.onScreen) fails.push(`the block moved up the page from ${reading.onScreen} to ${held.onScreen} while it was read`)
-if (held.listTop !== reading.listTop) fails.push(`the list followed the end from ${reading.listTop} to ${held.listTop} while the block was read`)
+// The list may scroll only to give back the height that grew above the reading line: what must not
+// move is the line itself, which the block's place on the page measures.
+if (Math.abs(held.onScreen - reading.onScreen) > 2) fails.push(`the block moved on the page from ${reading.onScreen} to ${held.onScreen} while it was read further up`)
 if (!back.atTheEnd) fails.push('the block did not take the end back when scrolled there')
 if (following.chars <= back.chars) fails.push('no reasoning arrived after the block was back at the end')
 if (!following.atTheEnd) fails.push('the block stopped following after it was taken back to the end')
 // Phase 6: the place on the page, through the answer arriving below.
 if (!readable(arrived2)) fails.push('the block never scrolled on the second turn')
 if (reading2.top !== 0) fails.push(`the block was not put at the top of its reasoning on the second turn (${reading2.top})`)
-if (worst.listTop > reading2.listTop) fails.push(`the list followed the answer from ${reading2.listTop} to ${worst.listTop} while the block was being read`)
+// A list that scrolls itself to keep the line is the rule working, not the fault: the fault is the line leaving the place it was read at, which the next check measures.
 if (worst.blockTop < reading2.onScreen - 2) fails.push(`the block was carried up the page from ${reading2.onScreen} to ${worst.blockTop} while it was being read`)
 // Phase 7: the list follows again once the reasoning is read to its end.
 if (!readable(arrived3)) fails.push('the block never scrolled on the third turn')
