@@ -695,6 +695,7 @@ other half, and they belong to the same session.
 
 | Feature | Issue | PR |
 | --- | --- | --- |
+| Settings organization and maintained placement rules | | 446 |
 | English labels and hints across Settings and Wiki | 409 | 410 |
 | Skills: filter and group an agent's tab | 228 | 244 |
 | Skills: read a Hermes library as it is | 102 | 311 |
