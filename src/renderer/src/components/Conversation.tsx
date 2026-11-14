@@ -349,6 +349,10 @@ function glide(list: HTMLElement, to: number, done: () => void): void {
 
 const JumpTo = createContext<(id: string) => void>(() => {})
 
+// How a reply's reasoning tells the list it is being read further up: `hold` stops the list following
+// the end of the reply, `release` gives it back. A block that is not inside a list of messages gets
+// the no-ops.
+const Reading = createContext<{ hold: () => void; release: () => void }>({ hold: () => {}, release: () => {} })
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
 // jump to, and a reply with no prompt of its own (a routine's, one an agent called for) has none.
@@ -398,6 +402,26 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     setFarFromBottom(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId])
+
+  // Reading an earlier passage of a reply's reasoning holds the list where it is: the block keeps its
+  // place on the page while the rest arrives below. Coming back to the block's end lets the list
+  // follow again.
+  const paused = useRef(false)
+  const reading = useMemo(
+    () => ({
+      hold: () => {
+        if (paused.current) return
+        paused.current = true
+        stick.current = false
+      },
+      release: () => {
+        if (!paused.current) return
+        paused.current = false
+        stick.current = true
+      }
+    }),
+    []
+  )
 
   // To the end when a message arrives or changes there; the rows growing on their own (a reply
   // streaming, an image loading) are watched below, so a word streamed doesn't lay the list out again.
@@ -559,7 +583,11 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
       onScroll={(e) => {
         const el = e.currentTarget
         const fromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-        if (Date.now() >= held.current) stick.current = fromBottom < 60
+        // While a reasoning block is being read further up, where the list sits says nothing about
+        // whether to follow the end: the hold decides, and only the block gives it back. Reading the
+        // position here is what put the list back on the end after every scroll of its own and carried
+        // the block up the page, so it is not read at all while the hold is on.
+        if (!paused.current && Date.now() >= held.current) stick.current = fromBottom < 60
         setFarFromBottom(fromBottom > el.clientHeight / 2)
         more(el)
       }}
@@ -571,21 +599,23 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
         </div>
       )}
       {lead}
-      <JumpTo.Provider value={jump}>
-        {messages.map((m, i) => {
-          const prev = messages[i - 1]
-          const grouped =
-            !!prev &&
-            prev.author.kind === m.author.kind &&
-            (m.author.kind !== 'agent' || (prev.author.kind === 'agent' && prev.author.id === m.author.id)) &&
-            (m.author.kind !== 'person' || (prev.author.kind === 'person' && prev.author.id === m.author.id)) &&
-            m.at - prev.at < 5 * 60_000 &&
-            !m.run &&
-            m.author.kind !== 'system' &&
-            m.author.kind !== 'routine'
-          return <MessageRow key={m.id} message={m} grouped={grouped} away={promptAway(m, prev)} replies={replies && (replies.get(m.id) ?? NO_REPLIES)} />
-        })}
-      </JumpTo.Provider>
+      <Reading.Provider value={reading}>
+        <JumpTo.Provider value={jump}>
+          {messages.map((m, i) => {
+            const prev = messages[i - 1]
+            const grouped =
+              !!prev &&
+              prev.author.kind === m.author.kind &&
+              (m.author.kind !== 'agent' || (prev.author.kind === 'agent' && prev.author.id === m.author.id)) &&
+              (m.author.kind !== 'person' || (prev.author.kind === 'person' && prev.author.id === m.author.id)) &&
+              m.at - prev.at < 5 * 60_000 &&
+              !m.run &&
+              m.author.kind !== 'system' &&
+              m.author.kind !== 'routine'
+            return <MessageRow key={m.id} message={m} grouped={grouped} away={promptAway(m, prev)} replies={replies && (replies.get(m.id) ?? NO_REPLIES)} />
+          })}
+        </JumpTo.Provider>
+      </Reading.Provider>
       {farFromBottom && (
         <div className="messages__jump">
           <button className="messages__jump-btn" title={L('Ir para o fim', 'Go to the end')} aria-label={L('Ir para o fim da conversa', 'Go to the end of the conversation')} onClick={() => ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' })}>
@@ -2027,6 +2057,23 @@ export function Thought({ message, working }: { message: Message; working: boole
   // read an earlier passage keeps that place as the rest streams in below it, and the block takes
   // the stream up again by itself once they are back at the end.
   const follow = useRef(true)
+  // The list around the block follows the reply's end, which carries the block up the page while the
+  // answer arrives below it. Reading above the block's end holds the list too, and coming back hands
+  // it back (`Reading`, above). Only a block that holds it may give it back: another reply's block
+  // folding or scrolling away must not take the list back to the end while this one is being read.
+  const reading = useContext(Reading)
+  const holding = useRef(false)
+  const holdList = (): void => {
+    if (holding.current) return
+    holding.current = true
+    reading.hold()
+  }
+  const releaseList = (): void => {
+    if (!holding.current) return
+    holding.current = false
+    reading.release()
+  }
+  useEffect(() => () => releaseList(), [reading])
   useEffect(() => {
     const el = box.current
     if (working && follow.current && el) el.scrollTop = el.scrollHeight
@@ -2038,7 +2085,19 @@ export function Thought({ message, working }: { message: Message; working: boole
       className={`thought thought--${size}`}
       aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
       onScroll={(e) => {
-        follow.current = followsTheEnd(e.currentTarget)
+        const el = e.currentTarget
+        const end = followsTheEnd(el)
+        follow.current = end
+        if (end) releaseList()
+        else holdList()
+      }}
+      onWheel={(e) => {
+        // A wheel up is the person reading back into it: the block stops following at once, before the
+        // piece that is already on its way lands and pulls the place away.
+        if (e.deltaY < 0) {
+          follow.current = false
+          holdList()
+        }
       }}
     >
       <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>

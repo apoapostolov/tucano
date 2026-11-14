@@ -108,45 +108,80 @@ console.log('off again:', JSON.stringify({ thoughtBlocksSeen: seenOff, finished 
 await win.waitForTimeout(1000)
 await shot('05-off-again-nothing-shown')
 
-// 5. Reading further up while the rest arrives: the block keeps the place the person is reading,
-// instead of pulling them to the end with every piece that lands, and it takes the stream up again
-// once they are back at the end. Small, the shortest block, so a turn's reasoning already scrolls.
-// The block's own scroller, in the shape this branch draws it: the whole block in next, the text
-// alone on the branch that folds it.
-// The block of the turn running now: the only one that says "Thinking", since every block of an
-// earlier turn says "Thought". The list unmounts rows that scroll out of view, so counting blocks
-// is not a place to stand.
-const RUNNING = '.thought:has(.thought__label:text-is("Thinking"))'
-const block = () =>
+// 5. Reading further up while the rest arrives: the block keeps the place the person is reading, and
+// so does its place on the page. Two things pulled it away before: the block scrolled itself to the end
+// on every piece (fixed by `followsTheEnd`), and the list underneath kept following the end of the
+// reply, carrying the whole block up out of view as the answer streamed in below.
+// The block's own scroller, in the shape this branch draws it: the whole block in next, the text alone
+// on the branch that folds it.
+const turn = () =>
   win.evaluate(() => {
-    const t = [...document.querySelectorAll('.thought')].filter((b) => b.querySelector('.thought__label')?.textContent === 'Thinking').at(-1)
-    if (!t) return null
-    const box = [t.querySelector('.thought__text'), t].find((el) => el && el.scrollHeight - el.clientHeight > 20) ?? t.querySelector('.thought__text') ?? t
-    const scrollable = box.scrollHeight - box.clientHeight > 20
+    const blocks = [...document.querySelectorAll('.thought')]
+    const running = blocks.filter((b) => b.querySelector('.thought__label')?.textContent === 'Thinking')
+    const t = running.at(-1) ?? blocks.at(-1)
+    // The list this block is in, not simply the first one in the page: a thread panel has its own.
+    const list = t ? t.closest('.messages') : document.querySelector('.messages')
+    const box = t
+      ? ([t.querySelector('.thought__text'), t].find((el) => el && el.scrollHeight - el.clientHeight > 20) ?? t.querySelector('.thought__text') ?? t)
+      : null
     return {
-      label: t.querySelector('.thought__label')?.textContent ?? null,
-      chars: t.querySelector('.thought__text')?.textContent?.length ?? 0,
-      top: Math.round(box.scrollTop),
-      hidden: box.scrollHeight - box.clientHeight,
-      atTheEnd: !scrollable || box.scrollHeight - box.scrollTop - box.clientHeight < 24,
-      scrollable,
+      label: t?.querySelector('.thought__label')?.textContent ?? null,
+      chars: t?.querySelector('.thought__text')?.textContent?.length ?? 0,
+      top: box ? Math.round(box.scrollTop) : null,
+      hidden: box ? box.scrollHeight - box.clientHeight : 0,
+      atTheEnd: box ? box.scrollHeight - box.scrollTop - box.clientHeight < 24 : null,
+      onScreen: t ? Math.round(t.getBoundingClientRect().top) : null,
+      listTop: list ? Math.round(list.scrollTop) : null,
+      bottom: list ? Math.round(list.scrollHeight - list.clientHeight) : null,
+      lists: document.querySelectorAll('.messages').length,
       working: !!document.querySelector('.steps__stop')
     }
   })
-const grew = async (from) => {
-  for (let i = 0; i < 40; i++) {
-    const s = await block()
-    if (s && s.chars > from) return s
-    await win.waitForTimeout(100)
-  }
-  return block()
-}
+const readable = (s) => s?.label === 'Thinking' && s.hidden > 70
+// The block's own scroll, moved the way a wheel moves it: the scroll event is what the block reads, so
+// setting the position drives the path a gesture drives. The app's own QA covered the wheel itself.
 const scrollBlock = (where) =>
   win.evaluate((w) => {
-    const t = [...document.querySelectorAll('.thought')].filter((b) => b.querySelector('.thought__label')?.textContent === 'Thinking').at(-1)
+    const blocks = [...document.querySelectorAll('.thought')]
+    const t = blocks.filter((b) => b.querySelector('.thought__label')?.textContent === 'Thinking').at(-1) ?? blocks.at(-1)
+    if (!t) return false
     const box = [t.querySelector('.thought__text'), t].find((el) => el && el.scrollHeight - el.clientHeight > 20) ?? t.querySelector('.thought__text') ?? t
     box.scrollTop = w === 'end' ? box.scrollHeight : 0
+    return true
   }, where)
+const readInto = async () => {
+  // The scroll is the block's own, but a piece of reasoning can land between the wheel and the block
+  // reading the scroll, which puts the place back. In the app the wheel's own handling stops that; here
+  // the gesture is a scroll event, so it is repeated until it stays.
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await scrollBlock('up')
+    await win.waitForTimeout(120)
+    const s = await turn()
+    if (s && s.top === 0) return s
+  }
+  return turn()
+}
+const untilReadable = async () => {
+  let s = null
+  for (let i = 0; i < 120; i++) {
+    s = await turn()
+    if (readable(s)) return s
+    await win.waitForTimeout(100)
+  }
+  return s
+}
+const throughTheTurn = async () => {
+  const seen = []
+  for (let i = 0; i < 240; i++) {
+    const s = await turn()
+    seen.push(s)
+    if (!s?.working && i > 8) break
+    await win.waitForTimeout(150)
+  }
+  await win.waitForTimeout(400)
+  seen.push(await turn())
+  return seen
+}
 
 await win.setViewportSize({ width: 900, height: 880 })
 await settings()
@@ -154,44 +189,78 @@ await win.locator(`${switchRow} .toggle`).click()
 await win.locator(`${sizeRow} .segmented button`, { hasText: 'Small' }).click()
 await win.waitForTimeout(300)
 await ask()
-let arrived = null
-for (let i = 0; i < 120; i++) {
-  arrived = await block()
-  if (arrived?.label === 'Thinking' && arrived.scrollable) break
-  await win.waitForTimeout(100)
-}
+const arrived = await untilReadable()
 console.log('following, at the end:', JSON.stringify(arrived))
 
-// A wheel up over the block, the way a person reads back into it.
-const box2 = await win.locator(RUNNING).last().boundingBox()
-await win.mouse.move(box2.x + box2.width / 2, box2.y + box2.height / 2)
-await win.mouse.wheel(0, -260)
-await win.waitForTimeout(120)
-const reading = await block()
-const landing = await grew(reading.chars)
-const held = await block()
-console.log('reading above the stream:', JSON.stringify({ reading, landing, held }))
+// Reading back into it: the next piece of reasoning must leave the place alone.
+const reading = await readInto()
+let held = reading
+for (let i = 0; i < 40 && held.chars <= reading.chars; i++) {
+  await win.waitForTimeout(100)
+  held = await turn()
+}
+console.log('reading above the stream:', JSON.stringify({ reading, held }))
 await shot('06-reading-above-the-stream')
 
 // Back at the end by hand: the block follows the rest of what arrives.
 await scrollBlock('end')
-await win.waitForTimeout(120)
-const back = await block()
-const after = await grew(back.chars)
-await win.waitForTimeout(200)
-const following = await block()
-console.log('back at the end:', JSON.stringify({ back, after, following }))
+await win.waitForTimeout(150)
+const back = await turn()
+let following = back
+for (let i = 0; i < 40 && following.chars <= back.chars; i++) {
+  await win.waitForTimeout(100)
+  following = await turn()
+}
+console.log('back at the end:', JSON.stringify({ back, following }))
 await shot('07-back-at-the-end')
 
+// 6. The same reading carried through to the answer. The block's own scroll is held by then, but the
+// list underneath kept following the end of the reply, so as the answer streamed in below, the block
+// was carried up the page and out of the reading. A wheel inside the block holds the list too.
+await ask()
+const arrived2 = await untilReadable()
+const reading2 = await readInto()
+const seen2 = await throughTheTurn()
+const worst = seen2.reduce(
+  (w, s) => ({ listTop: Math.max(w.listTop, s?.listTop ?? 0), blockTop: Math.min(w.blockTop, s?.onScreen ?? 0) }),
+  { listTop: reading2.listTop, blockTop: reading2.onScreen }
+)
+console.log('through the answer:', JSON.stringify({ arrived2, reading2, worst, settled: seen2.at(-1) }))
+await shot('08-through-the-answer')
+
+// 7. Back at the end of the reasoning, on another turn: the list follows the reply again, so the answer
+// arriving below is in view, the way it was before anyone read back into the block.
+await ask()
+const arrived3 = await untilReadable()
+const reading3 = await readInto()
+await scrollBlock('end')
+await win.waitForTimeout(200)
+const released = await turn()
+await throughTheTurn()
+const afterRelease = await turn()
+console.log('the list takes the end back:', JSON.stringify({ arrived3, reading3, released, afterRelease }))
+await shot('09-the-list-follows-again')
+
 const fails = []
-if (!arrived?.scrollable) fails.push('the block never scrolled, so there was nothing to hold')
+// Phase 5: the block's own scroll, while the reasoning streams.
 if (!arrived?.atTheEnd) fails.push('the block did not open at the end of the reasoning')
-if (reading.top === 0 && reading.hidden === 0) fails.push('the wheel over the block moved nothing')
+if (reading.top !== 0) fails.push(`the block was not put at the top of its reasoning (${reading.top})`)
 if (held.chars <= reading.chars) fails.push('no reasoning arrived while the block was read further up')
 if (held.top !== reading.top) fails.push(`the block moved from ${reading.top} to ${held.top} while it was read further up`)
+if (held.onScreen !== reading.onScreen) fails.push(`the block moved up the page from ${reading.onScreen} to ${held.onScreen} while it was read`)
+if (held.listTop !== reading.listTop) fails.push(`the list followed the end from ${reading.listTop} to ${held.listTop} while the block was read`)
 if (!back.atTheEnd) fails.push('the block did not take the end back when scrolled there')
 if (following.chars <= back.chars) fails.push('no reasoning arrived after the block was back at the end')
 if (!following.atTheEnd) fails.push('the block stopped following after it was taken back to the end')
+// Phase 6: the place on the page, through the answer arriving below.
+if (!readable(arrived2)) fails.push('the block never scrolled on the second turn')
+if (reading2.top !== 0) fails.push(`the block was not put at the top of its reasoning on the second turn (${reading2.top})`)
+if (worst.listTop > reading2.listTop) fails.push(`the list followed the answer from ${reading2.listTop} to ${worst.listTop} while the block was being read`)
+if (worst.blockTop < reading2.onScreen - 2) fails.push(`the block was carried up the page from ${reading2.onScreen} to ${worst.blockTop} while it was being read`)
+// Phase 7: the list follows again once the reasoning is read to its end.
+if (!readable(arrived3)) fails.push('the block never scrolled on the third turn')
+if (released.atTheEnd !== true) fails.push('the block did not take the end back after the reasoning was read to its end again')
+if (!afterRelease || afterRelease.listTop < afterRelease.bottom - 4) fails.push(`the list did not take the end back (${afterRelease?.listTop} of ${afterRelease?.bottom})`)
 console.log('scroll check:', fails.length === 0 ? 'ok' : JSON.stringify(fails))
 if (fails.length > 0) process.exitCode = 1
 
