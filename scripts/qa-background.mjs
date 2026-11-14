@@ -5,6 +5,7 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
+import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 
@@ -19,6 +20,7 @@ mkdirSync(output, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US', TUCANO_WEBHOOK_PORT: String(reservations[0].port), TUCANO_GIT_PORT: String(reservations[1].port) }
+if (process.argv.includes('--skill-origins')) Object.assign(env, seedSkillOrigins())
 delete env.ELECTRON_RUN_AS_NODE
 delete env.ELECTRON_RENDERER_URL
 const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(), data, ports: reservations.map((r) => r.port), checks: [], errors: [], passed: false }
@@ -63,6 +65,7 @@ try {
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
+  if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard)
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard)
   if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard)
   const hasNotices = await window.evaluate(async () => {
