@@ -352,7 +352,11 @@ const JumpTo = createContext<(id: string) => void>(() => {})
 // How a reply's reasoning tells the list it is being read further up: `hold` stops the list following
 // the end of the reply, `release` gives it back. A block that is not inside a list of messages gets
 // the no-ops.
-const Reading = createContext<{ hold: () => void; release: () => void }>({ hold: () => {}, release: () => {} })
+const Reading = createContext<{ hold: () => void; release: () => void; forget: () => void }>({
+  hold: () => {},
+  release: () => {},
+  forget: () => {}
+})
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
 // jump to, and a reply with no prompt of its own (a routine's, one an agent called for) has none.
@@ -414,10 +418,20 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
         paused.current = true
         stick.current = false
       },
+      // Back at the block's end: the list follows again, and takes the end now rather than at the next
+      // word, which may never come if the reply has already finished.
       release: () => {
         if (!paused.current) return
         paused.current = false
         stick.current = true
+        const el = ref.current
+        if (el) el.scrollTop = el.scrollHeight
+      },
+      // The block went away (a reply ended, a row unmounted) while it was being read: nothing is being
+      // read there any more, so the list may follow again, but going to the end would move the page
+      // under the person for no reason of theirs.
+      forget: () => {
+        paused.current = false
       }
     }),
     []
@@ -2073,7 +2087,15 @@ export function Thought({ message, working }: { message: Message; working: boole
     holding.current = false
     reading.release()
   }
-  useEffect(() => () => releaseList(), [reading])
+  useEffect(
+    () => () => {
+      // Unmounted while being read: give the list back, without moving the page.
+      if (!holding.current) return
+      holding.current = false
+      reading.forget()
+    },
+    [reading]
+  )
   useEffect(() => {
     const el = box.current
     if (working && follow.current && el) el.scrollTop = el.scrollHeight

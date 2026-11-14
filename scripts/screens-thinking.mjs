@@ -11,7 +11,14 @@ mkdirSync(out, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-'))
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_FAKE_THINKING: '1', TUCANO_LOCALE: 'en-US' }
 
-const app = await electron.launch({ args: ['.'], env })
+// TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, in the
+// package Apo actually opens.
+const installed = env.TUCANO_ELECTRON
+const app = await electron.launch({
+  ...(installed ? { executablePath: installed } : {}),
+  args: [...(installed ? [] : ['.']), `--user-data-dir=${join(data, 'electron')}`],
+  env
+})
 const win = await app.firstWindow()
 await win.setViewportSize({ width: 1280, height: 880 })
 await win.waitForSelector('.sidebar')

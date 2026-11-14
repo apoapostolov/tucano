@@ -98,7 +98,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
   streamed, but the message list around it kept following the answer arriving below, so the block slid
   up and off the window while a passage higher in it was being read. Reading anywhere above the block's
   end now holds the list as well, and coming back to that end gives it back, which is when the list goes
-  on following the answer. In the window at 900 x 880 the list stayed at 177 through a held read while
+  on following the answer. In the window at 1280 x 880 the list stayed at 177 through a held read while
   the reply grew from 178 to 255 below it; with the hold taken out, the same run moved the list from 255
   to 817 and carried the block from 334 to -63.
 
