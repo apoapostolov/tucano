@@ -15,7 +15,7 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 - [x] Preserve steering, follow-up, restart recovery and reading-position behavior; 41 focused combined checks pass.
 - [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
 - [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
-- [ ] Install, launch and verify the combined source in the installed executable.
+- [x] Install, launch and verify the combined source in the installed executable.
 - [ ] Publish final integration and refresh the fork release, which currently predates the pause feature.
 
 The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
@@ -34,7 +34,7 @@ files untouched and deliver this batch from the isolated audit worktree. See the
 - [x] Reproduce the skill diff's quadratic allocation on current main and open upstream #454 with an immutable reproduction script.
 - [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
 - [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
-- [ ] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
+- [x] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
 - [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
 
 See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
@@ -107,8 +107,8 @@ unverified because duplicate accessibility names prevent a safe background click
 currently open profiles, with Open DM as a separate action; this differs from the older smoke
 check wording and was not silently changed.
 
-The original audit cohort contains 43 open feature/fix PRs. Five have received targeted repairs
-and browser or core checks: **5/43 (11.6%)**. None has yet passed every audit dimension below:
+The original audit cohort contains 43 open feature/fix PRs. Six have received targeted repairs
+and browser or core checks: **6/43 (14.0%)**. None has yet passed every audit dimension below:
 **0/43 fully audited (0%)**. Three additional standalone upstream PRs, #367, #368 and #372, were opened
 with upstream-based validation. #367 and #368 are now merged. These figures distinguish useful progress from a release signoff.
 

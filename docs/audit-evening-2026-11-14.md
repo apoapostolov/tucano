@@ -59,4 +59,28 @@ The recovered #311 repair and component split are included in this candidate. Th
 diff allocation bug remains tracked separately in upstream #454, with its immutable clean-main
 reproduction. Room-sharing persistence and access enforcement remain pending on #423/#424.
 
-Installation and release verification are the remaining delivery steps for this record.
+## Installed delivery
+
+`node scripts/self-build.mjs install` completed from `eafde861d4ac3a15cca788bd0a36ab0c67e2a33e`.
+The installed archive is **37,360,777 bytes**, SHA-256
+`7655fed31d1107db2a2bdb436e69c2bee3fa9865e8ad77256f566c5fc061fcbc`, equal to the packaged
+archive. The normal installed executable was observed at its TucanoNext install path, with a
+fresh visible, unfocused window. Its accessibility tree exposed only one ref, so normal-workspace
+navigation is not claimed. The installed executable separately passed the complete hidden scratch
+flow: seven smoke checks, 18 Settings page/width measurements, native 150% scaling, supported
+900/1280 desktop widths, eight skill-source imports with edit/archive/reactivate, and pause/resume
+with the question withheld until resume. Browser source captures separately cover 420px.
+
+The first combined installed style check returned empty computed styles for one Wiki card; an
+unchanged build passed a repeat. The probe used separate selector resolution and style reads.
+It now queries and measures the current DOM in one page task, requires connected/nonempty groups,
+and saves the group styles with measurements. This prevents stale references during card
+replacement without filtering a failing group or relaxing the layout assertion. It is a harness
+repair; no application source changed after the passing full suite.
+
+Evidence: `C:/tmp/tucano-evening-audit-full.json`,
+`C:/tmp/tucano-pause-audit-full.json`, `C:/tmp/tucano-evening-final-installed/report.json`,
+and `C:/tmp/tucano-evening-audit-installed-identity.json`. The public #457 CI run `43627010425`
+passes macOS, Linux and all four Windows shards. The primary checkout's concurrent copy work
+remains untouched. Publishing this audited branch and refreshing the older fork release are the
+remaining bookkeeping steps.

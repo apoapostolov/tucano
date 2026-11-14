@@ -14,11 +14,12 @@ export async function checkSettingsOverhaul(page, output, guard, resize) {
       if (!(await tab.count())) continue
       await tab.click()
       await page.evaluate(() => document.fonts.ready)
-      const grouped = await page.locator('.settings-content .card').evaluateAll(nodes => nodes.every(node => {
+      // Query and read styles in one page task: a Wiki card can be replaced while its status loads.
+      const groups = await page.evaluate(() => [...document.querySelectorAll('.settings-content .card')].map(node => {
         const style = getComputedStyle(node)
-        return style.borderRadius !== '0px' && style.boxShadow === 'none'
+        return { connected: node.isConnected, title: node.querySelector('h2')?.textContent, classes: node.className, radius: style.borderRadius, shadow: style.boxShadow }
       }))
-      assert.ok(grouped, 'Settings groups must have restrained rounded borders without shadows')
+      assert.ok(groups.length > 0 && groups.every(group => group.connected && group.radius && group.radius !== '0px' && group.shadow === 'none'), 'Settings group styles: ' + JSON.stringify({ width, page: id, groups }))
       const copy = await measureCopy(page, [
         { selector: '.settings-pages button, .settings-sections a', maxLines: 1 },
         { selector: '.settings-content .hint:visible, .settings-content .card__head p:visible, .settings-content .key-row p.muted.small:visible, .settings-content .wk-setting small:visible, .settings-content .workspace-danger__section > p:visible' }
@@ -34,7 +35,7 @@ export async function checkSettingsOverhaul(page, output, guard, resize) {
       await guard()
       await page.screenshot({ path: join(output, screenshot) })
       await guard()
-      measurements.push({ ...copy, screenshot, display })
+      measurements.push({ ...copy, groups, screenshot, display })
     }
   }
   await viewport.restore()
