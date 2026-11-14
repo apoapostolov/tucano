@@ -1127,6 +1127,10 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 }
 
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
+// A reply put on hold stops at the end of the turn it is in, keeping its session and its text, and
+// starts the next turn when it is let go: a limit passing without another model taking it over.
+export const pauseRun = (messageId: string): void => void fire(L('Não consegui pausar a resposta.', "I couldn't pause the reply."), 'pauseRun', { messageId })
+export const resumeRun = (messageId: string): void => void fire(L('Não consegui retomar a resposta.', "I couldn't let the reply go on."), 'resumeRun', { messageId })
 export const retryRun = (messageId: string, note?: string): void =>
   void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId, ...(note ? { note } : {}) })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })

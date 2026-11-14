@@ -1589,6 +1589,32 @@ h3 {
     opacity: 1;
   }
 }
+/* The reply's last row while it is at work: the pause beside the steer pill. Both say something about
+   a reply that is running; under the thinking block the row keeps a gap from the box above it, as the
+   steer pill alone did. */
+.steps__hold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 4px 3px;
+  padding-left: 14px;
+}
+.thought + .steps__hold {
+  margin-top: 6px;
+}
+.steps__hold .steps__ask {
+  margin: 0;
+  padding: 0;
+}
+.steps__hold .steps__ask-pill[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+/* A paused reply: letting it go on is the one thing to do there, so it reads as the choice. */
+.steps__ask-pill--go {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .steps__ask-pill {
   justify-self: start;
   display: inline-flex;
@@ -12313,7 +12339,11 @@ button.agent-card__now:hover {
 /* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
    arrives, so a long reply can be studied while it is being written. */
 .thought {
-  margin: 6px 0 0;
+  /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
+     border, so the rail runs unbroken from the steps into the reasoning under them. Without the
+     3px the thought's line stood a hair to the left of the one above it, and the two read as one
+     line drawn twice. */
+  margin: 6px 0 0 3px;
   /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
      than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
      lines, plus the label and the padding around the text. The plain rule is the middle size, so a
@@ -12321,6 +12351,9 @@ button.agent-card__now:hover {
   --thought-lines: 12;
   max-height: calc(var(--thought-lines) * 1.55em + 34px);
   overflow-y: auto;
+  /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar on
+     the block whenever a line of reasoning had nowhere to wrap. */
+  overflow-x: hidden;
   padding: 8px 10px;
   border-left: 2px solid var(--border);
   border-radius: 0 8px 8px 0;
@@ -12348,6 +12381,9 @@ button.agent-card__now:hover {
   margin-bottom: 3px;
 }
 .thought__text {
+  /* A path or an address in the reasoning has no space to break at: it wraps onto the next line
+     instead of running past the box and asking for a sideways scroll, the rule `.md` already has. */
+  overflow-wrap: anywhere;
   opacity: 0.85;
 }
 /* The open question, kept next to the field: in a long reply the card that waits for an answer is

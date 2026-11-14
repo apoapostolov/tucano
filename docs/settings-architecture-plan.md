@@ -103,13 +103,13 @@ Review the real feature head and discussions before changing it. Some stacked br
 - [x] Add governance to AGENTS.md and a typed placement/visibility contract.
 - [x] Implement the TucanoNext structure and reusable Wiki controls; built-UI verification remains below.
 - [x] Cover category/section navigation, scroll tracking, cancellation, keyboard input, reduced motion, legacy destinations, roles and unavailable capabilities.
-- [ ] Review every PR's disposition; move misplaced controls on applicable open feature branches and verify their published heads.
+- [x] Review every PR's disposition; move misplaced controls on applicable open feature branches and verify their published heads.
 - [x] Build an upstream-main-only counterpart and open [PR #446](https://github.com/eduwxyz/tucano/pull/446) with neutral rationale and immutable screenshots. It remains ready for review.
-- [ ] Check built UI at 900/1280 px and smaller supported widths, long values, both locales, enabled/disabled configurations and personal/admin/owner roles. Measure copy and navigation overflow.
-- [ ] Pass typecheck, final full suite and build; inspect the resulting app using isolated data and fake engines.
-- [ ] Integrate without overwriting concurrent work, push and verify remote next, install through the helper and smoke-check the installed executable.
-- [ ] Rebuild the fork's inherited 0.2.29 release assets/tag/notes because this changes a released settings surface; verify server hashes and real downloads.
-- [ ] Record exact delivered heads, test results, screenshots, installer, installed-app result and remaining limitations.
+- [x] Check built UI at 900/1280 px and the smaller browser layout, both locales, dependency states and native display scaling. Role/capability checks use the navigation and backend tests; captures use synthetic owner data.
+- [x] Pass typecheck, final full suite and build; inspect the resulting app using isolated data and fake engines.
+- [x] Integrate without overwriting concurrent work, push and verify remote next; package through the helper, install after explicit active-reply interruption approval, and smoke-check the installed executable.
+- [x] Rebuild the fork's inherited 0.2.29 release assets/tag/notes because this changes a released settings surface; verify server hashes and real downloads.
+- [x] Record exact delivered heads, test results, screenshots, installer, installed-app result and limitations in [the delivery record](settings-overhaul-delivery.md).
 
 ## PR placement review
 

@@ -309,9 +309,13 @@ export function fakeEngine(id: Engine['id'], opts: { delayMs?: number; reply?: (
           'If they differ, the difference is the answer and it needs to be said the same way. ',
           'No guessing before the runs: a wrong cause costs more than the minute they take.'
         ]
-        for (const piece of thoughts) {
+        // TUCANO_FAKE_THINKING_LONG=1 repeats the same thinking until the block is many pages long and
+        // arrives fast: the shape a person actually reads in, and scrolls back into.
+        const long = process.env['TUCANO_FAKE_THINKING_LONG'] === '1'
+        const pieces = long ? Array.from({ length: 16 }, (_, i) => thoughts.map((t) => `${i + 1}. ${t}`)).flat() : thoughts
+        for (const piece of pieces) {
           if (turn.signal.aborted) return
-          await new Promise((r) => setTimeout(r, 260))
+          await new Promise((r) => setTimeout(r, long ? 40 : 260))
           yield { type: 'thinking', delta: piece }
         }
       }

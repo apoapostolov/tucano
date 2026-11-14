@@ -105,6 +105,15 @@ it('does not restart approval waits, questions, budget pauses, failures or compl
   expect(turns).toHaveLength(0)
 })
 
+it('closes a reply left held by the person when the app closed, and leaves a ceiling pause where it is', () => {
+  reply('held', 1000, 'paused')
+  reply('ceiling', 2000, 'paused')
+  db.saveMessage({ ...db.message('held')!, run: { ...db.message('held')!.run!, held: true } })
+  expect(db.interruptStaleRuns()).toBe(1)
+  expect(db.message('held')?.run?.status).toBe('interrupted')
+  expect(db.message('ceiling')?.run?.status).toBe('paused')
+})
+
 it('does not recover an archived agent', async () => {
   reply('running', 1000, 'working')
   db.interruptStaleRuns()
