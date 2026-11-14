@@ -16,7 +16,8 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 - [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
 - [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
 - [x] Install, launch and verify the combined source in the installed executable.
-- [ ] Publish final integration and refresh the fork release, which currently predates the pause feature.
+- [x] Publish the audited integration and refresh the fork release; uploaded installer and blockmap hashes match local assets, and ranged download returns HTTP 206.
+- [ ] Review the six concurrent copy-task commits through `cbe06953`; their new application changes are outside this batch's verified source.
 
 The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
 files untouched and deliver this batch from the isolated audit worktree. See the
@@ -35,7 +36,8 @@ files untouched and deliver this batch from the isolated audit worktree. See the
 - [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
 - [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
 - [x] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
-- [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
+- [x] Publish the afternoon integration/evidence records with the evening delivery.
+- [ ] Continue reviewing new feature and test PRs, including #451 and the revised heads recorded in the inventory.
 
 See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
 complete the wider skills audit: large-history comparisons, import accessibility and large-library

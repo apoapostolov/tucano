@@ -10,7 +10,7 @@ The former audit worktree had been removed, but its commits survived at `f2a91b6
 worktree recovered that source and merged published next through `cf9d34fa`, retaining the newer
 pause and reasoning work. The old candidate's final report is also preserved: 2,588 passed,
 61 skipped, zero failures. This is historical evidence, not verification of the newer combined tree.
-Current upstream remains `04539404`; the refreshed authored inventory at 18:17 UTC has 90 PRs,
+Current upstream remains `04539404`; the refreshed authored inventory at 19:02 UTC has 90 PRs,
 62 open, 18 merged and 10 closed. Commit ancestry remains an intake signal, not feature proof.
 
 ## #457: pause gate safety
@@ -74,13 +74,22 @@ with the question withheld until resume. Browser source captures separately cove
 The first combined installed style check returned empty computed styles for one Wiki card; an
 unchanged build passed a repeat. The probe used separate selector resolution and style reads.
 It now queries and measures the current DOM in one page task, requires connected/nonempty groups,
-and saves the group styles with measurements. This prevents stale references during card
-replacement without filtering a failing group or relaxing the layout assertion. It is a harness
+and saves the group styles with measurements. This avoids the separate reference lookup without filtering a failing group or relaxing the layout
+assertion; the intermittent empty-style result does not establish a product defect or its cause. It is a harness
 repair; no application source changed after the passing full suite.
 
 Evidence: `C:/tmp/tucano-evening-audit-full.json`,
 `C:/tmp/tucano-pause-audit-full.json`, `C:/tmp/tucano-evening-final-installed/report.json`,
 and `C:/tmp/tucano-evening-audit-installed-identity.json`. The public #457 CI run `43627010425`
 passes macOS, Linux and all four Windows shards. The primary checkout's concurrent copy work
-remains untouched. Publishing this audited branch and refreshing the older fork release are the
-remaining bookkeeping steps.
+remains untouched. Audited integration `77286bf46c6fcaa9140517c7b3ad29151ad5e501` was published
+with a normal push. The fork release `next-v0.2.29` now points to installed source `eafde861`.
+Both uploaded assets match local sizes and SHA-256 digests: installer 132,366,905 bytes and
+blockmap 139,039 bytes. A real ranged installer download returns HTTP 206 and bytes 0–31 of
+132,366,905. The original project's release and tags were not changed.
+
+At final reconciliation, another task had committed six local copy-review changes through
+`cbe06953bd3119c20bb796c86d82d2f26b1baa49`. They contain the published audit plus new application
+copy and QA changes. They have not been published by this audit, and the passing suite and installed
+archive recorded above do not verify those new changes. Their review and delivery remain separate
+work. The original cohort remains 6/43 with targeted repairs and 0/43 fully audited.

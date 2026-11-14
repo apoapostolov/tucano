@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-14T18:17:46.398Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-14T19:02:57.467Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 90 total: 62 open, 18 merged, 10 closed.
 
-Upstream main: `04539404e545323124e5dd4737098892cd746226`. Daily driver HEAD: `2fdc1bd104a0a2049e61972aa1d9f2cc44ac09ee`. Upstream main is contained: yes.
+Upstream main: `04539404e545323124e5dd4737098892cd746226`. Daily driver HEAD: `77286bf46c6fcaa9140517c7b3ad29151ad5e501`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -42,7 +42,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#305](https://github.com/eduwxyz/tucano/pull/305) | OPEN | Show each provider's quota in Usage and limits, and the ones a session's bots run on in its header | no: inspect patch equivalence | 5 | 3 | not reviewed |
 | [#308](https://github.com/eduwxyz/tucano/pull/308) | CLOSED | Read skills from every harness's folder, and let the person add or turn off folders | no: inspect patch equivalence | 3 | 6 | not reviewed |
 | [#310](https://github.com/eduwxyz/tucano/pull/310) | MERGED | Stop teaching a model Portuguese in an English workspace: language-free screen ids, the guide index, and a test that notices | yes | 2 | 0 | not reviewed |
-| [#311](https://github.com/eduwxyz/tucano/pull/311) | OPEN | Read a Hermes skill library as it is: categories one level down, versions, and the facets it is navigated by | yes | 5 | 3 | not reviewed |
+| [#311](https://github.com/eduwxyz/tucano/pull/311) | OPEN | Read a Hermes skill library as it is: categories one level down, versions, and the facets it is navigated by | yes | 5 | 3 | targeted source-label repair verified; full skills audit remains |
 | [#313](https://github.com/eduwxyz/tucano/pull/313) | OPEN | Settings › Models: change the thinking on the bulk change and on every agent | no: inspect patch equivalence | 2 | 8 | not reviewed |
 | [#316](https://github.com/eduwxyz/tucano/pull/316) | MERGED | Stop calling a slow Chrome and a starved Windows test a failure: 90 s to open, 60 s on Windows | yes | 8 | 0 | not reviewed |
 | [#319](https://github.com/eduwxyz/tucano/pull/319) | OPEN | Let the Tuca set the skills a bot follows, and show them in ver_estado | no: inspect patch equivalence | 3 | 0 | not reviewed |
@@ -93,13 +93,13 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#432](https://github.com/eduwxyz/tucano/pull/432) | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 7 | 5 | targeted safety repairs verified; full feature audit remains (stale) |
 | [#435](https://github.com/eduwxyz/tucano/pull/435) | OPEN | A bot can look after something for you between conversations | no: inspect patch equivalence | 8 | 3 | not reviewed |
 | [#437](https://github.com/eduwxyz/tucano/pull/437) | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 3 | 3 | migration-compatible counter assertion repaired; full feature audit remains (stale) |
-| [#445](https://github.com/eduwxyz/tucano/pull/445) | OPEN | Give the two core-boot tests the budget Windows already has | no: inspect patch equivalence | 2 | 0 | not reviewed |
+| [#445](https://github.com/eduwxyz/tucano/pull/445) | OPEN | Give the two core-boot tests the budget Windows already has | no: inspect patch equivalence | 2 | 0 | CI explanation corrected; budget changes not integrated |
 | [#446](https://github.com/eduwxyz/tucano/pull/446) | OPEN | Organize settings by task with accessible section navigation | no: inspect patch equivalence | 3 | 2 | not reviewed |
 | [#447](https://github.com/eduwxyz/tucano/pull/447) | OPEN | Give the OpenCode retry test the engine's own wait, not 200 ms | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#448](https://github.com/eduwxyz/tucano/pull/448) | OPEN | Fix the forwarder test's port race, which fails on the macOS runner | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#451](https://github.com/eduwxyz/tucano/pull/451) | OPEN | Write the guide's 24 pages in English too, and hand each workspace its own | no: inspect patch equivalence | 3 | 0 | not reviewed |
 | [#453](https://github.com/eduwxyz/tucano/pull/453) | OPEN | Give the delegation test's parked request 8 s, so it is still at it when Clara's answer lands | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#457](https://github.com/eduwxyz/tucano/pull/457) | OPEN | Pause a reply before its next step, and resume it there | no: inspect patch equivalence | 2 | 0 | not reviewed |
+| [#457](https://github.com/eduwxyz/tucano/pull/457) | OPEN | Pause a reply before its next step, and resume it there | yes | 2 | 4 | targeted cancellation/concurrency repair verified and installed; broader feature audit remains |
 
 ## Commit dependencies
 
