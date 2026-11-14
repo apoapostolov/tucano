@@ -1751,7 +1751,8 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // A routine with nothing to report is one quiet line, closed: what it did is a click away, and
   // the reply itself has no text at all.
   const silent = run.silent === true
-  const open = toggled ?? (working && mode !== 'one-line' && !silent && !remembered)
+  const stepsOpen = useStore((s) => s.settings?.stepsOpen) !== false
+  const open = toggled ?? (working && stepsOpen && mode !== 'one-line' && !silent && !remembered)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'

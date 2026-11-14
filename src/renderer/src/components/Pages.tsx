@@ -3526,6 +3526,15 @@ export function SettingsPage(): ReactNode {
     ),
     'app-conversation': (
       <Card title={L('A conversa', "Conversation")}>
+<div className="key-row">
+              <Icon name="layers" />
+              <div className="grow">
+                <strong>{L('Mostrar os passos enquanto o agente trabalha', 'Expand steps while working')}</strong>
+                <p className="muted small">{L('Abre a lista do que o agente está fazendo embaixo da resposta. Desligado, fica só a linha com o que ele faz agora; um clique nela abre os passos. Muda só pra você.', 'Keep active reply steps expanded. You can still open or close them manually.')}</p>
+              </div>
+              <Toggle on={settings.stepsOpen !== false} onChange={(v) => updateSettings({ stepsOpen: v })} />
+            </div>
+
                   <div className="key-row">
                     <Icon name="spark" />
                     <div className="grow">

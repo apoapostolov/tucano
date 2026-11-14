@@ -16,6 +16,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
   'theme',
   'sounds',
+  'stepsOpen',
   'notice',
   'showThinking',
   'thinkingSize',
