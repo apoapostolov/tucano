@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
+import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 
 // Reserve both ports together; let the app bind immediately after releasing them.
 const reserve = async () => {
@@ -63,6 +64,7 @@ try {
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard)
+  if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()

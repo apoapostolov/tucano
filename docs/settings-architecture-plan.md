@@ -18,6 +18,8 @@ Pointer activation uses an interruptible 280 ms ease-in-out scroll. Keyboard act
 
 Use stable section IDs rather than labels, translated text or DOM positions. Preserve legacy tab destinations (`geral`, `modelos`, `agentes`, `roteamento`, `integracoes`, `pessoas`, `atividade`, `servidores`) through an explicit mapping. Existing links must reach the appropriate new page/section even if a permission or capability removes a remembered destination. Navigation state remains UI state; it is not a new database preference.
 
+Use a flat presentation within each page: plain section headings, spacing and thin dividers. Settings sections and their nested groups do not use rounded cards, raised surfaces or shadows. Keep the existing input and button affordances.
+
 ## Canonical placement
 
 Section order is intentional: common choices first, advanced setup later, destructive actions last. Labels below are the proposed concise English navigation labels; Portuguese labels follow the existing localization pattern.
@@ -25,7 +27,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | Page / section ID | Contents and owned settings | Access and scope to preserve |
 | --- | --- | --- |
 | App / `app-appearance` | Theme, interface/workspace language, time format where implemented | Personal preferences; explain existing workspace-language behavior for admins |
-| App / `app-conversation` | Reasoning visibility/height, step display/count, reply shortcut where implemented | Personal display/input behavior; no new feature toggle invented |
+| App / `app-conversation` | Reasoning visibility/height, step display/count, expand steps while working, reply shortcut where implemented | Personal display/input behavior; no new feature toggle invented |
 | App / `app-sidebar` | Personal screen order/visibility guidance; empty Asks and Approvals visibility | Screen dragging stays in the sidebar's contextual editor. Members see personal guidance; automatic empty-section controls remain admin-only |
 | App / `app-notifications` | Sounds, notification appearance, timing, placement, interaction and test notification | Personal preferences; preserve explicit approval safeguards |
 | App / `app-dictation` | Dictation engine, model, downloads and existing permission guidance | Existing admin/capability checks |

@@ -618,7 +618,7 @@ export interface Settings {
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
-  stepsOpen?: boolean // personal default for opening a working reply
+  stepsOpen?: boolean // open reply steps while working; unset: on
   showThinking?: boolean
   thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
   clock?: '24' | '12' // Settings › The conversation: times as 15:05 or 3:05 PM; unset keeps the app's own reading

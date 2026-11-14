@@ -22,7 +22,7 @@ export async function checkSettingsCopy(page, output, guard) {
     measurements.push({ ...copy, screenshot, display: await page.evaluate(() => ({ devicePixelRatio, screenWidth: screen.width, screenHeight: screen.height })) })
   }
   await page.setViewportSize(originalViewport)
-  const preference = page.locator('#settings-app-conversation .key-row').filter({ has: page.getByText('Open steps automatically', { exact: true }) }).getByRole('switch')
+  const preference = page.locator('#settings-app-conversation .key-row').filter({ has: page.getByText('Expand steps while working', { exact: true }) }).getByRole('switch')
   assert.equal(await preference.getAttribute('aria-checked'), 'true')
   await preference.click()
   await page.waitForFunction(() => document.querySelector('#settings-app-conversation .toggle')?.getAttribute('aria-checked') === 'false')
