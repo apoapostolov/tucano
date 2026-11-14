@@ -839,7 +839,9 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             </div>
           </Details>
         )}
-        {message.run?.status === 'paused' && (
+        {/* The ceiling pause, not a reply the person put on hold: a held reply keeps its own row, and
+            nothing of it reads as ended while it waits. */}
+        {message.run?.status === 'paused' && !message.run.held && (
           <>
             <div className="note">
               {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
@@ -2778,7 +2780,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
     if (over.length) keep([...remember.done, ...over])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [working])
-  const finished = ended.map((id) => messages.find((m) => m.id === id)).filter((m): m is Message => !!m?.run && ENDED.includes(m.run.status))
+  const finished = ended.map((id) => messages.find((m) => m.id === id)).filter((m): m is Message => !!m?.run && !m.run.held && ENDED.includes(m.run.status))
   if (!running.length && !queued.length && !finished.length) return null
   const counts = [
     running.length > 0 ? L(`${running.length} respondendo`, `${running.length} replying`) : '',
