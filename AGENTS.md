@@ -527,9 +527,22 @@ code names the stage that failed (`typecheck 2`, `build 3`, `package 4`, `verify
   dependencies. The app then dies while loading (`Cannot find module 'fs-extra'`) with no window,
   and the processes left behind hold the single-instance lock, so every later launch, including the
   taskbar shortcut, does nothing at all. Run `npm ci` alone and wait for it to finish.
-- **Run it in the foreground.** A shell the runner moves to the background cannot answer the
-  installer's stdin: the run prints `stdin is not a tty` and ends without installing, leaving the
-  previous installer in `dist/` to be mistaken for a fresh one.
+- **A detached run installs, provided it starts in this checkout.** The installer is spawned as
+  `setup.exe /S` with its stdin ignored, so nothing needs a terminal; six detached
+  `npm run self-install` runs have completed here, each ending `Up: TucanoNext <version>, window
+  "TucanoNext"`. Two things still break a backgrounded attempt, and neither is the installer. A
+  launcher that does not carry this checkout as its working directory runs npm in the home directory
+  and dies with `Could not read package.json` before anything builds. A wrapper that refuses `node`
+  without a tty prints `stdin is not a tty` and exits having done nothing (Hermes's background
+  terminal on this machine does exactly that), so that run was never a build; set the working
+  directory explicitly and read the stage from the exit code rather than from the command having
+  been accepted.
+- **In a harness that caps a foreground command, use that harness's background runner once, with the
+  cwd set.** pi's `pi-watch` refuses any single bash call over 120 s, which is shorter than this
+  build takes, so the foreground route does not exist there: start it once through the background
+  runner and wait for the watch. Do not repeat it, because a second attempt can start another
+  instance against the same `TUCANO_DATA` and its Electron cache creation then fails with `Access is
+  denied`.
 - **`node scripts/self-build.mjs doctor` after any launch that shows no window.** It names a
   package that cannot load and instances that run without a window; `doctor --fix` closes those
   instances so the next launch can start.
