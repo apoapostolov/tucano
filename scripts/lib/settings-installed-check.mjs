@@ -6,8 +6,8 @@ import { measureCopy } from './copy-layout.mjs'
 export async function checkSettingsCopy(page, output, guard) {
   const originalViewport = page.viewportSize() ?? { width: 1280, height: 900 }
   const measurements = []
-  for (const width of [1280, 900, 760]) {
-    await page.setViewportSize({ width, height: 900 })
+  for (const width of [null, 1280, 900, 760]) {
+    if (width) await page.setViewportSize({ width, height: 900 })
     await page.locator('#settings-tab-app').click()
     await page.locator('.settings-sections a[href="#settings-app-conversation"]').click()
     const copy = await measureCopy(page, [
@@ -17,10 +17,19 @@ export async function checkSettingsCopy(page, output, guard) {
     assert.ok(copy.passed, JSON.stringify(copy.failures))
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
     await guard()
-    const screenshot = `installed-conversation-${width}.png`
+    const screenshot = `installed-conversation-${width ?? "native"}.png`
     await page.screenshot({ path: join(output, screenshot) })
     measurements.push({ ...copy, screenshot, display: await page.evaluate(() => ({ devicePixelRatio, screenWidth: screen.width, screenHeight: screen.height })) })
   }
   await page.setViewportSize(originalViewport)
+  const preference = page.locator('#settings-app-conversation .key-row').filter({ has: page.getByText('Open steps automatically', { exact: true }) }).getByRole('switch')
+  assert.equal(await preference.getAttribute('aria-checked'), 'true')
+  await preference.click()
+  await page.waitForFunction(() => document.querySelector('#settings-app-conversation .toggle')?.getAttribute('aria-checked') === 'false')
+  await page.reload()
+  await page.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
+  await page.locator('#settings-tab-app').click()
+  await page.locator('.settings-sections a[href="#settings-app-conversation"]').click()
+  assert.equal(await preference.getAttribute('aria-checked'), 'false', 'Personal step preference must survive reload')
   return measurements
 }
