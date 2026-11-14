@@ -699,7 +699,7 @@ other half, and they belong to the same session.
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
-| Thinking streamed as dim live text | 235 | 245 |
+| Thinking streamed as dim live text | 235, 452 | 245 |
 | Model-facing language in an English workspace | 242 | 310 |
 | Settings › Models: thinking under the model | 312 | 313 |
 | Settings › Accounts: another Grok login | 415 | 416 |
