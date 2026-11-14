@@ -1,8 +1,8 @@
 import { CLASSIFIER_JOBS, classifierFor, classifierLabel, jobAbout, jobLabel, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
 import { L, lang, locale, type Lang } from '../../../shared/lang'
+import { hasMonthlyLimit, safeLimit } from '../../../shared/limits'
 import { skillGroup, skillOrigin } from '../../../shared/skill-groups'
 import { defaultRouting } from '../../../shared/routing'
-import { hasMonthlyLimit, safeLimit } from '../../../shared/limits'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { parseQuestionsText } from '../../../shared/questions'
@@ -3794,7 +3794,7 @@ export function SettingsPage(): ReactNode {
                         onChange={(n) => updateSettings({ defaultLimit: safeLimit(n * 1_000_000) })}
                       />
                     </Field>
-      <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua.', "Pause at the limit and ask you whether to continue.")}>
+      <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', 'Pause at the limit. With no monthly limit, use a base of 10 million tokens.')}>
                       <NumberInput
                         min={1}
                         max={100}

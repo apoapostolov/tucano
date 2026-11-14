@@ -4,6 +4,44 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
+### Evening intake and pause safety, 14 November
+
+- [x] Set `apoapostolov/tucano`'s default branch to `next` and verify GitHub's returned value.
+- [x] Recover the removed audit worktree from surviving committed source; preserve newer pause/reasoning commits through `cf9d34fa`.
+- [x] Refresh authored inventory: 90 PRs, 62 open, 18 merged, 10 closed at 18:17 UTC.
+- [x] Reproduce three #457 defects: pre-aborted wait hangs, overwritten parallel waiters, and abort listeners retained after resume.
+- [x] Repair #457 in place; public full suite passes 1,756 tests with 60 skipped and zero failures. A fresh pushed-SHA checkout passes typecheck and 13 focused cases.
+- [x] Publish six public-branch pause captures and measurements; remove stale failure claims from the PR description.
+- [x] Preserve steering, follow-up, restart recovery and reading-position behavior; 41 focused combined checks pass.
+- [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
+- [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
+- [x] Install, launch and verify the combined source in the installed executable.
+- [ ] Publish final integration and refresh the fork release, which currently predates the pause feature.
+
+The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
+files untouched and deliver this batch from the isolated audit worktree. See the
+[evening intake record](audit-evening-2026-11-14.md) for exact SHAs and evidence boundaries.
+
+
+### Skills and revised PR intake, 14 November afternoon
+
+- [x] Refresh current upstream and the authored PR inventory: 89 total, 61 open, 18 merged, 10 closed at 13:04 UTC.
+- [x] Repair #311's source labels; preserve the latest folder-settings placement revision.
+- [x] Split the Skills UI into focused components without changing markup, permissions or complexity totals.
+- [x] Pass the current public branch's full suite: 1,769 passed, 60 skipped, zero failures; verify 49 focused cases from the pushed SHA in a fresh checkout.
+- [x] Publish new synthetic screenshots and copy measurements at 1280, 900 and 420 CSS pixels; update #311's stale description and validation.
+- [x] Correct #445's unsupported runner claim in source and description; test a clean current-main baseline. Keep the proposed budget increases unintegrated pending CI reproduction.
+- [x] Reproduce the skill diff's quadratic allocation on current main and open upstream #454 with an immutable reproduction script.
+- [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
+- [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
+- [x] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
+- [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
+
+See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
+complete the wider skills audit: large-history comparisons, import accessibility and large-library
+load checks remain distinct work.
+
+
 ### Upgrade to 0.2.29, 14 November 2026
 
 Starting refs: published integration `41d0979`, prior audit candidate `d0fc185`, local
@@ -69,8 +107,8 @@ unverified because duplicate accessibility names prevent a safe background click
 currently open profiles, with Open DM as a separate action; this differs from the older smoke
 check wording and was not silently changed.
 
-The original audit cohort contains 43 open feature/fix PRs. Five have received targeted repairs
-and browser or core checks: **5/43 (11.6%)**. None has yet passed every audit dimension below:
+The original audit cohort contains 43 open feature/fix PRs. Six have received targeted repairs
+and browser or core checks: **6/43 (14.0%)**. None has yet passed every audit dimension below:
 **0/43 fully audited (0%)**. Three additional standalone upstream PRs, #367, #368 and #372, were opened
 with upstream-based validation. #367 and #368 are now merged. These figures distinguish useful progress from a release signoff.
 

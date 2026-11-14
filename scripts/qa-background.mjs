@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
 import { checkPause } from './lib/pause-check.mjs'
 import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
+import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 
@@ -16,11 +17,12 @@ const reserve = async () => {
   await new Promise((yes, no) => { server.once('error', no); server.listen(0, '127.0.0.1', yes) })
   return { server, port: server.address().port }
 }
-const output = resolve(process.argv[2] ?? '.tucano-local/audit/background-qa')
+const output = resolve(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? '.tucano-local/audit/background-qa')
 mkdirSync(output, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US', TUCANO_WEBHOOK_PORT: String(reservations[0].port), TUCANO_GIT_PORT: String(reservations[1].port) }
+if (process.argv.includes('--skill-origins')) Object.assign(env, seedSkillOrigins())
 delete env.ELECTRON_RUN_AS_NODE
 delete env.ELECTRON_RENDERER_URL
 const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(), data, ports: reservations.map((r) => r.port), checks: [], errors: [], passed: false }
@@ -74,6 +76,7 @@ try {
   await capture('03-settings')
   if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard, resize)
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
+  if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
   if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false

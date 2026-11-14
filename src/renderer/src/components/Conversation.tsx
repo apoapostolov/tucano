@@ -2554,7 +2554,7 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
           </div>
         </form>
       ) : (
-        <div className="approval__actions">
+        <div className="approval__actions approval__buttons">
           {approval.highRisk ? (
             // The hold can't depend on the pointer staying inside the button: taking capture makes
             // the browser fire pointerout/pointerleave on the button at once, and a cursor that drifts
