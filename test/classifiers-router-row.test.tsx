@@ -37,6 +37,7 @@ vi.mock('../src/renderer/src/store', async (original) => {
 const real = await vi.importActual<typeof import('../src/renderer/src/store')>('../src/renderer/src/store')
 const { createRoot } = await import('react-dom/client')
 const { ClassifiersCard } = await import('../src/renderer/src/components/Pages')
+const { SmartRoutingRow } = await import('../src/renderer/src/components/Routing')
 
 let root: Root | undefined
 beforeEach(() => {
@@ -71,18 +72,19 @@ const text = (): string => document.body.textContent ?? ''
 const button = (label: string): HTMLElement | undefined =>
   [...document.querySelectorAll('button')].find((b) => (b.textContent ?? '').includes(label)) as HTMLElement | undefined
 
-describe('smart routing inside Classifiers', () => {
-  it('is a row of the card, under the jobs, with its switch and no button while it is off', async () => {
+describe('smart routing placement and its compatible entry point', () => {
+  it('keeps the fallback with classifier jobs and gives routing its own registered section', async () => {
     await render(<ClassifiersCard />)
-    expect(text()).toContain('Smart model routing')
-    // The router model the who-replies job falls back to is here too, now that its card is gone.
     expect(text()).toContain('Router model')
+    expect(text()).not.toContain('Smart model routing')
+    await render(<SmartRoutingRow configure={false} />)
+    expect(text()).toContain('Smart model routing')
     expect(button('Configure routing')).toBeUndefined()
   })
 
   it('offers the routing tab as a button to the left of the switch once it is on', async () => {
     fake = { ...fake, settings: { ...fake.settings, routing: { enabled: true, pools: {} } } as Settings }
-    await render(<ClassifiersCard />)
+    await render(<SmartRoutingRow />)
     const open = button('Configure routing')
     expect(open).toBeDefined()
     const row = open!.parentElement!
@@ -98,7 +100,7 @@ describe('smart routing inside Classifiers', () => {
     expect(setTab).toHaveBeenCalledWith('settings', 'roteamento')
   })
 
-  it('has no card of its own left in Settings', () => {
+  it('does not reintroduce the obsolete standalone Router model card', () => {
     const pages = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'components', 'Pages.tsx'), 'utf8')
     expect(pages).not.toContain("title={L('Roteador', 'Router')}")
     expect(pages).not.toContain('SmartRoutingSwitch')

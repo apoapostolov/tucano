@@ -18,16 +18,16 @@ retain the fork's behavior, as requested. This record is a checklist, not a rele
 
 ## Settings placement and copy review
 
-The six-page settings reorganization remains in its own working branch. This release does
-not import that unfinished UI merely to receive an upstream setting. Its documented mapping
-places conversation presentation under App / `app-conversation`; the current legacy surface
-is General / Conversation, beside the existing reasoning and step controls.
+The six-page settings reorganization is integrated from its committed, layout-checked revision
+`6f5d1b4`, leaving that task's uncommitted work untouched. Conversation presentation belongs
+to App / `app-conversation`, beside the existing reasoning and step controls. The new key is
+registered there and the settings placement check must pass before delivery.
 
 | Decision | Record |
 | --- | --- |
 | Choice | Whether a running reply opens its steps automatically |
 | Key | `Settings.stepsOpen` |
-| Canonical home | App / `app-conversation`; legacy General / Conversation |
+| Canonical home | App / `app-conversation` |
 | Scope and roles | Personal; available to members, admins and owner |
 | Default | On when unset |
 | Dependencies | Step mode, remembered conversation folding and silent-run presentation still constrain automatic opening |

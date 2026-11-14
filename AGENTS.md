@@ -65,7 +65,8 @@ an unchanged packaged app.
 ## Plan and moderate settings placement
 
 Settings placement is a product decision made before adding a control. Follow the maintained
-[settings architecture](docs/settings-architecture-plan.md) and the typed settings structure.
+[settings architecture](docs/settings-architecture-plan.md) and the
+[typed settings structure](src/renderer/src/settings-structure.ts).
 The main pages are App, Workspace, Agents, Models, Knowledge and Connections. Each setting
 has one canonical section; global defaults and object-specific overrides keep their scopes.
 
@@ -79,6 +80,11 @@ another switch at the bottom of the nearest card.
   Keep labels, anchors and deep links stable across translation and rearrangement. Update the
   placement checks and tests when a control moves. An undeclared or unreachable setting is
   incomplete work, even when the RPC and persistence tests pass.
+  Run `npm run check:settings`: its source check follows literal settings writes through shared
+  controls, checks declared ownership and catches missing or duplicate sections. Dynamic patches,
+  RPC-only controls and access scopes still require the placement review and interaction tests.
+  On an older upstream branch without this structure or tool, use the proposal's legacy-tab
+  mapping and built-UI checks; do not copy fork-only workflow files into that feature's PR.
 - Place personal appearance/input under App; workspace identity, people and data under
   Workspace; execution, permissions, limits, automation and skill defaults under Agents;
   runtime/model/accounts/classifier setup under Models; Memory and Wiki under Knowledge;
@@ -240,6 +246,14 @@ The released app and `TucanoNext` remain independent:
    domain of a feature that already has an open pair belongs on that PR, not on a new one.
 
 ## Worktrees, refs, and pushes
+
+Keep `C:/git-ext/tucano` on `next` for everyday fork work; use an isolated worktree for an
+upstream feature branch. Those branches may not track this fork's AGENTS.md, so switching the
+primary checkout can remove the instructions. If another task already has the primary checkout
+on a feature branch, preserve its work and consult `next:AGENTS.md` rather than silently changing
+its branch. Keep local instruction copies out of that feature's upstream diff. Before delivery,
+verify that the authoritative instructions and referenced guides are committed on `next` and
+present in the primary checkout; a copy left only in a disposable worktree is not delivered.
 
 Branches are cut in a worktree, and the hazards there destroy work or waste a cycle:
 
