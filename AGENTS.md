@@ -702,6 +702,7 @@ other half, and they belong to the same session.
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
 | Thinking streamed as dim live text | 235, 452 | 245 |
+| Pause a working reply, and resume it where it stopped | 455 | 457 |
 | Model-facing language in an English workspace | 242 | 310 |
 | Settings › Models: thinking under the model | 312 | 313 |
 | Settings › Accounts: another Grok login | 415 | 416 |
