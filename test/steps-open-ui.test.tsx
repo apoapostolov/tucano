@@ -45,6 +45,17 @@ describe("a reply's steps while the agent works", () => {
     expect(html).toContain('steps__stop')
   })
 
+  it('does not override one-line mode, remembered folding, or a silent routine', () => {
+    fake = { ...fake, settings: { ...fake.settings, stepsOpen: true, steps: 'one-line' } }
+    expect(steps('working')).not.toContain('steps__list')
+    fake = { ...fake, settings: { ...fake.settings, steps: 'all', folded: ['steps:c1'] } }
+    expect(steps('working')).not.toContain('steps__list')
+    fake = { ...fake, settings: { ...fake.settings, folded: [] } }
+    const silent = reply('working')
+    silent.run!.silent = true
+    expect(renderToStaticMarkup(<RunSteps message={silent} />)).not.toContain('steps__list')
+  })
+
   it('are closed after the reply either way', () => {
     expect(steps('done')).not.toContain('steps__list')
     fake = { ...fake, settings: { ...fake.settings, stepsOpen: true } }

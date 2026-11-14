@@ -1742,7 +1742,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // agent's own setting over the workspace's (src/shared/steps.ts).
   const mode = useStore((s) => stepsModeFor(s.settings, message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
   const keep = useStore((s) => s.settings?.stepsLatest)
-  const stepsOpen = useStore((s) => s.settings.stepsOpen) !== false
+  const stepsOpen = useStore((s) => s.settings?.stepsOpen) !== false
   // A manual choice lasts through completion: finishing must not close what someone is reading.
   // A conversation that was left folded stays folded, and a run that starts in it opens folded too.
   const memory = stepsMemory(message.conversationId)
