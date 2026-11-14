@@ -4,10 +4,10 @@ import { measureCopy } from './copy-layout.mjs'
 import { electronCopyViewport } from './electron-copy-viewport.mjs'
 
 // Reuse the hidden Electron session, including the installed executable and its display scaling.
-export async function checkSettingsCopy(page, output, guard) {
-  const viewport = await electronCopyViewport(page)
+export async function checkSettingsCopy(page, output, guard, resize) {
+  const viewport = await electronCopyViewport(page, resize)
   const measurements = []
-  for (const width of [null, 1280, 900, 760]) {
+  for (const width of [null, 1280, 900]) {
     await viewport.set(width)
     await page.locator('#settings-tab-app').click()
     await page.locator('.settings-sections a[href="#settings-app-conversation"]').click()

@@ -39,6 +39,12 @@ try {
   window.setDefaultTimeout(15_000)
   await window.context().tracing.start({ screenshots: true, snapshots: true })
   window.on('pageerror', (error) => report.errors.push(String(error)))
+  const qaWindowId = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].id)
+  const resize = async size => app.evaluate(({ BrowserWindow }, { id, size }) => {
+    const window = BrowserWindow.fromId(id)
+    if (!window || window.isVisible() || window.isFocusable()) throw new Error('Only a hidden QA window may be resized')
+    window.setContentSize(size.width, size.height)
+  }, { id: qaWindowId, size })
   const guard = async () => {
     const state = await app.evaluate(({ BrowserWindow }) => ({ events: globalThis.__qaExposure, windows: BrowserWindow.getAllWindows().map((w) => ({ visible: w.isVisible(), focused: w.isFocused(), focusable: w.isFocusable() })) }))
     assert.deepEqual(state.events, [], 'QA exposed or focused a window')
@@ -63,8 +69,8 @@ try {
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
-  if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard)
-  if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard)
+  if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard, resize)
+  if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()

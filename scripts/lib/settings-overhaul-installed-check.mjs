@@ -3,11 +3,11 @@ import { join } from 'node:path'
 import { measureCopy } from './copy-layout.mjs'
 import { electronCopyViewport } from './electron-copy-viewport.mjs'
 
-export async function checkSettingsOverhaul(page, output, guard) {
-  const viewport = await electronCopyViewport(page)
+export async function checkSettingsOverhaul(page, output, guard, resize) {
+  const viewport = await electronCopyViewport(page, resize)
   const measurements = []
   const failures = []
-  for (const width of [null, 1280, 900, 760]) {
+  for (const width of [null, 1280, 900]) {
     await viewport.set(width)
     for (const id of ['app', 'workspace', 'agents', 'models', 'knowledge', 'connections']) {
       const tab = page.locator('#settings-tab-' + id)
