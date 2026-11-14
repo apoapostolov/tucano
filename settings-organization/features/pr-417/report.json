@@ -1,7 +1,7 @@
 {
   "dirty": false,
-  "source": "b1be987356c661830a059910a500f1667164d1b1",
-  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-Gxrg4a",
+  "source": "c447ee919450f86742170d923d3bbee2cec0b95a",
+  "data": "C:\\Users\\theap\\AppData\\Local\\Temp\\tucano-copy-BcsJ3G",
   "measurements": [],
   "captures": [
     "1280-General-Notifications.png",
@@ -132,20 +132,6 @@
               "lineHeight": "18.6px",
               "overflowX": false,
               "overflowY": false
-            },
-            {
-              "text": "Sends a notification now, to see that it comes, or one of every kind to see how they look.",
-              "characters": 90,
-              "lines": 2,
-              "visible": true,
-              "width": 438.390625,
-              "height": 37.1875,
-              "contentWidth": 438,
-              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
-              "fontSize": "12px",
-              "lineHeight": "18.6px",
-              "overflowX": false,
-              "overflowY": false
             }
           ]
         }
@@ -271,20 +257,6 @@
               "width": 466,
               "height": 37.1875,
               "contentWidth": 466,
-              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
-              "fontSize": "12px",
-              "lineHeight": "18.6px",
-              "overflowX": false,
-              "overflowY": false
-            },
-            {
-              "text": "Sends a notification now, to see that it comes, or one of every kind to see how they look.",
-              "characters": 90,
-              "lines": 2,
-              "visible": true,
-              "width": 298.390625,
-              "height": 37.1875,
-              "contentWidth": 298,
               "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
               "fontSize": "12px",
               "lineHeight": "18.6px",

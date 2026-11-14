@@ -16,7 +16,7 @@
   "controlPropsUnchanged": true,
   "settingPayloadsUnchanged": true,
   "branch": "feat/history-retention",
-  "head": "81ac4bbd68256878bb68385deb649aaff0edef79",
+  "head": "35070e863690f3fceff566a530fa5aab79800875",
   "tests": 10,
   "skipped": 0,
   "focusedFiles": [
@@ -24,13 +24,17 @@
     "test/retention-surface.test.ts"
   ],
   "ui": "C:/tmp/tucano-settings-overhaul/pr-432-ui/report.json",
-  "pushed": "81ac4bbd68256878bb68385deb649aaff0edef79",
+  "pushed": "35070e863690f3fceff566a530fa5aab79800875",
   "remoteVerification": {
-    "head": "81ac4bbd68256878bb68385deb649aaff0edef79",
-    "worktree": "C:/tmp/tucano-settings-verify/pr-432",
-    "dependencies": "Installed package versions checked against this head’s lockfile",
+    "head": "35070e863690f3fceff566a530fa5aab79800875",
+    "worktree": "C:/tmp/tucano-settings-rebased/pr-432",
     "typecheck": true,
     "tests": true
   },
-  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-432-remote-ui/report.json"
+  "remoteUI": "C:/tmp/tucano-settings-overhaul/pr-432-rebased-ui/report.json",
+  "priorVerifiedRevision": {
+    "head": "81ac4bbd68256878bb68385deb649aaff0edef79",
+    "ui": "C:/tmp/tucano-settings-overhaul/pr-432-remote-ui/report.json"
+  },
+  "descriptionUpdated": false
 }

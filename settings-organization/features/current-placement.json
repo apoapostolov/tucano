@@ -1,0 +1,310 @@
+[
+  {
+    "pr": 261,
+    "head": "5b3e294a72b77ae8ce96aa63761ddebd85ab7b5c",
+    "checkedRevision": "fa687b67dc0d2ec09b1aef2ef696966755f90f82",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Agent replies"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 274,
+    "head": "f81c4a1d426f676f68d2d47524196df1b117c04b",
+    "checkedRevision": "7ced57d2ddc975a7d8aa68758266271e9b940463",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Agent team-ups"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 284,
+    "head": "8eb84a079bf525772fda7cbf8b215920b34151a5",
+    "checkedRevision": "4aa97a7d092181c3e933532b96040072e168ba28",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agents’ browser",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      },
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Jev as a classifier",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 288,
+    "head": "94b4d2792b453cf008f3ab93694f4f472ca88cb3",
+    "checkedRevision": "99f6f02812507b2bbb77cc0e2abf76a6b5012bfb",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Agent replies"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 298,
+    "head": "d6342dc64bc5f248a533cd2ca671b55a3274246a",
+    "checkedRevision": "6d53ca358d07a56e35929197f905e62e62191c17",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agents’ browser",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      },
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Jev as a classifier",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 311,
+    "head": "b9e529018e5296ec91417217752766e3fc8d2ae0",
+    "checkedRevision": "f30f0b9ffcb82f901054d7cc0b922581072c9dba",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Skill folders"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 332,
+    "head": "6a98452378c934109c5a18df1cf744602a57a6d7",
+    "checkedRevision": "a49b1dff58a05bdd31917ce551bcfd7b53bc413a",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Agent replies"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 333,
+    "head": "12a4f4526e650352ef429cf76dc16a86f0a83d17",
+    "checkedRevision": "160df9277ebdc9199fce2a145ba943b4fe7b066f",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "routingAdjacent": true
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 338,
+    "head": "856b97742b89a39be8ca4fac18184fad4c9d34bd",
+    "checkedRevision": "b8c9654583851ccf6bf9801e403bbfb9b689a304",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Agent replies"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 379,
+    "head": "e614d4e6509892e3229ff37f77328e2d8154412e",
+    "checkedRevision": "e69a256d7397dbde8fd2235eabdf9619731c7099",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agents’ browser",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 383,
+    "head": "ed26fdc6600381b3d106ed9ddda2d509ce70f02a",
+    "checkedRevision": "e7eadfde276b6f5f4cf69957cf8373b8941ed0e4",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agents’ browser",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      },
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agent suggestions",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 385,
+    "head": "0c5dd260c1fcb829444450369e1b28851b0eced6",
+    "checkedRevision": "a41a36225dd635f198f32c473700ce0d3e8bfebc",
+    "findings": [
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Agents’ browser",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      },
+      {
+        "target": {
+          "tab": "Models",
+          "title": "Jev as a classifier",
+          "absentFrom": "Agents"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 391,
+    "head": "05502819ce756ac787b46e81b7e8d1e7c4cc5f3a",
+    "checkedRevision": "8920a3c9b5efd5dbcbba9426501e9d694ec9822f",
+    "findings": [
+      {
+        "target": {
+          "tab": "Agents",
+          "title": "Recovery",
+          "absentFrom": "General"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 395,
+    "head": "e5e1a18e738ccb47fd34b09bbda5979ec4dcab07",
+    "checkedRevision": "845a63bc6b9f46abb0a9a8696d4442d7ef1c3a89",
+    "findings": [
+      {
+        "target": {
+          "tab": "General",
+          "title": "Appearance"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 411,
+    "head": "4eef728c8baa903a36f50086102682e347bceaa4",
+    "checkedRevision": "779ef8ec3a80072942e4a6713c74a7c53914cd1c",
+    "findings": [
+      {
+        "target": {
+          "tab": "General",
+          "title": "Conversations"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 417,
+    "head": "c447ee919450f86742170d923d3bbee2cec0b95a",
+    "checkedRevision": "c447ee919450f86742170d923d3bbee2cec0b95a",
+    "findings": [
+      {
+        "target": {
+          "tab": "General",
+          "title": "Notifications"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 432,
+    "head": "35070e863690f3fceff566a530fa5aab79800875",
+    "checkedRevision": "35070e863690f3fceff566a530fa5aab79800875",
+    "findings": [
+      {
+        "target": {
+          "tab": "General",
+          "title": "Danger zone"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  {
+    "pr": 437,
+    "head": "a31233ed53f8d690b6d0e23253fe6c184546e7cd",
+    "checkedRevision": "c91c7d41a8d38982d1ed8604d3d3e3fcb88e7a4e",
+    "findings": [
+      {
+        "target": {
+          "tab": "General",
+          "title": "Danger zone"
+        },
+        "passed": true
+      }
+    ],
+    "passed": true
+  }
+]
