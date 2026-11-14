@@ -4,6 +4,25 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
+### Upgrade to 0.2.29, 14 November 2026
+
+Starting refs: published integration `41d0979`, prior audit candidate `d0fc185`, local
+`next` in another worktree `dca0d36`, and upstream release `68cf5da`. The primary checkout
+is on a feature branch; its work and the other worktrees remain untouched.
+
+- [x] Identify the current branches, worktrees and unpublished audit work.
+- [x] Refresh authored PR heads, discussions, merge dispositions and cached diffs.
+- [x] Integrate upstream 0.2.29 while preserving fork behavior in conflicts.
+- [x] Review accepted PRs for duplicated settings, helpers, events, tests and UI controls.
+- [ ] Verify committed instructions, settings ownership guides and primary-checkout delivery.
+- [ ] Install locked dependencies in a dedicated packaging worktree; run typecheck and full suite.
+- [ ] Build and exercise the reconciled app with isolated, hidden QA and affected copy checks.
+- [ ] Package, install, launch and verify the installed 0.2.29 app and archive hash.
+- [ ] Publish the fork's 0.2.29 release after installed verification.
+- [ ] Resume the feature audit and record every new or revised PR disposition.
+
+Earlier checkpoints below describe their named source revisions; they do not verify this upgrade.
+
 ### Current intake, 14 November 2026
 
 - [x] Preserve concurrent edits and review new work through per-bot initiative `8d8342d`.

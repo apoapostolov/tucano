@@ -768,7 +768,6 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - Receipts and a monthly token limit per agent, reviewed memory, skills, routines on a calendar, and a computer and browser of its own for each agent.
 - The app in Portuguese and English.
 
-[0.2.29]: https://github.com/eduwxyz/tucano/compare/v0.2.28...v0.2.29
 [0.2.28]: https://github.com/eduwxyz/tucano/compare/v0.2.27...v0.2.28
 [0.2.27]: https://github.com/eduwxyz/tucano/compare/v0.2.26...v0.2.27
 [0.2.26]: https://github.com/eduwxyz/tucano/compare/v0.2.25...v0.2.26

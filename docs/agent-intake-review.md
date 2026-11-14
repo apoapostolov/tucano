@@ -155,3 +155,23 @@ its cause. The real CLI regression and two launch-policy tests pass. The junctio
 with its target preserved, and a separate locked `npm ci` completed with 718 packages. Source
 and public PR validation used the same lockfile and versions; the installer is being rebuilt
 from the worktree's own install. This maintenance helper stays in the fork.
+
+
+### Upstream advanced during delivery checks
+
+Upstream moved from `73b724b` to `e0a5496` while the final dependency run was being
+investigated. It contains #438 (forward the live Codex session capability), #439 (Supabase
+catalog entry/logo) and #440 (request refresh-token scope when advertised by the OAuth server).
+All three are the maintainer's own PRs, not changes in the original Apo cohort. They merged
+into the candidate at `9c7e81b`; the only conflict was the Unreleased changelog. Both Added
+lists and both Fixed lists were retained under one section of each, including the Portuguese
+entries. Existing connector image/account behavior and the fork's identity were preserved.
+Typecheck and 24 focused session/catalog/OAuth/wiki-Git checks pass.
+
+The previous installer and its 21 successful packaged checks are now historical evidence,
+not verification of this newer upstream source. No installation or fork release was performed.
+The local-dependency full run had 2,535 passing assertions, none failed, but one failed setup
+hook left three additional tests unrun (64 skipped/unrun total). The timed-out wiki-Git suite
+passes alone on the candidate (3 tests) and on a clean current-upstream worktree (3 tests).
+That does not prove a host cause. A full upstream baseline is running before the next final
+combined validation; timeouts and assertions remain unchanged.
