@@ -161,10 +161,17 @@ const readInto = async () => {
   // reading the scroll, which puts the place back. In the app the wheel's own handling stops that; here
   // the gesture is a scroll event, so it is repeated until it stays.
   for (let attempt = 0; attempt < 8; attempt++) {
+    // Only a block with something hidden can be read back into: scrolling one that fits in its own box
+    // is a no-op that looks like success, and the block then follows the stream as if nobody read it.
+    const before = await turn()
+    if (!readable(before)) {
+      await win.waitForTimeout(120)
+      continue
+    }
     await scrollBlock('up')
     await win.waitForTimeout(120)
     const s = await turn()
-    if (s && s.top === 0) return s
+    if (s && s.top === 0 && s.hidden > 40) return s
   }
   return turn()
 }
