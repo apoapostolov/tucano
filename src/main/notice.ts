@@ -351,7 +351,11 @@ export class Notices {
       if (!win || win.isDestroyed()) return this.stopPoll()
       const point = screen.getCursorScreenPoint()
       const b = win.getBounds()
-      const inside = point.x >= b.x && point.x < b.x + b.width && point.y >= b.y && point.y < b.y + b.height
+      // Window bounds are in DIP; the cursor point is in physical pixels, so compare in one space.
+      const display = screen.getDisplayMatching(b)
+      const scale = display.scaleFactor || 1
+      const dip = { x: point.x / scale, y: point.y / scale }
+      const inside = dip.x >= b.x && dip.x < b.x + b.width && dip.y >= b.y && dip.y < b.y + b.height
       this.interactive(inside)
     }, 80)
   }
