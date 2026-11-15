@@ -1,0 +1,23 @@
+[
+  {
+    "lines": 500,
+    "characters": 1000,
+    "kind": "lines",
+    "milliseconds": 2.012299999999996,
+    "heapUsed": 9032096
+  },
+  {
+    "lines": 6000,
+    "characters": 12000,
+    "kind": "full",
+    "milliseconds": 0.037599999999997635,
+    "heapUsed": 9061848
+  },
+  {
+    "lines": 500000,
+    "characters": 1000000,
+    "kind": "full",
+    "milliseconds": 0.8049999999999997,
+    "heapUsed": 10703520
+  }
+]

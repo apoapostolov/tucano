@@ -1,0 +1,927 @@
+{
+  "gate_passed": true,
+  "files_before": 409,
+  "files_after": 419,
+  "totals_before": {
+    "nloc": 96382,
+    "cc": 32621,
+    "cogc": 22614
+  },
+  "totals_after": {
+    "nloc": 96521,
+    "cc": 32656,
+    "cogc": 22627
+  },
+  "delta": {
+    "nloc": 139,
+    "cc": 35,
+    "cogc": 13
+  },
+  "added": [
+    "src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+    "src\\shared\\skill-diff.ts",
+    "test\\skill-diff-ui.test.tsx",
+    "test\\skill-diff.test.ts"
+  ],
+  "removed": [],
+  "edited": [
+    "src\\renderer\\src\\components\\Skills.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+    "src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+    "src\\shared\\skill-diff.ts",
+    "src\\shared\\skills.ts",
+    "test\\skill-diff-ui.test.tsx",
+    "test\\skill-diff.test.ts"
+  ],
+  "contextual_changes": [],
+  "red_edited": [],
+  "untouched_red": [
+    "site\\index.html",
+    "src\\core\\agent-import.ts",
+    "src\\core\\apps-os.ts",
+    "src\\core\\apps.ts",
+    "src\\core\\browser.ts",
+    "src\\core\\chrome.ts",
+    "src\\core\\computer.ts",
+    "src\\core\\connectors.ts",
+    "src\\core\\context.ts",
+    "src\\core\\db.ts",
+    "src\\core\\delegations.ts",
+    "src\\core\\engine-setup.ts",
+    "src\\core\\engines\\antigravity.ts",
+    "src\\core\\engines\\claude.ts",
+    "src\\core\\engines\\cli.ts",
+    "src\\core\\engines\\cline.ts",
+    "src\\core\\engines\\codex-app.ts",
+    "src\\core\\engines\\codex.ts",
+    "src\\core\\engines\\cursor.ts",
+    "src\\core\\engines\\detect.ts",
+    "src\\core\\engines\\fake.ts",
+    "src\\core\\engines\\grok.ts",
+    "src\\core\\index.ts",
+    "src\\core\\mac.ts",
+    "src\\core\\memory.ts",
+    "src\\core\\people.ts",
+    "src\\core\\platform.ts",
+    "src\\core\\restore.ts",
+    "src\\core\\router.ts",
+    "src\\core\\routines.ts",
+    "src\\core\\runs.ts",
+    "src\\core\\skills.ts",
+    "src\\core\\team.ts",
+    "src\\core\\telegram.ts",
+    "src\\core\\tuca-help.ts",
+    "src\\core\\tuca.ts",
+    "src\\core\\vt-screen.ts",
+    "src\\core\\wiki-curator.ts",
+    "src\\core\\wiki-git.ts",
+    "src\\core\\wiki-review.ts",
+    "src\\core\\wiki.ts",
+    "src\\main\\browser.ts",
+    "src\\main\\home-link.ts",
+    "src\\main\\index.ts",
+    "src\\main\\servers.ts",
+    "src\\renderer\\src\\components\\AgentCard.tsx",
+    "src\\renderer\\src\\components\\Apps.tsx",
+    "src\\renderer\\src\\components\\Coach.tsx",
+    "src\\renderer\\src\\components\\ConnectorStore.tsx",
+    "src\\renderer\\src\\components\\Conversation.tsx",
+    "src\\renderer\\src\\components\\Decisions.tsx",
+    "src\\renderer\\src\\components\\Dialogs.tsx",
+    "src\\renderer\\src\\components\\Harness.tsx",
+    "src\\renderer\\src\\components\\Intro.tsx",
+    "src\\renderer\\src\\components\\Memory.tsx",
+    "src\\renderer\\src\\components\\Onboarding.tsx",
+    "src\\renderer\\src\\components\\OrgChart.tsx",
+    "src\\renderer\\src\\components\\Pages.tsx",
+    "src\\renderer\\src\\components\\Panel.tsx",
+    "src\\renderer\\src\\components\\People.tsx",
+    "src\\renderer\\src\\components\\Report.tsx",
+    "src\\renderer\\src\\components\\Routines.tsx",
+    "src\\renderer\\src\\components\\Select.tsx",
+    "src\\renderer\\src\\components\\Sidebar.tsx",
+    "src\\renderer\\src\\components\\Tuca.tsx",
+    "src\\renderer\\src\\components\\Update.tsx",
+    "src\\renderer\\src\\components\\Usage.tsx",
+    "src\\renderer\\src\\components\\Wiki.tsx",
+    "src\\renderer\\src\\components\\ui.tsx",
+    "src\\renderer\\src\\store.ts",
+    "src\\renderer\\src\\styles.css",
+    "src\\server\\index.ts",
+    "src\\shared\\actions.ts",
+    "src\\shared\\connector-catalog.ts",
+    "src\\shared\\errors.ts",
+    "src\\shared\\onboarding.ts",
+    "src\\shared\\types.ts",
+    "test\\action-rules.test.ts",
+    "test\\agent-import.test.ts",
+    "test\\apps.test.ts",
+    "test\\browser.test.ts",
+    "test\\codex-app.test.ts",
+    "test\\composio-calls.test.ts",
+    "test\\connectors-oauth.test.ts",
+    "test\\connectors.test.ts",
+    "test\\delegations.test.ts",
+    "test\\engine-setup.test.ts",
+    "test\\engines.test.ts",
+    "test\\governance.test.ts",
+    "test\\home-link.test.ts",
+    "test\\kept-session.test.ts",
+    "test\\limits.test.ts",
+    "test\\memory.test.ts",
+    "test\\onboarding-ui.test.tsx",
+    "test\\onboarding.test.ts",
+    "test\\org-chart-ui.test.tsx",
+    "test\\people-roles.test.ts",
+    "test\\people.test.ts",
+    "test\\platform.test.ts",
+    "test\\routines.test.ts",
+    "test\\runner.test.ts",
+    "test\\slow-triage.test.ts",
+    "test\\team-round2.test.ts",
+    "test\\team-round3-core.test.ts",
+    "test\\team-round3.test.ts",
+    "test\\team-round5.test.ts",
+    "test\\team-stress.test.ts",
+    "test\\threads.test.ts",
+    "test\\tuca-help.test.ts",
+    "test\\wiki-curator.test.ts",
+    "test\\wiki-git.test.ts"
+  ],
+  "changes": [
+    {
+      "path": "src\\renderer\\src\\components\\Skills.tsx",
+      "before": {
+        "hash": "3de5d3dc9df717841faaa4f885113278fcea5af07b7effb698f2f667619a81ff",
+        "nloc": 532,
+        "cc": 213,
+        "cogc": 139,
+        "mi": 0.0
+      },
+      "after": {
+        "hash": "4d7d725f520ee9d5f442fc35d37a8995dc7f13c3e6effd110dc2af898ae423a8",
+        "nloc": 149,
+        "cc": 49,
+        "cogc": 18,
+        "mi": 17.43087174135057
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+      "before": null,
+      "after": {
+        "hash": "060447de368d7f04c1c29fd418690e3611e3ff3201e909241928d2181c948aa8",
+        "nloc": 28,
+        "cc": 6,
+        "cogc": 6,
+        "mi": 44.629253933471524
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+      "before": null,
+      "after": {
+        "hash": "7576affec353d0e3e03877d3d01a339b798b835559d265b4432d413feacfbac0",
+        "nloc": 55,
+        "cc": 18,
+        "cogc": 11,
+        "mi": 33.232996546506364
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+      "before": null,
+      "after": {
+        "hash": "bc637d7b7340e9cf6d1ab340ce125736a07371b6ff3eb5b073de4a2eb8b8f652",
+        "nloc": 35,
+        "cc": 15,
+        "cogc": 13,
+        "mi": 39.25789567438463
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+      "before": null,
+      "after": {
+        "hash": "e9449ab9c6057d59d9bbec50736f0b8e1b9177506f0cac9917c46120a104f82d",
+        "nloc": 94,
+        "cc": 41,
+        "cogc": 27,
+        "mi": 23.620426809493573
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+      "before": null,
+      "after": {
+        "hash": "bb0cd923b3c9b98cb315bae425c55d6d370a2ef2fbf70d4effbb90b48ed9eda2",
+        "nloc": 105,
+        "cc": 34,
+        "cogc": 26,
+        "mi": 23.54033564896637
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+      "before": null,
+      "after": {
+        "hash": "1e4f626a0bdb10996f61990d2aaf08cbd5c8c37aacc77a2f19d38fad71395184",
+        "nloc": 51,
+        "cc": 25,
+        "cogc": 15,
+        "mi": 34.26093730913429
+      }
+    },
+    {
+      "path": "src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+      "before": null,
+      "after": {
+        "hash": "306c91074f4264d9388a2c2a19c4e59a429bceacb8462e3f34544d57fd012381",
+        "nloc": 50,
+        "cc": 15,
+        "cogc": 9,
+        "mi": 35.4765105687707
+      }
+    },
+    {
+      "path": "src\\shared\\skill-diff.ts",
+      "before": null,
+      "after": {
+        "hash": "aa036532eda35a06f6fd1a278f006dc6c42957405b310866e8d5d8265673e30e",
+        "nloc": 41,
+        "cc": 22,
+        "cogc": 24,
+        "mi": 36.9011575604998
+      }
+    },
+    {
+      "path": "src\\shared\\skills.ts",
+      "before": {
+        "hash": "28fecd8219f3516e7382c2d8c0fca687ad02f136f4bffb781fb4635d49c1d401",
+        "nloc": 18,
+        "cc": 5,
+        "cogc": 2,
+        "mi": 50.4950182403462
+      },
+      "after": {
+        "hash": "ed7d76058f86504bb4182a73d5de292888ba74809c0f25ead7048b2c42c5b9c1",
+        "nloc": 18,
+        "cc": 5,
+        "cogc": 2,
+        "mi": 50.4950182403462
+      }
+    },
+    {
+      "path": "test\\skill-diff-ui.test.tsx",
+      "before": null,
+      "after": {
+        "hash": "99800475c46bcd4068244d51fa72d5b93c2d351d013b4c45d15dcf319c372cc3",
+        "nloc": 30,
+        "cc": 10,
+        "cogc": 1,
+        "mi": 41.80734927044611
+      }
+    },
+    {
+      "path": "test\\skill-diff.test.ts",
+      "before": null,
+      "after": {
+        "hash": "171e5a4c8a3328a290d0924910dc2e8d7ead5ab5f35d0db145bc2c52434b7418",
+        "nloc": 33,
+        "cc": 13,
+        "cogc": 2,
+        "mi": 39.903628807849074
+      }
+    }
+  ],
+  "structure": {
+    "status": "partial",
+    "reason": "coverage",
+    "review": true,
+    "coverage_lost": [
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+      "module:C:\\git-ext\\tucano-skill-diff\\test\\skill-diff-ui.test.tsx",
+      "module:C:\\git-ext\\tucano-skill-diff\\test\\skill-diff.test.ts"
+    ],
+    "match_uncertain": [],
+    "effective_changed": true,
+    "graphs": [
+      {
+        "granularity": "module",
+        "projection": "contract",
+        "pc_before": {
+          "value": 0.01155540677064341,
+          "numerator": 1933,
+          "denominator": 167281
+        },
+        "pc_after": {
+          "value": 0.011152818678408075,
+          "numerator": 1958,
+          "denominator": 175561
+        },
+        "cycles_added": [],
+        "cycles_removed": null,
+        "reach_added": [],
+        "reach_removed": null,
+        "edges_added": [
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ]
+        ],
+        "edges_removed": null,
+        "order_changed": []
+      },
+      {
+        "granularity": "module",
+        "projection": "full",
+        "pc_before": {
+          "value": 0.04943179440582015,
+          "numerator": 8269,
+          "denominator": 167281
+        },
+        "pc_after": {
+          "value": 0.04842761205506918,
+          "numerator": 8502,
+          "denominator": 175561
+        },
+        "cycles_added": [],
+        "cycles_removed": null,
+        "reach_added": [],
+        "reach_removed": null,
+        "edges_added": [
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Skills.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Pages.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Pages.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillForm.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillImport.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Pages.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\Pages.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillHistory.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\links.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\links.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-groups.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-groups.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPage.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillDiff.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillPeople.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\ui.tsx",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\links.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\links.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\store.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\lang.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skills.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\renderer\\src\\components\\skills\\SkillProposal.tsx",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\types.ts",
+            "type"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\test\\skill-diff.test.ts",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+            "call"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\test\\skill-diff.test.ts",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+            "import"
+          ],
+          [
+            "module:C:\\git-ext\\tucano-skill-diff\\test\\skill-diff.test.ts",
+            "module:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts",
+            "type"
+          ]
+        ],
+        "edges_removed": null,
+        "order_changed": []
+      },
+      {
+        "granularity": "type",
+        "projection": "contract",
+        "pc_before": {
+          "value": 0.01941770414665229,
+          "numerator": 4952,
+          "denominator": 255025
+        },
+        "pc_after": {
+          "value": 0.019276480359775763,
+          "numerator": 4955,
+          "denominator": 257049
+        },
+        "cycles_added": [],
+        "cycles_removed": null,
+        "reach_added": [],
+        "reach_removed": null,
+        "edges_added": [
+          [
+            "type:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts#source.ts:SkillComparison",
+            "type:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts#source.ts:DiffLine",
+            "type"
+          ]
+        ],
+        "edges_removed": null,
+        "order_changed": []
+      },
+      {
+        "granularity": "type",
+        "projection": "full",
+        "pc_before": {
+          "value": 0.02156259190275463,
+          "numerator": 5499,
+          "denominator": 255025
+        },
+        "pc_after": {
+          "value": 0.021404479301611753,
+          "numerator": 5502,
+          "denominator": 257049
+        },
+        "cycles_added": [],
+        "cycles_removed": null,
+        "reach_added": [],
+        "reach_removed": null,
+        "edges_added": [
+          [
+            "type:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts#source.ts:SkillComparison",
+            "type:C:\\git-ext\\tucano-skill-diff\\src\\shared\\skill-diff.ts#source.ts:DiffLine",
+            "type"
+          ]
+        ],
+        "edges_removed": null,
+        "order_changed": []
+      }
+    ]
+  }
+}
