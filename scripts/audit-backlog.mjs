@@ -36,7 +36,7 @@ const lines = [
   'at the same head; revised heads reopen their review. Keep findings and evidence in the private',
   'reviews.json record, keyed to the exact head. A stale targeted review remains useful history.', '',
   'Groups are initial title-based triage, not an assessed severity. Within a group, lower PR numbers',
-  'come first as an approximation of submission order. The update date includes discussion activity',
+  'come first as an approximation of submission order. Open age uses the PR creation date; the update date includes discussion activity',
   'and does not establish the age of the source commit. Reprioritize concrete defects in the main plan.', '',
   'Do not routinely update these public branches to current main. Audit their existing code and its',
   'integrated behavior; make focused repairs when evidence warrants them.', ''
@@ -46,7 +46,7 @@ for (const bucket of buckets) {
   for (const pr of bucket.prs.sort((a, b) => a.number - b.number)) {
     const done = completed.get(pr.number) === pr.head
     lines.push(`- [${done ? 'x' : ' '}] #${pr.number} [${pr.title.replaceAll('\n', ' ')}](${pr.url}) <!-- head:${pr.head} -->`,
-      `  Head \`${pr.head.slice(0, 12)}\`; updated ${pr.updatedAt}; integration ancestry: ${pr.inNext === true ? 'present' : 'inspect equivalence'}; review: ${pr.review?.status ?? 'not reviewed'}${pr.review?.stale ? ' (stale)' : ''}.`)
+      `  Head \`${pr.head.slice(0, 12)}\`; open ${pr.createdAt ? Math.floor((Date.parse(snapshot.capturedAt) - Date.parse(pr.createdAt)) / 86_400_000) + ' days' : 'age unavailable'}; updated ${pr.updatedAt}; integration ancestry: ${pr.inNext === true ? 'present' : 'inspect equivalence'}; review: ${pr.review?.status ?? 'not reviewed'}${pr.review?.stale ? ' (stale)' : ''}.`)
   }
   lines.push('')
 }

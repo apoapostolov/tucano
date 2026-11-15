@@ -80,6 +80,8 @@ try {
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
   if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
   if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
+  report.updater = await window.evaluate(() => window.tucano.updateState())
+  assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')
   const hasNotices = await window.evaluate(async () => {
     if (!window.tucano.notice) return false
     window.tucano.notice.demo()
