@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createServer } from 'node:net'
 import { _electron as electron } from 'playwright'
+import { execFileSync } from 'node:child_process'
 
 const output = resolve(process.argv[2] ?? 'C:/tmp/tucano-scroll-evidence/thought')
 mkdirSync(output, { recursive: true })
@@ -19,12 +20,14 @@ const env = { ...process.env, TUCANO_DATA: mkdtempSync(join(tmpdir(), 'tucano-th
 delete env.ELECTRON_RUN_AS_NODE
 delete env.ELECTRON_RENDERER_URL
 const app = await electron.launch({ args: [...(env.TUCANO_ELECTRON ? [] : ['.']), '--qa-background'], ...(env.TUCANO_ELECTRON ? { executablePath: env.TUCANO_ELECTRON } : {}), env })
-const report = { checks: [], errors: [], passed: false }
+const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), checks: [], errors: [], passed: false }
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
 try {
   const page = await app.firstWindow()
+  report.runtime = await app.evaluate(({ app, screen }) => ({ executable: process.execPath, version: app.getVersion(), scale: screen.getPrimaryDisplay().scaleFactor }))
   page.on('pageerror', error => report.errors.push(String(error)))
   await page.waitForSelector('.sidebar')
+  report.viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, scale: devicePixelRatio }))
   // Use a normal authorized renderer connection, exclusively against this scratch workspace.
   await page.evaluate(async () => {
     const port = await new Promise(resolve => {
