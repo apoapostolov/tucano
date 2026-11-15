@@ -1,300 +1,231 @@
-# Tucano audit development plan
+# Tucano master audit plan
 
-Updated: 15 November 2026. This is private fork workflow context, not an upstream PR brief.
+Maintained from 15 November 2026. This document owns priorities, scope, acceptance criteria and
+progress. It is private fork workflow context; keep personal integration details out of upstream PRs.
+Apo's PRs are the primary execution queue. Independent reviews or changes to other contributors'
+work require explicit user approval. Update this plan after each meaningful intake, finding, review
+and delivery. Historical checklists are preserved in [the previous plan](audit-plan-history-2026-11-15.md); they do not override this queue.
 
-## Current priority and progress
+## Current position
 
-### Delivered: upstream 0.2.32
+TucanoNext 0.2.32 is installed and released. Upstream baseline is
+`d175567b0a12d885544d74c45792717a883287f5`; installer source is
+`d797e0c45a8b8c882274aad385b5e1c037caed8a`. The application suite passed **2,620 tests**,
+with 61 skipped and zero failures, plus installed background QA. See
+[the delivery record](upstream-reconciliation-0.2.32.md). This verifies that delivery, not the whole
+product or every integrated feature. Broad production readiness remains unclaimed.
 
-The current delivery checklist and exact source refs are in
-[the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). The upgrade, installed verification and fork release are complete: **2,620 passed, 61 skipped, zero failures**.
-Resume the priorities below. The verified source is in `C:/git-ext/tucano-0231` and published on
-origin/next. The primary checkout retains a separate uncommitted copy task; its full source
-fast-forward is deferred, so build further deliveries from a reconciled worktree.
+The primary checkout has a concurrent uncommitted copy task. Preserve its bytes and staged work.
+Published integration code and a clean delivery worktree are available at `C:/git-ext/tucano-0231`;
+do not build the primary checkout's older package until its source is reconciled. Documentation
+and intake tools can be delivered there independently without committing unrelated source.
 
-### Next audit priorities after the upgrade
+| Workstream | Baseline and progress | Maintained record |
+| --- | --- | --- |
+| Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
+| All Apo PRs | 90 captured: 62 open, 18 merged, 10 closed; 0/90 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/62 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| Other contributors, including maintainer PRs | Intake only: 236 captured, 30 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
+| Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
+| Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
+| Findings and proposals | Confirmed defects, repairs and open questions have separate states | [Finding register](audit-findings.md) |
 
-- [ ] Recheck #454 on current main, then prepare a focused bound on large skill comparisons; retain the distinction between the constrained Node reproduction and the Electron renderer.
-- [ ] Audit the complete #245 commit range and its integrated reasoning/reading-position behavior, including folding, steering and follow-up interactions.
+Counts above describe the 15 November intake snapshots. Refresh the table from generated records;
+never infer review completion from PR state, ancestry, a screenshot or green CI. Do not sum these
+unlike denominators into a software-completion percentage. The 43-feature cohort stays fixed for
+historical comparisons; new PRs enter the canonical current queues.
+
+## Immediate queue
+
+- [ ] Reproduce #454's large skill-comparison allocation on current upstream main and prepare a focused bounded implementation. Keep the constrained Node reproduction distinct from an observed Electron failure.
+- [ ] Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
-- [ ] Finish #423/#424 room-access persistence and enforcement, with separate people/agent controls and private defaults; keep Tuca's room-purpose discussion connected to the same controls.
-- [ ] Continue through the oldest unchecked open PRs, using the generated queue rather than recreating an intake list by hand.
+- [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
+- [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
+- [ ] Keep #414/#463/#464/#465 and other non-Apo PRs in the intake/approval queue. Prepare a bounded review request only when useful; wait for explicit approval before an independent audit or change.
+- [ ] Reconcile the primary copy task only when its changes are ready; preserve its separate review and evidence.
 
-### Daily intake and aging-PR audit policy
+Urgent privacy, data-loss, corrupted state, exposed credentials and unrecoverable/stalled execution
+findings take precedence. After intake, advance one bounded audit packet rather than spending the
+whole session refreshing metadata. Spend most audit time on Apo's backlog. Inspect original-code paths needed to verify those features
+and authorized upstream compatibility work. Independent other-contributor reviews and broader
+original-code expansion remain approval-gated; do not alternate into them automatically. A packet may span several days: leave its exact checkpoint instead of
+inventing a daily completion quota or checking a partially audited feature.
 
-This is a maintained work queue. Every daily run refreshes upstream and Apo's authored PR heads,
-records new or revised work, and updates [the open-PR checkbox backlog](open-pr-audit.md).
-Each intake retains a timestamped inventory/review snapshot under the ignored audit history directory.
-The inventory is a snapshot; the checkbox backlog is keyed to exact PR heads and resets completed
-reviews when those heads change. A merged PR, integration into TucanoNext, a targeted repair and
-a complete feature audit remain different states.
+## Daily intake checklist
 
-- [ ] At each daily intake, inspect remotes, worktrees, dirty files and local/published divergence before fetching.
-- [ ] Refresh upstream/main, origin/main and origin/next; preserve concurrent and unpublished work.
-- [ ] Refresh the authored PR inventory and cached patches; record new heads and maintainer dispositions.
-- [ ] Inspect new/revised PR descriptions, discussions, dependencies and behavior against the integration.
-- [ ] Reconcile upstream changes and useful new PR behavior into TucanoNext, resolving overlaps by behavior.
-- [ ] Review the next oldest unchecked PR in each risk group, prioritizing privacy, data loss and stalled runs.
-- [ ] For each selected PR, enumerate its commits from its actual base and review the original feature, later repairs, integration decisions and unresolved discussion; record the reviewed range.
-- [ ] Record exact-head findings, checks and remaining work; only mark a feature complete after every audit dimension passes.
-- [ ] Validate affected behavior, then complete full source checks and installed background QA for code deliveries.
-- [ ] Refresh the fork release when required, and record source, evidence, outcome and next priorities in a dated intake log.
+The existing automation runs at **09:00 Europe/Kyiv** in this chat. Reopen this checklist for each
+dated run; completed release boxes in the upstream tracker remain historical delivery evidence.
 
-These are recurring steps, reopened for each daily run. Do not routinely rebase or merge current
-upstream into old public PR branches. Keep their existing review boundaries and history while
-auditing their implementation and the integrated behavior. Update an existing PR when a concrete
-review finding requires a focused repair; propose new upstream bugs from current upstream/main.
-Do not spend a daily run refreshing every old PR merely to remove its GitHub conflict indicator.
+- [ ] Inspect remotes, branch/worktrees, dirty/staged files and local/published divergence; preserve concurrent work.
+- [ ] Fetch explicit origin/next, origin/main and upstream/main refs. Read new releases, all intervening main changes and linked PR discussions.
+- [ ] Refresh the version/main tracker, the rich Apo inventory and the all-contributor metadata inventory. Save timestamped snapshots and flag incomplete captures.
+- [ ] Diff the previous snapshot: identify newly opened PRs, revised head/base SHAs, merged/closed/reopened items and changed review decisions. Read selected descriptions, comments and review threads; metadata is intake only.
+- [ ] Triage every new item as queued, selected, deferred with reason, duplicate, superseded, dependency or requiring a product decision. An untriaged queue item stays visible.
+- [ ] Map overlapping contracts, settings, migrations and UI behavior before integrating upstream and reviewed compatible PR changes. Inspect clean merges for semantic duplication too.
+- [ ] Keep TucanoNext current without losing compatible features or its product/data/port identity. Record the exact upstream revision included and any deferred newer work.
+- [ ] Advance a bounded Apo item, using the full-stack cases needed for its verification. Advance independent non-Apo work only within an explicit approval; record the reviewed range and approval scope.
+- [ ] For code delivery, pass the required focused/full checks, built UI and installed background QA; publish the fork release when required and verify actual downloaded assets.
+- [ ] Update queues, finding states, coverage, progress and the dated run log. Record next action and unresolved limits, then report meaningful changes and failures.
 
-Daily intake is scheduled for 09:00 Europe/Kyiv in this chat (automation `tucanonext-daily-intake-and-pr-audit`).
+An upstream release supersedes an older version-sync task, but not unrelated feature work. Re-fetch
+before final push/install publication and account for intervening commits. Never force-push next.
+A documentation/tool-only change uses the affected tool checks and diff/content review; rebuilding
+an unchanged packaged application is unnecessary.
 
-The original 43-feature cohort below remains a stable historical denominator. The generated open
-queue covers later PRs too, with its own current denominator. Intake coverage and targeted repairs
-must never be reported as full feature audit completion. Use exact snapshots rather than a fixed
-claim about how many PRs Apo has opened.
+### Maintained intake commands
 
-### Evening intake and pause safety, 14 November
+Run from a reconciled worktree. The explicit shared output paths preserve review history while the
+primary checkout is dirty. Inspect remotes before any fetch. Commands read GitHub and fetch refs;
+they do not update old public branches or publish messages.
 
-- [x] Set `apoapostolov/tucano`'s default branch to `next` and verify GitHub's returned value.
-- [x] Recover the removed audit worktree from surviving committed source; preserve newer pause/reasoning commits through `cf9d34fa`.
-- [x] Refresh authored inventory: 90 PRs, 62 open, 18 merged, 10 closed at 18:17 UTC.
-- [x] Reproduce three #457 defects: pre-aborted wait hangs, overwritten parallel waiters, and abort listeners retained after resume.
-- [x] Repair #457 in place; public full suite passes 1,756 tests with 60 skipped and zero failures. A fresh pushed-SHA checkout passes typecheck and 13 focused cases.
-- [x] Publish six public-branch pause captures and measurements; remove stale failure claims from the PR description.
-- [x] Preserve steering, follow-up, restart recovery and reading-position behavior; 41 focused combined checks pass.
-- [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
-- [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
-- [x] Install, launch and verify the combined source in the installed executable.
-- [x] Publish the audited integration and refresh the fork release; uploaded installer and blockmap hashes match local assets, and ranged download returns HTTP 206.
-- [ ] Review the six concurrent copy-task commits through `cbe06953`; their new application changes are outside this batch's verified source.
+```powershell
+git remote -v
+git fetch origin refs/heads/next:refs/remotes/origin/next refs/heads/main:refs/remotes/origin/main
+git fetch upstream refs/heads/main:refs/remotes/upstream/main
+node scripts/audit-upstream.mjs --next HEAD --output C:/git-ext/tucano/.tucano-local/upstream-feed --report docs/upstream-intake.md
+node scripts/audit-prs.mjs --author all --metadata-only --fetch --next HEAD --output C:/git-ext/tucano/.tucano-local/upstream-audit --report docs/upstream-pr-inventory.md
+node scripts/audit-prs.mjs --patches --next HEAD --output C:/git-ext/tucano/.tucano-local/audit --report docs/pr-inventory.md
+node scripts/audit-backlog.mjs --inventory C:/git-ext/tucano/.tucano-local/audit/inventory.json --states all --output docs/apo-pr-audit.md --title "# Apo PR audit queue"
+node scripts/audit-backlog.mjs --inventory C:/git-ext/tucano/.tucano-local/audit/inventory.json --completion-source docs/apo-pr-audit.md --output docs/open-pr-audit.md
+node scripts/audit-backlog.mjs --inventory C:/git-ext/tucano/.tucano-local/upstream-audit/inventory.json --states all --exclude-author apoapostolov --output docs/contributor-pr-audit.md --title "# Other contributor PR audit queue"
+```
 
-The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
-files untouched and deliver this batch from the isolated audit worktree. See the
-[evening intake record](audit-evening-2026-11-14.md) for exact SHAs and evidence boundaries.
+`apo-pr-audit.md` is the canonical completion checklist for every Apo PR, including merged and
+closed work. Edit completion there; the open-wall view reads it. Other authors have their own
+canonical queue. Changed heads or bases reopen completion. Initial title-based risk groups and PR-number
+ordering are triage aids, not verified severity or commit age. Refresh all state counts, including
+newly closed work, rather than dropping it from the audit.
 
+All-contributor metadata intentionally omits full file lists, descriptions and checks. Collect
+those, the exact head/base, full diff and discussions for each selected review. A missing signal
+means not collected, not zero risk. The script stops at its list limit rather than silently
+claiming full coverage; extend pagination if that guard is reached.
 
-### Skills and revised PR intake, 14 November afternoon
+Dated snapshots, review records and cached patches stay under ignored `.tucano-local` directories.
+Patch cache entries carry head/base SHAs and a content hash; a changing PR during capture must fail
+rather than label a different diff as reviewed. Unchanged verified entries are reused. Refresh the
+selected PR's identity again before review, repair and push.
 
-- [x] Refresh current upstream and the authored PR inventory: 89 total, 61 open, 18 merged, 10 closed at 13:04 UTC.
-- [x] Repair #311's source labels; preserve the latest folder-settings placement revision.
-- [x] Split the Skills UI into focused components without changing markup, permissions or complexity totals.
-- [x] Pass the current public branch's full suite: 1,769 passed, 60 skipped, zero failures; verify 49 focused cases from the pushed SHA in a fresh checkout.
-- [x] Publish new synthetic screenshots and copy measurements at 1280, 900 and 420 CSS pixels; update #311's stale description and validation.
-- [x] Correct #445's unsupported runner claim in source and description; test a clean current-main baseline. Keep the proposed budget increases unintegrated pending CI reproduction.
-- [x] Reproduce the skill diff's quadratic allocation on current main and open upstream #454 with an immutable reproduction script.
-- [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
-- [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
-- [x] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
-- [x] Publish the afternoon integration/evidence records with the evening delivery.
-- [ ] Continue reviewing new feature and test PRs, including #451 and the revised heads recorded in the inventory.
+## Methodical PR review
 
-See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
-complete the wider skills audit: large-history comparisons, import accessibility and large-library
-load checks remain distinct work.
+Apply the same engineering standard to every author once the review is authorized. Apo's PRs are
+the primary queue; other-author metadata intake does not authorize independent review or repair.
+An accepted PR can contain a defect; an unmerged PR can contain useful behavior. Closed or
+superseded code still needs a disposition and, where it survives integration, a behavior review.
+Do not reopen rejected features or duplicate proposals merely to empty the queue.
 
+- [ ] Establish the user problem, intended outcomes, current discussion, dependencies and neighboring PRs.
+- [ ] Enumerate all commits from the actual base through the exact head; inspect original work, later repairs, rewrites and what changed after earlier reviews.
+- [ ] Trace the user action through renderer/store, RPC shape and validation, authorization, persistence/migrations, engine/tool execution, cancellation/failure and visible result.
+- [ ] Exercise permissions and role/scope boundaries, restarts, concurrency, partial failures, recovery, empty states and long/large inputs.
+- [ ] Review architecture and maintenance cost: one contract per surface, no redundant helpers/settings, explicit ownership, bounded work, comprehensible tests and appropriate dependency cost.
+- [ ] Review UI/UX, keyboard and screen-reader paths, discoverability, copy, narrow layouts, focus and native scaling with real rendered evidence.
+- [ ] Test neighboring features together and verify the integrated entry point, handler, persistence and output. Commit ancestry alone is insufficient.
+- [ ] Classify findings and missing functionality. Repair concrete defects; propose useful completion work with a focused scope and explicit tradeoffs.
+- [ ] Validate the final source and, for code changes, the installed app. Record skipped/missing platform or provider coverage and any remaining critical gap.
+- [ ] Update the exact-head review record, canonical checkbox and public PR evidence when warranted. Preserve reviewer history and current upstream dispositions.
 
-### Upgrade to 0.2.29, 14 November 2026
+Do **not** routinely rebase or merge latest main into aging public PR branches. Audit them at their
+existing heads, and test their integrated behavior separately. Update an existing feature PR for a
+concrete finding, making the smallest required base change. Do not open a second PR for its story.
+Changes whose necessary UI surface lives higher in a stack belong on that dependent branch, with
+clear placement notes. Full reviews and targeted repairs remain distinct.
 
-Starting refs: published integration `41d0979`, prior audit candidate `d0fc185`, local
-`next` in another worktree `dca0d36`, and upstream release `68cf5da`. The primary checkout
-is on a feature branch; its work and the other worktrees remain untouched.
+## Approval boundary
 
-- [x] Identify the current branches, worktrees and unpublished audit work.
-- [x] Refresh authored PR heads, discussions, merge dispositions and cached diffs.
-- [x] Integrate upstream 0.2.29 while preserving fork behavior in conflicts.
-- [x] Review accepted PRs for duplicated settings, helpers, events, tests and UI controls.
-- [x] Verify committed instructions, settings ownership guides and primary-checkout delivery.
-- [x] Install locked dependencies in a dedicated packaging worktree; run typecheck and full suite.
-- [x] Build and exercise the reconciled app with isolated, hidden QA and affected copy checks.
-- [x] Package, install, launch and verify the installed 0.2.29 app and archive hash.
-- [x] Publish the fork's 0.2.29 release after installed verification.
-- [x] Resume the feature audit and record every new or revised PR disposition.
+[The approval register](audit-approvals.md) records the scope the user approved. Other-contributor
+PRs remain inventory/triage items until a specific independent review or change is approved.
+Preparing a metadata-based scope and asking for approval is allowed; silence, elapsed time, a
+preselected answer or a checked intake box is not approval.
 
-Upgrade checklist: **10/10 complete**. Installed and release source `28ad4f2`; 2,563 tests passed,
-61 skipped, zero failures. The [reconciliation record](upstream-reconciliation-0.2.29.md) lists
-conflict decisions, installed verification, release digests and the new intake. The wider audit
-remains **0/43 fully audited**; this checklist measures the upgrade only.
+Authorized upstream version ingestion still includes reading changes and checking compatibility
+needed to preserve TucanoNext. This does not authorize an unrelated improvement campaign on the
+maintainer's or another contributor's PR. Code-path investigation necessary to audit or repair an
+Apo feature remains part of that feature's scope. Apo feature repairs continue within their scope, including the #454 comparison follow-up in the
+#311 Skills review. This is not approval for unrelated original-code campaigns.
 
-Next audit checks:
+Record PR/area, head/base or range, proposed action, reason, expected scope, actual user decision,
+date and limits. Reuse approvals within their granted scope. A newer head does not automatically
+revoke an approval covering ongoing revisions; ask again only when the proposed work exceeds the
+approved scope. Do not open repair/proposal PRs for independent non-Apo work before that approval.
 
-- [ ] Review the 13 revised heads captured at 08:25 UTC and distinguish rebases from behavior changes.
-- [ ] Correct #445's unsupported shared-runner claim and establish its base-branch timing evidence.
-- [ ] Finish #311's restored harness labels, rendered evidence and maintainability disposition.
-- [ ] Reconcile later Settings revision `7c583c8` with the verified installed arrangement.
-- [ ] Continue room-sharing persistence, access enforcement and confirmed Tuca proposals.
+## Original-code and contributor audit
 
-Earlier checkpoints below describe their named source revisions; they do not verify this upgrade.
+The baseline code predating this plan is not certified by a zero-length daily commit delta.
+[Full-stack work packages](full-stack-audit.md) cover the complete tree, build/release system and
+cross-feature behavior. Assign every maintained module to a package, identify unassigned files,
+then inspect code, invariants, tests and representative runtime behavior. Review relevant historical
+commits and contributor PRs as part of each package; record the reviewed source range.
 
-### Current intake, 14 November 2026
+The full-stack map is a roadmap, not blanket approval to execute independent non-Apo audits.
+Prioritize the checks needed by Apo PRs; obtain approval before expanding into other contributors'
+independent reviews or unrelated original-code work.
 
-- [x] Preserve concurrent edits and review new work through per-bot initiative `8d8342d`.
-- [x] Refresh the PR inventory: 83 authored, 61 open, 12 merged, 10 closed.
-- [x] Confirm upstream is still `73b724b` and restore previously published audit repairs.
-- [x] Reproduce and repair retention cascades that bypass active/recent/keep-forever messages.
-- [x] Reproduce and repair active and queued replies returning after a history wipe.
-- [x] Finish the public revision, final combined suite (2,537 passed, 61 skipped), build and hidden runtime checks.
-- [ ] Finish installed-app verification after the working live reply completes.
-- [ ] Continue room sharing #423/#424 with persistence, enforcement and Tuca proposals.
+New main commits are tracked separately in [upstream intake](upstream-intake.md), including direct
+commits without a PR. A first-parent integration event requires reading its first-parent diff and
+the linked PR's full range. Mark its semantic review explicitly in `audit-state.json`; integrated
+ancestry must not mark it reviewed. Relevant later changes reopen affected package cases.
 
-See [the current intake record](agent-intake-review.md) for exact source revisions and remaining
-checks. These are targeted repairs; fully audited features remain **0/43**.
+Use a clean current-upstream worktree to reproduce each new original-code defect. Compare with
+TucanoNext afterwards to determine whether integration fixes it, reproduces it or changes it.
+Fork-only behavior is repaired in its integration/feature context; do not report it as a main bug.
+Record source SHA, scenario, expected/observed result and limits of the reproduction. A synthetic
+memory cap, timing threshold or fake engine does not establish an actual production failure.
 
-### English copy delivery, 13 November 2026
+## Findings, proposals and modular upstream delivery
 
-- [x] Prepare the replacement proposal before implementation and measure two-line hint budgets with screenshots.
-- [x] Deliver upstream issue #409 and PR #410, and update copy on the six existing feature PRs rather than duplicate their stories.
-- [x] Integrate 376 English string revisions while retaining concurrent feature work; installed source is `7ba091c`.
-- [x] Pass typecheck, build and final full suite: 2,306 passed, 66 skipped, zero failed.
-- [x] Install 0.2.28 through the self-build helper, verify the installed package hash, and pass seven hidden installed-executable checks, including Wiki reset and two-line resolver text.
-- [ ] Complete normal-workspace navigation when background accessibility can reach the minimized window. The isolated installed instance passed navigation; no foreground input was used.
+[The finding register](audit-findings.md) records confirmed defects separately from hypotheses,
+design proposals and existing repair verification. Use these independent dimensions:
 
-See [the delivery record](english-copy-delivery.md) for exact heads, installer hashes, measurements and limitations. These copy checks do not change the feature cohort's full-audit counts below.
+| Dimension | States and meaning |
+| --- | --- |
+| Intake | new, triaged, selected, deferred with reason |
+| Review | unreviewed, in progress, targeted, complete, stale |
+| Disposition | retain, revise, duplicate, superseded, rejected, dependency, product decision |
+| Delivery | absent, integrated, built, installed/verified, published, upstream merged |
+| Finding | suspected, reproduced, fix prepared, regression verified, delivered, closed |
 
-Upstream 0.2.28 through `73b724b` is integrated in `28eddc4`, including all 19 new commits
-from the 0.2.27 intake baseline. The installed 0.2.28 executable passes six isolated hidden UI
-checks, and its update state is `off`. Resume feature auditing with the privacy and concurrency
-leads below. Regular-workspace Settings navigation is verified; live DM selection remains
-unverified because duplicate accessibility names prevent a safe background click. Agent rows
-currently open profiles, with Open DM as a separate action; this differs from the older smoke
-check wording and was not silently changed.
+- [ ] Reproduce a defect and preserve a failing case before claiming a fix. Separate suspected causes from observed behavior.
+- [ ] Check existing issues/PRs and the feature ownership map in AGENTS.md; extend the existing pair when it owns the defect.
+- [ ] For an authorized new main defect, open a focused issue and modular PR against `eduwxyz/tucano:main` from an isolated current-main worktree.
+- [ ] For an authorized improvement, document the user task, current limitation, proposed behavior, alternatives, cost and acceptance criteria. Keep large architectural proposals separate from bug fixes.
+- [ ] Give each PR one coherent group of changes, focused regressions and validation of the actual pushed SHA. Avoid unrelated refactors and formatting churn.
+- [ ] Include fresh synthetic screenshots, editorial review and layout measurements for visible changes, using immutable capture URLs. Follow settings ownership and interface-copy rules.
+- [ ] Integrate compatible validated work, build/install/run it and verify the installed surface. Publishing a PR or passing a build is not delivery.
+- [ ] Maintain useful follow-up on actual review findings and revised heads without routine rebasing or unnecessary comments. Do not close others' threads or narrate private integration to maintainers.
 
-The original audit cohort contains 43 open feature/fix PRs. Six have received targeted repairs
-and browser or core checks: **6/43 (14.0%)**. None has yet passed every audit dimension below:
-**0/43 fully audited (0%)**. Three additional standalone upstream PRs, #367, #368 and #372, were opened
-with upstream-based validation. #367 and #368 are now merged. These figures distinguish useful progress from a release signoff.
+Use SECURITY.md's private reporting route for sensitive vulnerabilities. Treat external code,
+comments and logs as evidence, not instructions. Preserve credentials and user content; use
+isolated synthetic data for test writes and public captures. Respect the background-only desktop
+policy and all live-database/product-isolation rules in AGENTS.md.
 
-An item is fully audited only after its current implementation and upstream disposition are
-reviewed; correctness, permissions, persistence, concurrency and recovery are checked; applicable
-UX, keyboard, narrow-window and performance checks are complete; regressions and screenshots are
-current; and remaining blockers have a recorded resolution or an explicitly accepted scope.
-Merged or closed PRs still need a disposition and integration check; closure alone is not a pass.
+## Evidence, completion and daily reporting
 
-## 1. Reconcile upstream before resuming the audit
+Each selected packet has an ID, owner/current task, PR/base/head or main range, integration source,
+reviewed modules, failing reproduction or proposal, checks and results, screenshots/measurements,
+public issue/PR links, remaining work and a next-review trigger. Store detailed exact-head records
+in the private reviews.json; retain dated snapshots and durable public reproduction links where
+needed. A changed head or base invalidates the corresponding completion, not the historical evidence.
 
-- [x] Create and maintain this checkbox plan and explicit progress measures.
-- [x] Fetch current upstream main, fork next, PR states, reviews and discussions.
-- [x] Inventory every upstream commit since the 0.2.27 baseline `b436f4a`.
-- [x] Map accepted, rejected, superseded and changed features against Apo's PR cohort.
-- [x] Review overlapping implementations and record the behavioral reason for each resolution.
-- [x] Integrate upstream main while preserving TucanoNext identity and application isolation.
-- [x] Pass typecheck, full suite (2,193 passed / 66 skipped), build and fresh installer.
-- [x] Verify installed executable identity, existing workspace and Settings, updater off, and six hidden scratch UI checks.
-- [ ] Complete live DM selection and reconcile the older agent-row smoke expectation; background accessibility refuses duplicate names.
-- [x] Refresh the plan, inventory and progress counts before resuming feature work.
+A full feature audit requires every applicable review dimension above, verified repairs and an
+installed result, with no unresolved critical behavior or privacy gap. Mark a case not applicable
+only with a reason. Untested required platforms/providers remain an explicit gap. Global production
+readiness additionally requires all full-stack packages, representative load/recovery evidence and
+resolved or explicitly accepted risks; no single aggregate test count establishes it.
 
-## 2. Maintain the evidence and delivery workflow
+Add every run to [the run index](audit-log.md). For each dated log, record starting/ending refs, release/PR deltas, reviewed commit ranges, concrete
+findings and dispositions, delivered artifacts, test counts/skips, unresolved limits, changed queue
+counts and the next bounded action. Keep installation/version checks separate from semantic audit
+completion. Report each denominator with its date; do not inflate progress when a PR merges.
 
-- [x] Establish upstream `eduwxyz/tucano` and fork `apoapostolov/tucano` identities.
-- [x] Create a repeatable PR inventory with head SHAs, dependencies, file overlaps and patch cache.
-- [x] Record per-head reviews and mark changed heads stale.
-- [x] Establish focused upstream-main-based fixes and existing-feature PR updates.
-- [x] Keep personal next/QA context out of upstream descriptions and comments.
-- [x] Commit and preserve the operating documents and current inventory in the fork.
-- [ ] Revalidate stacks and duplicates against the maintainer's new decisions.
-- [ ] Keep each public PR description, test report and screenshot aligned with its final diff.
+## Master-plan rollout, 15 November
 
-## 3. Audit the original 43-PR cohort
-
-All boxes mean the complete audit criteria above, not merely a targeted fix or green test run.
-The cohort stays stable for progress measurement; record changed upstream dispositions beside it.
-
-- [ ] #244 — Skill filtering, grouping and bulk assignment.
-- [ ] #245 — Reasoning streams and per-person visibility.
-- [ ] #247 — Questions inbox and history.
-- [ ] #248 — Active question beside the composer.
-- [ ] #249 — Clear conversation history and dependent state.
-- [ ] #250 — Sidebar reordering. Targeted capture repair and browser check completed; broader audit remains.
-- [ ] #258 — Missing-page handoff. Write-tool stack repaired; completion and load behavior remain.
-- [ ] #259 — Orphan-link handoff. Stack and browser checks completed; broader audit remains.
-- [ ] #261 — Parallel, queued, steer and interrupt send modes.
-- [ ] #268 — Wiki finding resolver.
-- [ ] #272 — Mention-only channel agents.
-- [ ] #274 — Cross-room team-ups and their lifecycle.
-- [ ] #275 — Sticky thread entry during long runs.
-- [ ] #279 — Selective listening and routing.
-- [ ] #284 — Recommended question answer.
-- [ ] #288 — Work drawer, active sessions and queued prompts.
-- [ ] #290 — Prompt ordering and navigation back to the initiating prompt.
-- [ ] #296 — Personal memory tab naming.
-- [ ] #298 — Proposed next-step cards and their execution.
-- [ ] #301 — Hermes harness, isolation and engine contracts.
-- [ ] #303 — Artifact image galleries.
-- [ ] #305 — Provider quotas, account scope, freshness and header presentation.
-- [ ] #308 — Harness skill folders and folder management.
-- [ ] #310 — Language-neutral model-facing context.
-- [ ] #311 — Hermes skill categories and versions.
-- [ ] #313 — Model thinking settings, individual and bulk.
-- [ ] #319 — Assistant-controlled skill assignment.
-- [ ] #321 — Retry with additional instructions.
-- [ ] #322 — Steps presentation modes; a newer head was detected during the initial audit.
-- [ ] #327 — Steps rail folding gesture.
-- [ ] #329 — Remembered fold state.
-- [ ] #332 — Live steering controls.
-- [ ] #333 — Routing pools and specialist selection.
-- [ ] #334 — Approval action, target and outcome presentation.
-- [ ] #336 — Image context menu and attachment handling.
-- [ ] #338 — Follow up from a finished reply.
-- [ ] #339 — CI deadlines and distinguishing hangs from slow execution.
-- [ ] #341 — Routed replies waiting on marked-busy slots.
-- [ ] #343 — Routed replies whose reserved job never ran.
-- [ ] #351 — Unlimited monthly budgets throughout the UI.
-- [ ] #353 — Connector images, decoding, persistence and resource bounds.
-- [ ] #355 — Wiki write tools. Prospective DM provenance repaired; historical and in-flight privacy review remains.
-- [ ] #366 — Silent routines, badges, notifications and retained run history.
-
-## 4. Hunt upstream bugs and prepare for heavy use
-
-- [x] Reproduce and fix shell-dependent, cross-workspace key-cleanup assertions in #367.
-- [x] Review locked dependencies and prepare focused runtime updates in #368.
-- [x] Review the maintainer's disposition of #367 and #368 and reconcile the resulting code. Both merged.
-- [ ] Audit run scheduling, routing, queues, resource bounds and cancellation under load.
-- [ ] Audit permission changes during active runs, DM/wiki privacy and multi-user isolation.
-- [ ] Audit startup, shutdown, crash recovery, database migrations and backup/restore.
-- [ ] Audit engine adapters, tool-call contracts, approvals, credentials and external input handling.
-- [ ] Audit growing histories, streaming/rendering costs, large wikis and skill libraries.
-- [ ] Audit keyboard access, focus, narrow layouts, empty/error states and feature discoverability.
-- [ ] Reproduce each new upstream defect on current upstream main before proposing its fix.
-- [ ] Follow SECURITY.md for private vulnerability reports; do not publish unreviewed privacy findings.
-- [ ] Review remaining moderate dependency findings without blanket major downgrades.
-- [ ] Address or explicitly record existing maintainability gates and cross-platform coverage gaps.
-
-## 5. Publish and verify each accepted group of changes
-
-- [ ] Keep changes modular and target upstream main; update existing PRs for their own defects.
-- [ ] Include regression evidence and fresh captures for visible changes.
-- [ ] Integrate validated behavior into the personal build without changing its product identity.
-- [ ] Finish with clean checks, a newer installer and the installed-app smoke check.
-- [ ] Record remaining work and update both progress ratios at each substantive checkpoint.
-
-## Evidence from the initial repair batch
-
-- Before runtime dependency updates, the integrated suite passed 2,071 tests, with 65 skipped.
-- #367's upstream-based suite passed 1,562 tests, with 59 skipped.
-- #368's full suite passed the same 1,562 tests with #367's independent test repair applied for
-  validation; that test repair is excluded from #368's diff. Electron 44.11.1 also passed a
-  fresh-workspace smoke check. The dependency-updated integration's verification was in progress
-  when upstream reconciliation became the priority.
-- Some concurrent feature-branch runs produced host-command or wiki-Git timing failures. Keep
-  them visible until investigated; isolated reruns are not proof of stability under heavy use.
-- The original large runner, wiki and wiki-Git test files fail the selected maintainability
-  threshold. This prevents an overall production-readiness claim despite targeted passing checks.
-
-
-## 7. Background QA and current intake limits
-
-- [x] Add hidden, unfocusable QA startup with fresh data, fake engines and isolated ports.
-- [x] Add rendered navigation checks, screenshots, traces, renderer-error and focus guards.
-- [x] Validate both the built source and the installed 0.2.28 executable.
-- [x] Open upstream-main-based QA PR #372; 1,700 passed, 64 skipped, no failures.
-- [x] Review and integrate revised #274 head `d2e21ed` and #305 head `06cecbf`; final tree unchanged from the tested delivery.
-- [ ] Recheck in-flight wiki permission/provenance changes in #355 before expanding wiki workflows.
-- [ ] Expand UI checks to keyboard access, narrow layouts and large histories per feature.
-
-Latest inventory: 58 authored PRs, 38 open / 12 merged / 8 closed. Current #274 and #305 heads are integrated after comparing their behavior with the tested
-tree. The final source tree is identical to `c50fe6c` (tree `74d7452`); merge-generated
-duplicate gateway waits, quota types and provider panels were removed before delivery. #372 is independently integrated with the application-specific identity/port
-adaptation. Neither ancestry nor these six smoke screens establishes a complete feature audit.
-
-The maintainability gate remains blocked by edited large existing modules. The new background
-options and runner score 41.06 and 26.00 respectively (green); broad production readiness remains
-unclaimed. Metrics and test JSON are retained under the task's temporary audit directories.
+- [x] Preserve earlier checklists and evidence as dated history.
+- [x] Establish canonical all-state Apo and other-contributor queues plus a generated open-wall view.
+- [x] Establish a release/main-delta tracker with explicit verified-delivery and semantic-review state.
+- [x] Define full-stack coverage, finding/proposal handling, modular delivery and completion criteria.
+- [x] Verify the intake tools against fixtures and current GitHub data, including stale-head and capture-race behavior.
+- [x] Update the existing daily automation to follow all workstreams without creating a duplicate schedule.
+- [x] Incorporate the user's Apo-first priority and explicit approval gate for independent non-Apo work.
+- [x] Commit/publish the master plan and deliver its guides/tools to the primary checkout while preserving the copy task.

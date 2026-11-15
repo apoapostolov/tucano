@@ -215,7 +215,7 @@ The released app and `TucanoNext` remain independent:
 ## Start each task
 
 1. Read this file, [the fork workflow](docs/fork-audit.md), and the current
-   [audit plan](docs/audit-plan.md). Consult `C:/git/_notes/tucanonext-pr-triage.md` for historical
+   [master audit plan](docs/audit-plan.md). Consult `C:/git/_notes/tucanonext-pr-triage.md` for historical
    decisions, then confirm them against current PR heads and discussions.
 2. Inspect branch, worktrees, status, and recent commits. Preserve user edits and concurrent
    tasks. Do not stash, reset, clean, or commit unrelated files to get a clean checkout.
@@ -327,10 +327,19 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
 
 ## Ingest new PRs and revisions
 
+The master plan also covers all upstream contributors and direct main commits, plus the original
+code through `docs/full-stack-audit.md`. Apo PRs take priority; independent non-Apo reviews or
+changes require explicit user approval recorded in `docs/audit-approvals.md`. Necessary compatibility
+checks during authorized upstream ingestion remain in scope. Maintain the canonical all-state
+queues and findings; metadata intake, integration and targeted repairs do not certify a full audit.
+
 Daily intake keeps TucanoNext current and audits existing feature heads. Do not routinely rebase
 or merge current upstream into aging public PR branches. Update a public feature branch for a
-concrete repair, not merely to remove its conflict indicator. Maintain the generated exact-head
-queue in `docs/open-pr-audit.md`, the review records and the daily checklist in `docs/audit-plan.md`.
+concrete repair, not merely to remove its conflict indicator. Maintain the exact-head/base
+canonical queues in `docs/apo-pr-audit.md` and `docs/contributor-pr-audit.md`
+(the open-Apo view is generated in `docs/open-pr-audit.md`), the review records and the master plan.
+
+For authorized selected PRs:
 
 
 1. Read the description, replies, review threads, current diff, dependencies, and checks.
