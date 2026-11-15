@@ -17,7 +17,7 @@
       "sha": "ac3dd1915a9d897643c8e11d230a655baf77fe75",
       "passed": 1781,
       "skipped": 60,
-      "note": "Full suite before test-only harness follow-ups; final source rechecked by typecheck, focused tests and 19 runtime assertions."
+      "note": "Full suite before test-only harness follow-ups; final source rechecked by typecheck, focused tests and 20 runtime assertions."
     },
     "468": {
       "sha": "74f64aedf6d2f0b2cb1c954d4fcdc21dbf186554",
