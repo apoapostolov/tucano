@@ -40,6 +40,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   questionDeadlineHours: { kind: 'number', max: 30, nullable: true },
   theme: { kind: ['system', 'light', 'dark'], max: 20 },
   language: { kind: ['pt', 'en'], max: 10 },
+  launchMinimized: { kind: 'boolean', max: 10, nullable: true },
   openAtLogin: { kind: 'boolean', max: 10, nullable: true },
   resumeInterrupted: { kind: 'boolean', max: 10 },
   runBudgetPct: { kind: 'number', max: 30, nullable: true },

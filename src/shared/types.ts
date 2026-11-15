@@ -586,6 +586,7 @@ export interface Settings {
   outsideGuard?: boolean // after reading something from outside, what goes out asks first even where rules let it run (default on)
   theme: 'system' | 'light' | 'dark'
   language: Lang // the app's, and the language agents answer in
+  launchMinimized?: boolean // TucanoNext: start in the tray at login
   openAtLogin?: boolean // so routines run without me opening the app
   resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: on
   runBudgetPct?: number // per reply, % of the agent's monthly limit before it pauses; default RUN_BUDGET_PCT

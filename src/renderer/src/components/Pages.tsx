@@ -2517,19 +2517,19 @@ export function ModelSelect(p: { value: string; onChange: (v: string) => void; j
   return <ModelPicker {...p} />
 }
 
-export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }): ReactNode {
-  return <button className={`toggle ${on ? 'is-on' : ''}`} role="switch" aria-checked={on} onClick={() => onChange(!on)} />
+export function Toggle({ on, onChange, disabled = false }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }): ReactNode {
+  return <button className={`toggle ${on ? 'is-on' : ''}`} role="switch" aria-checked={on} disabled={disabled} onClick={() => onChange(!on)} />
 }
 
 // ---------- Settings ----------
 
-// Português or English: the app's, and the language agents answer in. Labeled in both, so anyone finds it.
+// TucanoNext keeps Portuguese available in source, after English, but hides it in its local UI.
 export function LanguagePicker({ className = '' }: { className?: string }): ReactNode {
   const language = useStore((s) => s.settings.language)
   return (
-    <div className={`segmented lang-picker ${className}`} role="radiogroup" aria-label="Idioma · Language">
-      {(['pt', 'en'] as const satisfies readonly Lang[]).map((l) => (
-        <button key={l} type="button" role="radio" aria-checked={language === l} className={language === l ? 'is-active' : ''} onClick={() => language !== l && updateSettings({ language: l })}>
+    <div className={`segmented lang-picker ${className}`} role="radiogroup" aria-label="Language">
+      {(['en', 'pt'] as const satisfies readonly Lang[]).map((l) => (
+        <button key={l} hidden={l === 'pt'} type="button" role="radio" aria-checked={language === l} className={language === l ? 'is-active' : ''} onClick={() => language !== l && updateSettings({ language: l })}>
           {l === 'pt' ? 'Português' : 'English'}
         </button>
       ))}
@@ -3268,9 +3268,15 @@ function VoiceCard(): ReactNode {
   }
   const choice = (id: VoiceModelId) => VOICE_CHOICES().find((c) => c.id === id)!
   const other = status?.ownModel === 'recommended' ? 'light' : 'recommended'
+  const microphone = (
+    <label className="row row--center small">
+      <input type="checkbox" checked={!voice?.hidden} onChange={(e) => save({ hidden: !e.target.checked })} />
+      {L('Mostrar o microfone no campo de mensagem', 'Show microphone in composer')}
+    </label>
+  )
   return (
     <Card title={L('Ditado', 'Dictation')} lead={L('Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar. O áudio vira texto neste computador, sem internet, e o texto fica no campo para você revisar antes de enviar.', "Click the mic or press ⌥ Space (Mac) / Ctrl+Space to start; click again to stop. Transcription stays offline for review before sending.")}>
-      {status && !status.ready && <VoiceSetup status={status} />}
+      {status && !status.ready && <VoiceSetup status={status} actions={microphone} />}
       <div className="voice-prefs">
         {status?.ready && (
           <div className="voice-on">
@@ -3297,10 +3303,7 @@ function VoiceCard(): ReactNode {
             {status.error && <p className="field__error">{status.error}</p>}
           </div>
         )}
-        <label className="row row--center small">
-          <input type="checkbox" checked={!voice?.hidden} onChange={(e) => save({ hidden: !e.target.checked })} />
-          {L('Mostrar o microfone no campo de mensagem', "Show microphone in composer")}
-        </label>
+        {(!status || status.ready) && microphone}
         <details className="voice-advanced">
           <summary className="small muted">{L('Avançado', 'Advanced')}</summary>
           <label className="row row--center small">
@@ -3483,7 +3486,7 @@ export function SettingsPage(): ReactNode {
     'app-appearance': (
       <Card title={L('Aparência', 'Appearance')} >
       <div className="field">
-                    <span className="field__label">Idioma · Language</span>
+                    <span className="field__label">Language</span>
                     <LanguagePicker />
                     <span className="hint">{admin ? L('O idioma da interface e dos agentes neste workspace.', 'Language for the interface and agent replies in this workspace.') : L('O idioma da interface pra você. Os agentes usam o idioma do workspace.', 'Your interface language. Agents use the workspace language.')}</span>
                   </div>
@@ -3654,6 +3657,14 @@ export function SettingsPage(): ReactNode {
                     </div>
                     <Toggle on={!!settings.openAtLogin && packaged && defaultWorkspace} onChange={(v) => packaged && defaultWorkspace && updateSettings({ openAtLogin: v })} />
                   </div>
+      <div className="key-row">
+        <Icon name="eyeOff" />
+        <div className="grow">
+          <strong>Launch minimized</strong>
+          <p className="muted small">Keep TucanoNext in the system tray when it starts at login.</p>
+        </div>
+        <Toggle on={!!settings.launchMinimized} disabled={!packaged || !defaultWorkspace || !settings.openAtLogin} onChange={(v) => updateSettings({ launchMinimized: v })} />
+      </div>
       {!defaultWorkspace && <p className="muted small">{L('Abrir ao ligar o computador é uma configuração do app: ajuste no workspace padrão. Todos os workspaces iniciam juntos.', "Change login startup in the default workspace. All workspaces start together.")}</p>}
       </Card>
     ),
@@ -3665,6 +3676,7 @@ export function SettingsPage(): ReactNode {
     'workspace-context': (
       <Card title={L('Contexto do workspace', 'Workspace context')}>
         <p className="muted small">{L('Agentes, conversas, conectores e memórias ficam neste workspace. Os logins do Claude Code e OpenCode continuam compartilhados no computador. Um workspace não é uma sandbox do sistema.', "Workspace data is separate; Claude Code and OpenCode logins are shared. Workspaces are not sandboxes.")}</p>
+        <div className="settings-context-names">
         {window.tucano.workspaces && (
           <Field label={L('Nome do workspace', 'Workspace name')}>
             <input value={settings.workspaceLabel ?? ''} placeholder={settings.workspaceName} maxLength={120} onChange={(e) => updateSettings({ workspaceLabel: e.target.value })} />
@@ -3676,6 +3688,7 @@ export function SettingsPage(): ReactNode {
           </Field>
         )}
 
+        </div>
         <Field label={L('Contexto', 'Context')} hint={L('Entra em toda conversa de todo agente: quem você é, o que faz, o que importa agora e o que nunca fazer.', "Shared with every agent: your role, priorities, and rules.")}>
           <textarea rows={5} value={settings.context} onChange={(e) => updateSettings({ context: e.target.value })} />
         </Field>
@@ -4168,6 +4181,7 @@ function NotifyTest(): ReactNode {
     <div className="key-row">
       <Icon name="spark" />
       <div className="grow">
+        <strong>Notification preview</strong>
         <p className="muted small">
           {L('Um aviso de cada tipo: terminou, menção, pergunta, aprovação e alto risco.', "Preview completion, mention, question, approval, and high-risk notifications.")}
         </p>

@@ -559,7 +559,7 @@ type ToMain =
   | { type: 'device-key-result'; id: string; data: { key?: string; person?: Person } }
   | { type: 'person-removed'; id: string }
   | { type: 'person-changed'; id: string } // a role changed: the server forgets what it remembered of them
-  | { type: 'login_item'; open: boolean }
+  | { type: 'login_item'; open: boolean; minimized: boolean }
   | { type: 'busy'; busy: boolean }
   | { type: 'lang'; lang: Lang; clock?: Clock }
 const toMain = (msg: ToMain): void =>
@@ -1230,7 +1230,7 @@ void ready.then(async () => {
   console.error('[core] startup failed', e)
   process.exit(1)
 })
-toMain({ type: 'login_item', open: !!settings().openAtLogin })
+toMain({ type: 'login_item', open: !!settings().openAtLogin, minimized: !!settings().launchMinimized })
 
 // Channels used to lend a project folder to their members; those folders go back.
 function returnChannelFolders(): void {
@@ -2239,7 +2239,7 @@ const api: Handlers = {
     }
     if (!serverMode && patch.theme !== undefined) toMain({ type: 'theme', theme: patch.theme })
     if (patch.paused !== undefined) runner.setPaused(patch.paused)
-    if (patch.openAtLogin !== undefined) toMain({ type: 'login_item', open: patch.openAtLogin })
+    if (patch.openAtLogin !== undefined || patch.launchMinimized !== undefined) toMain({ type: 'login_item', open: !!settings().openAtLogin, minimized: !!settings().launchMinimized })
     if (patch.onboarding?.done) bg(enginesReady.then(() => ensureTuca()), 'ensureTuca') // skipping the introduction still gets the Tuca
     if (patch.language || 'clock' in patch) toMain({ type: 'lang', lang: patch.language ?? db.getSettings(DEFAULTS).language, clock: patch.clock ?? db.getSettings(DEFAULTS).clock })
     if (!serverMode && patch.notice !== undefined) toMain({ type: 'notice-pref', ...noticePrefs() })

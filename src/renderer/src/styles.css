@@ -14322,3 +14322,15 @@ button.agent-card__now:hover {
 .settings-content .wk-settings--inline > header { margin-bottom: 12px; }
 .settings-content .wk-settings--inline > section { border-top: 0; padding: 0; }
 
+
+/* Local TucanoNext settings polish. */
+.lang-picker button[hidden] { display: none; }
+#settings-app-dictation .voice-setup__choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.voice-setup__actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
+.settings-context-names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.settings-context-names .field { min-width: 0; }
+@media (max-width: 600px) {
+  .settings-context-names { grid-template-columns: 1fr; }
+}
+
+.toggle:disabled { opacity: 0.45; cursor: not-allowed; }

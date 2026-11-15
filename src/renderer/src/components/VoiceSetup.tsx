@@ -21,7 +21,7 @@ export function useVoice(): VoiceStatus | null {
 
 const mb = (n: number): string => `${Math.round(n / 1_000_000)} MB`
 
-export function VoiceSetup({ status }: { status: VoiceStatus }): ReactNode {
+export function VoiceSetup({ status, actions }: { status: VoiceStatus; actions?: ReactNode }): ReactNode {
   const [pick, setPick] = useState<VoiceModelId>('recommended')
   const d = status.downloading
   if (d)
@@ -38,6 +38,7 @@ export function VoiceSetup({ status }: { status: VoiceStatus }): ReactNode {
             {L('Cancelar', 'Cancel')}
           </button>
         </div>
+        {actions}
       </div>
     )
   return (
@@ -53,9 +54,12 @@ export function VoiceSetup({ status }: { status: VoiceStatus }): ReactNode {
         ))}
       </div>
       {status.error && <p className="field__error">{status.error}</p>}
+      <div className="voice-setup__actions">
       <button className="btn btn--primary btn--sm" onClick={() => void voiceDownload(pick)}>
         <Icon name="mic" size={13} /> {status.error ? L('Tentar de novo', 'Try again') : L('Ativar ditado', 'Turn dictation on')}
       </button>
+      {actions}
+      </div>
     </div>
   )
 }

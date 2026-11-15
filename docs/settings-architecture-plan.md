@@ -31,7 +31,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | App / `app-sidebar` | Personal screen order/visibility guidance; empty Asks and Approvals visibility | Screen dragging stays in the sidebar's contextual editor. Members see personal guidance; automatic empty-section controls remain admin-only |
 | App / `app-notifications` | Sounds, notification appearance, timing, placement, interaction and test notification | Personal preferences; preserve explicit approval safeguards |
 | App / `app-dictation` | Dictation engine, model, downloads and existing permission guidance | Existing admin/capability checks |
-| App / `app-startup` | Launch at login | App-wide action, configured in the default workspace; retain installed-app restriction |
+| App / `app-startup` | Launch at login and launch minimized | App-wide action, configured in the default workspace; retain installed-app restriction |
 | App / `app-updates` | Version, release notes and existing update controls | Existing admin access; TucanoNext remains updates off; upstream keeps its own update behavior |
 | Workspace / `workspace-context` | Workspace label, owner's name, shared agent context and introduction/checklist actions | Admin; owner's name remains owner-only |
 | Workspace / `workspace-people` | People, profile, coverage and roles | Existing team-mode/member/admin/owner rules |
