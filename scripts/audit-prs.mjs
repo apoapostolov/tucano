@@ -38,7 +38,7 @@ const ancestor = (a, b) => {
   }
   return ancestry.get(b).has(a)
 }
-const fields = 'number,title,state,isDraft,url,headRefName,headRefOid,baseRefName,updatedAt,mergedAt,closedAt,mergeable,mergeStateStatus,additions,deletions,changedFiles,body,statusCheckRollup'
+const fields = 'number,title,state,isDraft,url,headRefName,headRefOid,baseRefName,createdAt,updatedAt,mergedAt,closedAt,mergeable,mergeStateStatus,additions,deletions,changedFiles,body,statusCheckRollup'
 const input = value('--input', null)
 const prs = input ? JSON.parse(readFileSync(input, 'utf8')) : JSON.parse(run('gh', ['pr', 'list', '--repo', upstream, '--author', author, '--state', 'all', '--limit', '1000', '--json', fields]))
 // Large nested file lists can exhaust GitHub's list query. File paths are immutable at a head.
@@ -65,7 +65,7 @@ const records = prs.sort((a, b) => a.number - b.number).map((p) => {
   const review = reviews[p.number]
   return {
     number: p.number, title: p.title, state: p.state, draft: p.isDraft, url: p.url,
-    branch: p.headRefName, head: p.headRefOid, base: p.baseRefName, updatedAt: p.updatedAt,
+    branch: p.headRefName, head: p.headRefOid, base: p.baseRefName, createdAt: p.createdAt, updatedAt: p.updatedAt,
     mergeable: p.mergeable, mergeStateStatus: p.mergeStateStatus,
     inNext: ancestor(p.headRefOid, next), inUpstream: ancestor(p.headRefOid, main),
     additions: p.additions, deletions: p.deletions, changedFiles: p.changedFiles, files,
@@ -101,6 +101,11 @@ const lines = [
   ...overlaps.map(([file, numbers]) => `| ${file} | ${numbers.map((n) => `#${n}`).join(', ')} |`), ''
 ]
 mkdirSync(output, { recursive: true })
+// Preserve dated intake evidence before replacing the current snapshot. Cached patches already use head SHAs.
+const history = join(output, 'history')
+mkdirSync(history, { recursive: true })
+const stamp = snapshot.capturedAt.replaceAll(':', '-')
+writeFileSync(join(history, `${stamp}.json`), JSON.stringify({ ...snapshot, reviews }, null, 2) + '\n')
 writeFileSync(join(output, 'inventory.json'), JSON.stringify(snapshot, null, 2) + '\n')
 writeFileSync(join(output, 'inventory.md'), lines.join('\n'))
 if (report) {

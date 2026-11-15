@@ -1,8 +1,57 @@
 # Tucano audit development plan
 
-Updated: 14 November 2026. This is private fork workflow context, not an upstream PR brief.
+Updated: 15 November 2026. This is private fork workflow context, not an upstream PR brief.
 
 ## Current priority and progress
+
+### Delivered: upstream 0.2.32
+
+The current delivery checklist and exact source refs are in
+[the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). The upgrade, installed verification and fork release are complete: **2,620 passed, 61 skipped, zero failures**.
+Resume the priorities below. The verified source is in `C:/git-ext/tucano-0231` and published on
+origin/next. The primary checkout retains a separate uncommitted copy task; its full source
+fast-forward is deferred, so build further deliveries from a reconciled worktree.
+
+### Next audit priorities after the upgrade
+
+- [ ] Recheck #454 on current main, then prepare a focused bound on large skill comparisons; retain the distinction between the constrained Node reproduction and the Electron renderer.
+- [ ] Audit the complete #245 commit range and its integrated reasoning/reading-position behavior, including folding, steering and follow-up interactions.
+- [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
+- [ ] Finish #423/#424 room-access persistence and enforcement, with separate people/agent controls and private defaults; keep Tuca's room-purpose discussion connected to the same controls.
+- [ ] Continue through the oldest unchecked open PRs, using the generated queue rather than recreating an intake list by hand.
+
+### Daily intake and aging-PR audit policy
+
+This is a maintained work queue. Every daily run refreshes upstream and Apo's authored PR heads,
+records new or revised work, and updates [the open-PR checkbox backlog](open-pr-audit.md).
+Each intake retains a timestamped inventory/review snapshot under the ignored audit history directory.
+The inventory is a snapshot; the checkbox backlog is keyed to exact PR heads and resets completed
+reviews when those heads change. A merged PR, integration into TucanoNext, a targeted repair and
+a complete feature audit remain different states.
+
+- [ ] At each daily intake, inspect remotes, worktrees, dirty files and local/published divergence before fetching.
+- [ ] Refresh upstream/main, origin/main and origin/next; preserve concurrent and unpublished work.
+- [ ] Refresh the authored PR inventory and cached patches; record new heads and maintainer dispositions.
+- [ ] Inspect new/revised PR descriptions, discussions, dependencies and behavior against the integration.
+- [ ] Reconcile upstream changes and useful new PR behavior into TucanoNext, resolving overlaps by behavior.
+- [ ] Review the next oldest unchecked PR in each risk group, prioritizing privacy, data loss and stalled runs.
+- [ ] For each selected PR, enumerate its commits from its actual base and review the original feature, later repairs, integration decisions and unresolved discussion; record the reviewed range.
+- [ ] Record exact-head findings, checks and remaining work; only mark a feature complete after every audit dimension passes.
+- [ ] Validate affected behavior, then complete full source checks and installed background QA for code deliveries.
+- [ ] Refresh the fork release when required, and record source, evidence, outcome and next priorities in a dated intake log.
+
+These are recurring steps, reopened for each daily run. Do not routinely rebase or merge current
+upstream into old public PR branches. Keep their existing review boundaries and history while
+auditing their implementation and the integrated behavior. Update an existing PR when a concrete
+review finding requires a focused repair; propose new upstream bugs from current upstream/main.
+Do not spend a daily run refreshing every old PR merely to remove its GitHub conflict indicator.
+
+Daily intake is scheduled for 09:00 Europe/Kyiv in this chat (automation `tucanonext-daily-intake-and-pr-audit`).
+
+The original 43-feature cohort below remains a stable historical denominator. The generated open
+queue covers later PRs too, with its own current denominator. Intake coverage and targeted repairs
+must never be reported as full feature audit completion. Use exact snapshots rather than a fixed
+claim about how many PRs Apo has opened.
 
 ### Evening intake and pause safety, 14 November
 
@@ -16,7 +65,8 @@ Updated: 14 November 2026. This is private fork workflow context, not an upstrea
 - [x] Pass the final combined suite at application source `ab5cd58f`: 2,603 passed, 61 skipped, zero failures.
 - [x] Pass seven hidden built-app smoke checks, the pause/resume/question flow, Skills interactions, and native Settings measurements.
 - [x] Install, launch and verify the combined source in the installed executable.
-- [ ] Publish final integration and refresh the fork release, which currently predates the pause feature.
+- [x] Publish the audited integration and refresh the fork release; uploaded installer and blockmap hashes match local assets, and ranged download returns HTTP 206.
+- [ ] Review the six concurrent copy-task commits through `cbe06953`; their new application changes are outside this batch's verified source.
 
 The primary checkout is on `next`. Another task has uncommitted copy changes there; leave those
 files untouched and deliver this batch from the isolated audit worktree. See the
@@ -35,7 +85,8 @@ files untouched and deliver this batch from the isolated audit worktree. See the
 - [x] Reconcile concurrent notification/reading-position work and upstream #444/#426/#450, preserving compatible fork behavior.
 - [x] Finish the final combined suite after the earlier 60-second wiki-Git test failure; no timeout was raised.
 - [x] Install and verify this audit batch in the installed executable, including hidden skills interactions and native Settings measurements.
-- [ ] Publish final integration/evidence records and continue reviewing the new feature and test PRs.
+- [x] Publish the afternoon integration/evidence records with the evening delivery.
+- [ ] Continue reviewing new feature and test PRs, including #451 and the revised heads recorded in the inventory.
 
 See [the afternoon intake record](audit-intake-2026-11-14.md). A targeted label repair does not
 complete the wider skills audit: large-history comparisons, import accessibility and large-library

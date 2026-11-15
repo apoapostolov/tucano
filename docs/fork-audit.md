@@ -19,6 +19,9 @@ a PR, opens an issue or touches application data. `--patches` caches each open P
 its head SHA in the filename. The files, descriptions and CI results remain evidence from
 that snapshot, not a continuous monitor.
 
+Each refresh also saves a timestamped inventory and review snapshot under the ignored
+`history/` directory, so a newer head does not erase the evidence of earlier intake.
+
 Keep semantic review records in `.tucano-local/audit/reviews.json`, keyed by PR number:
 
 ```json
@@ -41,8 +44,8 @@ are inventory signals; none establishes that the behavior works or is ready to p
 ## Review each feature independently
 
 Use an isolated worktree from upstream `main` for a new upstream bug. For an existing feature,
-start from its current PR head, bring in current upstream `main`, and inspect the resulting
-diff against upstream. Push only to the corresponding feature branch after validation.
+start from its current PR head and inspect its base and current diff. Bring in upstream `main`
+only when a specific repair requires it; do not routinely refresh aging public branches. Push only to the corresponding feature branch after validation.
 Avoid force pushes when an ordinary merge preserves review history.
 
 Review the behavior from the user's action through renderer state, RPC validation and
@@ -98,3 +101,18 @@ four NLOC with unchanged summed CC and CogC; that does not make the file pass. T
 script's file MI is 20.95. Do not claim the entire audit or production preparation is complete:
 most feature PRs still need an individual semantic review, upstream-platform validation and
 load testing.
+
+## Daily maintenance policy (15 November 2026)
+
+Keep TucanoNext current and audit the open features without routinely rebasing their public PR
+branches. Each daily intake refreshes refs and `scripts/audit-prs.mjs`, then runs
+`node scripts/audit-backlog.mjs --inventory C:/git-ext/tucano/.tucano-local/audit/inventory.json`
+to update `docs/open-pr-audit.md`. Preserve completed exact-head checks; changed heads become
+unchecked. Review upstream changes and new/revised PR discussions before integrating behavior.
+Record each run in a dated intake record, with refs, findings, validation and deferred work.
+
+Use the oldest unchecked work within each risk group as the default next review, after urgent
+privacy, data-loss and stuck-run defects. An implementation can be audited at its existing head
+without bringing that head up to current main. Repairs belong on the feature's existing PR;
+new main defects require a clean-main reproduction and a focused modular PR. Public branches
+are updated for concrete findings, not to keep every old branch cosmetically current.
