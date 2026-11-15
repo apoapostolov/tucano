@@ -37,9 +37,11 @@ export async function seedSectors(page) {
       const nina = snapshot.agents.find(agent => agent.handle === 'nina')
       if (!lia || !theo || !nina) throw new Error('Missing synthetic seed agents')
       const save = agent => call('saveAgent', { agent, channelIds: snapshot.conversations.filter(conversation => conversation.members?.includes(agent.id)).map(conversation => conversation.id) })
-      await save({ ...lia, sectorName: 'Engineering', sectorDoes: 'Build and verify the application' })
+      const entryId = crypto.randomUUID()
+      await save({ ...lia, id: entryId, name: 'QA coordinator', handle: 'qa-entry', entry: true, reportsTo: undefined })
+      await save({ ...lia, reportsTo: entryId, sectorName: 'Engineering', sectorDoes: 'Build and verify the application' })
       await save({ ...theo, reportsTo: lia.id })
-      await save({ ...nina, sectorName: 'Content', sectorDoes: 'Write and review documentation' })
+      await save({ ...nina, reportsTo: entryId, sectorName: 'Content', sectorDoes: 'Write and review documentation' })
       await save({ ...nina, id: crypto.randomUUID(), name: 'QA member', handle: 'qa-member', reportsTo: nina.id, sectorName: undefined, sectorDoes: undefined })
     } finally { port.close() }
   })
@@ -50,6 +52,24 @@ export async function checkSectors(page, output, guard, resize) {
   const measurements = []
   await page.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
   await page.locator('.org-zone').nth(1).waitFor()
+  await page.locator('.org-card__head--entry').waitFor()
+  assert.ok((await page.locator('.org-ask input[type="text"]').getAttribute('placeholder')).includes('QA coordinator'))
+  await page.locator('.org-card').filter({ hasText: 'QA coordinator' }).click()
+  const entryControl = page.locator('.org-pop__entry input')
+  await entryControl.click()
+  await page.locator('.org-card__head--entry').waitFor({ state: 'detached' })
+  await entryControl.click()
+  await page.locator('.org-card__head--entry').waitFor()
+  const entryCopy = []
+  for (const width of [1280, 900]) {
+    await viewport.set(width)
+    await page.locator('.org-side').evaluate(async node => { await Promise.all(node.getAnimations().map(animation => animation.finished)) })
+    const copy = await measureCopy(page, [{ selector: '.org-pop__entry b', maxLines: 1 }, { selector: '.org-pop__entry small', maxLines: 2 }])
+    entryCopy.push({ width, ...copy })
+    await page.screenshot({ path: join(output, `entry-${width}.png`) })
+    assert.ok(copy.passed, JSON.stringify(copy.failures))
+  }
+  await page.locator('.org-side button[title="Close (Esc)"]').click()
   for (const width of [1280, 900]) {
     await viewport.set(width)
     const arrange = page.getByRole('button', { name: 'Tidy up', exact: true })
@@ -82,5 +102,5 @@ export async function checkSectors(page, output, guard, resize) {
   await page.screenshot({ path: join(output, 'sectors-attachment.png') })
   await page.locator('.org-ask-wrap .composer__file-x').click()
   await viewport.restore()
-  return { measurements, attachment: 'Team composer reads and removes file', passed: true }
+  return { measurements, entryCopy, entry: 'Entry point selection and routing restored after toggle', attachment: 'Team composer reads and removes file', passed: true }
 }
