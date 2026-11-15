@@ -1,6 +1,6 @@
 # Other contributor PR audit queue
 
-Inventory captured 2026-11-15T07:02:32.149Z. Full exact-head audits: **0/236** (OPEN, MERGED, CLOSED).
+Inventory captured 2026-11-15T10:03:30.827Z. Full exact-head audits: **0/236** (OPEN, MERGED, CLOSED).
 
 This is an intake/approval queue. Independent reviews or changes require explicit user approval recorded in docs/audit-approvals.md.
 
@@ -27,7 +27,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #94 [Add a wiki: linked pages the agents read and a curator keeps](https://github.com/eduwxyz/tucano/pull/94) <!-- head:0bf5c16be5f796edd6bd29d0cd586a3791c11315 base:8b7c069ab8e6d5c45cf1a3d19a2a3e5885a7b88b -->
   Head `0bf5c16be5f7`; MERGED; author eduwxyz; age 11 days; updated 2026-11-04T09:27:50Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #95 [Wiki keeps knowledge, not records of the task](https://github.com/eduwxyz/tucano/pull/95) <!-- head:6c1de6f33037693e1f9975f7e87ca790933c0f91 base:3556ad01f7d6c958f4fa7e02a38e16ddacb43233 -->
-  Head `6c1de6f33037`; CLOSED; author eduwxyz; age 10 days; updated 2026-11-04T10:25:49Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `6c1de6f33037`; CLOSED; author eduwxyz; age 11 days; updated 2026-11-04T10:25:49Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #99 [Show the token-rejected message when a connector answers 401](https://github.com/eduwxyz/tucano/pull/99) <!-- head:a26243ff91cdd8a2861ede054b7f1394e6c4a313 base:def2458775855a7429b222cf5feae8d1f7d46b44 -->
   Head `a26243ff91cd`; MERGED; author eduwxyz; age 10 days; updated 2026-11-04T12:45:11Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #100 [Keep the connector's OAuth registration across launches, so signing in sticks](https://github.com/eduwxyz/tucano/pull/100) <!-- head:ea30c7e8d3bf11c98785edab32fdd1089301ae2e base:5a81c4e770d62624e70aa091dcc47a9675ac16a1 -->
@@ -47,9 +47,9 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #153 [Let a new workspace bring the wiki, the same one](https://github.com/eduwxyz/tucano/pull/153) <!-- head:dfa79fbe08e82f583260c0a9315c9263f1370ac8 base:a549562bd9c9ac8d10da5119b537d53013359a8e -->
   Head `dfa79fbe08e8`; MERGED; author eduwxyz; age 9 days; updated 2026-11-05T23:31:00Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #161 [Google Drive backup for the database (issue #81)](https://github.com/eduwxyz/tucano/pull/161) <!-- head:f00af8d7e0ec3bd56e723f599f6fe857ba25cbb5 base:45671add82010828ba5bfac89838e9baf59cfc98 -->
-  Head `f00af8d7e0ec`; CLOSED; author jvitorcarvalho; age 8 days; updated 2026-11-08T00:05:45Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `f00af8d7e0ec`; CLOSED; author jvitorcarvalho; age 9 days; updated 2026-11-08T00:05:45Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #164 [Add Gmail, Google Calendar, Drive, Docs and Sheets to the connector store](https://github.com/eduwxyz/tucano/pull/164) <!-- head:576cea484f70d4d9a9123a1a8808c33739899b81 base:c3f8febcc1016754362a210731795c07c8ab9d03 -->
-  Head `576cea484f70`; CLOSED; author eduwxyz; age 8 days; updated 2026-11-06T09:35:21Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `576cea484f70`; CLOSED; author eduwxyz; age 9 days; updated 2026-11-06T09:35:21Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #167 [Remove push and PR from the agent's computer; GitHub goes through its connector](https://github.com/eduwxyz/tucano/pull/167) <!-- head:4b8516269ac6d7a99307847251708df095bdfe77 base:91061b0d06649fa2f0f14c5d91c7ad9f35398dc1 -->
   Head `4b8516269ac6`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T11:13:54Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #170 [Let an agent be deleted for good](https://github.com/eduwxyz/tucano/pull/170) <!-- head:7e1b16276d76f1942ffda8f0d231c80176305bbc base:c8be362c3a777bf2ab409298f1b54d8950d93843 -->
@@ -65,9 +65,9 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #188 [Add Composio as a connector, explain Google's Developer Preview, and ask before sends and posts](https://github.com/eduwxyz/tucano/pull/188) <!-- head:0fac8311ab34c28d49322e951bc0a5dfaae739d3 base:37733feacc885dfeadfbe8f007410a829b38b241 -->
   Head `0fac8311ab34`; MERGED; author eduwxyz; age 7 days; updated 2026-11-07T16:28:59Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #200 [The connector store for the iPhone app, served by the Tucano](https://github.com/eduwxyz/tucano/pull/200) <!-- head:053e793cda960fd0231b6eb3305dbf48d0eff1e2 base:227ec68347fe7655d05d8d7f2e20da3a1889d0a1 -->
-  Head `053e793cda96`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T10:17:45Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `053e793cda96`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T10:17:45Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #202 [Keep connectors signed in across restarts: refresh each token once, and never wipe a sign-in by mistake](https://github.com/eduwxyz/tucano/pull/202) <!-- head:d39c0d431e17bf74e54539c0f4007e26f61f63dd base:2ae22a02f4c214acaa08d7e9c1545c3a2581d731 -->
-  Head `d39c0d431e17`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T10:25:35Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `d39c0d431e17`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T10:25:35Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #206 [Privacy policy: the iPhone's notifications through tucano.sh](https://github.com/eduwxyz/tucano/pull/206) <!-- head:c310559f4b372783c8771ca724ddfe700cadbae2 base:a89cd8455cbe94bbb99fe7f413e1a84da8b676a5 -->
   Head `c310559f4b37`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T13:32:22Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #207 [Sync the wiki with a git repository, so a Tucano on a server can use an Obsidian vault](https://github.com/eduwxyz/tucano/pull/207) <!-- head:eb04aa6f83b986b127ba8ff7998c0218d50a96d4 base:46019e05d2a722c69569c3fc75af813d16903730 -->
@@ -77,7 +77,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #226 [Say why a connector can't connect on a company network; trust the system's certificates and proxy](https://github.com/eduwxyz/tucano/pull/226) <!-- head:eb4d9ba5535d26970a826eadd79c95e0e4553d25 base:c583e45787dc2166d0c17a65bbde0883c78541cb -->
   Head `eb4d9ba5535d`; MERGED; author eduwxyz; age 5 days; updated 2026-11-09T13:59:06Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #266 [Wiki: Approve all, and switching to Automatic puts in what was waiting](https://github.com/eduwxyz/tucano/pull/266) <!-- head:5db0d2d64691ac9d476c40cf4f67f6b9aa55e525 base:35db1c360e5178ee7daf6c8a635a79ae031fcf59 -->
-  Head `5db0d2d64691`; MERGED; author eduwxyz; age 4 days; updated 2026-11-10T09:36:22Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `5db0d2d64691`; MERGED; author eduwxyz; age 5 days; updated 2026-11-10T09:36:22Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #280 [Take a computer's Tucano to a server whole: Export everything and Restore a backup](https://github.com/eduwxyz/tucano/pull/280) <!-- head:85229b53588f662ee4149d2aee2091c991a953c5 base:3149d426e952e66ffd57c2d6cfb1cbed2be70ff7 -->
   Head `85229b53588f`; MERGED; author eduwxyz; age 4 days; updated 2026-11-10T13:05:49Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #291 [Add Keenable to the connector store](https://github.com/eduwxyz/tucano/pull/291) <!-- head:674694714132d89abfd19028f74d5c906b073e3f base:95e6b6210422f4b9128fb648c1958dae86eb5851 -->
@@ -106,7 +106,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #12 [Keep the harness select when a single harness is in use](https://github.com/eduwxyz/tucano/pull/12) <!-- head:1a323cdaf8b8b5dd8833148b9617005918f8b214 base:d684bee21539138b384ed032166e61e6f313711b -->
   Head `1a323cdaf8b8`; MERGED; author GianCdM; age 15 days; updated 2026-10-30T18:24:36Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #20 [Run lanes per conversation with the wait made visible; one browser tab per thread](https://github.com/eduwxyz/tucano/pull/20) <!-- head:97d570345c4c9d3dac30e0de3a8f2a22dee70aa0 base:d14af097c345c16b3f9f173f18a124d7c19076b7 -->
-  Head `97d570345c4c`; OPEN; author GianCdM; age 15 days; updated 2026-10-30T23:51:15Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `97d570345c4c`; CLOSED; author GianCdM; age 15 days; updated 2026-11-15T09:21:49Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #21 [Working pulse on channels; a reply that lands while you're away marks unread](https://github.com/eduwxyz/tucano/pull/21) <!-- head:b7f01fbd9fc1e4672569d9fdb534fc12d43a4daa base:d14af097c345c16b3f9f173f18a124d7c19076b7 -->
   Head `b7f01fbd9fc1`; MERGED; author GianCdM; age 15 days; updated 2026-10-31T13:15:37Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #25 [Let agents run on Gemini CLI](https://github.com/eduwxyz/tucano/pull/25) <!-- head:2102718f1429d142cf88efd19f4abd4a40bc9a64 base:0e48d2aa1aa1f26a621fd73dc9488165b85f642b -->
@@ -168,7 +168,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #158 [Substituir harness Gemini CLI pelo Antigravity CLI](https://github.com/eduwxyz/tucano/pull/158) <!-- head:a2c51f48124bb44c6e643b8db551d95fcfd20a75 base:58afa9756e92af93ede2850be66fccc8f7a314e5 -->
   Head `a2c51f48124b`; MERGED; author Vialc; age 9 days; updated 2026-11-08T21:43:14Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #162 [Make the limit on chained agent replies a setting](https://github.com/eduwxyz/tucano/pull/162) <!-- head:e6b5321442a53d1fd721701b432a654f63c84aa2 base:ff8323a0746779b391ece5a7bc9abcc854203e31 -->
-  Head `e6b5321442a5`; MERGED; author eialanjones; age 8 days; updated 2026-11-07T15:12:58Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `e6b5321442a5`; MERGED; author eialanjones; age 9 days; updated 2026-11-07T15:12:58Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #171 [Let the hand-off screen see mentions at the end of a long reply](https://github.com/eduwxyz/tucano/pull/171) <!-- head:474785f0d87a6ce98a4a1dd14fb61dfd7182f7b9 base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->
   Head `474785f0d87a`; MERGED; author eialanjones; age 8 days; updated 2026-11-06T23:26:59Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #173 [Show replies in the order they ended](https://github.com/eduwxyz/tucano/pull/173) <!-- head:d07493b855041cd8ec4fedf47d137bf668bd819a base:e21e204e7f92a3172ccca0520db112f92bf4fa67 -->
@@ -182,9 +182,9 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #195 [Tucano Pro on the site: early-access waitlist, plans and prices](https://github.com/eduwxyz/tucano/pull/195) <!-- head:e8e0b629f96ca1705526e161d11c4a928726ceb8 base:51b823b34d6345205c343919d7b2c397e0142169 -->
   Head `e8e0b629f96c`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T02:06:05Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #198 [Sign a harness in on a server from the browser or the phone](https://github.com/eduwxyz/tucano/pull/198) <!-- head:69f1a4f1ba059c5b092e7ceb85dcbdaf0cef2d6e base:7e85fca2a22175843a86a53dc2aadd228cfba739 -->
-  Head `69f1a4f1ba05`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T10:04:39Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `69f1a4f1ba05`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T10:04:39Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #201 [Split Windows tests across four runners and skip CI for site and docs changes](https://github.com/eduwxyz/tucano/pull/201) <!-- head:a2a691e4c70cbbb598ba3e9f8dda809eaea9f4ff base:55bf5c98c4e3c211609d2b1f714c1554a75b8290 -->
-  Head `a2a691e4c70c`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T09:30:26Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `a2a691e4c70c`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T09:30:26Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #224 [Add Cline CLI as a harness](https://github.com/eduwxyz/tucano/pull/224) <!-- head:525104f8a16cd06847a187afb1983aebe41bec29 base:19b01c5856f981ff3a76858a32ae35f2a1e503e9 -->
   Head `525104f8a16c`; MERGED; author eduwxyz; age 5 days; updated 2026-11-09T11:42:50Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #257 [Make OpenCode's free models work, and stop a reply when its model call fails](https://github.com/eduwxyz/tucano/pull/257) <!-- head:96362e15a4c97764812c7d290d3988000efbdc49 base:61a1f9ebc9f6bf2da54642605d8c79ba030fda95 -->
@@ -194,7 +194,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #394 [Show what a reply changed in the code, as a diff opened file by file](https://github.com/eduwxyz/tucano/pull/394) <!-- head:9941c6770974a74f193bfe560b9e8633153c923e base:04539404e545323124e5dd4737098892cd746226 -->
   Head `9941c6770974`; OPEN; author b7s; age 2 days; updated 2026-11-14T20:44:08Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #404 [Let each person keep a reply's steps closed while the agent works](https://github.com/eduwxyz/tucano/pull/404) <!-- head:9f714755b70ce48874570d44eacd165e314b9cd8 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
-  Head `9f714755b70c`; MERGED; author eialanjones; age 1 days; updated 2026-11-14T00:16:19Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `9f714755b70c`; MERGED; author eialanjones; age 2 days; updated 2026-11-14T00:16:19Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #438 [Stop a Codex agent failing every other reply with "Codex no longer has this conversation"](https://github.com/eduwxyz/tucano/pull/438) <!-- head:9dd93f81b6b4fc8148168fcd9a896152d273eadb base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
   Head `9dd93f81b6b4`; MERGED; author eduwxyz; age 1 days; updated 2026-11-13T23:00:23Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #442 [Balance replies between the accounts of a harness, and show every account on Usage and limits](https://github.com/eduwxyz/tucano/pull/442) <!-- head:063931337586eec8823ed2609a6145d5393950a1 base:04539404e545323124e5dd4737098892cd746226 -->
@@ -229,7 +229,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #19 [Open message links in the real browser](https://github.com/eduwxyz/tucano/pull/19) <!-- head:196d673894f4decd05c7d507f9191db8d327d775 base:0ef815d91fe7ab143a4e1abcb601e619b826f034 -->
   Head `196d673894f4`; MERGED; author GianCdM; age 15 days; updated 2026-10-30T21:15:07Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #22 [Add WSL 2 execution target on Windows](https://github.com/eduwxyz/tucano/pull/22) <!-- head:79b2edbb7a1ccc7cc001cf18e3944d775c85ff69 base:b4a889fa95178f0b64bbb0a21acd700a561527d8 -->
-  Head `79b2edbb7a1c`; OPEN; author anota-ai-andrey; age 15 days; updated 2026-10-31T21:22:05Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `79b2edbb7a1c`; OPEN; author anota-ai-andrey; age 15 days; updated 2026-11-15T09:23:41Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #23 [Add a Tuca model picker](https://github.com/eduwxyz/tucano/pull/23) <!-- head:2784c9c53dfe99c41790f652ebd11624d94a98c2 base:0ecaee4e5336b88a66f3049213eb5b2ddbb4e73f -->
   Head `2784c9c53dfe`; MERGED; author anota-ai-andrey; age 15 days; updated 2026-10-31T13:19:29Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #24 [Find CLIs in their install folders even when PATH lacks them](https://github.com/eduwxyz/tucano/pull/24) <!-- head:27c460bd90990dd3346f9f9802e5705b01bcce06 base:739ff2530ed6f4f9e4664689b18269cfe5aad358 -->
@@ -323,9 +323,9 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #123 [fix: prevent startup crash on unpacked dev builds](https://github.com/eduwxyz/tucano/pull/123) <!-- head:04ac0126646b3afe21a7a43a377ac25a18631541 base:db70e573cebf284b463b425db6fc37196ea47d22 -->
   Head `04ac0126646b`; MERGED; author b7s; age 10 days; updated 2026-11-05T19:00:24Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #126 [Answer in the conversation again, and let each conversation choose threads](https://github.com/eduwxyz/tucano/pull/126) <!-- head:39442f7b5b101eb25ae78a221dc8722a9d71dbc4 base:a64a88e562496f76d160191af4bbf30c13bf422c -->
-  Head `39442f7b5b10`; MERGED; author eduwxyz; age 9 days; updated 2026-11-05T09:27:42Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `39442f7b5b10`; MERGED; author eduwxyz; age 10 days; updated 2026-11-05T09:27:42Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #127 [Show what's new once after an update, in the app's language](https://github.com/eduwxyz/tucano/pull/127) <!-- head:59fe8fdac251ec699a284ffc7e9ebea6e52efc2d base:1be8610c91d3961be20953d5ed529b737c6505f1 -->
-  Head `59fe8fdac251`; MERGED; author eduwxyz; age 9 days; updated 2026-11-05T09:43:56Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `59fe8fdac251`; MERGED; author eduwxyz; age 10 days; updated 2026-11-05T09:43:56Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #130 [Redraw only the message that changed while an agent streams](https://github.com/eduwxyz/tucano/pull/130) <!-- head:21f4055506e7aa64af819394ae49ffc619839bc4 base:2f0b96492a87999a02a1cf8a0ce271507993d6ed -->
   Head `21f4055506e7`; CLOSED; author SchonsWeb; age 9 days; updated 2026-11-05T11:28:37Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #131 [Redraw only the message that changed while an agent streams](https://github.com/eduwxyz/tucano/pull/131) <!-- head:21f4055506e7aa64af819394ae49ffc619839bc4 base:2f0b96492a87999a02a1cf8a0ce271507993d6ed -->
@@ -351,11 +351,11 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #159 [Route channel messages through a sequential agent plan](https://github.com/eduwxyz/tucano/pull/159) <!-- head:de47c648115bde37227224183812c4169d77de8c base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->
   Head `de47c648115b`; OPEN; author GianCdM; age 9 days; updated 2026-11-06T18:09:47Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #163 [Make Tucano as a server ready for other people to use](https://github.com/eduwxyz/tucano/pull/163) <!-- head:9a069b1e79cda7a700a30910503ce8e8b0e4fd9e base:c3f8febcc1016754362a210731795c07c8ab9d03 -->
-  Head `9a069b1e79cd`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T09:30:08Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `9a069b1e79cd`; MERGED; author eduwxyz; age 9 days; updated 2026-11-06T09:30:08Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #165 [Connect the desktop app to Tucanos on servers](https://github.com/eduwxyz/tucano/pull/165) <!-- head:f05e9108640b6aa330e21d54d16a4cb17b0e51d2 base:66d102fa0c528e6339f837f0dfdc320a64fa0307 -->
-  Head `f05e9108640b`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T09:53:28Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `f05e9108640b`; MERGED; author eduwxyz; age 9 days; updated 2026-11-06T09:53:28Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #166 [Connect more: Google, Slack, six services that ask first, and secrets from 1Password](https://github.com/eduwxyz/tucano/pull/166) <!-- head:307a4d1a3226bf966b4a2deddb127b9611845f92 base:66d102fa0c528e6339f837f0dfdc320a64fa0307 -->
-  Head `307a4d1a3226`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T09:53:22Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `307a4d1a3226`; MERGED; author eduwxyz; age 9 days; updated 2026-11-06T09:53:22Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #168 [Tell an agent on Codex that its read-only sandbox isn't its computer](https://github.com/eduwxyz/tucano/pull/168) <!-- head:a573c470738e195f91a212bef7ca8b923ffdc6f6 base:91061b0d06649fa2f0f14c5d91c7ad9f35398dc1 -->
   Head `a573c470738e`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T11:08:53Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #169 [[UI] Put the update note's button under its text instead of over it](https://github.com/eduwxyz/tucano/pull/169) <!-- head:84ced3d155f2d403c7810343a87765b3c835db72 base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->
@@ -389,9 +389,9 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #196 [Put the computer's network address in the iPhone QR code, not its .local name](https://github.com/eduwxyz/tucano/pull/196) <!-- head:c1f50a731b3db35fe511b712c2327204d1e20b2b base:5a021556d4cf7575c0d73da0819fbc8a71943377 -->
   Head `c1f50a731b3d`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T10:08:19Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #197 [Stop Codex agents calling the session read-only, tell agents how to publish to GitHub, and fix the computer card](https://github.com/eduwxyz/tucano/pull/197) <!-- head:0804fced848c14b9691bbc07ce22c07d5c25f5b8 base:bbb5a7d9f91878d8b0472e605e8e8b3cfb7d3a69 -->
-  Head `0804fced848c`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T09:07:42Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `0804fced848c`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T09:07:42Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #199 [Notifications on the iPhone with the app closed, through a push relay](https://github.com/eduwxyz/tucano/pull/199) <!-- head:b8e0c742e08eeaae2a26c231f39c9698d027073e base:39165e323b0916fc58da907b140c954323a4500b -->
-  Head `b8e0c742e08e`; MERGED; author eduwxyz; age 6 days; updated 2026-11-08T10:12:23Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `b8e0c742e08e`; MERGED; author eduwxyz; age 7 days; updated 2026-11-08T10:12:23Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #204 [Sidebar order setting for DMs and Agents](https://github.com/eduwxyz/tucano/pull/204) <!-- head:c5fff6d55b802f1c07d92ac28ea27bf9eb70e81e base:a89cd8455cbe94bbb99fe7f413e1a84da8b676a5 -->
   Head `c5fff6d55b80`; CLOSED; author omnisci3nce; age 6 days; updated 2026-11-13T06:13:09Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #208 [Pro page: drop the early-access price lock](https://github.com/eduwxyz/tucano/pull/208) <!-- head:70d68100330063c6a11f070a62646db9313900f5 base:5a1c88aaafcb515484d13225196cae47b5c9bc76 -->
@@ -463,17 +463,17 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #370 [Show the Codex subscription's limits on Usage and limits](https://github.com/eduwxyz/tucano/pull/370) <!-- head:6ab6eea03e7703712d71b27cee101d2f684b0dc0 base:b912d8b11abaa53db728accfbd57b30ca3a61ae3 -->
   Head `6ab6eea03e77`; MERGED; author eduwxyz; age 3 days; updated 2026-11-12T02:56:42Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #371 [An org chart: agents answer to other agents, hand them work and get the answer back](https://github.com/eduwxyz/tucano/pull/371) <!-- head:1b6568e5a0562cf6852ec16e736699ad6f4fcff4 base:e277c733bca120a82699cee9b0d9191325723d22 -->
-  Head `1b6568e5a056`; MERGED; author eduwxyz; age 2 days; updated 2026-11-12T10:04:16Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `1b6568e5a056`; MERGED; author eduwxyz; age 3 days; updated 2026-11-12T10:04:16Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #382 [Show the server's version in a browser's Settings](https://github.com/eduwxyz/tucano/pull/382) <!-- head:9080d35992bbd483adb9e9340d5d8730d1935658 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
   Head `9080d35992bb`; MERGED; author b7s; age 2 days; updated 2026-11-14T00:15:56Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #387 [Let an agent organize the team, and the Tuca propose the org chart](https://github.com/eduwxyz/tucano/pull/387) <!-- head:7f1ad024cc5ad9f13bff6cd8af5a7cbdd32c7328 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
   Head `7f1ad024cc5a`; OPEN; author rjgdias; age 2 days; updated 2026-11-12T14:13:21Z; integration ancestry: inspect equivalence; review: not reviewed.
-- [ ] #388 [Let an artifact without a preview be shown in Finder](https://github.com/eduwxyz/tucano/pull/388) <!-- head:084c1b369afcb818c6ca38c3a1cdfc68ab0cbf03 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
-  Head `084c1b369afc`; OPEN; author stefanosandes; age 2 days; updated 2026-11-12T14:57:09Z; integration ancestry: inspect equivalence; review: not reviewed.
+- [ ] #388 [Let an artifact without a preview be shown in Finder](https://github.com/eduwxyz/tucano/pull/388) <!-- head:34e0eb2b99fdcb6f8572476ed422da341d43ab1f base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
+  Head `34e0eb2b99fd`; MERGED; author stefanosandes; age 2 days; updated 2026-11-15T09:24:14Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #399 [Let each person choose how a routine's request shows: full, compact or hidden](https://github.com/eduwxyz/tucano/pull/399) <!-- head:7749995afabe0a66dcaa094c0606139d5cd86cc4 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
   Head `7749995afabe`; OPEN; author stefanosandes; age 2 days; updated 2026-11-12T18:39:46Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #400 [Keep the agent card open while the chat auto-scrolls](https://github.com/eduwxyz/tucano/pull/400) <!-- head:fab4085c5b6a642a8ef7d70023efa94263787106 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
-  Head `fab4085c5b6a`; OPEN; author stefanosandes; age 2 days; updated 2026-11-12T20:03:13Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `fab4085c5b6a`; MERGED; author stefanosandes; age 2 days; updated 2026-11-15T09:27:25Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #406 [Attach images and files when asking from the Team page](https://github.com/eduwxyz/tucano/pull/406) <!-- head:0277e42c7dc851cf1a03c796061450467a03fdd3 base:c06ab5479abb28acb0d3868abea7b0ad30eaa938 -->
   Head `0277e42c7dc8`; OPEN; author eialanjones; age 1 days; updated 2026-11-15T00:20:04Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #414 [Team: sectors, where heads ask other heads](https://github.com/eduwxyz/tucano/pull/414) <!-- head:b16e8267d9db7e200a0b58c4c08f9fe0aa8f50a2 base:04539404e545323124e5dd4737098892cd746226 -->
@@ -481,7 +481,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #426 [Let a Composio item name its account, and allow it for good per account](https://github.com/eduwxyz/tucano/pull/426) <!-- head:fbb2d3ccb83ea26ca16d10b50b8705f12e6f65bb base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
   Head `fbb2d3ccb83e`; MERGED; author stefanosandes; age 1 days; updated 2026-11-14T10:32:05Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #429 [Line up system notices with the message column on wide windows](https://github.com/eduwxyz/tucano/pull/429) <!-- head:588cd0a5a2fc9a18dc73f1f5a025f739714a3b1a base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
-  Head `588cd0a5a2fc`; OPEN; author stefanosandes; age 1 days; updated 2026-11-13T20:50:27Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `588cd0a5a2fc`; MERGED; author stefanosandes; age 1 days; updated 2026-11-15T09:24:04Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #443 [Give the Team guide page its English heading](https://github.com/eduwxyz/tucano/pull/443) <!-- head:fb7b0f3118a969fa67b657277f048bbfd9ea0b81 base:1138b41df35fc6b55ea1bd293b3b274a8cc3218a -->
   Head `fb7b0f3118a9`; MERGED; author eduwxyz; age 1 days; updated 2026-11-14T00:25:42Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #444 [Say a new version is ready with a server on screen too](https://github.com/eduwxyz/tucano/pull/444) <!-- head:05103a20a057b4c415f15d37ded6cfecb46955ca base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
