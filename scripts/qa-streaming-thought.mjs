@@ -173,6 +173,13 @@ try {
     assert.ok(ending.every(sample => Math.abs(sample.top - finishingTop) < 2), JSON.stringify({ size, finishingTop, ending }))
     assert.equal(ending.at(-1).working, false, 'Keep measuring through completion')
   }
+  assert.ok(await page.locator('.thought').count(), 'Completed reasoning remains available while enabled')
+  await page.evaluate(() => window.__qaCall('updateSettings', { patch: { showThinking: false } }))
+  await page.waitForFunction(() => !document.querySelector('.thought'))
+  await page.evaluate(() => window.__qaCall('updateSettings', { patch: { showThinking: true } }))
+  await page.screenshot({ path: join(output, 'after-reenable.png') })
+  assert.equal(await page.locator('.thought').count(), 0, 'Turning reasoning back on must not revive discarded text')
+  report.lifecycle = { disabled: 'removed', reenabled: 'not restored' }
   const windows = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map(window => ({ visible: window.isVisible(), focusable: window.isFocusable() })))
   assert.ok(windows.every(window => !window.visible && !window.focusable))
   assert.deepEqual(report.errors, [])

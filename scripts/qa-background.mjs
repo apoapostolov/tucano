@@ -12,6 +12,7 @@ import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.m
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 import { seedSkillComparisons, checkSkillComparisons } from './lib/skill-comparison-check.mjs'
+import { checkArtifactIngest } from './lib/artifact-ingest-check.mjs'
 
 // Reserve both ports together; let the app bind immediately after releasing them.
 const reserve = async () => {
@@ -20,6 +21,7 @@ const reserve = async () => {
   return { server, port: server.address().port }
 }
 const output = resolve(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? '.tucano-local/audit/background-qa')
+assert.ok(!process.argv.includes('--upstream-artifact') || process.argv.includes('--skill-comparisons'), 'Artifact ingestion QA requires the isolated --skill-comparisons fixture port')
 mkdirSync(output, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
@@ -83,6 +85,7 @@ try {
   if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
   if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
   if (process.argv.includes('--skill-comparisons')) report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
+  if (process.argv.includes('--upstream-artifact')) report.artifactIngest = await checkArtifactIngest(window, output, guard, resize)
   report.updater = await window.evaluate(() => window.tucano.updateState())
   assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')
   const hasNotices = await window.evaluate(async () => {

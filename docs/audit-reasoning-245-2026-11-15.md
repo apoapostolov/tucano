@@ -56,3 +56,57 @@ position even when scrollTop stays fixed; that needs a real rendered check rathe
 Maintainability baselines are fixed in C:/tmp/tucano-reasoning-audit-baseline.json (integration)
 and C:/tmp/tucano-245-public-baseline.json (public head). Existing edited monoliths already have
 known MI debt; any blocked gate will be reported rather than represented as a pass.
+
+## Retention repair checkpoint
+
+Five executable regressions fail on a fresh checkout of original head `5f4a1a21`: settings-event
+disable, local disable, conversation removal, replacement snapshot and aggregate retention across
+250 different runs. The unrelated-setting/conversation control passes. Evidence is in
+`C:/tmp/tucano-245-lifecycle-original.json`; the three initial transition checks also failed before
+implementation. These establish local retention, not another person's ability to retrieve data.
+
+Public repair head `c35e802c9fb651eac195a1837d922b18c217e47e` is pushed to the existing #245,
+without rebasing its aging branch. The new cache retains at most 200 recently streamed replies,
+20,000 UTF-16 code units each, and notifies subscribers on eviction/clearing. Disabling clears all;
+conversation removal clears its loaded replies; replacing the snapshot clears prior cache data.
+Re-enabling does not restore old text. Older ephemeral reasoning can disappear before restart.
+Answer text and database persistence are unchanged.
+
+Typecheck, 42 focused cases in a fresh checkout of the pushed SHA, and the final public full suite
+pass: 1,756 passed, 60 skipped, zero failed. The first full run hit the unchanged legacy delegation
+timing fixture; no timeout/assertion was modified. The final full run passes. Main's separate #453
+repair is already ingested; the older feature branch was not rebased for an unrelated fixture.
+
+Public browser QA at `ff6364e7` passes the actual fake-engine stream, completed reasoning,
+disable and re-enable path with zero renderer errors. `c35e802c` adds only a test to the same
+application source. Immutable synthetic captures and original regression results are at
+`9c382dc13447f1fdbdab9780e9397296f77bd1d7/frames/reasoning-cache`. The PR body now names the
+current repair and preserves historical validation as history. CI is pending at this checkpoint.
+
+Integration `8b508004` merges the actual feature head. It retains the newer reading-line/size
+implementation, existing folding-rail/steering/follow-up behavior and personal settings. A clean
+component merge inserted a second Thought implementation and call; those duplicates were removed.
+The public-only fold tests remain on the public branch, where they pass; they cannot honestly be
+counted as integration coverage of the different always-expanded component. This reveals F-005,
+an unresolved integration gap. Restoring folding while preserving the stronger reading-line
+ownership is the next composition task. No complete #245 audit is claimed.
+
+The combined full suite passes: 2,656 passed, 61 skipped, zero failed. Built general/settings/Skills/
+pause checks pass, and the hidden three-size reading-line fixture passes. The actual combined
+browser also passes disable/re-enable without restoring text. Native installed checks remain pending.
+The artifact compatibility fixture rendered and measured the incoming no-preview/reveal control,
+but initially failed on its cleanup selector (.side-panel__header instead of .side-panel__head).
+That is a harness mistake, corrected before the fresh full QA rerun; no product repair is inferred.
+
+Maintainability remains BLOCKED: public store.ts is MI 0 before and after. New cache and test files
+are MI 46.72, 30.55 and 40.94; growth +126 NLOC, +39 summed CC, +9 CogC includes the new regression
+coverage. The integration comparison also flags ingested upstream monoliths/CSS and the existing
+delegation test. It does not certify project-wide maintainability. Broader store decomposition is
+still required; keeping the functional regression fix does not complete that acceptance criterion.
+
+Intake: 92 Apo PRs (58 open, 22 merged, 12 closed), 236 other contributors' PRs (25 open).
+New/revised #305 `135e3fcc` and #467 `1f1fa3a5` remain queued, not automatically integrated.
+One initial gh inventory request returned truncated JSON; the retry completed without replacing
+history with an incomplete capture. New maintainer feedback on #468 requests separating its refactor
+and restoring existing English wording; candidate `74f64aed` is already in a concurrent worktree.
+The master queue records that follow-up without overwriting that task's work or calling it delivered.
