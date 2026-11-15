@@ -248,6 +248,56 @@ The released app and `TucanoNext` remain independent:
 6. Before opening a PR for a change, find the feature in the table under
    [Commit on the feature's own issue or PR](#commit-on-the-features-own-issue-or-pr): a change in the
    domain of a feature that already has an open pair belongs on that PR, not on a new one.
+7. For PR intake and review beyond a single item, work under
+   [Delegate PR work to subagents](#delegate-pr-work-to-subagents). The parent session holds the plan
+   and the decisions; the children hold one diff each.
+
+## Delegate PR work to subagents
+
+This section is the explicit authorization to use subagents for PR work in this repository. Without
+it, Codex declines to spawn agents proactively and does the whole queue inline, which is how one
+session's context ends up carrying every diff.
+
+- Bind a child to one PR and one exact head SHA. Give it that PR's number, head SHA, description,
+  diff and the review checklist from [the audit plan](docs/audit-plan.md). Do not give it the master
+  plan, the whole queue or another PR's context.
+- Spawn with `fork_turns="none"` and an explicit model and effort. A full-history fork inherits the
+  parent's model and effort and refuses overrides, so a Sol parent silently charges Sol rates on
+  every child turn.
+- Route by the kind of work, not by price alone. Discovery, ambiguity and "what else does this
+  break" go to Sol at low or medium effort, because noticing what the author did not ask about is
+  the behaviour the cheaper models do not have. Mechanical steps that a failing test, a type error
+  or a grep can judge go to Luna at high effort. Independent review, browsing and rendered UI checks
+  go to Terra at high or max. Escalate a child that has failed twice to Sol medium instead of
+  retrying it on the same settings.
+- Keep children in flight up to the concurrency slots the session reports, and reuse a finished
+  child with a follow-up task rather than spawning another. Children are leaves and must not spawn
+  their own.
+- Require this report from every child: PR number, head SHA reviewed, verdict, findings as
+  `file:line` with the command that proves each one, checks run and their results, and an explicit
+  list of what was not covered. Re-run a finding's proving command in the parent before it enters a
+  queue or the finding register. A child's summary is a lead, not evidence.
+- The parent reads reports, not diffs. Opening a diff in the parent defeats the point of the
+  fan-out, and so does a brief that makes a child re-read the whole repository.
+- Children are read-only on review packets and confine any repair to their own worktree. They do not
+  push, rebase, comment on public threads or widen scope into another contributor's work; those
+  remain parent actions under the approval rules in [the audit plan](docs/audit-plan.md).
+- A child inherits [the desktop protection rules](#protect-the-users-desktop) and
+  [the isolation hard rules](#application-isolation-and-hard-rules). A review child installs
+  nothing, launches no visible app, opens no connection to the live database and uses no default
+  port; a repair child gets its own worktree and a throwaway `TUCANO_DATA` directory.
+- A child's "done" never marks a review complete. Completion still requires every review dimension
+  and the installed evidence the audit plan defines; partial coverage is a checkpoint.
+- Cost is turns multiplied by context per turn, so open one parent session per PR batch and close it
+  when the batch is reported. A session kept open for days only grows, and its transcript is what the
+  allowance pays for.
+- Cap that transcript with `model_auto_compact_token_limit` in the Codex config instead of letting a
+  500k window fill. Write each child's brief tight enough that it never searches the repository for
+  its own task; every extra search is a turn paid for in the parent and again in the next child.
+- When the allowance runs out mid-queue, record the batch state, the head SHAs already reviewed and
+  the next item, then stop. Downgrading the model or dropping review dimensions to keep going trades
+  the audit's depth for a report that has to be redone. The queue-level economics and the batching
+  rules live under [keep the batch economical](docs/audit-plan.md#keep-the-batch-economical).
 
 ## Worktrees, refs, and pushes
 
