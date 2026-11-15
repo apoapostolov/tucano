@@ -15,6 +15,12 @@ with 61 skipped and zero failures, plus installed background QA. See
 [the delivery record](upstream-reconciliation-0.2.32.md). This verifies that delivery, not the whole
 product or every integrated feature. Broad production readiness remains unclaimed.
 
+The later local installation contains the scrolling repair from `4fef95c1`: its complete suite
+passed 2,622 tests with 61 skipped, and installed reasoning checks measured zero reading-line
+drift in all three panel sizes at 150% display scaling. See the
+[repair and delivery record](scroll-reading-repair-2026-11-15.md). This targeted repair does not
+advance the exact-head audit counts below.
+
 The primary checkout has a concurrent uncommitted copy task. Preserve its bytes and staged work.
 Published integration code and a clean delivery worktree are available at `C:/git-ext/tucano-0231`;
 do not build the primary checkout's older package until its source is reconciled. Documentation
