@@ -10,8 +10,8 @@ for #454 was found. This repair is based on current main, not the integrated fea
 - [x] Implement a fixed detailed-comparison budget and readable, complete-content fallback.
 - [x] Verify both history and proposal entry points, copy/layout, resource bounds and tests.
 - [x] Open the focused upstream PR with immutable public captures and actual-head evidence.
-- [ ] Integrate, test, install and verify the combined application; finish source/release records as required.
-- [ ] Remove this completed repair from the immediate queue without marking the entire #311 audit complete.
+- [x] Integrate, test, install and verify the combined application; finish source/release records as required.
+- [x] Remove this completed repair from the immediate queue without marking the entire #311 audit complete.
 
 ## Baseline and proposed behavior
 
@@ -118,3 +118,38 @@ comparison MI 44.63, helper 36.90, shared copy 50.50, tests 39.90/41.81, QA driv
 QA helper 17.06. The helper's yellow score warrants care; it centralizes the proposal/history and
 maximum-body checks rather than duplicating browser and installed flows. No structural-cycle
 removal or whole-project maintainability clearance is claimed.
+
+## Installed delivery and closure
+
+S-454's eight packet checks are complete. This is a targeted defect repair; #311's complete
+exact-head audit stays unchecked, as do the other 91 captured Apo PRs. The immediate queue now
+starts with the full #245 reasoning/reading-position review. Intake rose to 92 Apo PRs (64 open,
+18 merged, 10 closed), including new fix #468; other-author reviews remain approval-gated.
+
+The combined application suite completed with **2,634 passed, 61 skipped, zero failed** on the
+application tree at `c2829873`. Typecheck and build pass. Later commits through `db5aef86` change
+only audit documentation. All six upstream #468 CI jobs pass (macOS, Linux and four Windows shards).
+
+`node scripts/self-build.mjs install --json` completed packaging, identity verification, installation
+and a fresh background launch. Source at start was `b7a90baa`; later inventory/docs commits did not
+change packaged application code. Installed `app.asar` is **37,410,317 bytes**, SHA-256
+`1690f9fedb533fb123a2a298a9bcef579d074511906a3246194a6a7493b8c8c5`, identical to the built archive.
+Native-path extraction confirms package `tucanonext`, version 0.2.32 and a main bundle identical
+to the build (`befdc943d05f23783dd8dbb52726e4bfd4189e8fb9349c2e569a73c2e52f7438`).
+The regular app is the newly launched installed executable, PID 32040, argument `--background`;
+agent-desktop identifies its visible, unfocused window `w-6492594`. No foreground input was used.
+
+Installed scratch QA at `db5aef86` reports a clean tree, the actual installed executable,
+Electron 44.11.1, isolated fake-engine data/ports and zero renderer errors. Proposal approval,
+complete history/restoration, keyboard scrolling, maximum-body cancel, Skills origins, pause,
+settings navigation, update-off and notification background guards pass. Both 900 and 1280 CSS
+pixel captures measure at device scale 1.5; inspected installed screenshots keep labels and hints
+within their budgets. Browser evidence additionally covers 420px. No native 420px support is claimed.
+Reports/captures: `C:/tmp/tucano-skill-installed-ui`, install report
+`C:/tmp/tucano-skill-diff-install.json`; built checks at `C:/tmp/tucano-skill-integration-ui`.
+Scratch QA closed its own process; the regular app remains running against its regular data.
+No test writes were made to that workspace or the released Tucano installation.
+
+This single bug fix inherits 0.2.32 and does not require refreshing the fork release. The existing
+release asset/tag stays untouched. The initial unchanged delegation-case failure and global
+integration MI failure remain recorded, rather than being represented as universally green checks.

@@ -21,6 +21,14 @@ drift in all three panel sizes at 150% display scaling. See the
 [repair and delivery record](scroll-reading-repair-2026-11-15.md). This targeted repair does not
 advance the exact-head audit counts below.
 
+The current local installation also contains the bounded Skills comparison repair, integrated in
+`c2829873`, with application source unchanged through delivery record `db5aef86`. The combined
+suite passed **2,634 tests**, with 61 skipped and zero failures. Installed background checks pass
+at 150% scaling; [PR #468](https://github.com/eduwxyz/tucano/pull/468) has six passing CI jobs.
+See [S-454's completed repair record](audit-skill-comparison-2026-11-15.md). This is one targeted
+repair, not a complete audit of #311. The public fork release remains the earlier 0.2.32 asset;
+this single-bug delivery does not replace that release.
+
 The primary checkout has a concurrent uncommitted copy task. Preserve its bytes and staged work.
 Published integration code and a clean delivery worktree are available at `C:/git-ext/tucano-0231`;
 do not build the primary checkout's older package until its source is reconciled. Documentation
@@ -43,7 +51,6 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **Active: S-454 — bounded Skills comparisons.** Reproduce on `d175567b`, preserve full content beyond a fixed detail budget, and deliver the focused repair. [Current packet](audit-skill-comparison-2026-11-15.md).
 - [ ] Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
