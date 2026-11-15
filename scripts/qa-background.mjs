@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
 import { checkPause } from './lib/pause-check.mjs'
+import { seedSectors, checkSectors } from './lib/sectors-check.mjs'
 import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
 import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
@@ -62,6 +63,7 @@ try {
     report.checks.push(name)
   }
   await window.waitForSelector('.sidebar')
+  if (process.argv.includes('--sectors')) await seedSectors(window)
   await capture('01-workspace')
   const agents = window.locator('.nav-item', { has: window.locator('.nav-item__role') })
   assert.ok(await agents.count() >= 2, 'Seeded agents must load')
@@ -92,6 +94,7 @@ try {
   }
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
   await window.waitForSelector('.orgb')
+  if (process.argv.includes('--sectors')) report.sectors = await checkSectors(window, output, guard, resize)
   await capture('04-team')
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Usage and limits' }).first().click()
   await window.getByRole('heading', { name: 'Usage and limits', exact: true }).waitFor()

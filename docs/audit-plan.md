@@ -1,8 +1,43 @@
 # Tucano audit development plan
 
-Updated: 14 November 2026. This is private fork workflow context, not an upstream PR brief.
+Updated: 15 November 2026. This is private fork workflow context, not an upstream PR brief.
 
 ## Current priority and progress
+
+### Active delivery: upstream 0.2.31
+
+The current delivery checklist and exact source refs are in
+[the 0.2.31 reconciliation record](upstream-reconciliation-0.2.31.md). Complete that upgrade,
+installed verification and fork release before resuming older feature audits.
+
+### Daily intake and aging-PR audit policy
+
+This is a maintained work queue. Every daily run refreshes upstream and Apo's authored PR heads,
+records new or revised work, and updates [the open-PR checkbox backlog](open-pr-audit.md).
+The inventory is a snapshot; the checkbox backlog is keyed to exact PR heads and resets completed
+reviews when those heads change. A merged PR, integration into TucanoNext, a targeted repair and
+a complete feature audit remain different states.
+
+- [ ] At each daily intake, inspect remotes, worktrees, dirty files and local/published divergence before fetching.
+- [ ] Refresh upstream/main, origin/main and origin/next; preserve concurrent and unpublished work.
+- [ ] Refresh the authored PR inventory and cached patches; record new heads and maintainer dispositions.
+- [ ] Inspect new/revised PR descriptions, discussions, dependencies and behavior against the integration.
+- [ ] Reconcile upstream changes and useful new PR behavior into TucanoNext, resolving overlaps by behavior.
+- [ ] Review the next oldest unchecked PR in each risk group, prioritizing privacy, data loss and stalled runs.
+- [ ] Record exact-head findings, checks and remaining work; only mark a feature complete after every audit dimension passes.
+- [ ] Validate affected behavior, then complete full source checks and installed background QA for code deliveries.
+- [ ] Refresh the fork release when required, and record source, evidence, outcome and next priorities in a dated intake log.
+
+These are recurring steps, reopened for each daily run. Do not routinely rebase or merge current
+upstream into old public PR branches. Keep their existing review boundaries and history while
+auditing their implementation and the integrated behavior. Update an existing PR when a concrete
+review finding requires a focused repair; propose new upstream bugs from current upstream/main.
+Do not spend a daily run refreshing every old PR merely to remove its GitHub conflict indicator.
+
+The original 43-feature cohort below remains a stable historical denominator. The generated open
+queue covers later PRs too, with its own current denominator. Intake coverage and targeted repairs
+must never be reported as full feature audit completion. Use exact snapshots rather than a fixed
+claim about how many PRs Apo has opened.
 
 ### Evening intake and pause safety, 14 November
 

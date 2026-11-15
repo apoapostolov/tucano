@@ -690,8 +690,7 @@ const COLUMNS: [string, string, string][] = [
   // A check-in that said exactly what the last one said: kept as evidence, never delivered twice.
   ['initiative_wakes', 'deduped', 'INTEGER'],
   // A report that reached the person, so a restart between the run and the delivery shows it once.
-  ['initiative_wakes', 'delivered', 'INTEGER']
-,
+  ['initiative_wakes', 'delivered', 'INTEGER'],
   // A request that answered as far as it goes before stopping on an approval of mine, and how often
   // the one asked was knocked on after leaving no reply at all (src/core/delegations.ts).
   ['delegations', 'parked_told', 'INTEGER NOT NULL DEFAULT 0'],
