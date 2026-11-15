@@ -67,7 +67,7 @@ try {
     await block.waitFor()
     await page.waitForFunction(() => {
       const block = [...document.querySelectorAll('.thought')].at(-1)
-      return (block?.querySelector('.thought__text')?.textContent.length ?? 0) > 18000 && block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
+      return (block?.querySelector('.thought__text')?.textContent.length ?? 0) > 12000 && block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
     }, null, { polling: 50 })
     // An explicit open preserves the public feature's manual choice through completion.
     const head = block.locator('.thought__head')
@@ -81,18 +81,22 @@ try {
       list.scrollTop += block.getBoundingClientRect().top - list.getBoundingClientRect().top - 25
       list.dispatchEvent(new Event('scroll'))
       block.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }))
-      block.scrollTop = Math.round((block.scrollHeight - block.clientHeight) * 0.75)
+      block.scrollTop = Math.round((block.scrollHeight - block.clientHeight) * 0.8)
       block.dispatchEvent(new Event('scroll'))
       const text = block.querySelector('.thought__text').firstChild
-      let offset = 0
-      // Find a character fully visible in the upper half of the reasoning viewport.
       const range = document.createRange()
-      for (; offset < text.length; offset++) {
-        range.setStart(text, offset)
-        range.setEnd(text, offset + 1)
-        const rect = range.getBoundingClientRect()
-        if (rect.top >= block.getBoundingClientRect().top + 30) break
+      const target = block.getBoundingClientRect().top + 30
+      let low = 0, high = text.length - 1
+      while (low < high) {
+        const middle = Math.floor((low + high) / 2)
+        range.setStart(text, middle)
+        range.setEnd(text, middle + 1)
+        if (range.getBoundingClientRect().top < target) low = middle + 1
+        else high = middle
       }
+      const offset = low
+      range.setStart(text, offset)
+      range.setEnd(text, offset + 1)
       const marker = text.textContent.slice(offset - 100, offset + 100)
       window.__qaLine = { block, text, offset, marker }
       window.__qaReadLine = () => {

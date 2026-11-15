@@ -8,6 +8,17 @@ beside the released **`Tucano`**. Preserve that combination throughout developme
 A successful build, an installer exit code, or a process left from an earlier installation
 does not establish that the new app launched or that the changed feature works.
 
+The parent owns delivery after child reports. Context warnings and compaction preserve state;
+they never close unfinished delivery. Register `handoff_guard.py --begin-delivery` with the
+session ID on stdin, then record parent-owned `--checkpoint NAME` transitions in order:
+child-report, parent-reproduction, repair, pr-updated, pushed-head-verified, next-pushed,
+build-package, installed, fresh-launch, installed-behavior-verified. Use `--complete` only
+after every required result is verified. Keep incomplete checkpoints open if a hard limit
+interrupts work, and deliver the entire honest handoff in one fenced code block at task end.
+
+The guard never blocks a turn. It stays silent while delivery is open; above 200k input
+tokens, a completed task receives only a soft reminder to print the whole fenced handoff.
+
 ## Write and verify interface copy
 
 **New and changed interface strings must pass an editorial review and a rendered layout check

@@ -8,6 +8,21 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
+parent reproduction, repair, existing PR update (or an appropriate new PR), pushed-head verification,
+integration and push to next, build/package, installation into Programs/tucanonext, fresh launch,
+and changed-behavior verification in that installed build. A child completion or partial checkpoint
+cannot mark the packet delivered. Context warnings preserve state without closing the task;
+end-of-task handoffs above 200k follow the Stop hook. A hard interruption records unfinished work
+honestly. The guard's ordered checkpoint names and completion command are maintained in AGENTS.md.
+
+The guard never blocks a turn and stays silent during open delivery. Once a task is complete,
+its Stop hook gives only a soft handoff reminder above 200k input tokens.
+
+The [R-245 delivery record](audit-245-delivery-2026-11-15.md) tracks the public retention repair,
+composed folding, remote verification and installed checks. Targeted repair is separate from
+the still-open full feature audit.
+
 The [maintainer-requested revision batch](maintainer-revisions-2026-11-15.md) updates #391,
 #392, #402 and #468 and splits #471/#472. These are targeted upstream repairs with passing
 checks, not completed full feature audits. The safe restart-harness improvements are migrated;
