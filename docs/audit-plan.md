@@ -8,6 +8,12 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+The [maintainer-requested revision batch](maintainer-revisions-2026-11-15.md) updates #391,
+#392, #402 and #468 and splits #471/#472. These are targeted upstream repairs with passing
+checks, not completed full feature audits. The safe restart-harness improvements are migrated;
+TucanoNext retains its own strings, component organization, recovery defaults and dismissal
+behavior. The underlying comparison and older-retry repairs were already present.
+
 TucanoNext 0.2.32 is installed and released. Upstream baseline is
 `d175567b0a12d885544d74c45792717a883287f5`; installer source is
 `d797e0c45a8b8c882274aad385b5e1c037caed8a`. The application suite passed **2,620 tests**,
