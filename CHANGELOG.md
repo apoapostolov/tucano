@@ -48,6 +48,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ### Fixed
 
 - **A phone app can't start an empty install for the endpoint.** A phone app from before the endpoint listed it among the harnesses, with an **Install** button; on a server, that ran the installer with an empty command. Installing or signing in to the endpoint is now refused with what to do instead: it's an address and a key, in **Settings › Models**, on the computer or in the browser. (#492)
+- **Bring your Hermes Agent over.** Someone who has used Hermes (Nous Research) for a long time had no way to bring what they built there. **Settings › General › Team › Import from Hermes…** reads the Hermes folder where it is, on this computer (`$HERMES_HOME`, `~/.hermes`, or one you pick), and shows what comes in before adding anything; with profiles, you choose which. Each profile becomes an agent: its `SOUL.md` as instructions, its memories, what it knew about you (as your memories), the skills you made or installed, and the scheduled jobs that fit a routine here. As with OpenBot and Grok Bot, the agents come with no connector, web search off and no computer, the routines off and every memory waiting for your yes; MCP servers, messaging gateways (Telegram, Discord…), jobs whose schedule has no match here and the model are only named in the summary. Only a list of files is opened, by name: never `.env`, `auth.json`, the sessions or the logs.
+- **Resume interrupted replies when Tucano reopens, if enabled.** The new Agents / Recovery setting is off by default. Replies with tool results continue through the same rule and context as Continue; manual stops stay stopped and paused workspaces wait until resumed. (#389)
 
 ## [0.2.34] - 2026-11-15
 

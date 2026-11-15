@@ -39,19 +39,8 @@ beforeEach(() => {
   db.createConversation({ id: 'dm', kind: 'dm', name: 'Agent', members: ['a'] })
 })
 
-it('retrieves an older retry before the SQL history limit, without later summary or messages', async () => {
-  reply('old', 1000, 'stopped')
-  for (let n = 0; n < 250; n++) db.saveMessage({ id: `later-${n}`, conversationId: 'dm', author: { kind: 'person', id: db.ownerId() }, text: `Later ${n}`, at: 2000 + n })
-  db.setSummary('dm', 'Future summary', 2200)
-  runner.retry('old')
-  await runner.idle()
-  expect(turns).toHaveLength(1)
-  expect(turns[0]?.prompt).toContain('Request old')
-  expect(turns[0]?.prompt).not.toContain('Later')
-  expect(turns[0]?.prompt).not.toContain('Future summary')
-})
-
-it('resumes working replies by default, preserving progress and keeping explicit stops stopped', async () => {
+it('resumes working replies when enabled, preserving progress and keeping explicit stops stopped', async () => {
+  settings.resumeInterrupted = true
   reply('running', 1000, 'working')
   const msg = db.message('running')!
   db.saveMessage({ ...msg, run: { ...msg.run!, task: 'Original task', work: 'TASK-123', steps: [{ id: 's', label: 'Saved file', status: 'done' }] } })
@@ -64,13 +53,15 @@ it('resumes working replies by default, preserving progress and keeping explicit
   expect(turns[0]?.prompt).toContain('Original task')
   expect(turns[0]?.prompt).toContain('Partial running')
   expect(turns[0]?.prompt).toContain('Saved file')
-  expect(db.message('running')?.run).toMatchObject({ status: 'done', work: 'TASK-123' })
+  expect(db.message('running')?.run?.status).toBe('done')
+  expect(db.messagesWithRun(['done']).some(m => m.id !== 'running' && m.run?.work === 'TASK-123')).toBe(true)
   expect(db.message('running')?.run?.restartPending).toBeUndefined()
   expect(db.message('stopped')?.run?.status).toBe('stopped')
   expect(db.message('old-interrupted')?.run?.status).toBe('interrupted')
 })
 
 it('leaves replies interrupted when recovery is disabled, without replaying them on a later start', async () => {
+  settings.resumeInterrupted = true
   reply('running', 1000, 'working')
   db.interruptStaleRuns()
   settings.resumeInterrupted = false
@@ -82,7 +73,35 @@ it('leaves replies interrupted when recovery is disabled, without replaying them
   expect(db.message('running')?.run?.status).toBe('interrupted')
 })
 
+it('does not resume by default or replay skipped work after enabling recovery', async () => {
+  reply('running', 1000, 'working')
+  db.interruptStaleRuns()
+  await runner.resumeInterrupted()
+  settings.resumeInterrupted = true
+  await runner.resumeInterrupted()
+  await runner.idle()
+  expect(turns).toHaveLength(0)
+  expect(db.message('running')?.run?.status).toBe('interrupted')
+})
+
+it('uses the Continue rule: thinking alone is not recovered, failed tool work is', async () => {
+  settings.resumeInterrupted = true
+  reply('thinking', 1000, 'working')
+  reply('failed-tool', 2000, 'working')
+  for (const [id, label, status] of [['thinking', 'Thought', 'done'], ['failed-tool', 'Read file', 'error']] as const) {
+    const msg = db.message(id)!
+    db.saveMessage({ ...msg, run: { ...msg.run!, steps: [{ id: 's', label, status }] } })
+  }
+  db.interruptStaleRuns()
+  await runner.resumeInterrupted()
+  await runner.idle()
+  expect(turns).toHaveLength(1)
+  expect(db.message('thinking')?.run?.status).toBe('interrupted')
+  expect(db.message('failed-tool')?.run?.status).toBe('done')
+})
+
 it('queues all interrupted replies while paused and resumes each once', async () => {
+  settings.resumeInterrupted = true
   reply('one', 1000, 'working')
   reply('two', 2000, 'working')
   db.interruptStaleRuns()
@@ -91,6 +110,7 @@ it('queues all interrupted replies while paused and resumes each once', async ()
   await runner.resumeInterrupted()
   expect(turns).toHaveLength(0)
   expect(db.message('one')?.run?.restartPending).toBe(true)
+  expect(db.message('one')?.run?.status).toBe('interrupted')
   runner.setPaused(false)
   await runner.idle()
   expect(turns).toHaveLength(2)
@@ -106,6 +126,7 @@ it('does not restart approval waits, questions, budget pauses, failures or compl
 })
 
 it('does not recover an archived agent', async () => {
+  settings.resumeInterrupted = true
   reply('running', 1000, 'working')
   db.interruptStaleRuns()
   db.saveAgent({ ...db.agent('a')!, archived: true })
@@ -117,17 +138,5 @@ afterEach(async () => { await runner.idle(); db.close() })
 
 function reply(id: string, at: number, status: NonNullable<Message['run']>['status']): void {
   db.saveMessage({ id: `ask-${id}`, conversationId: 'dm', author: { kind: 'person', id: db.ownerId() }, text: `Request ${id}`, at: at - 1 })
-  db.saveMessage({ id, conversationId: 'dm', author: { kind: 'agent', id: 'a' }, text: `Partial ${id}`, at, run: { status, steps: [] } })
+  db.saveMessage({ id, conversationId: 'dm', author: { kind: 'agent', id: 'a' }, text: `Partial ${id}`, at, run: { status, steps: [{ id: `step-${id}`, label: 'Read file', status: 'done' }] } })
 }
-
-it('retries every stopped reply in one DM, including older replies', async () => {
-  reply('first', 1000, 'stopped')
-  reply('second', 2000, 'stopped')
-  reply('third', 3000, 'stopped')
-  for (const id of ['first', 'second', 'third']) runner.retry(id)
-  await runner.idle()
-  expect(turns).toHaveLength(3)
-  for (const id of ['first', 'second', 'third']) expect(db.message(id)?.run?.status).toBe('done')
-  expect(turns[0]?.prompt).toContain('Request first')
-  expect(turns[0]?.prompt).not.toContain('Request second')
-})

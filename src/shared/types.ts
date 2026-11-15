@@ -510,7 +510,7 @@ export interface Settings {
   theme: 'system' | 'light' | 'dark'
   language: Lang // the app's, and the language agents answer in
   openAtLogin?: boolean // so routines run without me opening the app
-  resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: on
+  resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: off
   runBudgetPct?: number // per reply, % of the agent's monthly limit before it pauses; default RUN_BUDGET_PCT
   runStallMinutes?: number // without any sign of life; default RUN_STALL_MINUTES
   chainDepth?: number // agent replies in a row from one human message; default CHAIN_DEPTH

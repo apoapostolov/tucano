@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { L, locale } from '../shared/lang'
 import { monthlyCeiling } from '../shared/limits'
-import { restartTask } from './restart-recovery'
 import { friendly, toolLabel } from '../shared/errors'
 import { NODE_APPROVED, NODE_BASH } from './node-server'
 import { nodeOf } from '../shared/node-link'
@@ -373,7 +372,7 @@ export function routedHistory(db: Pick<Db, 'message'>, windowed: Message[], anch
 }
 
 export class Runner {
-  private retrying = new Set<string>()
+  private recovering = new Set<string>()
   private queue: { job: () => Promise<unknown>; urgent: boolean }[] = []
   private active = 0
   private routing = 0
@@ -696,32 +695,29 @@ export class Runner {
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)
     if (!agent || !conv) return
-    this.restartReply(agent, conv, msg)
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg }, { urgent: true })
   }
 
-  private restartReply(agent: Agent, conv: Conversation, msg: Message, task?: string, urgent = true): void {
-    if (this.retrying.has(msg.id)) return
-    this.retrying.add(msg.id)
-    void this.startReply(agent, conv, { depth: msg.run?.depth ?? 1, existing: msg, ...(task ? { task } : {}), work: msg.run?.work }, { urgent })
-      .finally(() => this.retrying.delete(msg.id))
-  }
-
-  // Recovery uses the scheduler even while paused; queued replies start only after unpausing.
+  // Startup recovery shares the manual Continue rule and scheduler, including paused workspaces.
   async resumeInterrupted(): Promise<void> {
     const { db } = this.deps
-    const enabled = (await this.deps.settings()).resumeInterrupted !== false
+    const enabled = (await this.deps.settings()).resumeInterrupted === true
     for (const msg of db.messagesWithRun(['interrupted'])) {
       if (!msg.run?.restartPending) continue
-      if (!enabled) {
-        const { restartPending: _, ...run } = msg.run
+      const { restartPending: _, ...run } = msg.run
+      if (!enabled || !canContinue(run)) {
         db.saveMessage({ ...msg, run })
         continue
       }
-      if (msg.author.kind !== 'agent') continue
+      if (msg.author.kind !== 'agent' || this.recovering.has(msg.id)) continue
       const agent = db.agent(msg.author.id)
       const conv = db.conversation(msg.conversationId)
       if (!agent || agent.archived || !conv || !conv.members.includes(agent.id)) continue
-      this.restartReply(agent, conv, msg, restartTask(msg), false)
+      this.recovering.add(msg.id)
+      this.enqueue(async () => {
+        try { await this.continueReply(msg.id, true) }
+        finally { this.recovering.delete(msg.id) }
+      }, false)
     }
   }
 
@@ -730,10 +726,14 @@ export class Runner {
   // always has somewhere to go on from; stopped, interrupted or failed, only when a step came back.
   // A reply that never got a tool call back is not continued: the person tries again instead.
   async continue(messageId: string): Promise<void> {
+    await this.continueReply(messageId)
+  }
+
+  private async continueReply(messageId: string, automatic = false): Promise<void> {
     const { db } = this.deps
     const msg = db.message(messageId)
     if (!msg?.run || msg.author.kind !== 'agent' || !canContinue(msg.run)) return
-    if (this.paused) return // nobody starts working while paused
+    if (this.paused) return // startup recovery waits in the scheduler until unpaused
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)
     if (!agent || !conv) return
@@ -741,7 +741,8 @@ export class Runner {
     // Read before the status changes: how it was cut is what the next reply is told.
     const cut = msg.run.status
     // Said before the new reply starts, so the cut one reads as answered rather than as an offer.
-    this.update(msg, { run: { ...msg.run, status: 'done' } })
+    const { restartPending: _, ...run } = msg.run
+    this.update(msg, { run: { ...run, status: 'done' } })
     const steps = (msg.run.steps ?? [])
       .filter((s) => s.status !== 'running' && !WORKLESS_LABELS.includes(s.label))
       .slice(-40)
@@ -762,7 +763,7 @@ export class Runner {
     ]
       .filter(Boolean)
       .join('\n\n')
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}) }, { urgent: true })
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}) }, { urgent: !automatic })
   }
 
   // Posts a routine's request in its conversation and runs its agent on it.
