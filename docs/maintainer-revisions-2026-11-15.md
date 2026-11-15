@@ -50,7 +50,7 @@ scrolling and cancelling a one-million-character edit. Narrow browser evidence c
 900 and 1280 CSS pixels; Electron evidence covers 900 and 1280 CSS pixels at 150% scaling.
 The extracted screen also passes proposal, approval, history and restoration smoke checks.
 
-[Immutable captures, copy measurements, exact source identities and validation notes](https://github.com/apoapostolov/tucano/tree/0767758304c101eea9d12208755786cf1046a4ad/frames/maintainer-revisions-2026-11-15).
+[Immutable captures, copy measurements, exact source identities and validation notes](https://github.com/apoapostolov/tucano/tree/440f69724a5852aed53323af40c105faa8c18ed1/frames/maintainer-revisions-2026-11-15).
 
 Editorial and visual review passed for the recovery label/hint and new comparison text. The
 unchanged upstream Skills warning occupies three lines at 420 pixels. It remains fully visible;
@@ -79,6 +79,9 @@ packaged application source, interface strings, settings defaults, database impl
 installed files. Under AGENTS.md's development-script exception, no installer or release is
 required. The built TucanoNext was run with scratch data to validate the migrated harness.
 
+Final GitHub checks: all six published heads have successful CI and are mergeable against main `3e8162eb`. The migrated harness passes 20 assertions at clean source `f0d88b68`; later commits change documentation only.
+
 The next review trigger is a maintainer reply or a changed PR head/base. A future Tucano release
 must still be ingested selectively, preserving the decisions recorded here.
+
 
