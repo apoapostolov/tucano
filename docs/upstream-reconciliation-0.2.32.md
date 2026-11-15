@@ -21,3 +21,12 @@ The 0.2.31 release remains available, but 0.2.32 is now the requested final deli
 
 The living plan, exact-head open-PR queue and daily 09:00 Europe/Kyiv intake continue unchanged.
 Public feature branches are updated for concrete repairs, not routinely rebased to latest main.
+
+## Browser layout evidence
+
+The freshly built 0.2.32 renderer passes `scripts/qa-browser-sectors.mjs` with headless Edge at
+1280, 900 and 420 CSS pixels. The synthetic entry-point toggle reaches the core and comes back,
+its default request target is the coordinator, both sector zones remain separate, Team attachments
+are reachable, and the revised entry-point hint remains within two lines. The helper supports the
+additional browser width without asking Electron to violate its 900px minimum. Evidence and fonts,
+line counts and overflow measurements: `C:/tmp/tucano-0232-browser-sectors/report.json`.

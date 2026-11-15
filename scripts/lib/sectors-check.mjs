@@ -47,7 +47,7 @@ export async function seedSectors(page) {
   })
 }
 
-export async function checkSectors(page, output, guard, resize) {
+export async function checkSectors(page, output, guard, resize, widths = [1280, 900]) {
   const viewport = await electronCopyViewport(page, resize)
   const measurements = []
   await page.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
@@ -61,7 +61,7 @@ export async function checkSectors(page, output, guard, resize) {
   await entryControl.click()
   await page.locator('.org-card__head--entry').waitFor()
   const entryCopy = []
-  for (const width of [1280, 900]) {
+  for (const width of widths) {
     await viewport.set(width)
     await page.locator('.org-side').evaluate(async node => { await Promise.all(node.getAnimations().map(animation => animation.finished)) })
     const copy = await measureCopy(page, [{ selector: '.org-pop__entry b', maxLines: 1 }, { selector: '.org-pop__entry small', maxLines: 2 }])
@@ -70,7 +70,7 @@ export async function checkSectors(page, output, guard, resize) {
     assert.ok(copy.passed, JSON.stringify(copy.failures))
   }
   await page.locator('.org-side button[title="Close (Esc)"]').click()
-  for (const width of [1280, 900]) {
+  for (const width of widths) {
     await viewport.set(width)
     const arrange = page.getByRole('button', { name: 'Tidy up', exact: true })
     if (await arrange.count()) await arrange.click()
