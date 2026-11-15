@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path'
 import { createServer } from 'node:net'
 import { _electron as electron } from 'playwright'
 import { execFileSync } from 'node:child_process'
+import { measureCopy } from './lib/copy-layout.mjs'
 
 const output = resolve(process.argv[2] ?? 'C:/tmp/tucano-scroll-evidence/thought')
 mkdirSync(output, { recursive: true })
@@ -192,7 +193,35 @@ try {
     report.checks.at(-1).ending = { top: finishingTop, samples: ending }
     assert.ok(ending.every(sample => Math.abs(sample.top - finishingTop) < 2), JSON.stringify({ size, finishingTop, ending }))
     assert.equal(ending.at(-1).working, false, 'Keep measuring through completion')
+    assert.equal(await head.getAttribute('aria-expanded'), 'true', 'Explicit open persists through completion')
+    await head.dispatchEvent('click')
+    await page.waitForFunction(() => [...document.querySelectorAll('.thought__head')].at(-1)?.getAttribute('aria-expanded') === 'false')
+    assert.equal(await block.locator('.thought__text').count(), 0)
+    report.checks.at(-1).foldCopy = []
+    for (const width of [900, 1280, 360]) {
+      await app.evaluate(({ BrowserWindow }, width) => {
+        const window = BrowserWindow.getAllWindows()[0]
+        if (window.isVisible() || window.isFocusable()) throw new Error('Only resize hidden QA windows')
+        window.setContentSize(width, 800)
+      }, width)
+      const copy = await measureCopy(page, [{ selector: '.thought__label', maxLines: 1 }])
+      assert.ok(copy.passed, JSON.stringify(copy.failures))
+      report.checks.at(-1).foldCopy.push({ width, viewport: await page.evaluate(() => ({ width: innerWidth, height: innerHeight })), copy })
+      await page.screenshot({ path: join(output, `fold-${size}-${width}.png`) })
+    }
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(1280, 800))
+    await head.dispatchEvent('click')
+    await block.locator('.thought__text').waitFor()
   }
+  await page.locator('.composer textarea').fill('Lia, verify automatic completion folding.')
+  await page.locator('.composer textarea').press('Enter')
+  const automatic = page.locator('.thought').last()
+  await automatic.waitFor()
+  await page.waitForFunction(() => [...document.querySelectorAll('.thought')].at(-1)?.closest('.steps')?.classList.contains('is-working'))
+  assert.equal(await automatic.locator('.thought__head').getAttribute('aria-expanded'), 'true')
+  await page.waitForFunction(() => [...document.querySelectorAll('.thought__head')].at(-1)?.getAttribute('aria-expanded') === 'false', null, { timeout: 45000 })
+  assert.equal(await automatic.locator('.thought__text').count(), 0)
+  report.automaticCompletionFold = true
   assert.ok(await page.locator('.thought').count(), 'Completed reasoning remains available while enabled')
   await page.evaluate(() => window.__qaCall('updateSettings', { patch: { showThinking: false } }))
   await page.waitForFunction(() => !document.querySelector('.thought'))
