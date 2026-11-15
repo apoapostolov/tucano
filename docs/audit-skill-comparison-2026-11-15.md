@@ -53,3 +53,23 @@ output and is not counted as a passing run.
 
 The public full suite is running. Real proposal/history QA, screenshots and installed verification
 are still pending; this checkpoint is not a complete feature audit or completed delivery.
+
+## Rendered review checkpoint
+
+The initial browser fixture opened a second browser core connection through a bridge with a shared
+client identifier. That redirected history replies away from the app's original port. The driver
+now uses its own EventSource/client for fixture calls in browsers; Electron keeps an independent
+IPC port. Proposal approval and history restoration then pass. This was a harness defect, not an
+application-history failure.
+
+Screenshot review found the existing long-recipe warning occupies three lines at 420px. Before:
+“Long recipe: 12,021 characters, 2,021 over the 10,000-character recommendation. Consider shortening
+it; the full recipe will be kept.” Reviewed English replacement, before implementation:
+“Long recipe: 12,021 characters (2,021 above the recommended 10,000). Full text is kept.”
+Actual/excess/recommended counts and the full-content assurance remain; Portuguese stays unchanged.
+The new fallback hint and labels already fit. Fresh captures will measure the neighboring warning too.
+
+The first public full suite reports one failure in the unchanged delegation timing case (1,770
+passed, 60 skipped). No timeout or assertion is changed. A run mistakenly launched from the repair
+worktree despite a base-named output is retained as repair-focused evidence only; a separate
+clean-main worktree is now running the actual baseline case. Do not attribute that first output to main.

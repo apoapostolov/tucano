@@ -6,28 +6,41 @@ import { electronCopyViewport } from './electron-copy-viewport.mjs'
 // Only called by scratch-data/fake-engine drivers. Use the normal core port and proposal tool.
 export async function seedSkillComparisons(page) {
   return page.evaluate(async () => {
-    const port = await new Promise(resolve => {
-      const receive = event => {
-        if (event.source !== window || event.data !== 'core:port' || !event.ports[0]) return
-        window.removeEventListener('message', receive)
-        resolve(event.ports[0])
-      }
-      window.addEventListener('message', receive)
-      window.tucano.connect()
-    })
     let sequence = 0
     const pending = new Map()
-    port.onmessage = event => {
-      const reply = pending.get(event.data.id)
+    const receive = data => {
+      const reply = pending.get(data.id)
       if (!reply) return
-      pending.delete(event.data.id)
-      if (event.data.error !== undefined) reply.reject(Error(event.data.error))
-      else reply.resolve(event.data.result)
+      pending.delete(data.id)
+      if (data.error !== undefined) reply.reject(Error(data.error))
+      else reply.resolve(data.result)
+    }
+    let send
+    if (location.protocol.startsWith('http')) {
+      // The browser bridge has a shared client variable. Do not replace the app's connection.
+      const events = new EventSource('./events')
+      events.onmessage = event => receive(JSON.parse(event.data))
+      const client = await new Promise(resolve => events.addEventListener('hello', event => resolve(event.data), { once: true }))
+      send = request => fetch('./rpc?c=' + encodeURIComponent(client), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(request) })
+      window.__skillQaClose = () => events.close()
+    } else {
+      const port = await new Promise(resolve => {
+        const listener = event => {
+          if (event.source !== window || event.data !== 'core:port' || !event.ports[0]) return
+          window.removeEventListener('message', listener)
+          resolve(event.ports[0])
+        }
+        window.addEventListener('message', listener)
+        window.tucano.connect()
+      })
+      port.onmessage = event => receive(event.data)
+      send = request => port.postMessage(request)
+      window.__skillQaClose = () => port.close()
     }
     window.__skillQaCall = (method, params) => new Promise((resolve, reject) => {
       const id = ++sequence
       pending.set(id, { resolve, reject })
-      port.postMessage({ id, method, params })
+      send({ id, method, params })
     })
     const call = window.__skillQaCall
     await call('setMyName', { name: 'Review user' })
@@ -55,7 +68,9 @@ export async function checkSkillComparisons(page, output, guard, resize, widths 
     for (const width of widths) {
       await viewport.set(width)
       await page.evaluate(async () => { await Promise.allSettled(document.getAnimations().filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished)) })
-      const copy = await measureCopy(page, [{ selector: `${scope} .diff-full .hint`, maxLines: 2 }, { selector: `${scope} .diff-full .field__label`, maxLines: 1 }])
+      const rules = [{ selector: `${scope} .diff-full .hint`, maxLines: 2 }, { selector: `${scope} .diff-full .field__label`, maxLines: 1 }]
+      if (await page.locator(`${scope} > .hint--warn`).count()) rules.push({ selector: `${scope} > .hint--warn`, maxLines: 2 })
+      const copy = await measureCopy(page, rules)
       assert.ok(copy.passed, JSON.stringify(copy.failures))
       const complete = await page.locator(`${scope} .diff-full pre`).evaluateAll(nodes => {
         const fixture = window.__skillQaFixture
