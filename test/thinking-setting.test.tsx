@@ -67,10 +67,11 @@ describe("the model's thinking on screen", () => {
   // place while the rest arrives below it (scripts/screens-thinking.mjs proves it in the window).
   it('counts the end as where the person is reading, not where the stream stopped', () => {
     const box = (scrollTop: number): { scrollHeight: number; scrollTop: number; clientHeight: number } => ({ scrollHeight: 900, scrollTop, clientHeight: 240 })
-    // At the end, and inside the last line: the block keeps taking what arrives.
+    // At the end, allowing subpixel rounding: the block keeps taking what arrives.
     expect(followsTheEnd(box(660))).toBe(true)
-    expect(followsTheEnd(box(646))).toBe(true)
-    // Scrolled up to read: the place stays, further than a line from the end.
+    expect(followsTheEnd(box(659))).toBe(true)
+    expect(followsTheEnd(box(646))).toBe(false)
+    // Scrolled up to read: even part of an earlier line keeps its place.
     expect(followsTheEnd(box(620))).toBe(false)
     expect(followsTheEnd(box(0))).toBe(false)
   })
