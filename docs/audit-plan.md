@@ -10,6 +10,14 @@ The current delivery checklist and exact source refs are in
 [the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). Complete that upgrade,
 installed verification and fork release before resuming older feature audits.
 
+### Next audit priorities after the upgrade
+
+- [ ] Recheck #454 on current main, then prepare a focused bound on large skill comparisons; retain the distinction between the constrained Node reproduction and the Electron renderer.
+- [ ] Audit the complete #245 commit range and its integrated reasoning/reading-position behavior, including folding, steering and follow-up interactions.
+- [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
+- [ ] Finish #423/#424 room-access persistence and enforcement, with separate people/agent controls and private defaults; keep Tuca's room-purpose discussion connected to the same controls.
+- [ ] Continue through the oldest unchecked open PRs, using the generated queue rather than recreating an intake list by hand.
+
 ### Daily intake and aging-PR audit policy
 
 This is a maintained work queue. Every daily run refreshes upstream and Apo's authored PR heads,
