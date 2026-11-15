@@ -1,6 +1,7 @@
 import { L, lang, locale } from '../../../shared/lang'
 import { hourStyle, timeOpts } from '../../../shared/clock'
 import { overMonthlyLimit } from '../../../shared/limits'
+import { sectorName } from '../../../shared/org'
 import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { neverAllowedForGood, ruleTool, runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
@@ -96,6 +97,7 @@ import { canEditChannel,
 } from '../store'
 import { AttachedList, isFile, pastedFiles, touchScreen, uploadsOf, useAttachments, type Attached } from './Attachments'
 import { AgentAvatar, Icon, MeAvatar, ago, ownColor, duration, time, tokens, usd, useJustEnded, type IconName } from './ui'
+import { askWay } from './OrgSectors'
 import { PanelResize } from './SidebarResize'
 import { canRecord, NoSound, record, type Recording } from '../voice'
 import { useVoice, VoicePopover } from './VoiceSetup'
@@ -957,8 +959,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         {(message.run?.agentDraft || proposalsOf(message.run).length > 0) && <Proposals message={message} />}
         {message.run?.memoryIds?.map((mid) => <MemoryChip key={mid} id={mid} />)}
         {message.run?.routineIds?.map((rid) => <RoutineChip key={rid} id={rid} />)}
-        {message.run?.delegations?.map((d) => <DelegationChip key={d.id} at={d} asked />)}
-        {message.run?.delegation && message.conversationId !== message.run.delegation.conversationId && <DelegationChip at={message.run.delegation} />}
+        {message.run?.delegations?.map((d) => <DelegationChip key={d.id} at={d} from={agent?.id} asked />)}
+        {message.run?.delegation && message.conversationId !== message.run.delegation.conversationId && <DelegationChip at={message.run.delegation} from={agent?.id} />}
         {message.run?.delegation && message.id === message.run.delegation.rootId && <RequestNote at={message.run.delegation} from={agent?.name} />}
         {message.run?.wikiChanges?.map((cid) => <WikiChip key={cid} id={cid} />)}
         {message.run?.artifactIds && (
@@ -1652,15 +1654,32 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
 }
 
 // reply that handed it; otherwise on what came back from it (an answer, a question).
-function DelegationChip({ at, asked }: { at: DelegationRef; asked?: boolean }): ReactNode {
+function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolean; from?: string }): ReactNode {
   const to = useStore((s) => agentById(s, at.to))
+  const agents = useStore((s) => s.agents)
+  const kind = from && to ? askWay(agents, { from, to: at.to }) : undefined
+  const label =
+    kind === 'up'
+      ? asked ? L('Passou ao chefe', 'Passed to the head') : L('Do pedido ao chefe', 'From the request to the head')
+      : kind === 'sector' && to
+        ? asked ? L(`Pediu para ${sectorName(to, 'Setor de')}`, `Asked ${sectorName(to, 'Sector of')}`) : L(`Do pedido para ${sectorName(to, 'Setor de')}`, `From the request to ${sectorName(to, 'Sector of')}`)
+        : undefined
   const channel = useStore((s) => s.conversations.find((c) => c.id === at.conversationId))
   if (!channel) return null // a channel this person doesn't see, or one that's gone
   return (
     <div className="memory-chip delegation-chip">
       <Icon name="users" size={13} />
-      <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
-      <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+      {label ? (
+        <>
+          <span className="memory-chip__label">{label}</span>
+          {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
+        </>
+      ) : (
+        <>
+          <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
+          <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+        </>
+      )}
       <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
       <button
         className="link"
