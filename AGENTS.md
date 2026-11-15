@@ -264,12 +264,22 @@ session's context ends up carrying every diff.
 - Spawn with `fork_turns="none"` and an explicit model and effort. A full-history fork inherits the
   parent's model and effort and refuses overrides, so a Sol parent silently charges Sol rates on
   every child turn.
-- Route by the kind of work, not by price alone. Discovery, ambiguity and "what else does this
-  break" go to Sol at low or medium effort, because noticing what the author did not ask about is
-  the behaviour the cheaper models do not have. Mechanical steps that a failing test, a type error
-  or a grep can judge go to Luna at high effort. Independent review, browsing and rendered UI checks
-  go to Terra at high or max. Escalate a child that has failed twice to Sol medium instead of
-  retrying it on the same settings.
+- Route by the kind of work, not by price. This table is the routing for this repository, and a spawn
+  that omits `model` and `reasoning_effort` inherits the parent's settings instead of using it. A
+  spawn that passes a model but no effort takes that model's own multi-agent default, which the model
+  catalogue records as `xhigh` for Sol and Terra, so pass both fields every time.
+
+  | Child role | `model` | `reasoning_effort` | Why |
+  | --- | --- | --- | --- |
+  | Discovery and ambiguity, "what else does this break" | `gpt-6.1-sol` | `low` | Noticing what nobody asked about is the capability the cheap lane lacks, and raising its effort does not add it |
+  | Mechanical step with a cheap check, such as a failing test, a type error or a grep | `gpt-6-luna` | `high` | The check catches a miss, so the cheap lane is safe here |
+  | Independent review, browsing and rendered UI checks | `gpt-6.1-terra` | `high`, or `max` for a rendered verdict | Reads and drives a browser well, and is the worst of the three as an implementer |
+  | Escalation after two failed attempts | `gpt-6.1-sol` | `medium` | Re-prompting the same cheap child burns the wave |
+  | Parent session | `gpt-6.1-sol` | `medium` | Plans, dispatches, dedupes and judges; never reads a diff |
+
+  Escalate a child that has failed twice by changing its model and effort, not by re-prompting it on
+  the same settings. Pin the effort for the life of a child, because switching effort appears to clear
+  the prompt cache.
 - Keep children in flight up to the concurrency slots the session reports, and reuse a finished
   child with a follow-up task rather than spawning another. Children are leaves and must not spawn
   their own.

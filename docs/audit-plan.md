@@ -173,11 +173,14 @@ session's context absorbing every diff.
 - Spawn with `fork_turns="none"` plus an explicit model and effort. A full-history fork inherits the
   parent's model and effort and refuses overrides, so a Sol parent silently bills Sol rates on every
   child turn.
-- Route by the kind of work. Discovery, ambiguous behavior and "what else does this break" go to Sol
-  at low or medium effort, because noticing what nobody asked about is the capability the cheaper
-  models lack and raising their effort does not add it. Mechanical steps with a cheap check, such as
-  a failing test, a type error or a grep, go to Luna at high effort. Independent review, browsing and
-  rendered UI checks go to Terra at high or max.
+- Route by the kind of work. The authoritative table is under
+  [delegate PR work to subagents](../AGENTS.md#delegate-pr-work-to-subagents); in short, discovery and
+  other ambiguity go to `gpt-6.1-sol` at `low`, mechanical steps with a cheap check go to
+  `gpt-6-luna` at `high`, and independent review, browsing or a rendered UI check go to
+  `gpt-6.1-terra` at `high` or `max`. The parent session stays on `gpt-6.1-sol` at `medium`, and a
+  spawn that omits `model` and `reasoning_effort` copies those settings into every child turn, which
+  is the cost this section exists to avoid. Escalate a child that has failed twice by changing its
+  model and effort rather than re-prompting it.
 - Keep at most six children in flight and reuse a finished child for its next PR with a follow-up
   task. Children are leaves and must not spawn further agents.
 - Every child reports the PR number, head SHA, verdict, findings as `file:line` with the command that
