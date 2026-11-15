@@ -43,7 +43,9 @@ try {
     })
     let id = 0
     const pending = new Map()
+    window.__qaThoughtBytes = 0
     port.onmessage = event => {
+      if (event.data.event?.type === 'thinking') window.__qaThoughtBytes += event.data.event.text.length
       const result = pending.get(event.data.id)
       if (!result) return
       pending.delete(event.data.id)
@@ -64,11 +66,15 @@ try {
     await block.waitFor()
     await page.waitForFunction(() => {
       const block = [...document.querySelectorAll('.thought')].at(-1)
-      return block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
+      return (block?.querySelector('.thought__text')?.textContent.length ?? 0) > 8000 && block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
     }, null, { polling: 50 })
     // An explicit open preserves the public feature's manual choice through completion.
-    await block.locator('.thought__head').click()
-    await block.locator('.thought__head').click()
+    const head = block.locator('.thought__head')
+    await head.dispatchEvent('click')
+    await page.waitForFunction(() => [...document.querySelectorAll('.thought__head')].at(-1)?.getAttribute('aria-expanded') === 'false')
+    await head.dispatchEvent('click')
+    await page.waitForFunction(() => [...document.querySelectorAll('.thought__head')].at(-1)?.getAttribute('aria-expanded') === 'true')
+    await block.locator('.thought__text').waitFor()
     const marked = await block.evaluate(block => {
       const list = block.closest('.messages')
       list.scrollTop += block.getBoundingClientRect().top - list.getBoundingClientRect().top - 25
@@ -86,18 +92,25 @@ try {
         const rect = range.getBoundingClientRect()
         if (rect.top >= block.getBoundingClientRect().top + 30) break
       }
-      window.__qaLine = { block, text, offset }
-      return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length }
+      const marker = text.textContent.slice(offset - 100, offset + 100)
+      window.__qaLine = { block, text, offset, marker }
+      window.__qaReadLine = () => {
+        const saved = window.__qaLine
+        const start = saved.text.textContent.indexOf(saved.marker)
+        if (start < 0) throw new Error('The marked native reading passage left retention; this sample cannot establish line stability')
+        return { ...saved, offset: start + 100 }
+      }
+      return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length, streamed: window.__qaThoughtBytes }
     })
     // Finish the synthetic scroll gesture and its pre-paint layout before starting the reading
     // interval. Measurements below include every subsequent streamed update and completion.
     await page.screenshot()
     Object.assign(marked, await page.evaluate(() => {
-      const { block, text, offset } = window.__qaLine
+      const { block, text, offset } = window.__qaReadLine()
       const range = document.createRange()
       range.setStart(text, offset)
       range.setEnd(text, offset + 1)
-      return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length }
+      return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length, streamed: window.__qaThoughtBytes }
     }))
     const samples = []
     for (let i = 0; i < 45; i++) {
@@ -114,11 +127,11 @@ try {
       // pre-paint ResizeObserver delivery rather than sampling its provisional layout.
       if (i === 12 || i === 25) await page.screenshot({ path: join(output, `growth-${size}-${i}.png`) })
       samples.push(await page.evaluate(() => {
-        const { block, text, offset } = window.__qaLine
+        const { block, text, offset } = window.__qaReadLine()
         const range = document.createRange()
         range.setStart(text, offset)
         range.setEnd(text, offset + 1)
-        return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length, connected: text.isConnected,
+        return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length, streamed: window.__qaThoughtBytes, connected: text.isConnected,
           blockTop: block.getBoundingClientRect().top, textTop: block.querySelector('.thought__text').getBoundingClientRect().top,
           listTop: block.closest('.messages').scrollTop, height: block.clientHeight,
           font: getComputedStyle(block).font, textFont: getComputedStyle(block.querySelector('.thought__text')).font }
@@ -127,7 +140,7 @@ try {
     }
     report.checks.push({ size, marked, samples })
     await page.screenshot({ path: join(output, `reading-${size}.png`) })
-    assert.ok(samples.at(-1).chars > marked.chars + 1000, 'Substantial reasoning must arrive while reading')
+    assert.ok(samples.at(-1).streamed > marked.streamed + 1000, 'Substantial reasoning must arrive while reading')
     assert.ok(samples.every(sample => sample.connected && Math.abs(sample.top - marked.top) < 2), JSON.stringify({ size, marked, samples }))
     // At the page's top limit a shrinking header can move the block itself. The inner offset
     // may compensate for that; the character's visible line is the invariant.
@@ -148,14 +161,14 @@ try {
       list.dispatchEvent(new Event('scroll'))
       block.scrollTop = scroll
       block.dispatchEvent(new Event('scroll'))
-      const { text, offset } = window.__qaLine
+      const { text, offset } = window.__qaReadLine()
       const range = document.createRange()
       range.setStart(text, offset)
       range.setEnd(text, offset + 1)
     }, marked.scroll)
     await page.screenshot()
     const finishingTop = await page.evaluate(() => {
-      const { text, offset } = window.__qaLine
+      const { text, offset } = window.__qaReadLine()
       const range = document.createRange()
       range.setStart(text, offset)
       range.setEnd(text, offset + 1)
@@ -164,7 +177,7 @@ try {
     const ending = []
     for (let i = 0; i < 200; i++) {
       const sample = await page.evaluate(() => {
-        const { block, text, offset } = window.__qaLine
+        const { block, text, offset } = window.__qaReadLine()
         const range = document.createRange()
         range.setStart(text, offset)
         range.setEnd(text, offset + 1)

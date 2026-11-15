@@ -33,3 +33,5 @@ function Fixture() {
 createRoot(document.getElementById('root')!).render(<Fixture />)
 ;(window as any).setSize = (thinkingSize: string) => port.onmessage({ data: { event: { type: 'settings', settings: { ...settings, thinkingSize } } } })
 ;(window as any).emitThought = (text: string) => port.onmessage({ data: { event: { type: 'thinking', id: 'm', text } } })
+
+;(window as any).setThinking = (showThinking: boolean) => port.onmessage({ data: { event: { type: 'settings', settings: { ...settings, showThinking } } } })

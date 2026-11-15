@@ -9,7 +9,7 @@ let fake: State
 let thought = ''
 vi.mock('../src/renderer/src/store', async original => {
   const real = await original<typeof import('../src/renderer/src/store')>()
-  return { ...real, useStore: <T,>(select: (state: State) => T): T => select(fake), useLiveThought: () => thought }
+  return { ...real, useStore: <T,>(select: (state: State) => T): T => select(fake), useLiveThoughtState: () => ({ text: thought, start: 0 }) }
 })
 const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
 const frames = new Map<number, FrameRequestCallback>()

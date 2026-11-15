@@ -23,14 +23,16 @@ Object.assign(globalThis, {
 })
 
 // What the pill sends: the same call the composer makes, with the send mode that hands it to the run.
+let viewSettings = { showThinking: true, thinkingSize: 'sm', folded: [] as string[] }
 const sent = vi.hoisted(() => [] as { conversationId: string; text: string; mode?: string }[])
 vi.mock('../src/renderer/src/store', async (original) => {
   const real = await original<typeof import('../src/renderer/src/store')>()
   return {
     ...real,
     // A reply that is working, with its reasoning showing: the block the pill has to sit under.
-    useStore: <T,>(select: (s: unknown) => T): T => select({ settings: { showThinking: true, thinkingSize: 'sm' } }),
-    useLiveThought: (): string => 'lendo o arquivo antes de responder',
+    useStore: <T,>(select: (s: unknown) => T): T => select({ settings: viewSettings }),
+    useLiveThoughtState: () => ({ text: 'lendo o arquivo antes de responder', start: 0 }),
+    updateSettings: (patch: { folded?: string[] }): void => { viewSettings = { ...viewSettings, ...patch } },
     sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, mode?: string): void => {
       sent.push({ conversationId, text, mode })
     },
@@ -55,6 +57,7 @@ const reply = (status: Message['run'] extends undefined ? never : NonNullable<Me
 let root: Root
 beforeEach(() => {
   sent.length = 0
+  viewSettings = { showThinking: true, thinkingSize: 'sm', folded: [] }
   root = createRoot(document.getElementById('root')!)
 })
 afterEach(() => act(() => root.unmount()))
@@ -104,6 +107,29 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 }
 
 describe('the steer pill', () => {
+  it('folds reasoning independently of remembered steps while keeping steering and pause reachable', async () => {
+    const message = reply('working')
+    await drawChain(message)
+    const head = (): HTMLElement => document.querySelector<HTMLElement>('.thought__head')!
+    await act(async () => head().click())
+    expect(head().getAttribute('aria-expanded')).toBe('false')
+    expect(document.querySelector('.steps__list')).not.toBeNull()
+    await act(async () => document.querySelector<HTMLElement>('.steps__toggle')!.click())
+    expect(viewSettings.folded.length).toBe(1)
+    await act(async () => head().click())
+    expect(head().getAttribute('aria-expanded')).toBe('true')
+    expect(document.querySelector('.steps__list')).toBeNull()
+    expect(document.querySelector('.steps__hold button[aria-label="Pausar a resposta"]')).not.toBeNull()
+    await act(async () => pill()!.click())
+    await type('Continue with the synthetic fixture')
+    await act(async () => buttons()[0]!.click())
+    expect(sent[0]?.mode).toBe('steer')
+    await act(async () => root.render(null))
+    await drawChain(message)
+    expect(document.querySelector('.steps__list')).toBeNull()
+    expect(head().getAttribute('aria-expanded')).toBe('true')
+  })
+
   it('sits under the thinking block, never above it', async () => {
     await drawChain(reply('working'))
     // Read off the drawing order: the reasoning first, the pill last, which is what the person sees.
