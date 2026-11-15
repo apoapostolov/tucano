@@ -29,4 +29,9 @@ The freshly built 0.2.32 renderer passes `scripts/qa-browser-sectors.mjs` with h
 its default request target is the coordinator, both sector zones remain separate, Team attachments
 are reachable, and the revised entry-point hint remains within two lines. The helper supports the
 additional browser width without asking Electron to violate its 900px minimum. Evidence and fonts,
-line counts and overflow measurements: `C:/tmp/tucano-0232-browser-sectors/report.json`.
+line counts and overflow measurements: `C:/tmp/tucano-0232-browser-sectors-final/report.json`.
+
+Screenshot review rejected the first narrow capture: the sidebar was midway through its closing
+transition and covered the left of the panel even though text geometry passed. The QA helper now
+waits for finite CSS animations/transitions and explicitly asserts the mobile drawer is closed and
+offscreen before measurement. Earlier narrow screenshots are not accepted layout evidence.

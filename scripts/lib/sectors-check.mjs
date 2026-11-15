@@ -50,6 +50,14 @@ export async function seedSectors(page) {
 export async function checkSectors(page, output, guard, resize, widths = [1280, 900]) {
   const viewport = await electronCopyViewport(page, resize)
   const measurements = []
+  const settleLayout = async () => {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await page.evaluate(async () => {
+      await Promise.allSettled(document.getAnimations().filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished))
+    })
+    const drawer = await page.evaluate(() => ({ narrow: innerWidth <= 760, open: document.querySelector('.app')?.classList.contains('is-nav-open'), right: document.querySelector('.sidebar')?.getBoundingClientRect().right }))
+    assert.ok(!drawer.narrow || (!drawer.open && drawer.right <= 1), 'Mobile navigation must be closed before capturing the feature')
+  }
   await page.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
   await page.locator('.org-zone').nth(1).waitFor()
   await page.locator('.org-card__head--entry').waitFor()
@@ -63,6 +71,7 @@ export async function checkSectors(page, output, guard, resize, widths = [1280, 
   const entryCopy = []
   for (const width of widths) {
     await viewport.set(width)
+    await settleLayout()
     await page.locator('.org-side').evaluate(async node => { await Promise.all(node.getAnimations().map(animation => animation.finished)) })
     const copy = await measureCopy(page, [{ selector: '.org-pop__entry b', maxLines: 1 }, { selector: '.org-pop__entry small', maxLines: 2 }])
     entryCopy.push({ width, ...copy })
@@ -72,6 +81,7 @@ export async function checkSectors(page, output, guard, resize, widths = [1280, 
   await page.locator('.org-side button[title="Close (Esc)"]').click()
   for (const width of widths) {
     await viewport.set(width)
+    await settleLayout()
     const arrange = page.getByRole('button', { name: 'Tidy up', exact: true })
     if (await arrange.count()) await arrange.click()
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
