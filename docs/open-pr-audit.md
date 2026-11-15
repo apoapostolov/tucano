@@ -1,6 +1,6 @@
 # Open PR audit queue
 
-Inventory captured 2026-11-15T21:28:13.595Z. Full exact-head audits: **0/53** (OPEN).
+Inventory captured 2026-11-15T21:44:33.023Z. Full exact-head audits: **0/53** (OPEN).
 
 Completion is read from docs/apo-pr-audit.md; edit that canonical queue rather than this generated view.
 
@@ -123,7 +123,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #424 [Control room visibility and agent read access](https://github.com/eduwxyz/tucano/pull/424) <!-- head:e5899459b70be1b5aa33e94dbe0019d86e05f25c base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `e5899459b70b`; OPEN; author apoapostolov; age 2 days; updated 2026-11-14T09:17:50Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #435 [A bot can look after something for you between conversations](https://github.com/eduwxyz/tucano/pull/435) <!-- head:efa3cbe7c5bc5b1e06bbb0902d2fb63980a59999 base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `efa3cbe7c5bc`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:33:28Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `efa3cbe7c5bc`; OPEN; author apoapostolov; age 2 days; updated 2026-11-15T10:33:28Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #437 [Give the file its space back, and say whether it is sound](https://github.com/eduwxyz/tucano/pull/437) <!-- head:a31233ed53f8d690b6d0e23253fe6c184546e7cd base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `a31233ed53f8`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:33:15Z; integration ancestry: inspect equivalence; review: migration-compatible counter assertion repaired; full feature audit remains (stale).
 - [ ] #446 [Organize settings by task with accessible section navigation](https://github.com/eduwxyz/tucano/pull/446) <!-- head:ea0f090c2be51671ab71f71293100ce3ff6cb345 base:04539404e545323124e5dd4737098892cd746226 -->

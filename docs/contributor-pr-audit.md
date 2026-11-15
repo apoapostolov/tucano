@@ -1,6 +1,6 @@
 # Other contributor PR audit queue
 
-Inventory captured 2026-11-15T21:31:50.922Z. Full exact-head audits: **0/244** (OPEN, MERGED, CLOSED).
+Inventory captured 2026-11-15T21:44:50.358Z. Full exact-head audits: **0/244** (OPEN, MERGED, CLOSED).
 
 This is an intake/approval queue. Independent reviews or changes require explicit user approval recorded in docs/audit-approvals.md.
 
@@ -323,7 +323,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #117 [Start every agent computer with the tools you pick](https://github.com/eduwxyz/tucano/pull/117) <!-- head:57f001f465c439952359689448b7620a32776585 base:ec8c2655d6cb3dc214e6dc1ae2e457e8e23f570b -->
   Head `57f001f465c4`; OPEN; author rjgdias; age 11 days; updated 2026-11-07T00:31:32Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #118 [Fix a black screen when the server is opened over plain http](https://github.com/eduwxyz/tucano/pull/118) <!-- head:30eeb8e94e6c89e1a9c7e79d160e623f4a980443 base:5bb3de8f310fb5565bae27996448d09b960ddb23 -->
-  Head `30eeb8e94e6c`; CLOSED; author vitoramaral10; age 10 days; updated 2026-11-07T00:59:26Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `30eeb8e94e6c`; CLOSED; author vitoramaral10; age 11 days; updated 2026-11-07T00:59:26Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #119 [Open a thread at its latest message](https://github.com/eduwxyz/tucano/pull/119) <!-- head:8333a9c731e84c7f85f6333f654c6cff589822ca base:5bb3de8f310fb5565bae27996448d09b960ddb23 -->
   Head `8333a9c731e8`; MERGED; author rjgdias; age 10 days; updated 2026-11-05T01:13:01Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #120 [Keep each thread to itself, and let agents look the others up](https://github.com/eduwxyz/tucano/pull/120) <!-- head:07c592542a79917dba63cfc1e1473d7f4ced5e99 base:dd23f83d4ef14e3230fc50803cc9971d2d292ee0 -->
@@ -371,7 +371,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #172 [Give Chrome 30 s to open, so a slow first start doesn't fail](https://github.com/eduwxyz/tucano/pull/172) <!-- head:b5ee3ff8bf25698fa8323ba09ae8fc6f6cd4551f base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->
   Head `b5ee3ff8bf25`; MERGED; author rjgdias; age 9 days; updated 2026-11-06T23:11:55Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #175 [Reusable Select component (filtering, grouping, multi-select)](https://github.com/eduwxyz/tucano/pull/175) <!-- head:90b783eea620496b464b269bcdd9fec7d689b076 base:c3d0217c998278bb3d16a810e41da955e6d340da -->
-  Head `90b783eea620`; MERGED; author b7s; age 8 days; updated 2026-11-07T15:22:38Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `90b783eea620`; MERGED; author b7s; age 9 days; updated 2026-11-07T15:22:38Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #176 [Say in the README that Tucano is a Grok Bot alternative](https://github.com/eduwxyz/tucano/pull/176) <!-- head:4301127d6a22791b2ebe1e1f45feb57761e84435 base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->
   Head `4301127d6a22`; MERGED; author eduwxyz; age 8 days; updated 2026-11-06T23:07:01Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #177 [Give the site an English page, comparisons with Grok Bot and OpenClaw, and one domain](https://github.com/eduwxyz/tucano/pull/177) <!-- head:baf7d25e5e99c996b19af12eda2ec61802e2b4c2 base:c321b30789bf0c399db9a7703f56c0fc8e3e336b -->

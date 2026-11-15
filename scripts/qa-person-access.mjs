@@ -173,4 +173,3 @@ try {
   writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2))
 }
 console.log(JSON.stringify({ passed: report.passed, output, captures: report.captures.length, errors: report.errors, failure: report.failure, runtime: report.runtime }))
-

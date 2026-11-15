@@ -1,6 +1,6 @@
 # Apo PR audit queue
 
-Inventory captured 2026-11-15T21:28:13.595Z. Full exact-head audits: **0/94** (OPEN, MERGED, CLOSED).
+Inventory captured 2026-11-15T21:44:33.023Z. Full exact-head audits: **0/94** (OPEN, MERGED, CLOSED).
 
 Check a box only after the complete feature audit in docs/audit-plan.md passes. Targeted repairs,
 integration and green CI alone do not qualify. Refreshing this file preserves checked boxes only
@@ -43,7 +43,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #385 [Next steps open with every box clear; the classifier that ticks the ones worth doing now is a job in Classifiers](https://github.com/eduwxyz/tucano/pull/385) <!-- head:0c5dd260c1fcb829444450369e1b28851b0eced6 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `0c5dd260c1fc`; OPEN; author apoapostolov; age 3 days; updated 2026-11-14T12:44:03Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #392 [Stop reading a date that opens a sentence as a missing wiki page](https://github.com/eduwxyz/tucano/pull/392) <!-- head:49c3957f412b8f7f9ee578b7c481b441d29975be base:ea2a3a7faf19431a04f6d498ef8bc2973f8e06c0 -->
-  Head `49c3957f412b`; MERGED; author apoapostolov; age 3 days; updated 2026-11-15T13:55:04Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `49c3957f412b`; MERGED; author apoapostolov; age 3 days; updated 2026-11-15T13:55:04Z; integration ancestry: present; review: not reviewed.
 - [ ] #397 [Keep the Memory bot tabs inside the bar, and page them with two borderless arrows](https://github.com/eduwxyz/tucano/pull/397) <!-- head:0d90c46f829ad356bcdc70e0e04b3e712a82997b base:04539404e545323124e5dd4737098892cd746226 -->
   Head `0d90c46f829a`; OPEN; author apoapostolov; age 3 days; updated 2026-11-14T12:44:06Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #419 [Draw the wiki map in its first frame, and fit it again when the window changes size](https://github.com/eduwxyz/tucano/pull/419) <!-- head:a4707e82b10c6ac62aa98afc30d68a2927f99f47 base:73b724bec8a576d316a5dd5f46a07e3bf83cbe75 -->
@@ -173,7 +173,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #366 [Let a routine say nothing when it has nothing to report](https://github.com/eduwxyz/tucano/pull/366) <!-- head:328cbb76746b7012f7af7199b49e489d55738c82 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `328cbb76746b`; OPEN; author apoapostolov; age 4 days; updated 2026-11-14T08:17:57Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #377 [Bring a hand-off answer back however it ends, and knock on a request nobody answered](https://github.com/eduwxyz/tucano/pull/377) <!-- head:76715c454620aaa0e6a08b63cddbc6f6adf00861 base:d88a53571cdec1ba8c75746260576460c15bd30b -->
-  Head `76715c454620`; MERGED; author apoapostolov; age 3 days; updated 2026-11-15T13:55:25Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `76715c454620`; MERGED; author apoapostolov; age 3 days; updated 2026-11-15T13:55:25Z; integration ancestry: present; review: not reviewed.
 - [ ] #379 [Expand Jev into a Classifiers section: TypeSafe, OpenRouter, OpenAI and Google](https://github.com/eduwxyz/tucano/pull/379) <!-- head:e614d4e6509892e3229ff37f77328e2d8154412e base:04539404e545323124e5dd4737098892cd746226 -->
   Head `e614d4e65098`; OPEN; author apoapostolov; age 3 days; updated 2026-11-15T10:33:39Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #383 [Classifiers on all six jobs: the section, stacked on #279, #284, #298 and #333](https://github.com/eduwxyz/tucano/pull/383) <!-- head:ed26fdc6600381b3d106ed9ddda2d509ce70f02a base:04539404e545323124e5dd4737098892cd746226 -->
@@ -195,7 +195,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #424 [Control room visibility and agent read access](https://github.com/eduwxyz/tucano/pull/424) <!-- head:e5899459b70be1b5aa33e94dbe0019d86e05f25c base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `e5899459b70b`; OPEN; author apoapostolov; age 2 days; updated 2026-11-14T09:17:50Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #435 [A bot can look after something for you between conversations](https://github.com/eduwxyz/tucano/pull/435) <!-- head:efa3cbe7c5bc5b1e06bbb0902d2fb63980a59999 base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `efa3cbe7c5bc`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:33:28Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `efa3cbe7c5bc`; OPEN; author apoapostolov; age 2 days; updated 2026-11-15T10:33:28Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #437 [Give the file its space back, and say whether it is sound](https://github.com/eduwxyz/tucano/pull/437) <!-- head:a31233ed53f8d690b6d0e23253fe6c184546e7cd base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `a31233ed53f8`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:33:15Z; integration ancestry: inspect equivalence; review: migration-compatible counter assertion repaired; full feature audit remains (stale).
 - [ ] #445 [Give the two core-boot tests the budget Windows already has](https://github.com/eduwxyz/tucano/pull/445) <!-- head:13440052bdd92f223f4a73c0464f602c0e0b8cdc base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
@@ -205,8 +205,8 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #451 [Write the guide's 24 pages in English too, and hand each workspace its own](https://github.com/eduwxyz/tucano/pull/451) <!-- head:6dcfa7a99ddee2de957d4ead5e27ecc0348dc86f base:04539404e545323124e5dd4737098892cd746226 -->
   Head `6dcfa7a99dde`; OPEN; author apoapostolov; age 1 days; updated 2026-11-14T11:19:09Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #468 [fix: bound skill comparisons and preserve complete large versions](https://github.com/eduwxyz/tucano/pull/468) <!-- head:82e9aaf6accab0fc0db5523d62746d26fe9ab715 base:abf597a1304b1a5a996006ee58cbe892c88dc704 -->
-  Head `82e9aaf6acca`; MERGED; author apoapostolov; age 0 days; updated 2026-11-15T13:54:53Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `82e9aaf6acca`; MERGED; author apoapostolov; age 0 days; updated 2026-11-15T13:54:53Z; integration ancestry: present; review: not reviewed.
 - [ ] #471 [Keep older retries within their original conversation context](https://github.com/eduwxyz/tucano/pull/471) <!-- head:dd9f86c31b1fa4b64f5be2a9eaba3b4a1b5be99b base:3e8162ebbb8c1d432d6973cedde7444a21910f4f -->
-  Head `dd9f86c31b1f`; MERGED; author apoapostolov; age 0 days; updated 2026-11-15T13:39:56Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `dd9f86c31b1f`; MERGED; author apoapostolov; age 0 days; updated 2026-11-15T13:39:56Z; integration ancestry: present; review: not reviewed.
 - [ ] #472 [Extract Skills components without changing behavior or copy](https://github.com/eduwxyz/tucano/pull/472) <!-- head:e11417210356131e0253984652981257afbdebee base:b76f9d8d28cecff8ca4a3319168ae7f00c1ab49f -->
   Head `e11417210356`; MERGED; author apoapostolov; age 0 days; updated 2026-11-15T18:10:45Z; integration ancestry: inspect equivalence; review: not reviewed.

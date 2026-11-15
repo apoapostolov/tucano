@@ -1,10 +1,10 @@
 # Upstream contributor PR inventory
 
-Captured 2026-11-15T21:31:50.922Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T21:44:50.358Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 338 total: 83 open, 223 merged, 32 closed.
 
-Upstream main: `9474545f0415f4bb2a439e1a7727912254b69972`. Daily driver HEAD: `d6ea9cf9cf4c9211072870baaa6e9cf0513f8e78`. Upstream main is contained: no: inspect patch equivalence.
+Upstream main: `9474545f0415f4bb2a439e1a7727912254b69972`. Daily driver HEAD: `1047c2e5c6522aed0ea7b412a95bf103e365580f`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -285,7 +285,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#372](https://github.com/eduwxyz/tucano/pull/372) | apoapostolov | MERGED | Run isolated UI checks without taking desktop focus | object unavailable | not collected | not collected | not reviewed |
 | [#373](https://github.com/eduwxyz/tucano/pull/373) | apoapostolov | MERGED | Recheck wiki permissions and private pages during running replies | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#375](https://github.com/eduwxyz/tucano/pull/375) | apoapostolov | OPEN | Delete a session from the room: a trash under its thread button, in two presses | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#377](https://github.com/eduwxyz/tucano/pull/377) | apoapostolov | MERGED | Bring a hand-off answer back however it ends, and knock on a request nobody answered | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#377](https://github.com/eduwxyz/tucano/pull/377) | apoapostolov | MERGED | Bring a hand-off answer back however it ends, and knock on a request nobody answered | yes | not collected | not collected | not reviewed |
 | [#379](https://github.com/eduwxyz/tucano/pull/379) | apoapostolov | OPEN | Expand Jev into a Classifiers section: TypeSafe, OpenRouter, OpenAI and Google | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#382](https://github.com/eduwxyz/tucano/pull/382) | b7s | MERGED | Show the server's version in a browser's Settings | object unavailable | not collected | not collected | not reviewed |
 | [#383](https://github.com/eduwxyz/tucano/pull/383) | apoapostolov | OPEN | Classifiers on all six jobs: the section, stacked on #279, #284, #298 and #333 | no: inspect patch equivalence | not collected | not collected | not reviewed |
@@ -294,7 +294,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#387](https://github.com/eduwxyz/tucano/pull/387) | rjgdias | OPEN | Let an agent organize the team, and the Tuca propose the org chart | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#388](https://github.com/eduwxyz/tucano/pull/388) | stefanosandes | MERGED | Let an artifact without a preview be shown in Finder | yes | not collected | not collected | not reviewed |
 | [#391](https://github.com/eduwxyz/tucano/pull/391) | apoapostolov | OPEN | Resume interrupted replies after restart when enabled | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#392](https://github.com/eduwxyz/tucano/pull/392) | apoapostolov | MERGED | Stop reading a date that opens a sentence as a missing wiki page | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#392](https://github.com/eduwxyz/tucano/pull/392) | apoapostolov | MERGED | Stop reading a date that opens a sentence as a missing wiki page | yes | not collected | not collected | not reviewed |
 | [#394](https://github.com/eduwxyz/tucano/pull/394) | b7s | OPEN | Show what a reply changed in the code, as a diff opened file by file | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#395](https://github.com/eduwxyz/tucano/pull/395) | apoapostolov | OPEN | Let the person read times as a 24-hour clock, or a 12-hour one | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | OPEN | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | not collected | not collected | not reviewed |
@@ -339,8 +339,8 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#464](https://github.com/eduwxyz/tucano/pull/464) | eduwxyz | MERGED | Attach files from the browser, and keep sector zones apart on Team | object unavailable | not collected | not collected | not reviewed |
 | [#465](https://github.com/eduwxyz/tucano/pull/465) | eduwxyz | MERGED | Let the person choose an entry point over the sectors | object unavailable | not collected | not collected | not reviewed |
 | [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#468](https://github.com/eduwxyz/tucano/pull/468) | apoapostolov | MERGED | fix: bound skill comparisons and preserve complete large versions | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#471](https://github.com/eduwxyz/tucano/pull/471) | apoapostolov | MERGED | Keep older retries within their original conversation context | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#468](https://github.com/eduwxyz/tucano/pull/468) | apoapostolov | MERGED | fix: bound skill comparisons and preserve complete large versions | yes | not collected | not collected | not reviewed |
+| [#471](https://github.com/eduwxyz/tucano/pull/471) | apoapostolov | MERGED | Keep older retries within their original conversation context | yes | not collected | not collected | not reviewed |
 | [#472](https://github.com/eduwxyz/tucano/pull/472) | apoapostolov | MERGED | Extract Skills components without changing behavior or copy | object unavailable | not collected | not collected | not reviewed |
 | [#474](https://github.com/eduwxyz/tucano/pull/474) | eialanjones | OPEN | ElevenLabs in the connector store, signing in on a server by client metadata document | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#476](https://github.com/eduwxyz/tucano/pull/476) | eialanjones | OPEN | WhatsApp for agents: numbers with per-conversation access, approvals and send limits | no: inspect patch equivalence | not collected | not collected | not reviewed |
