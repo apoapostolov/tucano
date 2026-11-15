@@ -93,3 +93,28 @@ The 07:01–07:02 UTC intake captured new Apo #467 and revised heads #412 (`7907
 intake does not approve integration. Apo totals are 91 (63 open, 18 merged, 10 closed), other
 contributors 236 (29 open). Upstream remains `d175567b` / 0.2.32. The concurrent reading-position
 repair through `6f7229ff` was preserved in integration. No public aging branch was rebased.
+
+## Upstream publication and integration checkpoint
+
+Focused upstream PR: https://github.com/eduwxyz/tucano/pull/468, source `2d15a277`.
+Immutable public evidence: `cfa1b73a54ab6eee74e2c25d6bcdfa796f3485e8`,
+`frames/bounded-skill-diff` on the fork. A fresh worktree from the verified published SHA passes
+typecheck and 19 focused cases. GitHub CI is running; no checks are represented as complete yet.
+
+Integration merge `c2829873` preserves the existing #311 library/components, discovery behavior
+and approved interface copy. The public extraction is a pure move of that older screen; importing
+those old bodies would regress newer features. Only the bounded comparison, shared helper,
+length warning, tests and changelog behavior are retained from the public repair. The actual
+public head is merged into ancestry. Focused comparison, reading-anchor and reasoning-setting
+regressions pass: 32 tests across five files. Build succeeds. Hidden Electron QA passes the actual
+proposal/history workflows, Skills origins, pause and settings navigation at native 150% scaling;
+no show/focus event or visible/focusable QA window occurred. Source was `c2829873`; its dirty flag
+comes from inventory documentation refresh, not application edits. Installed verification is pending.
+
+The fixed integration maintainability baseline includes the other chat's scrolling changes.
+Its global comparator therefore fails on that chat's edited red `Conversation.tsx`; this is a
+reported integration debt, not a green project gate. All files authored for this repair pass:
+comparison MI 44.63, helper 36.90, shared copy 50.50, tests 39.90/41.81, QA driver 20.05,
+QA helper 17.06. The helper's yellow score warrants care; it centralizes the proposal/history and
+maximum-body checks rather than duplicating browser and installed flows. No structural-cycle
+removal or whole-project maintainability clearance is claimed.
