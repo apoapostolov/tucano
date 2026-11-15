@@ -4,6 +4,13 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+> **Em português:**
+> - **Correção:** mudanças grandes de skills mostram as duas versões por inteiro quando a comparação detalhada excede o limite de trabalho. Nenhuma instrução é cortada. (#454)
+
+### Fixed
+
+- **Large skill changes remain readable.** Comparisons beyond the detailed-view budget show the complete before and after versions, avoiding an unbounded matrix and excessive per-line rendering. Smaller changes keep the existing detailed presentation. (#454)
+
 ## [0.2.32] - 2026-11-14
 
 > **Em português:**
