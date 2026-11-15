@@ -88,3 +88,16 @@ uncovered. Store maintainability also remains blocked. No feature-completion che
 The installed application is unchanged in this batch. No build, installation or new installed
 runtime verdict is claimed. Product repairs, if needed, retain the existing feature's ownership
 and require their own regression and installed verification before closure.
+
+## Published verification
+
+Commit `d80f3ba92a6aed58cd3adbeee93650bb5facd985` was pushed to `origin/next`, and the remote
+head was read back. A fresh detached worktree at that SHA passes `npm run typecheck`, the
+audience probe (1/1), and `node scripts/test-audit-workflow.mjs` (7/7). Both browser commands
+reproduce their earlier results from the published files: control passes at zero drift;
+the boundary command exits 1 with the expected -241.71875-pixel defect assertion.
+
+The primary checkout stays on its existing local `next` with the concurrent copy edits
+untouched. Source reconciliation was performed in the isolated integration worktree, and the
+published branch includes both sets of starting commits. Do not build the older primary
+source as though it were the delivered integration candidate.
