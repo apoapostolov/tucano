@@ -9,8 +9,8 @@ Upstream release/main: `d175567b0a12d885544d74c45792717a883287f5`.
 - [x] Complete the required full suite for the final versioned source.
 - [x] Build, package, install and observe the new regular installed app.
 - [x] Verify the installed version, archive hash, existing workspace and hidden feature flow.
-- [ ] Publish and verify `next-v0.2.32` and its assets on the fork.
-- [ ] Publish the reconciled integration and deliver the living audit documents to the primary checkout.
+- [x] Publish and verify `next-v0.2.32` and its assets on the fork.
+- [x] Publish the reconciled integration and deliver the living audit documents to the primary checkout.
 
 The application changes and conflict decisions are documented in
 [the 0.2.31 record](upstream-reconciliation-0.2.31.md). The version-only upstream commit changes
@@ -59,3 +59,17 @@ therefore failed; its result is retained. No cause or missing-content claim can 
 aggregate hashes, and complete conversation preservation is not claimed for this later interval.
 The live database passes read-only quick_check. QA reports show synthetic writes targeted scratch
 data, not this workspace. Keep this observation separate from a demonstrated migration defect.
+
+## Release and source delivery
+
+`next-v0.2.32` points to installer source `d797e0c45a8b8c882274aad385b5e1c037caed8a`.
+Uploaded installer: 132,374,490 bytes; blockmap: 139,363 bytes. Both GitHub SHA-256 digests match
+local files. A ranged GET returns HTTP 206 and bytes 0–31/132374490; release notes name the same
+source. The original project's tags and releases remain untouched.
+
+The primary checkout has concurrent uncommitted copy edits. The integration and installer were
+therefore prepared in `C:/git-ext/tucano-0231`; no unrelated source was stashed, reset or committed.
+The new workflow, audit plan, inventory, exact-head backlog and intake scripts are also delivered
+on local next without changing those source edits. The complete reconciled code is published to
+origin/next. Fast-forwarding the primary source checkout remains deferred until its copy work is
+ready to reconcile; do not rebuild its older package in place and overwrite this verified install.

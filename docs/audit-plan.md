@@ -4,11 +4,13 @@ Updated: 15 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
-### Active delivery: upstream 0.2.32
+### Delivered: upstream 0.2.32
 
 The current delivery checklist and exact source refs are in
-[the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). Complete that upgrade,
-installed verification and fork release before resuming older feature audits.
+[the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). The upgrade, installed verification and fork release are complete: **2,620 passed, 61 skipped, zero failures**.
+Resume the priorities below. The verified source is in `C:/git-ext/tucano-0231` and published on
+origin/next. The primary checkout retains a separate uncommitted copy task; its full source
+fast-forward is deferred, so build further deliveries from a reconciled worktree.
 
 ### Next audit priorities after the upgrade
 
