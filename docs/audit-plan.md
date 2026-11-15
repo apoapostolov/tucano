@@ -14,6 +14,7 @@ installed verification and fork release before resuming older feature audits.
 
 This is a maintained work queue. Every daily run refreshes upstream and Apo's authored PR heads,
 records new or revised work, and updates [the open-PR checkbox backlog](open-pr-audit.md).
+Each intake retains a timestamped inventory/review snapshot under the ignored audit history directory.
 The inventory is a snapshot; the checkbox backlog is keyed to exact PR heads and resets completed
 reviews when those heads change. A merged PR, integration into TucanoNext, a targeted repair and
 a complete feature audit remain different states.
@@ -24,6 +25,7 @@ a complete feature audit remain different states.
 - [ ] Inspect new/revised PR descriptions, discussions, dependencies and behavior against the integration.
 - [ ] Reconcile upstream changes and useful new PR behavior into TucanoNext, resolving overlaps by behavior.
 - [ ] Review the next oldest unchecked PR in each risk group, prioritizing privacy, data loss and stalled runs.
+- [ ] For each selected PR, enumerate its commits from its actual base and review the original feature, later repairs, integration decisions and unresolved discussion; record the reviewed range.
 - [ ] Record exact-head findings, checks and remaining work; only mark a feature complete after every audit dimension passes.
 - [ ] Validate affected behavior, then complete full source checks and installed background QA for code deliveries.
 - [ ] Refresh the fork release when required, and record source, evidence, outcome and next priorities in a dated intake log.

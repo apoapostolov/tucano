@@ -19,6 +19,9 @@ a PR, opens an issue or touches application data. `--patches` caches each open P
 its head SHA in the filename. The files, descriptions and CI results remain evidence from
 that snapshot, not a continuous monitor.
 
+Each refresh also saves a timestamped inventory and review snapshot under the ignored
+`history/` directory, so a newer head does not erase the evidence of earlier intake.
+
 Keep semantic review records in `.tucano-local/audit/reviews.json`, keyed by PR number:
 
 ```json

@@ -101,6 +101,11 @@ const lines = [
   ...overlaps.map(([file, numbers]) => `| ${file} | ${numbers.map((n) => `#${n}`).join(', ')} |`), ''
 ]
 mkdirSync(output, { recursive: true })
+// Preserve dated intake evidence before replacing the current snapshot. Cached patches already use head SHAs.
+const history = join(output, 'history')
+mkdirSync(history, { recursive: true })
+const stamp = snapshot.capturedAt.replaceAll(':', '-')
+writeFileSync(join(history, `${stamp}.json`), JSON.stringify({ ...snapshot, reviews }, null, 2) + '\n')
 writeFileSync(join(output, 'inventory.json'), JSON.stringify(snapshot, null, 2) + '\n')
 writeFileSync(join(output, 'inventory.md'), lines.join('\n'))
 if (report) {
