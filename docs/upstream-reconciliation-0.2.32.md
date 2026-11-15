@@ -7,8 +7,8 @@ Upstream release/main: `d175567b0a12d885544d74c45792717a883287f5`.
 - [x] Preserve all fork identities, controls, fixes and the concurrent uncommitted copy work.
 - [x] Pass nine focused identity, background-QA and launch-environment cases.
 - [x] Complete the required full suite for the final versioned source.
-- [ ] Build, package, install and observe the new regular installed app.
-- [ ] Verify the installed version, archive hash, existing workspace and hidden feature flow.
+- [x] Build, package, install and observe the new regular installed app.
+- [x] Verify the installed version, archive hash, existing workspace and hidden feature flow.
 - [ ] Publish and verify `next-v0.2.32` and its assets on the fork.
 - [ ] Publish the reconciled integration and deliver the living audit documents to the primary checkout.
 
@@ -39,3 +39,23 @@ offscreen before measurement. Earlier narrow screenshots are not accepted layout
 Final suite artifact: `C:/tmp/tucano-0232-full.json`. Application source stayed unchanged from
 `c25531f` throughout the run; subsequent commits only maintain documentation and development QA.
 No timeout or assertion was weakened. Nine focused identity/background/launch checks also pass.
+
+## Installed 0.2.32
+
+Built and installed from `d797e0c45a8b8c882274aad385b5e1c037caed8a` using the self-build helper. Installed archive:
+**37,403,455 bytes**, SHA-256 `0ac1c82e4e3d59091aa69a8422e2a896133738d4d457bc4762dfb37ea1cdd4ef`; equal to the packaged archive, with the
+new entry-point string present. The new normal executable is PID 43272, with visible, unfocused
+window `w-1641484`. Installed hidden QA passes seven navigation/smoke checks, 18 Settings captures,
+native 150% scaling, entry-point toggles, sector spacing, Team attachments and pause/resume. The
+runtime and updater both report 0.2.32, and updates are off. Scratch instances were closed.
+
+Evidence: `C:/tmp/tucano-0232-self-install.log`, `C:/tmp/tucano-0232-installed/report.json`,
+`C:/tmp/tucano-0232-installed-identity.json` and `C:/tmp/tucano-0232-workspace-after.json`.
+
+Read-only workspace verification preserves all 19 agent IDs. The initial 0.2.31 migration also
+preserved the exact conversation/message IDs and counts. During the later live session, counts
+changed from 26 conversations / 915 messages to 25 / 927. The original exact-equality check
+therefore failed; its result is retained. No cause or missing-content claim can be established from
+aggregate hashes, and complete conversation preservation is not claimed for this later interval.
+The live database passes read-only quick_check. QA reports show synthetic writes targeted scratch
+data, not this workspace. Keep this observation separate from a demonstrated migration defect.
