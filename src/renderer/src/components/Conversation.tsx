@@ -6,6 +6,7 @@ import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { neverAllowedForGood, ruleTool, runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
 import { InitiativeLine } from './Initiative'
+import { captureLine, lineTop, type ReadingLine } from '../reading-line'
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
@@ -355,9 +356,10 @@ const JumpTo = createContext<(id: string) => void>(() => {})
 // the end of the reply, `release` gives it back. A block that is not inside a list of messages gets
 // the no-ops.
 const Reading = createContext<{
-  hold: (el: HTMLElement | null) => void
-  release: () => void
-  forget: () => void
+  hold: (el: HTMLElement | null, preserve: () => void, rebase: () => void) => void
+  release: (el: HTMLElement | null) => void
+  forget: (el: HTMLElement | null) => void
+  preserve: () => void
   // Whether the list around the block is still following the reply's end: a block that keeps taking its
   // own stream up while the person reads by scrolling the page is the same fault one level in.
   follows: () => boolean
@@ -365,6 +367,7 @@ const Reading = createContext<{
   hold: () => {},
   release: () => {},
   forget: () => {},
+  preserve: () => {},
   follows: () => true
 })
 
@@ -428,15 +431,17 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   const anchor = useRef<{ el: HTMLElement; top: number } | null>(null)
   const selfScroll = useRef(false)
   const [holding, setHolding] = useState(false)
-  const contentTop = (el: HTMLElement, list: HTMLElement): number =>
-    el.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop
+  // Measure the visible position: a correction (including Chromium's own scroll anchoring)
+  // must reduce the next frame's displacement, rather than repeat a content-coordinate delta.
+  const readingTop = (el: HTMLElement, list: HTMLElement): number =>
+    el.getBoundingClientRect().top - list.getBoundingClientRect().top
   // The line being read is a place in the content, not a scroll offset: what is under the reading edge
   // when the person stops is what they are reading. Only something actually on screen can be read.
   const takeAnchor = (el: HTMLElement, list: HTMLElement): void => {
     const box = list.getBoundingClientRect()
     const r = el.getBoundingClientRect()
     if (r.bottom <= box.top || r.top >= box.bottom) return
-    anchor.current = { el, top: contentTop(el, list) }
+    anchor.current = { el, top: readingTop(el, list) }
     setHolding(true)
   }
   const pickAnchor = (): void => {
@@ -447,74 +452,62 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     if (!el || el === list || !list.contains(el)) return
     takeAnchor(el, list)
   }
+  const heldBlock = useRef<{ el: HTMLElement; preserve: () => void; rebase: () => void } | null>(null)
+  // Every caller uses the same visible anchor. Layout effects and ResizeObserver settle it before
+  // paint; the frame loop also covers asynchronous growth in other replies.
+  const preserveLine = (): void => {
+    const list = ref.current
+    const a = anchor.current
+    if (!list || !a || stick.current) return
+    if (!a.el.isConnected) return pickAnchor()
+    const moved = readingTop(a.el, list) - a.top
+    if (Math.abs(moved) < 1) { heldBlock.current?.el === a.el && heldBlock.current.preserve(); return }
+    const want = Math.max(0, Math.min(list.scrollHeight - list.clientHeight, list.scrollTop + moved))
+    if (Math.abs(want - list.scrollTop) < 1) {
+      a.top = readingTop(a.el, list)
+      heldBlock.current?.el === a.el && heldBlock.current.preserve()
+      return
+    }
+    selfScroll.current = true
+    list.scrollTop = want
+    if (Math.abs(list.scrollTop - want) >= 1) a.top = readingTop(a.el, list)
+    heldBlock.current?.el === a.el && heldBlock.current.preserve()
+  }
   const reading = useMemo(
     () => ({
-      hold: (el: HTMLElement | null) => {
+      hold: (el: HTMLElement | null, preserve: () => void, rebase: () => void) => {
+        if (!el || !ref.current) return
+        heldBlock.current = { el, preserve, rebase }
         paused.current = true
         stick.current = false
-        // The block keeps its own line, in the layout pass, because it knows when its text changes. The
-        // list's frame loop is for a page the person scrolled themselves: two keepers of one line would
-        // give the same height back twice.
-        anchor.current = null
-        setHolding(false)
-        void el
+        takeAnchor(el, ref.current)
       },
-      // Back at the block's end: the list follows again, and takes the end now rather than at the next
-      // word, which may never come if the reply has already finished.
-      release: () => {
+      release: (el: HTMLElement | null) => {
+        if (!el || heldBlock.current?.el !== el) return
+        heldBlock.current = null
         paused.current = false
         stick.current = true
         anchor.current = null
         setHolding(false)
-        const el = ref.current
-        if (el) el.scrollTop = el.scrollHeight
+        if (ref.current) ref.current.scrollTop = ref.current.scrollHeight
       },
-      // The block went away (a reply ended, a row unmounted) while it was being read: nothing is being
-      // read there any more, so the list may follow again, but going to the end would move the page
-      // under the person for no reason of theirs.
-      forget: () => {
+      forget: (el: HTMLElement | null) => {
+        if (!el || heldBlock.current?.el !== el) return
+        heldBlock.current = null
         paused.current = false
         anchor.current = null
         setHolding(false)
       },
+      preserve: preserveLine,
       follows: () => stick.current
     }),
     []
   )
-
-  // Frame by frame while the list is not following its end: whatever grew above the reading line is
-  // given back as scroll, so the line itself does not move under the person's eyes.
   useEffect(() => {
     if (!holding) return
     let raf = 0
     const tick = (): void => {
-      const list = ref.current
-      const a = anchor.current
-      if (!list || !a || stick.current) {
-        raf = requestAnimationFrame(tick)
-        return
-      }
-      // The row the line was in went away (the list draws only what it shows): pick the line afresh
-      // from where the reading edge is now.
-      if (!a.el.isConnected) {
-        pickAnchor()
-      } else {
-        // Growth above the line moves it down the content: give the list back exactly that height, so
-        // the line stays where it is in the window. A shrink is given the other way, down to the top.
-        const now = contentTop(a.el, list)
-        const grew = now - a.top
-        if (Math.abs(grew) >= 1) {
-          const max = list.scrollHeight - list.clientHeight
-          const want = Math.max(0, Math.min(max, list.scrollTop + grew))
-          if (Math.abs(want - list.scrollTop) >= 1) {
-            selfScroll.current = true
-            list.scrollTop = want
-            if (Math.abs(list.scrollTop - want) >= 1) a.top = now // at an end of the list: nothing to give
-          } else {
-            a.top = now
-          }
-        }
-      }
+      preserveLine()
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -533,6 +526,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     if (!el) return
     const watch = new ResizeObserver(() => {
       if (stick.current && Date.now() >= held.current) el.scrollTop = el.scrollHeight
+      else preserveLine()
     })
     for (const row of el.children) watch.observe(row)
     return () => watch.disconnect()
@@ -695,6 +689,10 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
             anchor.current = null
             setHolding(false)
           }
+        } else if (paused.current && !mine && anchor.current) {
+          // Moving the page while a block is held establishes a new reading position.
+          takeAnchor(anchor.current.el, el)
+          heldBlock.current?.rebase()
         } else if (!paused.current && !mine) {
           // The person scrolled the list themselves: the line under the reading edge is theirs now.
           pickAnchor()
@@ -2160,9 +2158,8 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
   )
 }
 
-// How close to the end of the block counts as reading its end: a little over one line, so a wheel's
-// fraction of a line and a subpixel scroll still count as the end.
-const THOUGHT_END = 24
+// Only rounding at the actual end counts as following. Reading even part of an earlier line pauses it.
+const THOUGHT_END = 2
 
 // Whether the block sits at the end of what it shows: the place a person is reading, not where the
 // stream stopped. Content arriving below it does not move that place.
@@ -2190,66 +2187,96 @@ export function Thought({ message, working }: { message: Message; working: boole
   // folding or scrolling away must not take the list back to the end while this one is being read.
   const reading = useContext(Reading)
   const holding = useRef(false)
-  // Where the block sat on the page when the person started reading it: the steps and the route above it
-  // keep growing while the reply works, and growth above moves the block down. Giving the height back in
-  // the same layout pass, before the frame is drawn, is what keeps the line still instead of nudging it.
-  const keepLine = useRef<number | null>(null)
+  const position = useRef(0)
+  const written = useRef<number | null>(null)
+  const heldElement = useRef<HTMLElement | null>(null)
+  const line = useRef<ReadingLine | null>(null)
+  const preserveTextLine = (): void => {
+    const el = box.current
+    const saved = line.current
+    if (!el || !saved || !holding.current) return
+    const top = lineTop(el, saved.offset)
+    if (top === null) { line.current = captureLine(el); return }
+    const moved = top - saved.top
+    if (Math.abs(moved) < 1) return
+    el.scrollTop += moved
+    position.current = el.scrollTop
+    written.current = el.scrollTop
+    const after = lineTop(el, saved.offset)
+    if (after !== null && Math.abs(after - saved.top) >= 1) saved.top = after
+  }
   const holdList = (): void => {
-    if (holding.current) return
     holding.current = true
-    keepLine.current = box.current?.getBoundingClientRect().top ?? null
-    reading.hold(box.current)
+    heldElement.current = box.current
+    line.current = box.current ? captureLine(box.current) : null
+    reading.hold(box.current, preserveTextLine, () => { line.current = box.current ? captureLine(box.current) : null })
   }
   const releaseList = (): void => {
     if (!holding.current) return
     holding.current = false
-    keepLine.current = null
-    reading.release()
+    line.current = null
+    reading.release(heldElement.current)
+    heldElement.current = null
   }
-  useEffect(
-    () => () => {
-      // Unmounted while being read: give the list back, without moving the page.
-      if (!holding.current) return
-      holding.current = false
-      keepLine.current = null
-      reading.forget()
-    },
-    [reading]
-  )
+  useEffect(() => () => {
+    reading.forget(heldElement.current)
+  }, [reading])
+  // Follow intent survives streamed DOM updates. Browser-generated scroll events from our own
+  // writes cannot resume following; only moving back to the actual end releases the hold.
   useLayoutEffect(() => {
-    if (!holding.current) return
     const el = box.current
-    const list = el?.closest('.messages') as HTMLElement | null
-    const want = keepLine.current
-    if (!el || !list || want === null) return
-    const now = el.getBoundingClientRect().top
-    if (Math.abs(now - want) >= 1) list.scrollTop += now - want
-  }, [thought])
-  useEffect(() => {
-    const el = box.current
-    // Only while the page is at the reply's end too: reading a long reply means scrolling the list, and
-    // the block must not carry its own text up while it is being read from there.
-    if (working && follow.current && reading.follows() && el) el.scrollTop = el.scrollHeight
-  }, [thought, working])
+    if (!el) {
+      reading.forget(heldElement.current)
+      heldElement.current = null
+      holding.current = false
+      line.current = null
+      written.current = null
+      follow.current = true
+      return
+    }
+    if (written.current !== null && el.scrollTop < written.current - 1 && !followsTheEnd(el)) {
+      follow.current = false
+      position.current = el.scrollTop
+      holdList()
+    }
+    if (follow.current && reading.follows()) el.scrollTop = el.scrollHeight
+    else if (!follow.current) {
+      // A scrollbar/touch scroll can precede its scroll event. Keep that newer user position.
+      if (written.current !== null && Math.abs(el.scrollTop - written.current) >= 1) position.current = el.scrollTop
+      el.scrollTop = position.current
+    }
+    written.current = el.scrollTop
+    reading.preserve()
+    preserveTextLine()
+  })
   if (!on || !thought) return null
   return (
     <div
       ref={box}
       className={`thought thought--${size}`}
+      style={{ overflowAnchor: 'none' }}
       aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
       onScroll={(e) => {
         const el = e.currentTarget
-        const end = followsTheEnd(el)
-        follow.current = end
-        if (end) releaseList()
-        else holdList()
+        if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
+        position.current = el.scrollTop
+        written.current = el.scrollTop
+        follow.current = followsTheEnd(el)
+        if (follow.current) releaseList()
+        else {
+          holdList()
+          line.current = captureLine(el)
+        }
       }}
       onWheel={(e) => {
-        // A wheel up is the person reading back into it: the block stops following at once, before the
-        // piece that is already on its way lands and pulls the place away.
         if (e.deltaY < 0) {
           follow.current = false
+          position.current = e.currentTarget.scrollTop
+          written.current = e.currentTarget.scrollTop
           holdList()
+        } else if (e.deltaY > 0 && followsTheEnd(e.currentTarget)) {
+          follow.current = true
+          releaseList()
         }
       }}
     >
