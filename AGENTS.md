@@ -8,6 +8,12 @@ beside the released **`Tucano`**. Preserve that combination throughout developme
 A successful build, an installer exit code, or a process left from an earlier installation
 does not establish that the new app launched or that the changed feature works.
 
+**Every immediate task ends in the same three places: the PR released or rebased, the change built
+and installed, and the change confirmed in the live installation.** Code that compiles, a green test
+suite, or a subagent report is not a finished task. Those are the last three checkpoints before the
+session closes with a handoff, and nothing about context size, a context warning or a compaction may
+close a task before them.
+
 The parent owns delivery after child reports. Context warnings and compaction preserve state;
 they never close unfinished delivery. Register `handoff_guard.py --begin-delivery` with the
 session ID on stdin, then record parent-owned `--checkpoint NAME` transitions in order:
