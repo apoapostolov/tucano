@@ -8,6 +8,12 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+The [maintainer-requested revision batch](maintainer-revisions-2026-11-15.md) updates #391,
+#392, #402 and #468 and splits #471/#472. These are targeted upstream repairs with passing
+checks, not completed full feature audits. The safe restart-harness improvements are migrated;
+TucanoNext retains its own strings, component organization, recovery defaults and dismissal
+behavior. The underlying comparison and older-retry repairs were already present.
+
 TucanoNext 0.2.32 is installed and released. Upstream baseline is
 `d175567b0a12d885544d74c45792717a883287f5`; installer source is
 `d797e0c45a8b8c882274aad385b5e1c037caed8a`. The application suite passed **2,620 tests**,
@@ -37,8 +43,8 @@ and intake tools can be delivered there independently without committing unrelat
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 92 captured: 58 open, 22 merged, 12 closed; 0/92 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
-| Apo open wall | 0/58 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| All Apo PRs | 94 captured: 60 open, 22 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/60 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
 | Other contributors, including maintainer PRs | Intake only: 236 captured, 25 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
@@ -52,7 +58,6 @@ historical comparisons; new PRs enter the canonical current queues.
 ## Immediate queue
 
 - [ ] **Active: R-245.** Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies. Reconcile incoming main `3e8162eb` first. [Current packet](audit-reasoning-245-2026-11-15.md).
-- [ ] Address the maintainer's new #468 requests: isolate the Skills refactor and restore existing English wording. A concurrent worktree has candidate `74f64aed`; verify its current published head and ownership before changing that branch. The earlier installed repair remains historical delivery evidence, not approval of the revised PR.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
