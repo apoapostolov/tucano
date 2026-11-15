@@ -91,6 +91,7 @@ dated run; completed release boxes in the upstream tracker remain historical del
 - [ ] Map overlapping contracts, settings, migrations and UI behavior before integrating upstream and reviewed compatible PR changes. Inspect clean merges for semantic duplication too.
 - [ ] Keep TucanoNext current without losing compatible features or its product/data/port identity. Record the exact upstream revision included and any deferred newer work.
 - [ ] Advance a bounded Apo item, using the full-stack cases needed for its verification. Advance independent non-Apo work only within an explicit approval; record the reviewed range and approval scope.
+- [ ] For a batch of PR reviews, fan out one child per PR under [subagent delegation](#subagent-delegation-for-audit-packets) and record each child's head SHA; keep the parent on reports and decisions, not diffs.
 - [ ] For code delivery, pass the required focused/full checks, built UI and installed background QA; publish the fork release when required and verify actual downloaded assets.
 - [ ] Update queues, finding states, coverage, progress and the dated run log. Record next action and unresolved limits, then report meaningful changes and failures.
 
@@ -157,6 +158,66 @@ existing heads, and test their integrated behavior separately. Update an existin
 concrete finding, making the smallest required base change. Do not open a second PR for its story.
 Changes whose necessary UI surface lives higher in a stack belong on that dependent branch, with
 clear placement notes. Full reviews and targeted repairs remain distinct.
+
+## Subagent delegation for audit packets
+
+Delegation is authorized for audit work here, and the default Codex instruction against proactive
+spawning does not apply to this repository. It is how a queue of dozens of PRs is worked without one
+session's context absorbing every diff.
+
+- Assign one child per PR, bound to the exact head SHA at dispatch. Record that SHA in the report; a
+  changed head voids the report exactly as it voids a parent review.
+- Give the child its PR's diff, description and the checklist below. Do not give it this plan, the
+  whole queue or other PRs' context. The plan stays on disk and the parent holds it, so the parent's
+  context grows by one report per PR instead of one diff per PR.
+- Spawn with `fork_turns="none"` plus an explicit model and effort. A full-history fork inherits the
+  parent's model and effort and refuses overrides, so a Sol parent silently bills Sol rates on every
+  child turn.
+- Route by the kind of work. The authoritative table is under
+  [delegate PR work to subagents](../AGENTS.md#delegate-pr-work-to-subagents); in short, discovery and
+  other ambiguity go to `gpt-6.1-sol` at `low`, mechanical steps with a cheap check go to
+  `gpt-6-luna` at `high`, and independent review, browsing or a rendered UI check go to
+  `gpt-6.1-terra` at `high` or `max`. The parent session stays on `gpt-6.1-sol` at `medium`, and a
+  spawn that omits `model` and `reasoning_effort` copies those settings into every child turn, which
+  is the cost this section exists to avoid. Escalate a child that has failed twice by changing its
+  model and effort rather than re-prompting it.
+- Keep at most six children in flight and reuse a finished child for its next PR with a follow-up
+  task. Children are leaves and must not spawn further agents.
+- Every child reports the PR number, head SHA, verdict, findings as `file:line` with the command that
+  proves each one, checks and their results, and an explicit list of what it did not cover. Re-run
+  each proving command in the parent before a finding enters [the finding register](audit-findings.md).
+  A child's "done" never marks a review complete.
+- Children are read-only on review packets and confine any repair to their own worktree. They do not
+  push, rebase, comment on public threads or widen scope into another contributor's work; the
+  approval boundary below still decides who may do that.
+- Completion still requires every dimension in [Methodical PR review](#methodical-pr-review) plus the
+  installed evidence this plan defines. A batch of child reports is progress toward that, not a
+  completed feature audit.
+
+### Keep the batch economical
+
+A parent turn costs its whole transcript, so a queue's bill is turns multiplied by context per turn.
+Fifty diffs in one session multiply, because every later turn re-sends the earlier ones. Fifty
+children carrying one diff each stay linear, because a child's context dies with its PR.
+
+- Open one parent session per batch and report at its end. A session kept open across days is the
+  largest single cost in the audit, since the transcript only grows and nothing prunes it.
+- Cap that transcript with `model_auto_compact_token_limit` in the Codex config, using a value near
+  150000 rather than the model's own window. A 500k window that never compacts is not headroom, it is
+  the bill.
+- Give each child its PR number, head SHA, diff, checklist and the exact commands, and nothing else.
+  Every file a child has to go looking for is a turn the next child pays for again.
+- Do not spend a child on a question one command answers. A grep, a test run or a version check
+  belongs in the parent or in the packet's checklist.
+- Fill the announced concurrency slots and reuse a finished child with a follow-up task. Spawns
+  beyond the slots queue somewhere the parent cannot see, which reads as a hung batch.
+- When the allowance runs out, record the heads already reported, the open items and the next action,
+  then stop. Do not downgrade the model or trim the review dimensions to keep working.
+
+Depth is the part that does not change. Discovery, ambiguity and cross-feature reasoning stay on Sol,
+[Methodical PR review](#methodical-pr-review) stays whole, and the parent still re-runs every proving
+command before a finding enters the register. What the economics change is the number of contexts in
+flight, never what each one is asked to prove.
 
 ## Approval boundary
 
