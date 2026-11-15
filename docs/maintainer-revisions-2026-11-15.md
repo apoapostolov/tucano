@@ -20,7 +20,7 @@ The primary checkout's uncommitted copy work was left intact.
 - [x] Run type checks, full suites, builds, focused regressions and isolated runtime checks.
 - [x] Verify the published heads in a separate worktree.
 - [x] Review the safe migration boundary against current TucanoNext source.
-- [x] Port the background kill/restart harness and verify all 19 assertions on TucanoNext.
+- [x] Port the background kill/restart harness and verify all 20 assertions on TucanoNext.
 - [x] Refresh the exact-head Apo queues without claiming completed full feature audits.
 
 ## Upstream results
@@ -37,7 +37,7 @@ All branches use main `3e8162eb`. Every full suite below has zero failures and 6
 | [#472](https://github.com/eduwxyz/tucano/pull/472) | `9d2ea252` | Pure Skills extraction, split from #468; all 11 function bodies match main byte for byte. | 1,779 |
 
 #402's full suite predates its test-only harness refinements; its final published head passes
-typecheck, nine focused tests, a production build and all 19 kill/restart assertions. The other
+typecheck, nine focused tests, a production build and all 20 kill/restart assertions. The other
 five source heads have passing full suites and separate published-head type/focused checks.
 Locked dependencies were installed in the isolated refactor worktree; published-head checks
 used that installation. Earlier complete suites, except the final #391 and #472 runs, used the
@@ -81,3 +81,4 @@ required. The built TucanoNext was run with scratch data to validate the migrate
 
 The next review trigger is a maintainer reply or a changed PR head/base. A future Tucano release
 must still be ingested selectively, preserving the decisions recorded here.
+
