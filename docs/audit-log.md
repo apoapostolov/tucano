@@ -7,6 +7,7 @@ an active task's report.
 
 | Date | Record | Scope and limits |
 | --- | --- | --- |
+| 15 November 2026 | [S-454 Skills comparison](audit-skill-comparison-2026-11-15.md) | Completed targeted repair: current-main reproduction, upstream #468, combined suite and installed delivery. Broader #311 audit remains open. |
 | 15 November 2026 | [Master-plan rollout](audit-master-rollout-2026-11-15.md) | Apo-first policy, approval gate, all-state queues, release/main tracker and development-tool checks. No independent other-author audit. |
 | 15 November 2026 | [0.2.32 reconciliation](upstream-reconciliation-0.2.32.md) | Installed/released source, full-suite and runtime evidence; live-data comparison limits recorded. |
 | 15 November 2026 | [0.2.31 reconciliation](upstream-reconciliation-0.2.31.md) | Previous intermediate delivery and the sector/entry-point conflict decisions carried into 0.2.32. |

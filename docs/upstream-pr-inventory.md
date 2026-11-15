@@ -1,10 +1,10 @@
 # Upstream contributor PR inventory
 
-Captured 2026-11-15T01:08:43.612Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T07:02:32.149Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
-326 total: 92 open, 206 merged, 28 closed.
+327 total: 92 open, 206 merged, 29 closed.
 
-Upstream main: `d175567b0a12d885544d74c45792717a883287f5`. Daily driver HEAD: `85bb37f94cd8123468ee36fbd4d207d63ac28b90`. Upstream main is contained: yes.
+Upstream main: `d175567b0a12d885544d74c45792717a883287f5`. Daily driver HEAD: `11d5255e8828f0b909dc1e8cfa52f2cad5e22852`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -69,7 +69,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#70](https://github.com/eduwxyz/tucano/pull/70) | eduwxyz | MERGED | Let an agent fall back to a reserve model when its subscription is out | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#71](https://github.com/eduwxyz/tucano/pull/71) | eduwxyz | MERGED | Let agents run on more than one Claude Code or Codex account | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#72](https://github.com/eduwxyz/tucano/pull/72) | eduwxyz | MERGED | Let the reserve model run on another account of the same harness | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#75](https://github.com/eduwxyz/tucano/pull/75) | JulioAkaminee | OPEN | Harden the server against bad requests and token guessing | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#75](https://github.com/eduwxyz/tucano/pull/75) | JulioAkaminee | CLOSED | Harden the server against bad requests and token guessing | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#76](https://github.com/eduwxyz/tucano/pull/76) | eduwxyz | MERGED | Let an agent take a drawn avatar (Open Bot Avatar) | object unavailable | not collected | not collected | not reviewed |
 | [#77](https://github.com/eduwxyz/tucano/pull/77) | rayanneblima | MERGED | Reorder and group channels in the sidebar | object unavailable | not collected | not collected | not reviewed |
 | [#79](https://github.com/eduwxyz/tucano/pull/79) | eduwxyz | MERGED | Add Cursor CLI as a harness | no: inspect patch equivalence | not collected | not collected | not reviewed |
@@ -338,6 +338,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#463](https://github.com/eduwxyz/tucano/pull/463) | eduwxyz | MERGED | Pass work straight to the sector's head, from any depth | object unavailable | not collected | not collected | not reviewed |
 | [#464](https://github.com/eduwxyz/tucano/pull/464) | eduwxyz | MERGED | Attach files from the browser, and keep sector zones apart on Team | object unavailable | not collected | not collected | not reviewed |
 | [#465](https://github.com/eduwxyz/tucano/pull/465) | eduwxyz | MERGED | Let the person choose an entry point over the sectors | object unavailable | not collected | not collected | not reviewed |
+| [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | not collected | not collected | not reviewed |
 
 ## Commit dependencies
 

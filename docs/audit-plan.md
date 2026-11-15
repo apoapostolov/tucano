@@ -15,6 +15,20 @@ with 61 skipped and zero failures, plus installed background QA. See
 [the delivery record](upstream-reconciliation-0.2.32.md). This verifies that delivery, not the whole
 product or every integrated feature. Broad production readiness remains unclaimed.
 
+The later local installation contains the scrolling repair from `4fef95c1`: its complete suite
+passed 2,622 tests with 61 skipped, and installed reasoning checks measured zero reading-line
+drift in all three panel sizes at 150% display scaling. See the
+[repair and delivery record](scroll-reading-repair-2026-11-15.md). This targeted repair does not
+advance the exact-head audit counts below.
+
+The current local installation also contains the bounded Skills comparison repair, integrated in
+`c2829873`, with application source unchanged through delivery record `db5aef86`. The combined
+suite passed **2,634 tests**, with 61 skipped and zero failures. Installed background checks pass
+at 150% scaling; [PR #468](https://github.com/eduwxyz/tucano/pull/468) has six passing CI jobs.
+See [S-454's completed repair record](audit-skill-comparison-2026-11-15.md). This is one targeted
+repair, not a complete audit of #311. The public fork release remains the earlier 0.2.32 asset;
+this single-bug delivery does not replace that release.
+
 The primary checkout has a concurrent uncommitted copy task. Preserve its bytes and staged work.
 Published integration code and a clean delivery worktree are available at `C:/git-ext/tucano-0231`;
 do not build the primary checkout's older package until its source is reconciled. Documentation
@@ -23,9 +37,9 @@ and intake tools can be delivered there independently without committing unrelat
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 90 captured: 62 open, 18 merged, 10 closed; 0/90 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
-| Apo open wall | 0/62 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
-| Other contributors, including maintainer PRs | Intake only: 236 captured, 30 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
+| All Apo PRs | 92 captured: 64 open, 18 merged, 10 closed; 0/92 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/64 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| Other contributors, including maintainer PRs | Intake only: 236 captured, 29 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
 | Findings and proposals | Confirmed defects, repairs and open questions have separate states | [Finding register](audit-findings.md) |
@@ -37,7 +51,6 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] Reproduce #454's large skill-comparison allocation on current upstream main and prepare a focused bounded implementation. Keep the constrained Node reproduction distinct from an observed Electron failure.
 - [ ] Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
