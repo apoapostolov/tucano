@@ -8,10 +8,11 @@ const server = await createServer({ configFile: false, server: { host: '127.0.0.
 await server.listen()
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
 try {
-  const page = await browser.newPage({ viewport: { width: 900, height: 700 } })
+  const page = await browser.newPage({ viewport: { width: Number(process.argv[4] ?? 900), height: 700 } })
   page.on('pageerror', e => console.error(e))
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/scripts/qa-reasoning-retention-boundary.html`)
   await page.waitForFunction(() => window.emitThought)
+  await page.evaluate(size => window.setSize(size), process.argv[3] ?? 'md')
   const lines = Array.from({ length: 250 }, (_, i) => `Line ${String(i).padStart(4, '0')} ${'x'.repeat(65)}\n`).join('')
   await page.evaluate(text => window.emitThought(text), lines)
   const block = page.locator('.thought')
@@ -26,7 +27,7 @@ try {
     const range = document.createRange()
     let offset = 0
     for (; offset < text.length; offset++) { range.setStart(text, offset); range.setEnd(text, offset + 1); if (range.getBoundingClientRect().top >= target) break }
-    window.mark = text.textContent.slice(offset, offset + 20)
+    window.mark = text.textContent.slice(offset - 100, offset + 100)
     const style = getComputedStyle(text.parentElement)
     return { mark: window.mark, top: range.getBoundingClientRect().top, length: text.length, font: { family: style.fontFamily, size: style.fontSize, lineHeight: style.lineHeight } }
   })
@@ -36,7 +37,7 @@ try {
   await page.waitForTimeout(250)
   const after = await block.evaluate(el => {
     const text = el.querySelector('.thought__text').firstChild
-    const offset = text.textContent.indexOf(window.mark)
+    const offset = text.textContent.indexOf(window.mark) + 100
     const range = document.createRange(); range.setStart(text, offset); range.setEnd(text, offset + 1)
     return { mark: text.textContent.slice(offset, offset + 20), offset, top: range.getBoundingClientRect().top, length: text.length }
   })

@@ -6,7 +6,9 @@ import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { neverAllowedForGood, ruleTool, runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
 import { InitiativeLine } from './Initiative'
-import { captureLine, lineTop, type ReadingLine } from '../reading-line'
+import { Reading } from '../reading-context'
+import { Thought, followsTheEnd } from './Thought'
+export { Thought, followsTheEnd } from './Thought'
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
@@ -38,7 +40,6 @@ import { canEditChannel,
   repliesOf,
   timelineOf,
   useLiveText,
-  useLiveThought,
   workingIds,
   openDialog,
   decideApproval,
@@ -355,21 +356,7 @@ const JumpTo = createContext<(id: string) => void>(() => {})
 // How a reply's reasoning tells the list it is being read further up: `hold` stops the list following
 // the end of the reply, `release` gives it back. A block that is not inside a list of messages gets
 // the no-ops.
-const Reading = createContext<{
-  hold: (el: HTMLElement | null, preserve: () => void, rebase: () => void) => void
-  release: (el: HTMLElement | null) => void
-  forget: (el: HTMLElement | null) => void
-  preserve: () => void
-  // Whether the list around the block is still following the reply's end: a block that keeps taking its
-  // own stream up while the person reads by scrolling the page is the same fault one level in.
-  follows: () => boolean
-}>({
-  hold: () => {},
-  release: () => {},
-  forget: () => {},
-  preserve: () => {},
-  follows: () => true
-})
+
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
 // jump to, and a reply with no prompt of its own (a routine's, one an agent called for) has none.
@@ -2166,151 +2153,6 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// Only rounding at the actual end counts as following. Reading even part of an earlier line pauses it.
-const THOUGHT_END = 2
-
-// Whether the block sits at the end of what it shows: the place a person is reading, not where the
-// stream stopped. Content arriving below it does not move that place.
-export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; clientHeight: number }): boolean {
-  return box.scrollHeight - box.scrollTop - box.clientHeight < THOUGHT_END
-}
-
-// What the model is thinking, dim and small, as it arrives: not what it said, and not a step.
-// It stays after the reply ends (the window keeps it in memory) so it can be read back. Off unless
-// the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
-export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
-  const on = useStore((s) => s.settings?.showThinking === true)
-  // How much of it shows before it scrolls: a line or two when it is only a hint, most of the
-  // window when the reasoning is the thing being read.
-  const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
-  const thought = useLiveThought(message.id, STREAM_MS)
-  const box = useRef<HTMLDivElement>(null)
-  // The block follows what arrives only while the person is at its end. Someone who scrolled up to
-  // read an earlier passage keeps that place as the rest streams in below it, and the block takes
-  // the stream up again by itself once they are back at the end.
-  const follow = useRef(true)
-  // The list around the block follows the reply's end, which carries the block up the page while the
-  // answer arrives below it. Reading above the block's end holds the list too, and coming back hands
-  // it back (`Reading`, above). Only a block that holds it may give it back: another reply's block
-  // folding or scrolling away must not take the list back to the end while this one is being read.
-  const reading = useContext(Reading)
-  const holding = useRef(false)
-  const position = useRef(0)
-  const written = useRef<number | null>(null)
-  const heldElement = useRef<HTMLElement | null>(null)
-  const line = useRef<ReadingLine | null>(null)
-  const gesture = useRef(0)
-  const pinnedRow = useRef<{ el: HTMLElement; visibility: string } | null>(null)
-  const unpin = (): void => {
-    if (pinnedRow.current) pinnedRow.current.el.style.contentVisibility = pinnedRow.current.visibility
-    pinnedRow.current = null
-  }
-  const preserveTextLine = (): void => {
-    const el = box.current
-    const saved = line.current
-    if (!el || !saved || !holding.current) return
-    const top = lineTop(el, saved.offset)
-    if (top === null) return
-    const moved = top - saved.top
-    if (Math.abs(moved) < 1) return
-    el.scrollTop += moved
-    position.current = el.scrollTop
-    written.current = el.scrollTop
-    const after = lineTop(el, saved.offset)
-    if (after !== null && Math.abs(after - saved.top) >= 1) saved.top = after
-  }
-  const holdList = (): void => {
-    holding.current = true
-    const row = box.current?.closest<HTMLElement>('.msg')
-    if (row && !pinnedRow.current) {
-      pinnedRow.current = { el: row, visibility: row.style.contentVisibility }
-      row.style.contentVisibility = 'visible'
-    }
-    heldElement.current = box.current
-    line.current = box.current ? captureLine(box.current) : null
-    reading.hold(box.current, preserveTextLine, () => { line.current = box.current ? captureLine(box.current) : null })
-  }
-  const releaseList = (): void => {
-    if (!holding.current) return
-    holding.current = false
-    unpin()
-    line.current = null
-    reading.release(heldElement.current)
-    heldElement.current = null
-  }
-  useEffect(() => () => {
-    reading.forget(heldElement.current)
-    unpin()
-  }, [reading])
-  // Follow intent survives streamed DOM updates. Browser-generated scroll events from our own
-  // writes cannot resume following; only moving back to the actual end releases the hold.
-  useLayoutEffect(() => {
-    const el = box.current
-    if (!el) {
-      reading.forget(heldElement.current)
-      heldElement.current = null
-      unpin()
-      holding.current = false
-      line.current = null
-      written.current = null
-      follow.current = true
-      return
-    }
-    if (Date.now() < gesture.current && written.current !== null && Math.abs(el.scrollTop - written.current) >= 1) {
-      position.current = el.scrollTop
-      follow.current = followsTheEnd(el)
-      if (follow.current) releaseList()
-      else holdList()
-      gesture.current = 0
-    }
-    if (follow.current && reading.follows()) el.scrollTop = el.scrollHeight
-    else if (!follow.current) el.scrollTop = position.current
-    written.current = el.scrollTop
-    reading.preserve()
-    preserveTextLine()
-  })
-  if (!on || !thought) return null
-  return (
-    <div
-      ref={box}
-      className={`thought thought--${size}`}
-      style={{ overflowAnchor: 'none' }}
-      aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
-      onScroll={(e) => {
-        const el = e.currentTarget
-        if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
-        gesture.current = 0
-        position.current = el.scrollTop
-        written.current = el.scrollTop
-        follow.current = followsTheEnd(el)
-        if (follow.current) releaseList()
-        else {
-          holdList()
-          line.current = captureLine(el)
-        }
-      }}
-      onPointerDown={() => { gesture.current = Date.now() + 250 }}
-      onTouchStart={() => { gesture.current = Date.now() + 250 }}
-      onKeyDown={() => { gesture.current = Date.now() + 250 }}
-      onWheel={(e) => {
-        gesture.current = Date.now() + 250
-        if (e.deltaY < 0) {
-          follow.current = false
-          position.current = e.currentTarget.scrollTop
-          written.current = e.currentTarget.scrollTop
-          holdList()
-        } else if (e.deltaY > 0 && followsTheEnd(e.currentTarget)) {
-          follow.current = true
-          releaseList()
-        }
-      }}
-    >
-      <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
-      <div className="thought__text">{thought}</div>
     </div>
   )
 }

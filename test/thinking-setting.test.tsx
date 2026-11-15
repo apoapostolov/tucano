@@ -9,7 +9,7 @@ let fake: State
 let thought: string | undefined
 vi.mock('../src/renderer/src/store', async (original) => {
   const real = await original<typeof import('../src/renderer/src/store')>()
-  return { ...real, useStore: <T,>(select: (s: State) => T): T => select(fake), useLiveThought: () => thought }
+  return { ...real, useStore: <T,>(select: (s: State) => T): T => select(fake), useLiveThoughtState: () => thought === undefined ? undefined : ({ text: thought, start: 0 }) }
 })
 const { getState } = await import('../src/renderer/src/store')
 const { Thought, followsTheEnd } = await import('../src/renderer/src/components/Conversation')
@@ -37,7 +37,7 @@ describe("the model's thinking on screen", () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const html = drawn()
     // The middle size unless the person chose another: the class carries which one it is.
-    expect(html).toContain('class="thought thought--md"')
+    expect(html).toContain('class="thought thought--md is-open"')
     expect(html).toContain('Pensando')
     expect(html).toContain('o pedido tem duas partes')
   })
@@ -50,10 +50,10 @@ describe("the model's thinking on screen", () => {
   it('shows 6, 12 or 18 lines before it scrolls, and the middle one when nobody chose', () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const thought = (): string => renderToStaticMarkup(<Thought message={message} working />)
-    expect(thought()).toContain('class="thought thought--md"')
+    expect(thought()).toContain('class="thought thought--md is-open"')
     for (const chosen of ['sm', 'md', 'lg'] as const) {
       fake = { ...fake, settings: { ...fake.settings, showThinking: true, thinkingSize: chosen } }
-      expect(thought()).toContain(`class="thought thought--${chosen}"`)
+      expect(thought()).toContain(`class="thought thought--${chosen} is-open"`)
     }
   })
 

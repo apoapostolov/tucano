@@ -23,6 +23,8 @@ const app = await electron.launch({ args: [...(env.TUCANO_ELECTRON ? [] : ['.'])
 const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), checks: [], errors: [], passed: false }
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
 try {
+  const safeWindows = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().map(window => ({ visible: window.isVisible(), focusable: window.isFocusable() })))
+  assert.ok(safeWindows.every(window => !window.visible && !window.focusable), 'QA windows must remain hidden and unfocusable before interaction')
   const page = await app.firstWindow()
   report.runtime = await app.evaluate(({ app, screen }) => ({ executable: process.execPath, version: app.getVersion(), scale: screen.getPrimaryDisplay().scaleFactor }))
   page.on('pageerror', error => report.errors.push(String(error)))
@@ -64,6 +66,9 @@ try {
       const block = [...document.querySelectorAll('.thought')].at(-1)
       return block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
     }, null, { polling: 50 })
+    // An explicit open preserves the public feature's manual choice through completion.
+    await block.locator('.thought__head').click()
+    await block.locator('.thought__head').click()
     const marked = await block.evaluate(block => {
       const list = block.closest('.messages')
       list.scrollTop += block.getBoundingClientRect().top - list.getBoundingClientRect().top - 25

@@ -12395,6 +12395,22 @@ button.agent-card__now:hover {
 .thought--lg {
   --thought-lines: 18;
 }
+.thought__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.thought__head .thought__label { flex-shrink: 0; }
+.thought__last { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
+.thought__head:focus-visible { outline: 2px solid var(--text-3); outline-offset: 2px; }
+.thought:not(.is-open) { overflow: visible; }
 .thought__label {
   font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
   letter-spacing: 0.06em;
