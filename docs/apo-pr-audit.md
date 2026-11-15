@@ -1,6 +1,6 @@
 # Apo PR audit queue
 
-Inventory captured 2026-11-15T07:01:41.611Z. Full exact-head audits: **0/91** (OPEN, MERGED, CLOSED).
+Inventory captured 2026-11-15T07:16:15.757Z. Full exact-head audits: **0/92** (OPEN, MERGED, CLOSED).
 
 Check a box only after the complete feature audit in docs/audit-plan.md passes. Targeted repairs,
 integration and green CI alone do not qualify. Refreshing this file preserves checked boxes only
@@ -204,3 +204,5 @@ integrated behavior; make focused repairs when evidence warrants them.
   Head `ea0f090c2be5`; OPEN; author apoapostolov; age 0 days; updated 2026-11-14T13:15:11Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #451 [Write the guide's 24 pages in English too, and hand each workspace its own](https://github.com/eduwxyz/tucano/pull/451) <!-- head:6dcfa7a99ddee2de957d4ead5e27ecc0348dc86f base:04539404e545323124e5dd4737098892cd746226 -->
   Head `6dcfa7a99dde`; OPEN; author apoapostolov; age 0 days; updated 2026-11-14T11:19:09Z; integration ancestry: inspect equivalence; review: not reviewed.
+- [ ] #468 [fix: bound skill comparisons and preserve complete large versions](https://github.com/eduwxyz/tucano/pull/468) <!-- head:2d15a2777e3447575dafdebc121a372b3f1666ef base:d175567b0a12d885544d74c45792717a883287f5 -->
+  Head `2d15a2777e34`; OPEN; author apoapostolov; age 0 days; updated 2026-11-15T07:15:23Z; integration ancestry: present; review: not reviewed.

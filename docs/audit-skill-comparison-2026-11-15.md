@@ -8,8 +8,8 @@ for #454 was found. This repair is based on current main, not the integrated fea
 - [x] Confirm current main retains the original unbounded matrix; establish maintainability baseline.
 - [x] Reproduce the current-main failure and save resource/complete-content regressions.
 - [x] Implement a fixed detailed-comparison budget and readable, complete-content fallback.
-- [ ] Verify both history and proposal entry points, copy/layout, resource bounds and tests.
-- [ ] Open the focused upstream PR with immutable public captures and actual-head evidence.
+- [x] Verify both history and proposal entry points, copy/layout, resource bounds and tests.
+- [x] Open the focused upstream PR with immutable public captures and actual-head evidence.
 - [ ] Integrate, test, install and verify the combined application; finish source/release records as required.
 - [ ] Remove this completed repair from the immediate queue without marking the entire #311 audit complete.
 

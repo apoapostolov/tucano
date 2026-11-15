@@ -29,8 +29,8 @@ and intake tools can be delivered there independently without committing unrelat
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 91 captured: 63 open, 18 merged, 10 closed; 0/91 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
-| Apo open wall | 0/63 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| All Apo PRs | 92 captured: 64 open, 18 merged, 10 closed; 0/92 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/64 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
 | Other contributors, including maintainer PRs | Intake only: 236 captured, 29 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
