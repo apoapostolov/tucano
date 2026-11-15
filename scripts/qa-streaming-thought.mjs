@@ -66,7 +66,7 @@ try {
     await block.waitFor()
     await page.waitForFunction(() => {
       const block = [...document.querySelectorAll('.thought')].at(-1)
-      return (block?.querySelector('.thought__text')?.textContent.length ?? 0) > 8000 && block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
+      return (block?.querySelector('.thought__text')?.textContent.length ?? 0) > 18000 && block?.scrollHeight > block?.clientHeight * 4 && block?.querySelector('.thought__label')?.textContent === 'Thinking'
     }, null, { polling: 50 })
     // An explicit open preserves the public feature's manual choice through completion.
     const head = block.locator('.thought__head')
@@ -80,7 +80,7 @@ try {
       list.scrollTop += block.getBoundingClientRect().top - list.getBoundingClientRect().top - 25
       list.dispatchEvent(new Event('scroll'))
       block.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true }))
-      block.scrollTop = Math.round((block.scrollHeight - block.clientHeight) / 2)
+      block.scrollTop = Math.round((block.scrollHeight - block.clientHeight) * 0.75)
       block.dispatchEvent(new Event('scroll'))
       const text = block.querySelector('.thought__text').firstChild
       let offset = 0
@@ -141,6 +141,8 @@ try {
     report.checks.push({ size, marked, samples })
     await page.screenshot({ path: join(output, `reading-${size}.png`) })
     assert.ok(samples.at(-1).streamed > marked.streamed + 1000, 'Substantial reasoning must arrive while reading')
+    report.checks.at(-1).trimmed = marked.chars + samples.at(-1).streamed - marked.streamed - samples.at(-1).chars
+    assert.ok(report.checks.at(-1).trimmed > 1000, 'Measure retained reading across cache-prefix eviction')
     assert.ok(samples.every(sample => sample.connected && Math.abs(sample.top - marked.top) < 2), JSON.stringify({ size, marked, samples }))
     // At the page's top limit a shrinking header can move the block itself. The inner offset
     // may compensate for that; the character's visible line is the invariant.
