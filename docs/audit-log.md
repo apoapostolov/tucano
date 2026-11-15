@@ -7,6 +7,7 @@ an active task's report.
 
 | Date | Record | Scope and limits |
 | --- | --- | --- |
+| 15 November 2026 | [R-245 delegated boundary batch](audit-245-boundary-batch-2026-11-15.md) | Parent-reproduced retained-text reading-position defect F-006; bounded audience probe passes. Development evidence only; folding, broader audience coverage and installed repair verification remain open. |
 | 15 November 2026 | [Maintainer-requested revisions](maintainer-revisions-2026-11-15.md) | Four upstream revisions, two requested split PRs, published-head checks and selective migration of the background restart harness. Product copy and defaults remain separate. |
 | 15 November 2026 | [R-245 reasoning audit](audit-reasoning-245-2026-11-15.md) | Active exact-head review; upstream reconciliation through 3e8162eb, cache lifecycle and reading-position checks. |
 | 15 November 2026 | [S-454 Skills comparison](audit-skill-comparison-2026-11-15.md) | Completed targeted repair: current-main reproduction, upstream #468, combined suite and installed delivery. Broader #311 audit remains open. |

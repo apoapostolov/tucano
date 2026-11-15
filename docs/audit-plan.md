@@ -64,7 +64,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **Active: R-245.** Compose missing reasoning folding with reading-line ownership and size controls; verify retained-text trimming, audience transitions and neighboring reply controls. The cache repair and `3e8162eb` reconciliation are delivered. [Current packet and remaining checks](audit-reasoning-245-2026-11-15.md).
+- [ ] **Active: R-245.** Repair F-006's reproduced reading-position jump across retained-text trimming, compose missing reasoning folding with reading-line ownership and size controls, and complete audience and neighboring-control checks. A bounded role/preference transition probe passes; broader audience coverage remains open. The cache repair and `3e8162eb` reconciliation are delivered. [Boundary review batch](audit-245-boundary-batch-2026-11-15.md), [original packet](audit-reasoning-245-2026-11-15.md).
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
