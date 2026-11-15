@@ -51,7 +51,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies.
+- [ ] **Active: R-245.** Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies. Reconcile incoming main `3e8162eb` first. [Current packet](audit-reasoning-245-2026-11-15.md).
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
