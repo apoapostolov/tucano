@@ -47,3 +47,12 @@ not routinely rebased or refreshed. Concrete findings still receive focused repa
 The primary checkout's uncommitted copy-review files are preserved and excluded from this installer.
 Committed copy-review work through `f6e0d04f` is included. The newer uncommitted text remains its own
 review and delivery task; this upgrade's evidence must not be attributed to it.
+
+## Entry-point copy review
+
+Rendered QA found the imported English entry-point hint occupies three lines, exceeding the two-line
+secondary-copy rule. Before: “You talk to it, and it passes each part to the right sector. The teams
+below it are the sectors.” Reviewed replacement: “Routes your requests to sector heads. Each team
+below it is a sector.” This retains the delegation target and the meaning of the child teams without
+repeating the conversation setup. Portuguese is unchanged. The in-progress final suite was stopped
+before applying this edit so the final report can describe one stable source tree.
