@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-15T00:08:43.849Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T00:17:26.512Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 90 total: 62 open, 18 merged, 10 closed.
 
-Upstream main: `5da3d7e10472208e72c67386395a27b0d7759a7d`. Daily driver HEAD: `cc645b0a17b29d069e90059d94923b06724ebfc6`. Upstream main is contained: yes.
+Upstream main: `c06ab5479abb28acb0d3868abea7b0ad30eaa938`. Daily driver HEAD: `0458045680b687da556601bfd61cc4dfbcf497e4`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 

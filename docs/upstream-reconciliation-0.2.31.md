@@ -56,3 +56,23 @@ below it are the sectors.” Reviewed replacement: “Routes your requests to se
 below it is a sector.” This retains the delegation target and the meaning of the child teams without
 repeating the conversation setup. Portuguese is unchanged. The in-progress final suite was stopped
 before applying this edit so the final report can describe one stable source tree.
+
+## Built UI evidence
+
+`C:/tmp/tucano-0231-final-built/report.json` passes at application source `04580456`: seven smoke
+checks, 18 Settings page/viewport measurements, pause/resume with no premature question, two sector
+zones that do not overlap, entry-point routing and a persisted off/on toggle, and Team attachments.
+The new entry-point label and revised hint pass at 900 and 1280 CSS pixels at native 150% display
+scaling; sector-panel labels and hints pass too. Fresh captures wait for the panel's finite opening
+animation to complete, rather than saving an intermediate translucent frame. No window is shown,
+focused or made focusable. Scratch data, fake engines and separately reserved ports are enforced.
+
+`C:/tmp/tucano-0231-browser-files-2/report.json` proves an ordinary browser file attaches, sends and
+survives renderer reload, while a 21 MiB file uploads and inserts its server path. This uses a
+headless browser, loopback server and scratch home/data. The first attempt was blocked by a name
+prompt after renderer reload; dismissing that prompt fixed the harness without bypassing file checks.
+
+The first sector fixture attempted to reopen seeded data; the QA startup guard correctly refused
+it. Fixtures now go through a separate normal authorized renderer RPC port after startup. The
+entry checkbox requires waiting for the asynchronous core update; clicks are followed by observed
+badge transitions instead of assuming the state changes synchronously inside Playwright's check().
