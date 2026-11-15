@@ -1,0 +1,125 @@
+{
+  "source": "ac3dd1915a9d897643c8e11d230a655baf77fe75",
+  "dirty": false,
+  "checks": [
+    {
+      "name": "it had two steps of real work before the kill",
+      "passed": true,
+      "detail": [
+        "Thought:done",
+        "Saved to memory:done",
+        "Thought:done",
+        "Searched memory:done",
+        "Thinking:running"
+      ]
+    },
+    {
+      "name": "one of them is what it wrote",
+      "passed": true
+    },
+    {
+      "name": "it was still working when the app was killed",
+      "passed": true
+    },
+    {
+      "name": "with no shutdown path, it is still marked working",
+      "passed": true
+    },
+    {
+      "name": "what it wrote before the kill is in the database",
+      "passed": true,
+      "detail": [
+        "prefiro respostas curtas"
+      ]
+    },
+    {
+      "name": "the session comes back with the run marked interrupted",
+      "passed": true
+    },
+    {
+      "name": "every step of work it finished survived the kill",
+      "passed": true,
+      "detail": {
+        "before": [
+          "Thought:done",
+          "Saved to memory:done",
+          "Thought:done",
+          "Searched memory:done",
+          "Thinking:running"
+        ],
+        "after": [
+          "Thought:done",
+          "Saved to memory:done",
+          "Thought:done",
+          "Searched memory:done",
+          "Thinking:error"
+        ]
+      }
+    },
+    {
+      "name": "the rule says this reply can go on",
+      "passed": true
+    },
+    {
+      "name": "Continue is offered",
+      "passed": true
+    },
+    {
+      "name": "Try again stands beside it",
+      "passed": true
+    },
+    {
+      "name": "Continue produced a second reply rather than rewriting the first",
+      "passed": true
+    },
+    {
+      "name": "the new reply says it went on from there",
+      "passed": true,
+      "detail": "I went on from there: Saved to memory, Searched memory were already done, and I redid none"
+    },
+    {
+      "name": "the one it went on from now reads as answered, not as an offer",
+      "passed": true
+    },
+    {
+      "name": "the new reply was told the steps the cut one had taken",
+      "passed": true,
+      "detail": "I went on from there: Saved to memory, Searched memory were already done, and I redid none"
+    },
+    {
+      "name": "nothing but thinking had happened",
+      "passed": true,
+      "detail": [
+        "Thinking:running"
+      ]
+    },
+    {
+      "name": "it still comes back as interrupted",
+      "passed": true
+    },
+    {
+      "name": "the rule says it has nothing to go on with",
+      "passed": true
+    },
+    {
+      "name": "Continue is not offered",
+      "passed": true,
+      "detail": [
+        "Try again"
+      ]
+    },
+    {
+      "name": "Try again is still offered",
+      "passed": true,
+      "detail": [
+        "Try again"
+      ]
+    },
+    {
+      "name": "the window raised no errors across four launches",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "passed": true
+}

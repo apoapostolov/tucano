@@ -1,0 +1,112 @@
+{
+  "source": "f55ce3fbfec482281ad73fe8b376137dad246b99",
+  "dirty": false,
+  "checks": [
+    "setting defaults off",
+    "default-off restart leaves work interrupted",
+    "opt-in persists across launch",
+    "tool work continues",
+    "thinking alone stays interrupted",
+    "manual stops stay stopped",
+    "skipped older interruptions are not replayed"
+  ],
+  "measurements": [
+    {
+      "width": 900,
+      "viewport": null,
+      "results": [
+        {
+          "selector": ".key-row:has(strong:text-is(\"Resume interrupted replies\")) strong",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Resume interrupted replies",
+              "characters": 26,
+              "lines": 1,
+              "visible": true,
+              "width": 484.66668701171875,
+              "height": 21.697917938232422,
+              "contentWidth": 485,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "14px",
+              "lineHeight": "21.7px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".key-row:has(strong:text-is(\"Resume interrupted replies\")) p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Resume work after a quit or crash, unless you stopped it. Paused agents wait until resumed.",
+              "characters": 91,
+              "lines": 2,
+              "visible": true,
+              "width": 484.66668701171875,
+              "height": 37.1875,
+              "contentWidth": 485,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "width": 1280,
+      "viewport": null,
+      "results": [
+        {
+          "selector": ".key-row:has(strong:text-is(\"Resume interrupted replies\")) strong",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Resume interrupted replies",
+              "characters": 26,
+              "lines": 1,
+              "visible": true,
+              "width": 634.6666870117188,
+              "height": 21.697917938232422,
+              "contentWidth": 635,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "14px",
+              "lineHeight": "21.7px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".key-row:has(strong:text-is(\"Resume interrupted replies\")) p",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Resume work after a quit or crash, unless you stopped it. Paused agents wait until resumed.",
+              "characters": 91,
+              "lines": 1,
+              "visible": true,
+              "width": 634.6666870117188,
+              "height": 18.59375,
+              "contentWidth": 635,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ],
+  "passed": true
+}

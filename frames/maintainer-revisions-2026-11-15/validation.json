@@ -1,0 +1,91 @@
+{
+  "base": "3e8162ebbb8c1d432d6973cedde7444a21910f4f",
+  "date": "2026-11-15",
+  "platform": "Windows",
+  "suites": {
+    "391": {
+      "sha": "f55ce3fbfec482281ad73fe8b376137dad246b99",
+      "passed": 1787,
+      "skipped": 60
+    },
+    "392": {
+      "sha": "20570b537e2a34ca3407ddfa84a2439e19237608",
+      "passed": 1791,
+      "skipped": 60
+    },
+    "402": {
+      "sha": "ac3dd1915a9d897643c8e11d230a655baf77fe75",
+      "passed": 1781,
+      "skipped": 60,
+      "note": "Full suite before test-only harness follow-ups; final source rechecked by typecheck, focused tests and 19 runtime assertions."
+    },
+    "468": {
+      "sha": "74f64aedf6d2f0b2cb1c954d4fcdc21dbf186554",
+      "passed": 1791,
+      "skipped": 60
+    },
+    "471": {
+      "sha": "dd9f86c31b1fa4b64f5be2a9eaba3b4a1b5be99b",
+      "passed": 1781,
+      "skipped": 60
+    },
+    "472": {
+      "sha": "9d2ea2520d8f91cc38c0e881d1a5d6d623dba859",
+      "passed": 1779,
+      "skipped": 60
+    }
+  },
+  "failed": 0,
+  "freshPublishedHeads": "Each source rechecked with typecheck and focused tests in a separate worktree using the main lockfile installation.",
+  "maintainability": {
+    "391": {
+      "gate_passed": false,
+      "delta": {
+        "nloc": -3,
+        "cc": -8,
+        "cogc": -7
+      },
+      "red_edited": [
+        "src\\core\\memory.ts",
+        "src\\core\\runs.ts",
+        "src\\renderer\\src\\components\\Pages.tsx",
+        "src\\shared\\types.ts",
+        "test\\kept-session.test.ts",
+        "test\\wiki-curator.test.ts"
+      ]
+    },
+    "392": {
+      "gate_passed": false,
+      "delta": {
+        "nloc": 12,
+        "cc": 5,
+        "cogc": 1
+      },
+      "red_edited": [
+        "src\\core\\wiki.ts"
+      ]
+    },
+    "468": {
+      "gate_passed": false,
+      "delta": {
+        "nloc": 105,
+        "cc": 35,
+        "cogc": 13
+      },
+      "red_edited": [
+        "src\\renderer\\src\\components\\Skills.tsx"
+      ]
+    },
+    "refactor": {
+      "gate_passed": true,
+      "delta": {
+        "nloc": 33,
+        "cc": 0,
+        "cogc": 0
+      },
+      "red_edited": []
+    }
+  },
+  "layoutException": "Original upstream warning retained at maintainer request. It wraps to three lines at 420 CSS pixels, stays fully visible and is recorded separately from the passing new comparison hint/labels.",
+  "editorialReview": "New comparison text reviewed in context. Existing upstream warning restored byte-identically. Recovery label/hint reviewed with default-off/enabled states; screenshot and measurement review at 900/1280 CSS pixels and 150% Electron scaling."
+}

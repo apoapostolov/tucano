@@ -1,0 +1,386 @@
+{
+  "source": "74f64aedf6d2f0b2cb1c954d4fcdc21dbf186554",
+  "dirty": false,
+  "checks": [],
+  "measurements": [],
+  "fixture": {
+    "historyId": "bf996492-0866-41ab-a472-ead08e04f3de",
+    "proposalId": "f36b7299-ba60-44a1-b7d2-9c9e86166a45",
+    "characters": [
+      12023,
+      12021
+    ]
+  },
+  "comparison": {
+    "passed": true,
+    "measurements": [
+      {
+        "name": "proposal",
+        "width": 1280,
+        "deviceScaleFactor": 1.5,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".proposal .diff-full .hint",
+            "maxLines": 2,
+            "rows": [
+              {
+                "text": "Large change: both versions are shown in full.",
+                "characters": 46,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 18.59375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".proposal .diff-full .field__label",
+            "maxLines": 1,
+            "rows": [
+              {
+                "text": "Before",
+                "characters": 6,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 19.375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              },
+              {
+                "text": "After",
+                "characters": 5,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 19.375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".proposal > .hint--warn",
+            "maxLines": 12,
+            "reason": "Unchanged upstream warning restored at maintainer request; existing layout debt.",
+            "rows": [
+              {
+                "text": "Long recipe: 12,021 characters, 2,021 over the 10,000-character recommendation. Consider shortening it; the full recipe will be kept.",
+                "characters": 133,
+                "lines": 2,
+                "visible": true,
+                "width": 640,
+                "height": 37.1875,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      },
+      {
+        "name": "proposal",
+        "width": 900,
+        "deviceScaleFactor": 1.5,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".proposal .diff-full .hint",
+            "maxLines": 2,
+            "rows": [
+              {
+                "text": "Large change: both versions are shown in full.",
+                "characters": 46,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 18.59375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".proposal .diff-full .field__label",
+            "maxLines": 1,
+            "rows": [
+              {
+                "text": "Before",
+                "characters": 6,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 19.375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              },
+              {
+                "text": "After",
+                "characters": 5,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 19.375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".proposal > .hint--warn",
+            "maxLines": 12,
+            "reason": "Unchanged upstream warning restored at maintainer request; existing layout debt.",
+            "rows": [
+              {
+                "text": "Long recipe: 12,021 characters, 2,021 over the 10,000-character recommendation. Consider shortening it; the full recipe will be kept.",
+                "characters": 133,
+                "lines": 2,
+                "visible": true,
+                "width": 554,
+                "height": 37.1875,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      },
+      {
+        "name": "history",
+        "width": 1280,
+        "deviceScaleFactor": 1.5,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".skill__history .diff-full .hint",
+            "maxLines": 2,
+            "rows": [
+              {
+                "text": "Large change: both versions are shown in full.",
+                "characters": 46,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 18.59375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".skill__history .diff-full .field__label",
+            "maxLines": 1,
+            "rows": [
+              {
+                "text": "Before",
+                "characters": 6,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 19.375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              },
+              {
+                "text": "After",
+                "characters": 5,
+                "lines": 1,
+                "visible": true,
+                "width": 640,
+                "height": 19.375,
+                "contentWidth": 640,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      },
+      {
+        "name": "history",
+        "width": 900,
+        "deviceScaleFactor": 1.5,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".skill__history .diff-full .hint",
+            "maxLines": 2,
+            "rows": [
+              {
+                "text": "Large change: both versions are shown in full.",
+                "characters": 46,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 18.59375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          },
+          {
+            "selector": ".skill__history .diff-full .field__label",
+            "maxLines": 1,
+            "rows": [
+              {
+                "text": "Before",
+                "characters": 6,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 19.375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              },
+              {
+                "text": "After",
+                "characters": 5,
+                "lines": 1,
+                "visible": true,
+                "width": 554,
+                "height": 19.375,
+                "contentWidth": 554,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12.5px",
+                "lineHeight": "19.375px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      },
+      {
+        "name": "maximum-warning",
+        "width": 1280,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".modal .hint--warn",
+            "maxLines": 12,
+            "reason": "Unchanged upstream warning restored at maintainer request; existing layout debt.",
+            "rows": [
+              {
+                "text": "Long recipe: 1,000,000 characters, 990,000 over the 10,000-character recommendation. Consider shortening it; the full recipe will be kept.",
+                "characters": 138,
+                "lines": 2,
+                "visible": true,
+                "width": 638.6666870117188,
+                "height": 37.1875,
+                "contentWidth": 639,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      },
+      {
+        "name": "maximum-warning",
+        "width": 900,
+        "viewport": null,
+        "results": [
+          {
+            "selector": ".modal .hint--warn",
+            "maxLines": 12,
+            "reason": "Unchanged upstream warning restored at maintainer request; existing layout debt.",
+            "rows": [
+              {
+                "text": "Long recipe: 1,000,000 characters, 990,000 over the 10,000-character recommendation. Consider shortening it; the full recipe will be kept.",
+                "characters": 138,
+                "lines": 2,
+                "visible": true,
+                "width": 638.6666870117188,
+                "height": 37.1875,
+                "contentWidth": 639,
+                "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                "fontSize": "12px",
+                "lineHeight": "18.6px",
+                "overflowX": false,
+                "overflowY": false
+              }
+            ]
+          }
+        ],
+        "failures": [],
+        "passed": true
+      }
+    ],
+    "checks": [
+      "fake-engine proposal creates comparison",
+      "proposal approval keeps complete replacement",
+      "history comparison keeps both complete versions",
+      "restore recovers complete old body",
+      "full versions scroll from the keyboard",
+      "maximum-body warning remains fully visible and cancel preserves saved content"
+    ]
+  },
+  "passed": true
+}

@@ -1,0 +1,18 @@
+{
+  "source": "9d2ea2520d8f91cc38c0e881d1a5d6d623dba859",
+  "compared": [
+    "result",
+    "SkillsPage",
+    "Skills",
+    "SkillPage",
+    "Who",
+    "AddFromTerminal",
+    "AgentPicker",
+    "History",
+    "Proposal",
+    "Diff",
+    "SkillForm"
+  ],
+  "unchanged": 11,
+  "mismatches": []
+}
