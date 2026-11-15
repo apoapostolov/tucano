@@ -1931,6 +1931,7 @@ function ReportsTo({ draft, patch }: { draft: Agent; patch: (p: Partial<Agent>) 
         <span className="field__label">{L('Também responde a', 'Also answers to')}</span>
         <Select
           multiple
+          showAllValues
           values={also}
           onValuesChange={(ids) => {
             const keep = ids.filter((id) => id !== draft.reportsTo).slice(0, 12)
