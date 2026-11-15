@@ -700,6 +700,8 @@ const COLUMNS: [string, string, string][] = [
   // How long an agent's history is kept (src/shared/retention.ts), in days: its replies and its own DMs.
   // NULL: the Tucano's period. 0: everything, for good, whatever that period says.
   ['agents', 'retention_days', 'INTEGER'],
+  // The other agents it also answers to, as a JSON list of ids (src/shared/org.ts bossesOf).
+  ['agents', 'also_to', 'TEXT'],
   // A sector head's name for its sector and what it solves, in a line (src/shared/org.ts).
   ['agents', 'sector_name', 'TEXT'],
   ['agents', 'sector_does', 'TEXT'],
@@ -757,6 +759,15 @@ const inChunks = (all: readonly string[]): string[][] => {
   const out: string[][] = []
   for (let i = 0; i < all.length; i += CHUNK) out.push(all.slice(i, i + CHUNK))
   return out
+}
+// A JSON list of ids in a column ('["a","b"]'): anything else, a broken value included, reads as none.
+const idList = (v: unknown): string[] => {
+  try {
+    const parsed: unknown = JSON.parse(str(v) || '[]')
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string' && !!x) : []
+  } catch {
+    return []
+  }
 }
 
 export const monthStart = (now = new Date()): number => new Date(now.getFullYear(), now.getMonth(), 1).getTime()
@@ -1063,6 +1074,7 @@ export class Db {
       // One with no owner (put there by another tool, after the people came) is the Tucano owner's.
       owner: r['owner'] ? str(r['owner']) : this.ownerId(),
       ...(r['reports_to'] ? { reportsTo: str(r['reports_to']) } : {}),
+      ...(idList(r['also_to']).length ? { alsoTo: idList(r['also_to']) } : {}),
       ...(r['sector_name'] ? { sectorName: str(r['sector_name']) } : {}),
       ...(r['sector_does'] ? { sectorDoes: str(r['sector_does']) } : {}),
       ...(r['entry'] ? { entry: true as const } : {})
@@ -1098,7 +1110,9 @@ export class Db {
       .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, cleanRetentionDays(a.retentionDays) ?? null, isStepsMode(a.steps) ? a.steps : null, a.smartRouting === true ? 1 : a.smartRouting === false ? 0 : null, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki === 'none' || a.wiki === 'read' || a.wiki === 'read_write' ? a.wiki : null, Date.now())
     // An agent made without one belongs to the Tucano's owner; a save that doesn't say keeps it.
     this.db.prepare('UPDATE agents SET owner = COALESCE(?, owner, (SELECT id FROM people WHERE role = ?)) WHERE id = ?').run(a.owner ?? null, 'owner', a.id)
-    this.db.prepare('UPDATE agents SET reports_to = ?, sector_name = ?, sector_does = ?, entry = ? WHERE id = ?').run(a.reportsTo || null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.id)
+    this.db
+      .prepare('UPDATE agents SET reports_to = ?, also_to = ?, sector_name = ?, sector_does = ?, entry = ? WHERE id = ?')
+      .run(a.reportsTo || null, a.alsoTo?.length ? JSON.stringify(a.alsoTo) : null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.id)
   }
 
   // Kept apart from saveAgent: folders change only after the core checks them.
