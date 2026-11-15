@@ -10,6 +10,7 @@ import type { Engine, Turn } from '../src/core/engines/types'
 import { Gateway } from '../src/core/gateway'
 import { Runner } from '../src/core/runs'
 import { exportTeam, importTeam } from '../src/core/team'
+import { People } from '../src/core/people'
 
 const ready = { installed: true, loggedIn: true }
 const agent = (id: string, extra: Partial<Agent> = {}): Agent => ({ id, name: id[0]!.toUpperCase() + id.slice(1), handle: id, role: '', color: 'sky', instructions: '', modelId: 'sonnet', effort: 'low', limit: 1_000_000, used: 0, grants: {}, memory: 'auto', computer: false, archived: false, ...extra })
@@ -536,6 +537,18 @@ describe('work handed down the tree', () => {
     expect(by('clara', 'dm').at(-1)?.text).toMatch(/^Sobre o pedido em #clientes:/)
   })
 
+  it('does not start an old silent request out of the blue: it ends, and whoever asked hears it', async () => {
+    const r = runner()
+    // Open and silent for two days (the app was closed, or it predates the knock): no turn now.
+    const rootId = askedButSilent({ createdAt: Date.now() - 2 * 24 * 60 * 60_000 })
+    r.sweepDelegations()
+    await r.idle()
+    expect(db.delegation('pedido-mudo')).toMatchObject({ state: 'failed', told: true })
+    expect(db.delegation('pedido-mudo')?.nudges).toBeUndefined()
+    expect(db.messages().some((m) => m.threadId === rootId && m.author.kind === 'agent')).toBe(false)
+    expect(codex.turns.at(-1)!.prompt).toMatch(/Clara, #clientes: não terminou/)
+  })
+
   it('gives up on a request nobody answered, and whoever asked hears it', async () => {
     const r = runner()
     const rootId = askedButSilent({ nudges: 1, createdAt: Date.now() - 11 * 60_000 })
@@ -624,5 +637,63 @@ describe('who a mention may open a room for', () => {
     await r.send('dm', 'audite o retry')
     await r.idle()
     expect(rooms().map((c) => c.name)).toEqual(['auditar-retry'])
+  })
+})
+
+// Work handed on for someone who sees only part of the team stays within that part, however far it goes.
+describe('work handed on for a restricted member', () => {
+  // Orion is the entry point: Bento heads a sector (Nico), Clara another (Lia).
+  async function ask(picked: boolean): Promise<{ bia: string; bento: string }> {
+    db.saveAgent({ ...db.agent('orion')!, entry: true })
+    db.saveAgent(agent('lia', { reportsTo: 'clara' }))
+    const r = runner()
+    const people = new People(db)
+    const joined = people.join(people.createInvite(db.owner(), { role: 'member' }).code, 'Bia')
+    if (!('person' in joined)) throw new Error(joined.error)
+    const bia = joined.person.id
+    if (picked) db.setPersonAccess(bia, { mode: 'picked', sectors: ['bento'], agents: [], channels: ['eng'] })
+    await r.send('eng', '@nico delegue a bento: veja o build', [], undefined, bia)
+    await r.idle()
+    const turn = claude.turns.find((t) => t.system.includes('Você é Bento'))
+    if (!turn) throw new Error('Bento never ran')
+    return { bia, bento: `${turn.system}\n${turn.prompt}` }
+  }
+
+  it('runs the one asked for the member, not the owner, and brings the answer back as them', async () => {
+    const { bia, bento } = await ask(true)
+    const [d] = db.delegationsFrom('nico', 'eng')
+    expect(d).toMatchObject({ to: 'bento', requestedBy: bia, state: 'done', told: true })
+    // Bento, asked in a thread with no person in it, still works for Bia: no other sector, no hidden agent.
+    expect(bento).toContain('@nico')
+    for (const hidden of ['@clara', '@lia', '@orion']) expect(bento).not.toContain(hidden)
+    expect(by('bento', 'eng').some((m) => !m.threadId && m.text.startsWith('Sobre o pedido em #engenharia'))).toBe(true)
+  })
+
+  it('leaves a member who sees everything as before', async () => {
+    const { bento } = await ask(false)
+    expect(bento).toContain('@clara')
+  })
+
+  it('runs the answer back for the member who asked, even when someone else wrote there since', async () => {
+    db.saveAgent({ ...db.agent('orion')!, entry: true })
+    db.saveAgent(agent('lia', { reportsTo: 'clara' }))
+    const r = runner()
+    const people = new People(db)
+    const joined = people.join(people.createInvite(db.owner(), { role: 'member' }).code, 'Bia')
+    if (!('person' in joined)) throw new Error(joined.error)
+    const bia = joined.person.id
+    db.setPersonAccess(bia, { mode: 'picked', sectors: ['bento'], agents: [], channels: ['eng'] })
+    const sent = r.send('eng', '@nico delegue a bento: demore 1s e veja o build', [], undefined, bia)
+    await until(() => db.delegationsFrom('nico', 'eng').length > 0)
+    // The owner writes in the channel while Bento works: the last person there is no longer Bia.
+    const hers = db.messages().find((m) => m.conversationId === 'eng' && m.author.kind === 'person')!
+    db.saveMessage({ ...hers, id: 'edu-later', author: { kind: 'person', id: db.ownerId() }, text: 'bom dia', at: Date.now() })
+    await sent
+    await r.idle()
+    await until(() => db.delegationsFrom('nico', 'eng')[0]?.told === true)
+    await r.idle()
+    const back = claude.turns.filter((t) => t.system.includes('Você é Nico')).at(-1)!
+    expect(back.prompt).toMatch(/Voltou do que você pediu/)
+    for (const hidden of ['@clara', '@lia', '@orion']) expect(`${back.system}\n${back.prompt}`).not.toContain(hidden)
   })
 })

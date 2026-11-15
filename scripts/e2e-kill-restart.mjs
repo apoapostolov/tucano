@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { canContinue, workedOn, WORKLESS_LABELS } from '../src/shared/run-progress.ts'
 
-const out = process.argv[2] ?? 'screens/kill-restart'
+const out = process.argv[2] ?? '.tucano-local/audit/kill-restart'
 mkdirSync(out, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-kill-'))
 const HOLD = 30_000
@@ -113,12 +113,28 @@ const worked = (run) => (run?.steps ?? []).filter((s) => s.status !== 'running' 
 
 // Kill the window's whole process tree, the way a crash or Task Manager does: the core dies with it,
 // no shutdown path runs, and the run is left marked as working in the database.
+const tree = (pid) => {
+  let children
+  try {
+    children = execFileSync('pgrep', ['-P', String(pid)], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number)
+  } catch (error) {
+    if (error.status !== 1) throw error
+    children = [] // pgrep exits 1 when the process has no children.
+  }
+  return [...children.flatMap(tree), pid]
+}
 const kill = (app) => {
   const pid = app.process().pid
-  try {
-    execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' })
-  } catch {
-    // already gone
+  if (process.platform === 'win32') {
+    execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'pipe' })
+  } else {
+    for (const child of tree(pid)) {
+      try {
+        process.kill(child, 'SIGKILL')
+      } catch (error) {
+        if (error.code !== 'ESRCH') throw error
+      }
+    }
   }
 }
 

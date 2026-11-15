@@ -61,12 +61,11 @@ try {
   }
   const capture = async (name) => {
     await guard()
-    await window.screenshot({ path: join(output, `${name}.png`) })
+    await window.screenshot({ path: join(output, `${name}.png`), animations: 'disabled' })
     await guard()
     report.checks.push(name)
   }
   await window.waitForSelector('.sidebar')
-  if (process.argv.includes('--skill-comparisons')) await seedSkillComparisons(window)
   if (process.argv.includes('--sectors')) await seedSectors(window)
   await capture('01-workspace')
   const agents = window.locator('.nav-item', { has: window.locator('.nav-item__role') })
@@ -84,7 +83,10 @@ try {
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
   if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
   if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
-  if (process.argv.includes('--skill-comparisons')) report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
+  if (process.argv.includes('--skill-comparisons')) {
+    await seedSkillComparisons(window)
+    report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
+  }
   if (process.argv.includes('--upstream-artifact')) report.artifactIngest = await checkArtifactIngest(window, output, guard, resize)
   report.updater = await window.evaluate(() => window.tucano.updateState())
   assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')

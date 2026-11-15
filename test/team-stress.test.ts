@@ -239,7 +239,7 @@ describe('the wiki and DMs (3)', () => {
   })
 
   it('the core filters wikiSources/wikiSource by who can see; deleting is the admins\' (or the DM\'s person\'s), checked in the core', async () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     expect(src).toMatch(/wikiSources: \(_, ctx\) => wikiSourcesFor\(ctx\)/)
     expect(src).toMatch(/if \(people\.canSeeFrom\(ctx\.person, src\.origin\.conversationId\)\) return src/)
     expect(src).toMatch(/if \(!isAdmin\(ctx\.person\) && !theirs\) throw/) // see team-round2-core.test.ts
@@ -257,7 +257,7 @@ describe("the team's log and DMs (5)", () => {
   })
 
   it('every routine record in the core goes through it', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     const calls = [...src.matchAll(/record\(ctx, [^\n]*'routine\.[^\n]*/g)].map((m) => m[0])
     expect(calls.length).toBeGreaterThanOrEqual(3)
     for (const c of calls) expect(c).toContain('routineDetail(db,')
@@ -323,7 +323,7 @@ describe("someone else's routine (7, 14)", () => {
     expect(() => people.watch(bia, 'mine')).toThrow('Essa conversa é de outra pessoa.')
     expect(() => people.watch(bia, 'personal-ch')).toThrow('Só dá pra pedir aviso de uma rotina do canal.')
     expect(people.watch(bia, 'team').id).toBe('team')
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     expect(src).toMatch(/watchRoutine: \(\{ id, on \}, ctx\) => \{\n\s+people\.watch\(ctx\.person, id\)/)
     expect(src).toMatch(/saveRoutine: \(\{ routine \}, ctx\) => \{\n\s+const prev = people\.routineSave\(ctx\.person, routine\)/)
   })
@@ -395,7 +395,7 @@ describe('purging a removed person (8, 9, 10)', () => {
     db.saveRoutine({ id: 'r1', name: 'x', agentId: 'a1', conversationId: 'bia-dm', prompt: 'p', schedule: { days: [1], time: '09:00' }, enabled: true, createdAt: 1, owner: bia.id })
     new Routines({ db, runner: { runRoutine: async () => undefined }, emit: (e) => events.push(e) }).remove('r1')
     expect(events).toEqual([{ type: 'routine_removed', id: 'r1', for: bia.id }])
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     for (const m of src.matchAll(/emit\(\{ type: 'conversation_removed'[^\n]*/g)) expect(m[0]).toMatch(/for/)
     expect(src).toContain("for (const a of p.artifacts) rmSync(join(dataDir, 'artifacts', a.id), { recursive: true, force: true })")
   })
@@ -413,7 +413,7 @@ describe('who manages invites and people (13)', () => {
     people.revokeInvite(ana, hash(adminInvite.code))
     expect(db.invites().filter((i) => !i.usedAt)).toEqual([])
     expect(db.activity({ kind: 'invite.revoked' })).toHaveLength(2)
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     expect(src).toContain('revokeInvite: ({ id }, ctx) => people.revokeInvite(ctx.person, id),')
   })
 
@@ -460,7 +460,7 @@ describe('who changes a channel (product decision)', () => {
     expect(mayEditChannel(dani, c('bias'), ana.id)).toBe(true)
     expect(mayEditChannel(ana, c('bias'), ana.id)).toBe(true)
     expect(mayEditChannel(bia, c('old'), ana.id)).toBe(false)
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'core', 'index.ts'), 'utf8').replace(/\r\n/g, '\n')
     for (const m of ['renameChannel', 'setTopic', 'setChannelMembers']) expect(src).toMatch(new RegExp(`  ${m}: \\([^)]*\\}, ctx\\) => \\{\\n[^\\n]*\\n[^\\n]*\\n\\s+if \\(!mayEditChannel\\(ctx\\.person, conv, db\\.ownerId\\(\\)\\)\\) throw new Error\\(channelEditError\\(\\)\\)`))
     expect(src).toContain("createdBy: ctx.person.id, ...(threads ? { threads } : {})")
     expect(NEEDS_DELETE()).toBe('target')
@@ -678,9 +678,16 @@ describe('a question two people answer (21)', () => {
   })
 
   it('the page keeps what was typed when the answer fails', () => {
-    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'components', 'Conversation.tsx'), 'utf8')
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'components', 'Conversation.tsx'), 'utf8').replace(/\r\n/g, '\n')
     expect(src).toMatch(/answerQuestion\(id, text\.trim\(\)\)\.then\(\n\s+\(\) => setText\(''\),\n\s+\(e: unknown\) => \(setError/)
-    expect(src).toContain("{text.trim() && (")
+    const send = /const send = \(\): void => \{([\s\S]*?)\n  \}/.exec(src.slice(src.indexOf('const mayAnswer = !!waiting || admin')))![1]!
+    expect(send).toContain('if (!text.trim()) return')
+    expect(send).toContain('setSending(true)')
+    const failure = send.slice(send.indexOf('(e: unknown) =>'))
+    expect(failure).toContain('setError(')
+    expect(failure).toContain('setSending(false)')
+    expect(failure).not.toContain('setText(')
+    expect(src).toContain('disabled={sending || !text.trim()}')
   })
 })
 

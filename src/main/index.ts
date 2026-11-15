@@ -31,7 +31,7 @@ const NAME = 'TucanoNext'
 app.setName(NAME)
 const launch = (() => {
   try {
-    return backgroundOptions(process.argv, process.env, [app.getPath('userData'), join(app.getPath('appData'), NAME), join(app.getPath('appData'), 'Tucano')], [47717, 47718, 47727, 47728])
+    return backgroundOptions(process.argv, process.env, [app.getPath('userData'), join(app.getPath('appData'), NAME), join(app.getPath('appData'), 'Tucano'), join(app.getPath('appData'), `${NAME} Dev`), join(app.getPath('appData'), 'Tucano Dev')], [47717, 47718, 47727, 47728])
   } catch (error) {
     // Electron's uncaught-error dialog would itself interrupt a background test.
     console.error(error)

@@ -7,6 +7,7 @@ an active task's report.
 
 | Date | Record | Scope and limits |
 | --- | --- | --- |
+| 15 November 2026 | [0.2.33 reconciliation](upstream-reconciliation-0.2.33.md) | Upstream ingestion, Apo UI precedence and seven merged dispositions; delivery checkpoints tracked in the record. |
 | 15 November 2026 | [R-245 retention/folding delivery](audit-245-delivery-2026-11-15.md) | F-005/F-006 repaired, public PR updated, integration pushed, installer matched and installed behavior verified. Soft handoff guard tested 7/7. Full feature audit remains open. |
 | 15 November 2026 | [R-245 delegated boundary batch](audit-245-boundary-batch-2026-11-15.md) | Parent-reproduced retained-text reading-position defect F-006; bounded audience probe passes. Development evidence only; folding, broader audience coverage and installed repair verification remain open. |
 | 15 November 2026 | [Maintainer-requested revisions](maintainer-revisions-2026-11-15.md) | Four upstream revisions, two requested split PRs, published-head checks and selective migration of the background restart harness. Product copy and defaults remain separate. |

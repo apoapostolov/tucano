@@ -34,7 +34,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | App / `app-startup` | Launch at login and launch minimized | App-wide action, configured in the default workspace; retain installed-app restriction |
 | App / `app-updates` | Version, release notes and existing update controls | Existing admin access; TucanoNext remains updates off; upstream keeps its own update behavior |
 | Workspace / `workspace-context` | Workspace label, owner's name, shared agent context and introduction/checklist actions | Admin; owner's name remains owner-only |
-| Workspace / `workspace-people` | People, profile, coverage and roles | Existing team-mode/member/admin/owner rules |
+| Workspace / `workspace-people` | People, profile, coverage, roles and member/invite access | Existing team-mode/member/admin/owner rules |
 | Workspace / `workspace-activity` | Audit activity | Team-mode admins |
 | Workspace / `workspace-transfer` | Import/export team configuration | Existing admin restrictions and warnings |
 | Workspace / `workspace-backups` | Backup export, restore and replacement warnings | Owner, as required by the existing component; automatic-backup timing is not a new configurable control |

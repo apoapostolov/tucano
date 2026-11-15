@@ -375,6 +375,14 @@ Branches are cut in a worktree, and the hazards there destroy work or waste a cy
 
 ## Keep next current with upstream and the fork's main
 
+**Apo’s interface choices take precedence during upstream ingestion.** Preserve TucanoNext’s
+layout, component organization, polished copy, settings placement, controls and recovery defaults
+when upstream changes the same surface. Adapt upstream fixes and new capabilities to the existing
+interface, including when Git merges without a conflict. Do not replace the interface wholesale
+or restore upstream wording just because upstream accepted an older Apo PR revision. Record the
+behavioral differences and chosen implementation in the reconciliation log, and verify the combined
+result in the built and installed UI. Access controls and privacy protections remain enforced.
+
 Reconcile upstream before continuing older feature work. New upstream commits may accept a PR,
 replace it, change its contract, or make part of it unnecessary.
 

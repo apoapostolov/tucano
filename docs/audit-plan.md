@@ -8,6 +8,8 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+Active 0.2.33 reconciliation: upstream `9474545f`, with Apo interface precedence and seven additional merged Apo PRs recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Installation and release evidence remain pending until verified.
+
 Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
 parent reproduction, repair, existing PR update (or an appropriate new PR), pushed-head verification,
 integration and push to next, build/package, installation into Programs/tucanonext, fresh launch,
@@ -69,9 +71,9 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 94 captured: 60 open, 22 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
-| Apo open wall | 0/60 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
-| Other contributors, including maintainer PRs | Intake only: 236 captured, 25 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
+| All Apo PRs | 94 captured: 53 open, 29 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/53 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| Other contributors, including maintainer PRs | Intake only: 244 captured, 30 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
 | Findings and proposals | Confirmed defects, repairs and open questions have separate states | [Finding register](audit-findings.md) |

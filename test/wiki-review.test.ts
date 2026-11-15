@@ -79,6 +79,19 @@ describe('a review of the wiki', () => {
     expect(r.status().findings.find((f) => f.kind === 'missing')).toMatchObject({ name: 'Construtora Alpha' })
   })
 
+  it.each(['missing', 'broken', 'orphan', 'log', 'contradiction', 'stale', 'duplicate', 'link', 'git'] as const)('resets resolved dismissals for missing pages, broken links, orphans and logs: %s', (kind) => {
+    const w = wiki()
+    const finding = { key: `test:${kind}`, kind, state: 'open' as const, text: 'Synthetic finding', pages: [] }
+    w.setFindings([finding])
+    const id = w.findings().find(f => f.kind === kind)!.id
+    w.dismissFinding(id)
+    w.setFindings([finding])
+    expect(w.findings().some(f => f.kind === kind)).toBe(false)
+    w.setFindings([])
+    w.setFindings([finding])
+    expect(w.findings().some(f => f.kind === kind)).toBe(kind === 'missing' || kind === 'broken' || kind === 'orphan' || kind === 'log')
+  })
+
   it("keeps the model's findings whose fix fits the pages", () => {
     const w = wiki()
     const out = parseReview(
