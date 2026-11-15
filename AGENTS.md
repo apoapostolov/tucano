@@ -806,9 +806,18 @@ refusal means, is in [Working where you have no admin rights](#working-where-you
 Leave other contributors' PRs alone: no rebase, review, comment or close unless the user asks for that
 PR by number. Their conflicts are theirs, and a comment in their thread speaks for the maintainer. Reproduce new
 upstream defects on current upstream main and document stack dependencies and validation.
-`next` is private integration and QA context. Keep its importance and personal workflow out
-of upstream issues, PR descriptions, and review comments. Use upstream-main or feature-branch
-evidence in public reports. Do not copy this fork-local guide into upstream feature PRs.
+**Keep fork maintenance private in all upstream communication.** Do not mention TucanoNext,
+the maintained fork, `next` / `origin/next`, private integration branches, local fork releases,
+installed fork builds, or Apo's fork-specific UI/UX choices in upstream issues, PR descriptions,
+comments, reviews, replies, screenshots, captions or linked reports. The upstream maintainer
+does not need this context. Describe the Tucano change and its upstream-main or feature-branch
+validation only. Standard PR source links and immutable feature-evidence links may remain;
+they are not a reason to narrate fork maintenance. Never relabel fork-only testing as validation
+of an upstream PR: omit it, or clearly identify relevant observations as a local prototype.
+Review outgoing text and evidence for these disclosures before publishing. Remove existing
+disclosures from our editable upstream material when asked, without changing other authors'
+words or adding a public explanation of the private cleanup. Do not copy this fork-local guide
+into upstream feature PRs. A different disclosure requires the user's explicit instruction.
 
 Read `C:/git/self-profile/profile/operational.md` before substantial prose. Apply its supported
 writing habits while preserving facts, attribution, uncertainty, obligations, and exact syntax.
