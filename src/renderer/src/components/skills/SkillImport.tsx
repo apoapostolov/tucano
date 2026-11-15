@@ -43,7 +43,7 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
               <input
                 autoFocus
                 value={q}
-                placeholder={L('Buscar nas skills do seu Claude Code e do Codex', 'Search the skills of your Claude Code and Codex')}
+                placeholder={L('Buscar nas skills do seu Claude Code e do Codex', "Search available skill folders")}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') onClose()
@@ -54,8 +54,8 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
               />
             </div>
             <div className="skill-add__list" ref={list}>
-              {!found && <p className="skill-add__none">{L('Procurando…', 'Looking…')}</p>}
-              {found && shown.length === 0 && <p className="skill-add__none">{L('Nenhuma skill com', 'No skill matching')} “{q.trim()}”.</p>}
+              {!found && <p className="skill-add__none">{L('Procurando…', "Searching…")}</p>}
+              {found && shown.length === 0 && <p className="skill-add__none">{L('Nenhuma skill com', "No matching skills.")} “{q.trim()}”.</p>}
               {shown.map((l, i) => {
                 const on = linked(l)
                 return (
@@ -65,8 +65,8 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
                       <span>{l.origin}</span>
                       {l.category && <span>{l.category}</span>}
                       {l.version && <span>v{l.version}</span>}
-                      {l.scripts && <span className="warn-text">{L('precisa de computador', 'needs a computer')}</span>}
-                      {on && <span className="tag tag--ok">{L('em uso', 'in use')}</span>}
+                      {l.scripts && <span className="warn-text">{L('precisa de computador', "Computer access required")}</span>}
+                      {on && <span className="tag tag--ok">{L('em uso', "In use")}</span>}
                     </span>
                     <span className="skill-add__desc">{l.description}</span>
                     {l.tags && l.tags.length > 0 && (

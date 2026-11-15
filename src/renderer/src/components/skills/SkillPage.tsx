@@ -40,7 +40,7 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
             <Who ids={k.agents} />
             {admin && (
               <button className="text-btn" onClick={() => setPicking(!picking)}>
-                {picking ? L('pronto', 'done') : L('mudar', 'change')}
+                {picking ? L('pronto', "Done") : L('mudar', "Change")}
               </button>
             )}
           </dd>
@@ -59,7 +59,7 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
         </div>
         <div>
           <dt>{L('De onde', 'Source')}</dt>
-          <dd>{k.source ? <span title={k.source}>{L(`Lida do arquivo, ${from(k)}: o que você muda lá vale na próxima vez`, `Read from the file, ${from(k)}: what you change there applies next time`)}</span> : L(`Escrita aqui, ${from(k)}`, `Written here, ${from(k)}`)}</dd>
+          <dd>{k.source ? <span title={k.source}>{L(`Lida do arquivo, ${from(k)}: o que você muda lá vale na próxima vez`, `Source file ${from(k)}; edits apply on next use.`)}</span> : L(`Escrita aqui, ${from(k)}`, `Created here; ${from(k)}`)}</dd>
         </div>
       </dl>
       {picking && (
@@ -75,7 +75,7 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
             <Markdown urlTransform={safeUrl} remarkPlugins={[remarkGfm]}>{k.body}</Markdown>
           </article>
         ) : (
-          <p className="read-empty">{L(`A receita é lida de ${k.source} a cada uso.`, `The recipe is read from ${k.source} on every use.`)}</p>
+          <p className="read-empty">{L(`A receita é lida de ${k.source} a cada uso.`, `Instructions are read from ${k.source} on each use.`)}</p>
         )}
       </section>
       {admin && !k.source && (

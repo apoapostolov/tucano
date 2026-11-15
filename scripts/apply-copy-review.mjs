@@ -21,7 +21,16 @@ function literal(row) {
   if (row.syntax === 'StringLiteral') return JSON.stringify(row.replacement)
   assert.equal(row.syntax, 'TemplateLiteral', `Unsupported syntax for row ${row.id}`)
   // Reviewed templates retain the exact expression text and order; never evaluate them.
-  return '`' + row.replacement.replaceAll('`', '\\`') + '`'
+  // Nested template literals belong to the interpolation syntax and must not be escaped.
+  // Parsing below rejects any unescaped backtick in prose before a file can be written.
+  return '`' + row.replacement + '`'
+}
+function englishExpressionStructure(value) {
+  if (Array.isArray(value)) return value.map(englishExpressionStructure)
+  if (!value || typeof value !== 'object') return value
+  if (value.type === 'StringLiteral') return { type: value.type }
+  if (value.type === 'TemplateElement') return { type: value.type, tail: value.tail }
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !ignored.has(key)).map(([key, child]) => [key, englishExpressionStructure(child)]))
 }
 const grouped = new Map()
 for (const row of review.strings) {
@@ -73,7 +82,10 @@ for (const [file, candidates] of grouped) {
     else assert.equal(oldText, '`' + row.english + '`', `Stale template: ${file}:${row.line}`)
     const text = literal(row)
     const nextNode = parser('(' + text + ')').program.body[0].expression
-    if (row.syntax === 'TemplateLiteral') assert.deepEqual(structure(nextNode.expressions), structure(oldNode.expressions), `Changed interpolation: ${row.id}`)
+    if (row.syntax === 'TemplateLiteral') {
+      const compare = row.englishExpressionLiterals ? englishExpressionStructure : structure
+      assert.deepEqual(compare(nextNode.expressions), compare(oldNode.expressions), `Changed interpolation logic: ${row.id}`)
+    }
     output += source.slice(cursor, row.start)
     restore.set(output.length, { end: output.length + text.length, node: oldNode })
     output += text

@@ -205,7 +205,7 @@ export function CardView({ card, feed, full, open, act, onOpen, onClose, onDecid
             <HoldApprove onApprove={() => onDecide(card, 'approved')} />
           )}
           <button className="btn btn--xs" onClick={() => onDecide(card, 'refused')}>
-            {L('Recusar', "Decline")}
+            {L('Recusar', 'Refuse')}
           </button>
           {!approval.highRisk && (
             <button

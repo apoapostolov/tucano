@@ -4522,7 +4522,7 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "Approve, decline, or answer without opening the conversation. Hold to approve high-risk actions.",
+      "replacement": "Approve, refuse, or answer without opening the conversation. Hold to approve high-risk actions.",
       "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
     },
     {
@@ -5528,9 +5528,9 @@
       "syntax": "StringLiteral",
       "change": "new",
       "previous": null,
-      "decision": "replace",
-      "replacement": "Decline",
-      "reason": "Use direct, consistent professional English; preserve scope, conditions, and interpolation."
+      "decision": "retain",
+      "replacement": "Refuse",
+      "reason": "Retain the established approval action used in conversations, Skills and Telegram."
     },
     {
       "id": 291,

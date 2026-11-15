@@ -40,7 +40,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {agents.map((a) => {
             const on = value.includes(a.id)
             return (
-              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', 'At least one agent uses the skill') : undefined} onClick={() => toggle(a.id)}>
+              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', "At least one agent must be assigned") : undefined} onClick={() => toggle(a.id)}>
                 <AgentAvatar agent={a} size={18} />
                 {a.name}
                 {on && <Icon name="check" size={12} />}
@@ -55,11 +55,11 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
 
 export function result(r?: SkillReport): string {
   const n = r?.reads.replies ?? 0
-  if (!r || n === 0) return L('ainda não foi lida', 'not read yet')
+  if (!r || n === 0) return L('ainda não foi lida', "Not read yet")
   const ok = r.reads.ok
   return L(
     `lida ${n} ${n === 1 ? 'vez' : 'vezes'} · ${ok === n ? (n === 1 ? 'terminou bem' : 'todas terminaram bem') : `${Math.round((ok / n) * 100)}% terminaram bem`}`,
-    `read ${n} ${n === 1 ? 'time' : 'times'} · ${ok === n ? (n === 1 ? 'it ended well' : 'all ended well') : `${Math.round((ok / n) * 100)}% ended well`}`
+    `${n} ${n === 1 ? 'reply' : 'replies'} · ${ok === n ? (n === 1 ? 'completed' : 'all completed') : `${Math.round((ok / n) * 100)}% completed`}`
   )
 }
 

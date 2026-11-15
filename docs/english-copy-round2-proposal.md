@@ -1,6 +1,6 @@
 # English copy follow-up proposal
 
-Source: `cf9d34fa6fff1fe9a7042a6785c827bb081683b3`; comparison: `7ba091c217eb6e3dab28b637c555de0126e560b5`. This is the editorial proposal before source implementation. The accompanying [complete review](english-copy-round2-review.json) records all 380 candidates, including retained strings. 180 replacements are proposed.
+Source: `cf9d34fa6fff1fe9a7042a6785c827bb081683b3`; comparison: `7ba091c217eb6e3dab28b637c555de0126e560b5`. This is the editorial proposal before source implementation. The accompanying [complete review](english-copy-round2-review.json) records all 380 candidates, including retained strings. 179 replacements are proposed.
 
 ## Purpose and scope
 
@@ -164,7 +164,7 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 234 · src/renderer/src/components/Pages.tsx:4071 | Choose the area | Choose area |
 | 235 · src/renderer/src/components/Pages.tsx:4074 | Back to the bottom right corner | Reset to bottom right |
 | 236 · src/renderer/src/components/Pages.tsx:4082 | Decide from the notification | Respond from notifications |
-| 237 · src/renderer/src/components/Pages.tsx:4086 | Approve, refuse and answer right on the notification, without opening the conversation. A high-risk action asks you to hold the button. | Approve, decline, or answer without opening the conversation. Hold to approve high-risk actions. |
+| 237 · src/renderer/src/components/Pages.tsx:4086 | Approve, refuse and answer right on the notification, without opening the conversation. A high-risk action asks you to hold the button. | Approve, refuse, or answer without opening the conversation. Hold to approve high-risk actions. |
 | 238 · src/renderer/src/components/Pages.tsx:4095 | Skin | Appearance |
 | 240 · src/renderer/src/components/Pages.tsx:4103 | Notification skin | Notification appearance |
 | 243 · src/renderer/src/components/Pages.tsx:4124 | Seconds before a notification goes. After that it fades, with a short pause to bring the pointer back. | Seconds before fading, followed by a short grace period to move the pointer back. |
@@ -183,7 +183,6 @@ Labels should occupy one line and hints at most two. Character counts are estima
 | 276 · src/renderer/src/notice/AreaPicker.tsx:100 | Notifications arrive here, from the top down | Notifications appear here, from top to bottom |
 | 277 · src/renderer/src/notice/AreaPicker.tsx:108 | Drag the rectangle, and its corners to resize it. Notifications appear there. | Drag to move the notification area. Drag its corners to resize it. |
 | 288 · src/renderer/src/notice/Notice.tsx:183 | high risk | High risk |
-| 290 · src/renderer/src/notice/Notice.tsx:208 | Refuse | Decline |
 | 291 · src/renderer/src/notice/Notice.tsx:213 | Approve, and from now on without asking, whenever it is this tool | Approve and allow future uses of this tool without asking |
 | 333 · src/renderer/src/store.ts:1132 | I couldn't pause the reply. | Could not pause the reply. |
 | 334 · src/renderer/src/store.ts:1133 | I couldn't let the reply go on. | Could not resume the reply. |
@@ -212,3 +211,5 @@ At native 150% scaling, the 900px agent editor has a 249px text column. The orig
 The screenshot also exposes wrapped neighboring labels and hints because the 260px profile summary squeezes the editor. Stack that summary below the form at 761–1100px viewports, retaining the existing mobile layout and wide desktop arrangement. Extend measurement to every visible editor label and hint, including the new Initiative controls.
 
 The current pause revision (`925c557a`) was integrated before installation. Its original Portuguese timing correction is preserved, and ID 66 now says “before the next step” in English. The copy-only syntax comparison remains evidence for the editorial patch; this subsequent integration also changes the Hold implementation and its regression coverage. Two unchanged “Checking…” occurrences are retained, giving 180 actual English replacements.
+
+Retain Refuse as the existing application-wide approval action. The notification uses the same term; the original comparison therefore contains 179 changed English occurrences.

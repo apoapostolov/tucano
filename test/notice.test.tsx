@@ -67,7 +67,7 @@ describe('what waits on me', () => {
     const html = draw(card!)
     expect(html).toContain('data-card="approval:ap1"')
     expect(html).toContain('Approve')
-    expect(html).toContain('Decline')
+    expect(html).toContain('Refuse')
     expect(html).toContain('in #vendas')
   })
 

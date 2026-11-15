@@ -2401,6 +2401,7 @@ h3 {
   gap: 14px;
   max-width: 720px;
 }
+.skill-source-path { overflow-wrap: anywhere; }
 /* Keep the profile summary from squeezing the editor's labels and hints on small desktops. */
 @media (min-width: 761px) and (max-width: 1100px) {
   .agent-layout {

@@ -34,6 +34,22 @@ export async function checkSkillOrigins(page, output, guard = async () => {}, re
   const report = { measurements: [], captures: [], interactions: [] };
   const original = page.viewportSize();
   const viewport = resize ? await electronCopyViewport(page, resize) : { set: async width => { if (width) await page.setViewportSize({ width, height: 900 }); }, restore: async () => { if (original) await page.setViewportSize(original); } };
+  const captureCopy = async (state, rules) => {
+    for (const width of resize ? [1280, 900] : [1280, 900, 420]) {
+      await viewport.set(width);
+      const copy = await measureCopy(page, rules);
+      copy.state = state;
+      copy.display = await page.evaluate(() => ({ width: innerWidth, devicePixelRatio }));
+      report.measurements.push(copy);
+      const name = `${state}-${width}.png`;
+      await guard();
+      await page.screenshot({ path: join(output, name) });
+      report.captures.push(name);
+      writeFileSync(join(output, 'skill-copy-progress.json'), JSON.stringify(report, null, 2));
+      assert.ok(copy.passed, JSON.stringify(copy.failures));
+    }
+    await viewport.set(1280);
+  };
   await viewport.set(1280);
   await page.locator('.sidebar .nav-item').filter({ hasText: 'Skills' }).first().click();
   for (const [, harness] of fixtures) {
@@ -64,16 +80,38 @@ export async function checkSkillOrigins(page, output, guard = async () => {}, re
   await page.locator('.skill-line').filter({ hasText: 'hermes-audit-skill' }).click();
   await page.locator('.skill-facts').waitFor();
   assert.ok((await page.locator('.skill-facts').innerText()).includes('from your Hermes'));
+  await captureCopy('linked-detail', [{ selector: '.skill-facts dd' }]);
   await guard();
   await page.screenshot({ path: join(output, 'hermes-detail.png') });
   report.captures.push('hermes-detail.png');
   await page.getByRole('button', { name: 'Edit', exact: true }).click();
   await page.locator('.agent-form').waitFor();
+  await captureCopy('linked-editor', [
+    { selector: '.agent-form .field__label', maxLines: 1 },
+    { selector: '.agent-form .hint:visible' },
+    { selector: '.skill-source-path', maxLines: 8, reason: 'The full source path is a value on its own row, not an explanatory hint.' }
+  ]);
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('button', { name: 'Archive', exact: true }).click();
   await page.getByRole('button', { name: /Archived/ }).click();
   await page.getByRole('button', { name: 'Reactivate', exact: true }).click();
   await page.locator('.skill-line').filter({ hasText: 'hermes-audit-skill' }).waitFor();
+  await page.getByRole('button', { name: 'New skill', exact: true }).click();
+  await captureCopy('new-skill', [{ selector: '.agent-form .field__label', maxLines: 1 }, { selector: '.agent-form .hint:visible' }]);
+  await page.getByRole('textbox', { name: /^Name/ }).fill('Copy audit fixture');
+  await page.getByRole('textbox', { name: /^When to use/ }).fill('When reviewing synthetic interface copy');
+  await page.getByRole('textbox', { name: /^Instructions/ }).fill('# Review\nInspect the synthetic interface copy.');
+  await page.getByRole('button', { name: 'Create skill', exact: true }).click();
+  await page.locator('.skill-line').filter({ hasText: 'copy-audit-fixture' }).click();
+  await page.getByText('No previous versions.', { exact: true }).waitFor();
+  await captureCopy('first-version', [{ selector: '.skill-facts dd, .read-group > p.small:visible' }]);
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('textbox', { name: /^Instructions/ }).fill('# Review\nInspect the synthetic interface copy.\nRecord the checks.');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.getByRole('button', { name: 'Show changes', exact: true }).first().waitFor();
+  await captureCopy('version-history', [{ selector: '.skill__history button', maxLines: 1 }]);
+  await page.getByRole('button', { name: 'Show changes', exact: true }).first().click();
+  await captureCopy('version-diff', [{ selector: '.skill__history button', maxLines: 1 }]);
   report.interactions = ['import-eight-harnesses', 'open-detail', 'edit-linked-skill', 'cancel-edit', 'archive', 'reactivate'];
   await viewport.restore();
   await guard();

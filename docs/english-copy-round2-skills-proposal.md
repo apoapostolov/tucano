@@ -8,7 +8,7 @@ Keep skill as the established term. Describe source files, assigned agents, vers
 | --- | --- | --- |
 | 380 · src/renderer/src/components/Pages.tsx:3797 | Pause at the limit. With no monthly limit, use a base of 10 million tokens. | Pause at the limit until you continue. Without a monthly limit, use a base of 10 million tokens. |
 | 384 · src/renderer/src/components/skills/SkillForm.tsx:19 | Short; becomes something like core-tests. | Used to generate an ID such as core-tests. |
-| 387 · src/renderer/src/components/skills/SkillForm.tsx:22 | One sentence. It goes in every agent’s prompt. | One sentence, included in each assigned agent’s prompt. |
+| 387 · src/renderer/src/components/skills/SkillForm.tsx:22 | One sentence. It goes in every agent’s prompt. | One sentence in assigned agents’ prompts. |
 | 390 · src/renderer/src/components/skills/SkillForm.tsx:28 | the recipe changes there, and agents always read the current version. Here you pick who uses it. | Edit the source file to update instructions. Choose assigned agents here. |
 | 392 · src/renderer/src/components/skills/SkillForm.tsx:32 | The steps, in Markdown: exact commands, pitfalls, how to check. | Markdown instructions, commands, cautions, and checks. |
 | 399 · src/renderer/src/components/skills/SkillHistory.tsx:14 | Fetching the history… | Loading history… |
@@ -30,3 +30,5 @@ Keep skill as the established term. Describe source files, assigned agents, vers
 | 437 · src/renderer/src/components/skills/SkillPeople.tsx:62 | read ${n} ${n === 1 ? 'time' : 'times'} · ${ok === n ? (n === 1 ? 'it ended well' : 'all ended well') : `${Math.round((ok / n) * 100)}% ended well`} | ${n} ${n === 1 ? 'reply' : 'replies'} · ${ok === n ? (n === 1 ? 'completed' : 'all completed') : `${Math.round((ok / n) * 100)}% completed`} |
 
 Validate the new/edited/imported/source-linked/history states at 900 and 1280 pixels and the supported narrow browser layout. Use seeded source paths and synthetic skills only. The completion metric changes English literals inside existing conditionals, with explicit review permission; syntax checks must still preserve operators, expressions, Portuguese, and all non-copy code. The expanded per-reply limit hint preserves both manual continuation and the default token base.
+
+The 420px browser check found the first assignment hint used three lines. Shorten it to “One sentence in assigned agents’ prompts.” and rerun the full set of editor states.

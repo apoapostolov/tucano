@@ -3794,7 +3794,7 @@ export function SettingsPage(): ReactNode {
                         onChange={(n) => updateSettings({ defaultLimit: safeLimit(n * 1_000_000) })}
                       />
                     </Field>
-      <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', 'Pause at the limit. With no monthly limit, use a base of 10 million tokens.')}>
+      <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa e você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', "Pause at the limit until you continue. Without a monthly limit, use a base of 10 million tokens.")}>
                       <NumberInput
                         min={1}
                         max={100}
@@ -4083,7 +4083,7 @@ function NoticeSettingsCard({ settings, update }: { settings: Settings; update: 
               <p className="muted small">
                 {L(
                   'Aprovar, recusar e responder direto no aviso, sem abrir a conversa. Uma ação de alto risco pede que você segure o botão.',
-                  "Approve, decline, or answer without opening the conversation. Hold to approve high-risk actions."
+                  "Approve, refuse, or answer without opening the conversation. Hold to approve high-risk actions."
                 )}
               </p>
             </div>

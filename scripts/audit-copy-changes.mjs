@@ -57,7 +57,7 @@ const strings = []
 for (const file of files) {
   const current = collect(readFileSync(file, 'utf8'), file)
   let before = []
-  try { before = collect(execFileSync('git', ['show', base + ':' + file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }), file) } catch {}
+  if (!args.includes('--all')) try { before = collect(execFileSync('git', ['show', base + ':' + file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }), file) } catch {}
   const pairs = new Set(before.map(row => [row.kind, row.source, row.english].join('\0')))
   for (const row of current) {
     if (pairs.has([row.kind, row.source, row.english].join('\0'))) continue

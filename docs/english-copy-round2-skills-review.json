@@ -152,7 +152,7 @@
       "change": "new",
       "previous": null,
       "decision": "replace",
-      "replacement": "One sentence, included in each assigned agent’s prompt.",
+      "replacement": "One sentence in assigned agents’ prompts.",
       "reason": "Clarify the user action or metric while preserving source-file, assignment, and version semantics."
     },
     {
