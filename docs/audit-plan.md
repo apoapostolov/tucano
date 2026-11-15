@@ -37,7 +37,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] Reproduce #454's large skill-comparison allocation on current upstream main and prepare a focused bounded implementation. Keep the constrained Node reproduction distinct from an observed Electron failure.
+- [ ] **Active: S-454 — bounded Skills comparisons.** Reproduce on `d175567b`, preserve full content beyond a fixed detail budget, and deliver the focused repair. [Current packet](audit-skill-comparison-2026-11-15.md).
 - [ ] Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
