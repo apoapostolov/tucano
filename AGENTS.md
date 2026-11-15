@@ -714,7 +714,8 @@ other half, and they belong to the same session.
 | English labels and hints across Settings and Wiki | 409 | 410 |
 | Skills: filter and group an agent's tab | 228 | 244 |
 | Skills: read a Hermes library as it is | 102 | 311 |
-| Bound large skill comparison memory and render work | 454 | |
+| Bound large skill comparison memory and render work | 454 | 468 |
+| Extract Skills components without changing behavior or copy | 454 | 472 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
 | Thinking streamed as dim live text | 235, 452 | 245 |
@@ -732,10 +733,9 @@ other half, and they belong to the same session.
 | Work drawer above the field | 287 | 288 |
 | Follow up a finished reply | 337 | 338 |
 | Try again in a direction you write | 320 | 321 |
-| Continue a reply the app cut | 390 | 401 |
-| Continue a reply the app cut, cut from `main` for upstream | 390 | 412 |
 | Kill and restart in the middle of a reply (check) | 390 | 402 |
 | Resume interrupted replies after a restart | 389 | 391 |
+| Keep an older retry within its original conversation context | 389 | 471 |
 | Steps: all, the latest few, or an expandable line | 314 | 322 |
 | Steps: fold them from the line beside them | 326 | 327 |
 | Steps: remember them folded | 328 | 329 |
