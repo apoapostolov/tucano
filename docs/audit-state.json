@@ -2,7 +2,15 @@
   "upstream": "eduwxyz/tucano",
   "deltaBaselineMain": "d175567b0a12d885544d74c45792717a883287f5",
   "legacyBaselineAuditComplete": false,
-  "reviewedMainCommits": [],
+  "reviewedMainCommits": [
+    "6111849f8d8b6fa844303cc0ac1f9d50c8afeeef",
+    "84c7252c5d1ec257387422a8fb90567d9449e0a7",
+    "37babafd2ef0b9db6ed78dde392462014d6ac8bb",
+    "8c5c5c2297c7ce0342ee9bf4952086c9faaeae89",
+    "e2a2dea425ae4076898203ee761c50154ac17eb8",
+    "26ae13da848261fc25e2ca80847494b51a8aa11b",
+    "3e8162ebbb8c1d432d6973cedde7444a21910f4f"
+  ],
   "deliveries": [
     {
       "tag": "v0.2.32",
@@ -11,5 +19,18 @@
       "evidence": "docs/upstream-reconciliation-0.2.32.md"
     }
   ],
-  "releaseBaselineTag": "v0.2.32"
+  "releaseBaselineTag": "v0.2.32",
+  "mainReconciliations": [
+    {
+      "upstreamCommit": "3e8162ebbb8c1d432d6973cedde7444a21910f4f",
+      "integration": "ff5033b0",
+      "scope": "Necessary compatibility and semantic reconciliation of seven incoming main events; not independent contributor feature audits",
+      "evidence": "docs/audit-reasoning-245-2026-11-15.md",
+      "installed": true,
+      "buildSource": "37a139ea60aad80d624739f8d0ff2965a56e5d48",
+      "forkRelease": "next-v0.2.32",
+      "asarBytes": 37413908,
+      "asarSHA256": "d6ddc42ef9af516f5a7a64c2c97511c827b81094f612d1c582c946e90f392a42"
+    }
+  ]
 }

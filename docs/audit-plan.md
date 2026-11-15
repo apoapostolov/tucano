@@ -40,6 +40,13 @@ Published integration code and a clean delivery worktree are available at `C:/gi
 do not build the primary checkout's older package until its source is reconciled. Documentation
 and intake tools can be delivered there independently without committing unrelated source.
 
+Latest installed/released build: `37a139ea`, containing upstream main `3e8162eb` and the #245
+retention repair. The final combined suite passed **2,656 tests**, with 61 skipped and zero failures.
+Installed checks cover all three reasoning sizes, clearing on disable/re-enable, Skills, pause,
+Settings and the new artifact panel. The fork's `next-v0.2.32` assets and tag were refreshed and
+verified. [R-245's record](audit-reasoning-245-2026-11-15.md) separates this targeted delivery from
+the unfinished folding composition, retained-text boundary, audience and maintainability audit.
+
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
@@ -57,7 +64,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **Active: R-245.** Review the complete #245 commit range and integrated reasoning/reading-position behavior alongside folding, steering and follow-up replies. Reconcile incoming main `3e8162eb` first. [Current packet](audit-reasoning-245-2026-11-15.md).
+- [ ] **Active: R-245.** Compose missing reasoning folding with reading-line ownership and size controls; verify retained-text trimming, audience transitions and neighboring reply controls. The cache repair and `3e8162eb` reconciliation are delivered. [Current packet and remaining checks](audit-reasoning-245-2026-11-15.md).
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.

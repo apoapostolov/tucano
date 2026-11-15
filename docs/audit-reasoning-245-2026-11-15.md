@@ -8,11 +8,11 @@ Other-contributor checks in this packet are limited to upstream ingestion compat
 - [x] Identify exact feature head/base, read its discussion and enumerate the complete commit range.
 - [x] Read the engine, event, audience, setting and renderer-cache changes across that range.
 - [x] Inspect incoming main commits and resolve overlapping integrated behavior without dropping features.
-- [ ] Validate and deliver the upstream reconciliation, including its built and installed UI.
+- [x] Validate and deliver the upstream reconciliation, including its built and installed UI.
 - [ ] Exercise reasoning lifecycle, audience changes, setting transitions and retention under sustained use.
 - [ ] Check folding, reading position, tail trimming, thread widths and neighboring reply controls.
-- [ ] Repair confirmed defects on the existing feature branch and verify the published head.
-- [ ] Record exact-head findings, residual gaps and the next checkpoint; check the full-audit box only if all criteria pass.
+- [x] Repair the confirmed retention defects on the existing feature branch and verify the published head.
+- [x] Record exact-head findings, residual gaps and the next checkpoint; keep the full-audit box unchecked while criteria remain open.
 
 ## Upstream reconciliation
 
@@ -110,3 +110,66 @@ One initial gh inventory request returned truncated JSON; the retry completed wi
 history with an incomplete capture. New maintainer feedback on #468 requests separating its refactor
 and restoring existing English wording; candidate `74f64aed` is already in a concurrent worktree.
 The master queue records that follow-up without overwriting that task's work or calling it delivered.
+
+## Installed delivery and exact remaining boundary
+
+Application tree `8b508004` passes typecheck, build and the complete suite: **2,656 passed,
+61 skipped, zero failed**. Later commits through build source `37a139ea` change only instructions,
+audit records and development QA scripts. Subsequent changelog/documentation/privacy commits also
+leave src/package/lock bytes unchanged; the changelog is not packaged in app.asar.
+Public application source `c35e802c` passes 1,756/60/0 and all six CI jobs; current public head
+`6e383851095949ba45f098f0eab7548721dc5997` adds only the bilingual changelog. The workflow excludes
+Markdown-only changes, so the lack of new checks on that documentation commit is not a green CI
+claim. A fresh checkout of c35e802c passes typecheck and 42 focused cases. Public evidence remains
+bound to its actual source; no installed-fork results are presented as public-PR validation.
+
+The concurrent maintainer batch was preserved through `75b474ec`, followed by the private-context
+instruction update through `70289872`. Both leave packaged source unchanged. #468 is now published
+at `74f64aed`, its extraction is #472, and older-retry filtering is split to #471. That new revision
+work was removed from the immediate queue after its completed record was ingested. It remains a
+set of targeted revisions, not six certified feature audits. Canonical current intake is 94 Apo
+PRs (60 open, 22 merged, 12 closed), with zero complete full audits.
+
+Self-install succeeded at source `37a139ea60aad80d624739f8d0ff2965a56e5d48`. Installed and built
+archives match: **37,413,908 bytes**, SHA-256
+`d6ddc42ef9af516f5a7a64c2c97511c827b81094f612d1c582c946e90f392a42`.
+Native-path extraction confirms tucanonext 0.2.32 and the main bundle matches the build. The fresh
+regular executable is under Programs/tucanonext, PID 10316, `--background`, window w-15732940.
+Agent-desktop status and window identity were checked; no physical input, pointer movement or
+clipboard operation was used. The ordinary window was observed focused; no attribution is made
+about whether that resulted from user activity or launch. The isolated QA windows stayed hidden
+and unfocusable, with their guards passing.
+
+Installed reasoning QA measures **zero CSS-pixel drift**, during streaming and completion, for
+small, medium and large. Returning to the end resumes following within subpixel rounding. Its
+new lifecycle check disables and re-enables reasoning and confirms the discarded text does not
+return. The installed general run passes Settings, Skills origins, proposal approval/history,
+complete restoration, pause, updater-off and background-notification guards, with zero renderer
+errors. New artifact empty-state copy and its Show in Explorer button fit at 900/1280 CSS px,
+device scale 1.5; the file manager was never invoked. Rendered captures were reviewed. The narrow
+screenshot also exposes chat-header/composer crowding beside the panel; this is recorded as a
+neighboring layout gap, not hidden by the new control's passing copy measurement or independently
+repaired outside this packet.
+
+Evidence: C:/tmp/tucano-245-installed-thinking/report.json,
+C:/tmp/tucano-245-installed-general/report.json, C:/tmp/tucano-245-install.json.
+Their source is 37a139ea; dirty state records audit documentation only. Scratch data, fake engines
+and ports are separate; no writes were made to the regular database or released Tucano directories.
+The regular app stays running after scratch processes exit. A read-only pre-install query found no
+working/queued/waiting runs; only completed, failed, interrupted, paused and stopped statuses.
+
+Because this reconciliation introduces the artifact reveal RPC/control, the fork's existing
+next-v0.2.32 release was refreshed under the major-surface delivery rule. The inherited package
+version is unchanged. Tag target is exactly 37a139ea. Published assets match local sizes/digests:
+installer 132,377,054 bytes, SHA-256 90165b461901af9b3abb9f2d201343b8084fae7f99bee11ace6037f9cf6f9767;
+blockmap 139,386 bytes, SHA-256 21591094ec2c5d8cd7fa16e895c4fd335aaefa5a25ee4e956c870de84339d30d.
+A ranged download returned HTTP 206, 1,024 bytes and an MZ executable header. Upstream releases and
+tags are untouched. Notes name this build, checks, unsigned-installer warning and updates off.
+
+R-245 has six of eight packet checkpoints complete. Its full-feature acceptance remains open:
+compose folding without dropping reading-line protection, check retained-text trimming, exercise
+audience/role transitions and neighboring controls, and address the blocked store maintainability
+gate. The integration metric comparison includes incoming main and concurrent development tools;
+its global gate remains blocked. New artifact helper MI 42.55, background driver 19.72, streaming
+QA 14.94 and cache 46.72 pass individually. Do not report a whole-project gate or production-readiness
+pass. The master immediate queue contains these remaining actions, not the completed retention repair.

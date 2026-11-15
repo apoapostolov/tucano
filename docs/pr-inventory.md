@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-15T10:26:22.125Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T10:38:15.602Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 94 total: 60 open, 22 merged, 12 closed.
 
-Upstream main: `3e8162ebbb8c1d432d6973cedde7444a21910f4f`. Daily driver HEAD: `8b50800434ee5999b3e0cf445e99ce956a9ec5ec`. Upstream main is contained: yes.
+Upstream main: `3e8162ebbb8c1d432d6973cedde7444a21910f4f`. Daily driver HEAD: `dff035f10793eb68898df8147678a994aec09b71`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -125,7 +125,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/core/settings-patch.ts | #245, #247, #250, #261, #268, #274, #284, #288, #298, #311, #322, #332, #333, #336, #338, #379, #383, #385, #391, #395, #411, #417, #432 |
 | src/core/policy-people.ts | #245, #247, #249, #250, #258, #259, #268, #305, #311, #322, #336, #338, #353, #375, #379, #383, #385, #417, #432, #435, #437, #457 |
 | src/core/engines/fake.ts | #245, #258, #259, #268, #274, #298, #319, #322, #332, #338, #355, #366, #383, #385, #402, #435 |
-| CHANGELOG.md | #261, #305, #332, #333, #383, #391, #392, #395, #397, #410, #435, #446, #468, #471 |
+| CHANGELOG.md | #245, #261, #305, #332, #333, #383, #391, #392, #395, #397, #410, #435, #446, #468, #471 |
 | src/core/people.ts | #245, #247, #274, #284, #298, #322, #375, #383, #385, #432 |
 | test/opencode.test.ts | #261, #279, #290, #305, #319, #334, #355, #377, #397, #437 |
 | src/shared/workspaces.ts | #268, #274, #379, #383, #385, #391, #395, #411, #417 |
