@@ -99,8 +99,7 @@ try {
     const display = await target.evaluate(() => ({ width: innerWidth, height: innerHeight, deviceScaleFactor: devicePixelRatio }))
     const screenshot = `${name}-${display.width}.png`
     await target.screenshot({ path: join(output, screenshot) })
-    await target.locator('.access').screenshot({ path: join(output, `${name}-${display.width}-detail.png`) })
-    report.captures.push(screenshot, `${name}-${display.width}-detail.png`)
+    report.captures.push(screenshot)
     report.copy.push({ name, display, ...copy })
 
   }

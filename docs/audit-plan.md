@@ -8,7 +8,7 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-Active 0.2.33 reconciliation: upstream `9474545f`, with Apo interface precedence and seven additional merged Apo PRs recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Installation and release evidence remain pending until verified.
+TucanoNext 0.2.33 is installed, freshly launched and released from `4a5daa47`, containing upstream `9474545f`. The full suite passed 2,710 tests, with 61 skipped and no failures. Installed hidden QA passes at 900/1280 CSS pixels and 150% scaling. Apo interface precedence and seven additional merged Apo PRs are recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Full feature audits remain open; the older records below describe earlier builds.
 
 Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
 parent reproduction, repair, existing PR update (or an appropriate new PR), pushed-head verification,
@@ -52,12 +52,11 @@ See [S-454's completed repair record](audit-skill-comparison-2026-11-15.md). Thi
 repair, not a complete audit of #311. The public fork release remains the earlier 0.2.32 asset;
 this single-bug delivery does not replace that release.
 
-The primary checkout has a concurrent uncommitted copy task. Preserve its bytes and staged work.
-Published integration code and a clean delivery worktree are available at `C:/git-ext/tucano-0231`;
-do not build the primary checkout's older package until its source is reconciled. Documentation
-and intake tools can be delivered there independently without committing unrelated source.
+The earlier concurrent copy task is reconciled: its three local commits are preserved in the
+0.2.33 merge. Primary next and origin/next contain the verified application source. Packaging
+used the isolated `C:/git-ext/tucano-0233` worktree with its own dependency installation.
 
-Latest targeted installed build: `a0537d76`, published through `5efb3b44` and the later
+Earlier targeted installed build: `a0537d76`, published through `5efb3b44` and the later
 instruction/evidence-only commits. F-005/F-006 and installed three-size reasoning checks pass;
 the regular app is freshly running. This targeted repair did not refresh release assets.
 
@@ -70,7 +69,7 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
-| Versions and main commits | 0.2.32 delivered; later release/main deltas require separate review | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
+| Versions and main commits | 0.2.33 delivered; 12 new main events reconciled for compatibility | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
 | All Apo PRs | 94 captured: 53 open, 29 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
 | Apo open wall | 0/53 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
 | Other contributors, including maintainer PRs | Intake only: 244 captured, 30 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |

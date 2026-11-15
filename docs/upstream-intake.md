@@ -1,6 +1,6 @@
 # Upstream version and commit intake
 
-Captured 2026-11-15T21:44:52.557Z. Main: `9474545f0415f4bb2a439e1a7727912254b69972`; integration: `1047c2e5c6522aed0ea7b412a95bf103e365580f`.
+Captured 2026-11-15T21:53:40.288Z. Main: `9474545f0415f4bb2a439e1a7727912254b69972`; integration: `4a5daa474230a7742f155250e5fe58a077e5f86f`.
 
 Release boxes mean verified integration, installation and release evidence recorded in audit-state.json,
 not a complete audit of the release code. The baseline whole-tree audit remains separate.
@@ -8,7 +8,7 @@ not a complete audit of the release code. The baseline whole-tree audit remains 
 ## Published versions from the delivery baseline
 
 - [x] [v0.2.32](https://github.com/eduwxyz/tucano/releases/tag/v0.2.32) — published; target `d175567b0a12d885544d74c45792717a883287f5`; [delivery evidence](upstream-reconciliation-0.2.32.md).
-- [ ] [v0.2.33](https://github.com/eduwxyz/tucano/releases/tag/v0.2.33) — published; target `9474545f0415f4bb2a439e1a7727912254b69972`; intake/delivery pending.
+- [x] [v0.2.33](https://github.com/eduwxyz/tucano/releases/tag/v0.2.33) — published; target `9474545f0415f4bb2a439e1a7727912254b69972`; [delivery evidence](upstream-reconciliation-0.2.33.md).
 
 ## Main changes after the baseline
 

@@ -12,10 +12,10 @@ Starting local next `d6ea9cf9cf4c9211072870baaa6e9cf0513f8e78`; published next
 - [x] Mark seven additional Apo PRs merged upstream without marking their full audits complete.
 - [x] Reconcile upstream against the local unpublished UI work in an isolated worktree.
 - [x] Preserve Apo interface precedence explicitly in AGENTS.md.
-- [ ] Complete combined source checks and rendered copy review.
-- [ ] Verify the pushed integration in a fresh checkout.
-- [ ] Build/package, install, freshly launch and check installed behavior.
-- [ ] Publish the fork release after the required publishing approval.
+- [x] Complete combined source checks and rendered copy review.
+- [x] Verify the pushed integration in a fresh checkout.
+- [x] Build/package, install, freshly launch and check installed behavior.
+- [x] Publish the fork release after the required publishing approval.
 
 ## Access control placement and copy draft
 
@@ -100,3 +100,63 @@ without changing production behavior; all 33 team-stress tests pass. A wiki-git 
 out at 60 seconds under suite load. Its source and tests match upstream; all 19 tests pass unchanged
 in isolation. The final full suite uses four workers to reduce host contention, with unchanged
 assertions and timeouts. Final suite and installed evidence follow below when available.
+
+## Pushed source and installed package
+
+The final full suite passed: 2,710 passed, 61 skipped, zero failures (2,771 total).
+Command: `npm test -- --maxWorkers=4 --reporter=json
+--outputFile=C:/tmp/tucano-0233-full-final.json`; exit 0. No timeout or assertion was weakened.
+The earlier wiki-git timeout did not recur.
+
+Published source `4a5daa474230a7742f155250e5fe58a077e5f86f` was extracted to a fresh
+`C:/git-ext/tucano-0233-verify` worktree. `npm run typecheck` passed there, followed by
+`npm exec -- vitest run --maxWorkers=2 test/person-access.test.ts test/wiki-access.test.ts
+test/answer-audiences.test.ts test/retry-history.test.ts test/team-stress.test.ts`: all 66 tests
+passed in five files. Both the integration branch and origin/next resolved to that SHA.
+Primary next was fast-forwarded without discarding source edits; its only generated intake
+report was replaced by the committed current report. Upstream main is contained; origin/main
+has no unintegrated commits.
+
+`node scripts/self-build.mjs install --json` passed from that clean source: package has
+114 runtime packages and no missing dependencies. Installed archive is 37,482,572 bytes,
+SHA-256 `d71376bec56addea7f75ce76eb5894b30416830f74464157d615c535c9c4f631`, identical to the
+packaged archive. Normal executable PID 52780 was freshly launched at 23:47:40 local time with
+`--background`; the helper found window “TucanoNext”. The regular workspace was not used for
+synthetic tests. Released Tucano's executable and data were not targeted.
+
+Installed combined QA passed from `Programs/tucanonext/TucanoNext.exe`, version 0.2.33,
+with scratch data and ephemeral ports: Settings ownership/navigation/copy, Skills origins and
+full comparisons, pause, artifact intake, sectors and notification background guards. No page
+errors. Evidence: `C:/tmp/tucano-0233-installed/report.json`, screenshots and trace. Parent
+reviewed the installed Settings screenshot at 900 CSS pixels and 150% scaling.
+
+The first installed access capture timed out while Playwright tried to scroll a taller-than-window
+`.access` element into a stable screenshot position. No renderer error occurred. Removed only
+that supplementary whole-element capture; visible top/result captures and every copy measurement
+and assertion remain. This development-script correction does not change the packaged app.
+
+
+The corrected installed access run passed all four measurements at 1280/900 CSS pixels and
+150% scaling, with eight native screenshots and no page errors or foreground exposure.
+Evidence: `C:/tmp/tucano-0233-access-installed-fixed/report.json`. Parent reviewed the installed
+900-pixel result screenshot; all consequences and controls remain visible. The dirty source
+flag in this run reflects documentation and the development-only screenshot correction, not
+packaged application changes. The normal installed app remains running after scratch QA closes.
+
+## Published fork release
+
+The user explicitly requested publication on the Apo fork. Created
+[TucanoNext 0.2.33](https://github.com/apoapostolov/tucano/releases/tag/next-v0.2.33).
+Tag `next-v0.2.33` resolves remotely to installer source
+`4a5daa474230a7742f155250e5fe58a077e5f86f`. Upstream tags and releases were untouched.
+
+- Installer: 132,387,131 bytes, SHA-256
+  `81dda09c7b01d5e8f536342982ba4323ed55dcd010759e2f3551ef9d49ece2b8`.
+- Blockmap: 139,072 bytes, SHA-256
+  `8d019c21efae57070d6fa0da165f32d8e702ffceafefc5b7cbddacaa1570a97b`.
+
+GitHub reports both assets uploaded, with matching sizes and SHA-256 digests. Ranged GETs for
+both return HTTP 206, 32 bytes and the expected Content-Range; downloaded bytes match the local
+files. Release notes name the build source and disclose unsigned SmartScreen warnings and
+self-update being disabled. Verification log: `C:/tmp/tucano-0233-release-verification.log`.
+All delivery checkpoints are complete. Full feature and whole-product audits remain open.

@@ -29,6 +29,12 @@
       "upstreamCommit": "d175567b0a12d885544d74c45792717a883287f5",
       "source": "d797e0c45a8b8c882274aad385b5e1c037caed8a",
       "evidence": "docs/upstream-reconciliation-0.2.32.md"
+    },
+    {
+      "tag": "v0.2.33",
+      "upstreamCommit": "9474545f0415f4bb2a439e1a7727912254b69972",
+      "source": "4a5daa474230a7742f155250e5fe58a077e5f86f",
+      "evidence": "docs/upstream-reconciliation-0.2.33.md"
     }
   ],
   "releaseBaselineTag": "v0.2.32",
@@ -43,6 +49,19 @@
       "forkRelease": "next-v0.2.32",
       "asarBytes": 37413908,
       "asarSHA256": "d6ddc42ef9af516f5a7a64c2c97511c827b81094f612d1c582c946e90f392a42"
+    },
+    {
+      "upstreamCommit": "9474545f0415f4bb2a439e1a7727912254b69972",
+      "integration": "4a5daa474230a7742f155250e5fe58a077e5f86f",
+      "scope": "Necessary compatibility and semantic reconciliation of 12 incoming main events; preserves Apo interface decisions; not independent contributor feature audits",
+      "evidence": "docs/upstream-reconciliation-0.2.33.md",
+      "installed": true,
+      "freshLaunchVerified": true,
+      "installedBehaviorVerified": true,
+      "buildSource": "4a5daa474230a7742f155250e5fe58a077e5f86f",
+      "forkRelease": "next-v0.2.33",
+      "asarBytes": 37482572,
+      "asarSHA256": "d71376bec56addea7f75ce76eb5894b30416830f74464157d615c535c9c4f631"
     }
   ],
   "targetedDeliveries": [
