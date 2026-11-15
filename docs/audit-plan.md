@@ -4,10 +4,10 @@ Updated: 15 November 2026. This is private fork workflow context, not an upstrea
 
 ## Current priority and progress
 
-### Active delivery: upstream 0.2.31
+### Active delivery: upstream 0.2.32
 
 The current delivery checklist and exact source refs are in
-[the 0.2.31 reconciliation record](upstream-reconciliation-0.2.31.md). Complete that upgrade,
+[the 0.2.32 reconciliation record](upstream-reconciliation-0.2.32.md). Complete that upgrade,
 installed verification and fork release before resuming older feature audits.
 
 ### Daily intake and aging-PR audit policy

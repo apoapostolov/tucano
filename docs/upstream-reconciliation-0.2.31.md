@@ -9,8 +9,8 @@ Starting local committed integration: `f6e0d04f`; uncommitted copy work in the p
 - [x] Merge all upstream changes through 0.2.31 and inspect semantic overlaps.
 - [x] Refresh PR intake and record changed heads without routinely updating their source branches.
 - [x] Pass settings checks, typecheck, full suite and built-feature verification.
-- [ ] Package, install, launch and verify the installed build with isolated background QA.
-- [ ] Publish and verify the fork's `next-v0.2.31` release.
+- [x] Package, install, launch and verify the installed build with isolated background QA.
+- [x] Publish and verify the fork's `next-v0.2.31` release.
 - [x] Deliver a living daily intake and aging-PR audit plan, preserving explicit incomplete work.
 
 ## Reconciliation decisions
@@ -91,4 +91,14 @@ Installed QA initially failed before launch because the recent copy-runtime help
 the installed archive confirms `\out\main\index.js` exists. Using `join('out', 'main', 'index.js')`
 repairs inspection without weakening the hidden-QA source guard or changing the packaged app.
 This is a development-helper defect in the concurrent committed copy work, not missing installer
-content. Installed runtime verification is being repeated after that repair.
+content. Installed runtime verification then passed all smoke, Settings, pause and sector/entry checks, with updates off.
+
+The 0.2.31 fork release is published and verified. Uploaded installer: 132,374,821 bytes; blockmap:
+139,172 bytes; both GitHub SHA-256 digests match local assets. A real download returns HTTP 206,
+bytes 0–31 of 132,374,821. Installed ASAR SHA-256:
+`f63747e8813b2ec3b62edc6a40bd7bc4605653ce4dca0833cf619fb3cd953c68`.
+
+At the final fetch upstream tagged `d175567b` as 0.2.32, changing only version/changelog metadata
+from the already integrated entry-point source. The user explicitly requested moving this delivery
+to 0.2.32. Follow [the 0.2.32 record](upstream-reconciliation-0.2.32.md) for the final installed version
+and release; the 0.2.31 results above remain historical evidence for that exact installer.
