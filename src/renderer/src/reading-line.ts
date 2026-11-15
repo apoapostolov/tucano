@@ -7,7 +7,8 @@ export function lineTop(block: HTMLElement, offset: number): number | null {
   if (!range.getBoundingClientRect) return null
   range.setStart(text, offset)
   range.setEnd(text, offset + 1)
-  return range.getBoundingClientRect().top
+  const rect = range.getBoundingClientRect()
+  return rect.height > 0 ? rect.top : null
 }
 
 // A character identifies the reading line even when wrapping or surrounding content changes.

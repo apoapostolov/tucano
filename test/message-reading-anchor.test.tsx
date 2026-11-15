@@ -53,6 +53,8 @@ it('keeps an internal reading position through streamed renders and resumes only
   }
   // Only 14 px above the end still expresses the intention to read back.
   await scroll(4486)
+  // Layout changes can reset a native offset without any user scroll. Restore the saved place.
+  block.scrollTop = 0
   for (let chunk = 0; chunk < 10; chunk++) {
     thought += 'New reasoning below the reading line. '
     await render()

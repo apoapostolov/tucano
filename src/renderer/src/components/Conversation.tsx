@@ -424,6 +424,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // place on the page while the rest arrives below. Coming back to the block's end lets the list
   // follow again.
   const paused = useRef(false)
+  const pageGesture = useRef(0)
   // The line being read, and where it sits in the window. Holding the line is what the person asks for
   // when they scroll up: a reply's steps and its text grow above it as it works, and growth above moves
   // everything below it down the page, so the line has to be given back the height that appeared above
@@ -672,6 +673,14 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     <div
       className="messages"
       ref={ref}
+      onWheelCapture={(e) => {
+        const block = (e.target as HTMLElement).closest('.thought')
+        if (block && ((e.deltaY < 0 && block.scrollTop > 0) || (e.deltaY > 0 && !followsTheEnd(block)))) return
+        pageGesture.current = Date.now() + 250
+      }}
+      onPointerDownCapture={(e) => { if (e.target === e.currentTarget) pageGesture.current = Date.now() + 250 }}
+      onTouchStartCapture={() => { pageGesture.current = Date.now() + 500 }}
+      onKeyDownCapture={(e) => { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) pageGesture.current = Date.now() + 250 }}
       onScroll={(e) => {
         const el = e.currentTarget
         const fromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
@@ -691,8 +700,11 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
           }
         } else if (paused.current && !mine && anchor.current) {
           // Moving the page while a block is held establishes a new reading position.
-          takeAnchor(anchor.current.el, el)
-          heldBlock.current?.rebase()
+          if (Date.now() < pageGesture.current) {
+            takeAnchor(anchor.current.el, el)
+            heldBlock.current?.rebase()
+            pageGesture.current = Date.now() + 150
+          } else preserveLine()
         } else if (!paused.current && !mine) {
           // The person scrolled the list themselves: the line under the reading edge is theirs now.
           pickAnchor()
@@ -2191,12 +2203,18 @@ export function Thought({ message, working }: { message: Message; working: boole
   const written = useRef<number | null>(null)
   const heldElement = useRef<HTMLElement | null>(null)
   const line = useRef<ReadingLine | null>(null)
+  const gesture = useRef(0)
+  const pinnedRow = useRef<{ el: HTMLElement; visibility: string } | null>(null)
+  const unpin = (): void => {
+    if (pinnedRow.current) pinnedRow.current.el.style.contentVisibility = pinnedRow.current.visibility
+    pinnedRow.current = null
+  }
   const preserveTextLine = (): void => {
     const el = box.current
     const saved = line.current
     if (!el || !saved || !holding.current) return
     const top = lineTop(el, saved.offset)
-    if (top === null) { line.current = captureLine(el); return }
+    if (top === null) return
     const moved = top - saved.top
     if (Math.abs(moved) < 1) return
     el.scrollTop += moved
@@ -2207,6 +2225,11 @@ export function Thought({ message, working }: { message: Message; working: boole
   }
   const holdList = (): void => {
     holding.current = true
+    const row = box.current?.closest<HTMLElement>('.msg')
+    if (row && !pinnedRow.current) {
+      pinnedRow.current = { el: row, visibility: row.style.contentVisibility }
+      row.style.contentVisibility = 'visible'
+    }
     heldElement.current = box.current
     line.current = box.current ? captureLine(box.current) : null
     reading.hold(box.current, preserveTextLine, () => { line.current = box.current ? captureLine(box.current) : null })
@@ -2214,12 +2237,14 @@ export function Thought({ message, working }: { message: Message; working: boole
   const releaseList = (): void => {
     if (!holding.current) return
     holding.current = false
+    unpin()
     line.current = null
     reading.release(heldElement.current)
     heldElement.current = null
   }
   useEffect(() => () => {
     reading.forget(heldElement.current)
+    unpin()
   }, [reading])
   // Follow intent survives streamed DOM updates. Browser-generated scroll events from our own
   // writes cannot resume following; only moving back to the actual end releases the hold.
@@ -2228,23 +2253,22 @@ export function Thought({ message, working }: { message: Message; working: boole
     if (!el) {
       reading.forget(heldElement.current)
       heldElement.current = null
+      unpin()
       holding.current = false
       line.current = null
       written.current = null
       follow.current = true
       return
     }
-    if (written.current !== null && el.scrollTop < written.current - 1 && !followsTheEnd(el)) {
-      follow.current = false
+    if (Date.now() < gesture.current && written.current !== null && Math.abs(el.scrollTop - written.current) >= 1) {
       position.current = el.scrollTop
-      holdList()
+      follow.current = followsTheEnd(el)
+      if (follow.current) releaseList()
+      else holdList()
+      gesture.current = 0
     }
     if (follow.current && reading.follows()) el.scrollTop = el.scrollHeight
-    else if (!follow.current) {
-      // A scrollbar/touch scroll can precede its scroll event. Keep that newer user position.
-      if (written.current !== null && Math.abs(el.scrollTop - written.current) >= 1) position.current = el.scrollTop
-      el.scrollTop = position.current
-    }
+    else if (!follow.current) el.scrollTop = position.current
     written.current = el.scrollTop
     reading.preserve()
     preserveTextLine()
@@ -2259,6 +2283,7 @@ export function Thought({ message, working }: { message: Message; working: boole
       onScroll={(e) => {
         const el = e.currentTarget
         if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
+        gesture.current = 0
         position.current = el.scrollTop
         written.current = el.scrollTop
         follow.current = followsTheEnd(el)
@@ -2268,7 +2293,11 @@ export function Thought({ message, working }: { message: Message; working: boole
           line.current = captureLine(el)
         }
       }}
+      onPointerDown={() => { gesture.current = Date.now() + 250 }}
+      onTouchStart={() => { gesture.current = Date.now() + 250 }}
+      onKeyDown={() => { gesture.current = Date.now() + 250 }}
       onWheel={(e) => {
+        gesture.current = Date.now() + 250
         if (e.deltaY < 0) {
           follow.current = false
           position.current = e.currentTarget.scrollTop

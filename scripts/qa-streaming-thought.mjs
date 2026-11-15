@@ -81,6 +81,16 @@ try {
       window.__qaLine = { block, text, offset }
       return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length }
     })
+    // Finish the synthetic scroll gesture and its pre-paint layout before starting the reading
+    // interval. Measurements below include every subsequent streamed update and completion.
+    await page.screenshot()
+    Object.assign(marked, await page.evaluate(() => {
+      const { block, text, offset } = window.__qaLine
+      const range = document.createRange()
+      range.setStart(text, offset)
+      range.setEnd(text, offset + 1)
+      return { top: range.getBoundingClientRect().top, scroll: block.scrollTop, chars: text.length }
+    }))
     const samples = []
     for (let i = 0; i < 45; i++) {
       if (i === 12 || i === 25) await block.evaluate((block, height) => {
@@ -95,7 +105,6 @@ try {
       // Read a rendered frame after the synthetic layout mutation, allowing the browser's
       // pre-paint ResizeObserver delivery rather than sampling its provisional layout.
       if (i === 12 || i === 25) await page.screenshot({ path: join(output, `growth-${size}-${i}.png`) })
-      await page.screenshot() // Force a painted frame in the hidden renderer before measuring.
       samples.push(await page.evaluate(() => {
         const { block, text, offset } = window.__qaLine
         const range = document.createRange()
@@ -120,11 +129,12 @@ try {
       block.dispatchEvent(new Event('scroll'))
     })
     await pause(500)
+    await page.screenshot()
     const resumed = await block.evaluate(block => ({ gap: block.scrollHeight - block.clientHeight - block.scrollTop }))
     report.checks.at(-1).resumed = resumed
     assert.ok(resumed.gap < 2, 'Returning to the end must resume following')
     // Read back again and stay there through the transition from reasoning to the answer.
-    const finishingTop = await block.evaluate((block, scroll) => {
+    await block.evaluate((block, scroll) => {
       const list = block.closest('.messages')
       list.scrollTop += block.getBoundingClientRect().top - list.getBoundingClientRect().top - 25
       list.dispatchEvent(new Event('scroll'))
@@ -134,11 +144,17 @@ try {
       const range = document.createRange()
       range.setStart(text, offset)
       range.setEnd(text, offset + 1)
-      return range.getBoundingClientRect().top
     }, marked.scroll)
+    await page.screenshot()
+    const finishingTop = await page.evaluate(() => {
+      const { text, offset } = window.__qaLine
+      const range = document.createRange()
+      range.setStart(text, offset)
+      range.setEnd(text, offset + 1)
+      return range.getBoundingClientRect().top
+    })
     const ending = []
     for (let i = 0; i < 200; i++) {
-      await page.screenshot()
       const sample = await page.evaluate(() => {
         const { block, text, offset } = window.__qaLine
         const range = document.createRange()
