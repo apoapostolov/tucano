@@ -1,6 +1,6 @@
 # Upstream version and commit intake
 
-Captured 2026-11-15T01:12:41.164Z. Main: `d175567b0a12d885544d74c45792717a883287f5`; integration: `85bb37f94cd8123468ee36fbd4d207d63ac28b90`.
+Captured 2026-11-15T07:01:29.823Z. Main: `d175567b0a12d885544d74c45792717a883287f5`; integration: `11d5255e8828f0b909dc1e8cfa52f2cad5e22852`.
 
 Release boxes mean verified integration, installation and release evidence recorded in audit-state.json,
 not a complete audit of the release code. The baseline whole-tree audit remains separate.

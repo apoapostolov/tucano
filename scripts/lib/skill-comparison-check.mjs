@@ -92,6 +92,15 @@ export async function checkSkillComparisons(page, output, guard, resize, widths 
   await page.locator('.notice-line button').filter({ hasText: /Review/ }).click()
   await page.locator('.proposal .diff-full').waitFor()
   await capture('proposal', '.proposal')
+  const beforePanel = page.locator('.proposal .diff-full pre').first()
+  await beforePanel.focus()
+  assert.ok(await beforePanel.evaluate(node => document.activeElement === node), 'Full-version panels must accept keyboard focus')
+  await beforePanel.press('End')
+  await page.waitForFunction(() => document.querySelector('.proposal .diff-full pre').scrollTop > 0)
+  await page.locator('.proposal .diff-full pre').evaluateAll(nodes => nodes.forEach(node => { node.scrollTop = node.scrollHeight }))
+  await page.locator('.proposal__acts').scrollIntoViewIfNeeded()
+  await guard()
+  await page.screenshot({ path: join(output, 'proposal-actions.png') })
   await viewport.set(1280)
   await page.locator('.proposal').getByRole('button', { name: 'Approve', exact: true }).click()
   await page.waitForFunction(async () => {
@@ -108,7 +117,20 @@ export async function checkSkillComparisons(page, output, guard, resize, widths 
     const fixture = window.__skillQaFixture
     return (await window.__skillQaCall('snapshot')).skills.find(skill => skill.id === fixture.historyId)?.body === fixture.before
   })
+  await page.locator('.sheet__actions .text-btn').filter({ hasText: /^Edit$/ }).click()
+  await page.locator('.modal textarea').last().fill('x'.repeat(1_000_000))
+  assert.equal((await page.locator('.modal textarea').last().inputValue()).length, 1_000_000)
+  for (const width of widths) {
+    await viewport.set(width)
+    const copy = await measureCopy(page, [{ selector: '.modal .hint--warn', maxLines: 2 }])
+    assert.ok(copy.passed, JSON.stringify(copy.failures))
+    await guard()
+    await page.screenshot({ path: join(output, `maximum-warning-${width}.png`) })
+    measurements.push({ name: 'maximum-warning', width, ...copy })
+  }
+  await page.locator('.modal').getByRole('button', { name: 'Cancel', exact: true }).click()
+  await page.waitForFunction(async () => (await window.__skillQaCall('snapshot')).skills.find(skill => skill.id === window.__skillQaFixture.historyId)?.body === window.__skillQaFixture.before)
   await viewport.restore()
   await guard()
-  return { passed: true, measurements, checks: ['fake-engine proposal creates comparison', 'proposal approval keeps complete replacement', 'history comparison keeps both complete versions', 'restore recovers complete old body'] }
+  return { passed: true, measurements, checks: ['fake-engine proposal creates comparison', 'proposal approval keeps complete replacement', 'history comparison keeps both complete versions', 'restore recovers complete old body', 'full versions scroll from the keyboard', 'maximum-body warning fits and cancel preserves saved content'] }
 }

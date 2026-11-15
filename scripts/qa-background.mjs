@@ -11,6 +11,7 @@ import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
 import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
 import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
+import { seedSkillComparisons, checkSkillComparisons } from './lib/skill-comparison-check.mjs'
 
 // Reserve both ports together; let the app bind immediately after releasing them.
 const reserve = async () => {
@@ -63,6 +64,7 @@ try {
     report.checks.push(name)
   }
   await window.waitForSelector('.sidebar')
+  if (process.argv.includes('--skill-comparisons')) await seedSkillComparisons(window)
   if (process.argv.includes('--sectors')) await seedSectors(window)
   await capture('01-workspace')
   const agents = window.locator('.nav-item', { has: window.locator('.nav-item__role') })
@@ -80,6 +82,7 @@ try {
   if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
   if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
   if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
+  if (process.argv.includes('--skill-comparisons')) report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
   report.updater = await window.evaluate(() => window.tucano.updateState())
   assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')
   const hasNotices = await window.evaluate(async () => {

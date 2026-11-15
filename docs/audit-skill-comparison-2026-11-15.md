@@ -73,3 +73,23 @@ The first public full suite reports one failure in the unchanged delegation timi
 passed, 60 skipped). No timeout or assertion is changed. A run mistakenly launched from the repair
 worktree despite a base-named output is retained as repair-focused evidence only; a separate
 clean-main worktree is now running the actual baseline case. Do not attribute that first output to main.
+
+## Final public validation and new intake
+
+Public repair head `2d15a2777e3447575dafdebc121a372b3f1666ef` passes the full suite:
+1,771 passed, 60 skipped, zero failures. The unchanged delegation case passes all 26 cases
+on clean main and on the repair branch; the earlier full-run failure remains recorded above.
+Its cause is unresolved; no test, assertion or timeout was weakened.
+
+Fresh built-browser evidence in `C:/tmp/tucano-skill-diff-public-final-ui` passes proposal
+approval, full-content history comparison/restoration, keyboard focus/scrolling, and cancelling
+a one-million-character edit without changing saved content. Screenshots and JSON measure actual
+text at 1280, 900 and 420 CSS pixels. The longest count warning fits two lines at 420px; labels
+fit one line and the fallback hint fits two. Rendered screenshots were inspected, including the
+reachable approval actions and maximum-body warning. Native installed scaling remains pending.
+
+The 07:01–07:02 UTC intake captured new Apo #467 and revised heads #412 (`7907872c`),
+#402 (`fcd564ab`) and #305 (`75435831`). These remain queued for exact-head review; metadata
+intake does not approve integration. Apo totals are 91 (63 open, 18 merged, 10 closed), other
+contributors 236 (29 open). Upstream remains `d175567b` / 0.2.32. The concurrent reading-position
+repair through `6f7229ff` was preserved in integration. No public aging branch was rebased.

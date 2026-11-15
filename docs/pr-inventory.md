@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-15T01:09:37.509Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T07:01:41.611Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
-90 total: 62 open, 18 merged, 10 closed.
+91 total: 63 open, 18 merged, 10 closed.
 
-Upstream main: `d175567b0a12d885544d74c45792717a883287f5`. Daily driver HEAD: `85bb37f94cd8123468ee36fbd4d207d63ac28b90`. Upstream main is contained: yes.
+Upstream main: `d175567b0a12d885544d74c45792717a883287f5`. Daily driver HEAD: `11d5255e8828f0b909dc1e8cfa52f2cad5e22852`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -100,6 +100,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#451](https://github.com/eduwxyz/tucano/pull/451) | apoapostolov | OPEN | Write the guide's 24 pages in English too, and hand each workspace its own | no: inspect patch equivalence | 3 | 0 | not reviewed |
 | [#453](https://github.com/eduwxyz/tucano/pull/453) | apoapostolov | OPEN | Give the delegation test's parked request 8 s, so it is still at it when Clara's answer lands | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#457](https://github.com/eduwxyz/tucano/pull/457) | apoapostolov | OPEN | Pause a reply before its next step, and resume it there | yes | 2 | 4 | targeted cancellation/concurrency repair verified and installed; broader feature audit remains |
+| [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | 4 | 3 | not reviewed |
 
 ## Commit dependencies
 
@@ -108,14 +109,14 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 
 | File | PRs |
 | --- | --- |
-| src/renderer/src/styles.css | #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #432, #435, #446, #457 |
-| src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #377, #379, #383, #385, #391, #395, #411, #416, #417, #424, #432, #435, #457 |
+| src/renderer/src/styles.css | #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #432, #435, #446, #457, #467 |
+| src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #377, #379, #383, #385, #391, #395, #411, #416, #417, #424, #432, #435, #457, #467 |
 | src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #377, #383, #385, #395, #401, #402, #410, #411, #412, #435, #446, #457 |
 | src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #375, #377, #379, #383, #385, #391, #395, #401, #402, #411, #412, #417, #432, #435, #457 |
-| src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417, #432, #435, #437, #457 |
+| src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417, #432, #435, #437, #457, #467 |
 | src/shared/rpc.ts | #245, #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #322, #332, #338, #353, #375, #379, #383, #385, #401, #402, #411, #416, #417, #432, #435, #437, #457 |
-| src/renderer/src/components/Pages.tsx | #245, #247, #258, #259, #261, #274, #284, #288, #298, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #435, #437, #446 |
-| src/core/db.ts | #247, #249, #250, #258, #259, #261, #272, #274, #279, #288, #322, #332, #333, #334, #338, #353, #355, #366, #375, #377, #383, #391, #411, #416, #417, #432, #435, #437, #457 |
+| src/renderer/src/components/Pages.tsx | #245, #247, #258, #259, #261, #274, #284, #288, #298, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #435, #437, #446, #467 |
+| src/core/db.ts | #247, #249, #250, #258, #259, #261, #272, #274, #279, #288, #322, #332, #333, #334, #338, #353, #355, #366, #375, #377, #383, #391, #411, #416, #417, #432, #435, #437, #457, #467 |
 | src/renderer/src/store.ts | #245, #247, #249, #261, #272, #279, #288, #305, #311, #313, #321, #322, #332, #334, #338, #353, #375, #379, #383, #385, #395, #411, #416, #432, #435, #437, #446, #457 |
 | src/shared/rpc-shapes.ts | #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #332, #338, #353, #375, #379, #383, #385, #411, #417, #432, #435, #437, #457 |
 | src/core/settings-patch.ts | #245, #247, #250, #261, #268, #274, #284, #288, #298, #311, #322, #332, #333, #336, #338, #379, #383, #385, #391, #395, #411, #417, #432 |
@@ -188,6 +189,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/core/wiki-handoff.ts | #258, #259 |
 | test/wiki-handoff-ui.test.tsx | #258, #259 |
 | test/wiki-handoff.test.ts | #258, #259 |
+| src/shared/org.ts | #274, #467 |
 | scripts/screens-jev-listen.mjs | #279, #383 |
 | src/core/jev-fake.ts | #279, #383 |
 | test/jev-fake.test.ts | #279, #383 |
@@ -207,6 +209,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | test/model-routing-run.test.ts | #333, #383 |
 | test/model-routing.test.ts | #333, #383 |
 | src/core/routines.ts | #366, #395 |
+| src/core/delegations.ts | #377, #467 |
 | src/core/memory.ts | #391, #432 |
 | docs/english-copy-proposal.md | #410, #446 |
 | docs/english-copy-validation.md | #410, #446 |
