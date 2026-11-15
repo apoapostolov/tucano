@@ -1,5 +1,7 @@
 # R-245 boundary review batch
 
+Follow-up: F-005/F-006 are now repaired and installed; see the [delivery record](audit-245-delivery-2026-11-15.md). This historical batch remains a record of the earlier reproduction, not current delivery status.
+
 This bounded batch continues the existing reasoning packet. It does not certify the whole
 feature or expand into independent reviews of other contributors' work.
 

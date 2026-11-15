@@ -32,5 +32,19 @@
       "asarBytes": 37413908,
       "asarSHA256": "d6ddc42ef9af516f5a7a64c2c97511c827b81094f612d1c582c946e90f392a42"
     }
+  ],
+  "targetedDeliveries": [
+    {
+      "feature": "R-245 F-005/F-006",
+      "publicHead": "899933e57c795b75a2e00068460f5090f424178b",
+      "integration": "5efb3b44f05cf7b5dabe3a8995766ac3e06d018f",
+      "buildSource": "a0537d763ef3700dfc8f223b65ff5ab1051efebd",
+      "installed": true,
+      "freshLaunchVerified": true,
+      "installedBehaviorVerified": true,
+      "fullAuditComplete": false,
+      "asarSHA256": "ecd8f3d93dc091e4586d7c63f495dae9584595abde02e3509b602ad9c6cc73fe",
+      "evidence": "docs/audit-245-delivery-2026-11-15.md"
+    }
   ]
 }

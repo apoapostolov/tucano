@@ -47,17 +47,66 @@ its repeated-trim and cache tests passed 6/6. The parent owns the combined deliv
   automatic-fold contract was corrected before the successful full run.
 - `node scripts/self-build.mjs build --json` succeeded with a real local install, NSIS packaging
   with publish disabled, 37,416,601-byte app.asar and 114 packaged runtime dependencies.
-- Native and installed evidence is pending. Build success alone does not close delivery.
+- Unpacked native checks pass all three sizes at display scale 1.5: 3,596–3,736 units trimmed
+  during reading, maximum drift below 0.33 CSS pixels, following resumed, manual/completion
+  folding and disable clearing passed. Native widths were 900, 1280 and minimum 886 CSS pixels;
+  the requested 360 width was clamped by Electron, and is not claimed as native 360 coverage.
+  The separate headless component fixture covers actual 360. Installed reasoning checks also pass, as recorded below.
 
 ## Delivery checkpoints
 
 - [x] Child reports read; findings reproduced by parent.
 - [x] Repair and existing public PR updated; pushed public head verified in a fresh checkout.
-- [ ] Integration pushed to origin/next and remote SHA verified.
+- [x] Integration pushed to origin/next at `5efb3b44f05cf7b5dabe3a8995766ac3e06d018f`;
+  remote SHA verified. A fresh detached checkout passed typecheck, 27 focused tests, control
+  drift zero and trimmed boundary drift 0.28125 CSS pixels.
 - [x] Build and package produced with real node_modules.
-- [ ] Installed into Programs/tucanonext; package identity/hash checked.
-- [ ] Fresh installed launch and changed behavior verified at display scaling.
+- [x] Installed into Programs/tucanonext after graceful quit; installer exited zero. Identity
+  remains tucanonext / TucanoNext / dev.tucano.next, updater off. Built and installed app.asar
+  SHA256 both `ecd8f3d93dc091e4586d7c63f495dae9584595abde02e3509b602ad9c6cc73fe`.
+  Package has 114 runtime dependencies and none missing.
+- [x] Fresh hidden installed launch verified in the adjacent background check.
+- [x] Installed reasoning behavior verified; all ten parent checkpoints have evidence.
 
 Broader audience, concurrency, real-provider, backend steering and full-audit dimensions remain
 open. The native fixtures use synthetic throwaway data, separate ports and hidden unfocusable
 windows. They never target the live database, released app or user's foreground desktop.
+
+## Installed adjacent controls
+
+`node scripts/qa-background.mjs C:/tmp/r245-installed-adjacent --pause` passed from
+`Programs/tucanonext/TucanoNext.exe`, with synthetic data and separate ports. Pause → Pausing… →
+Resume → resumed was exercised; Steer remained available during active/pausing states. Labels
+fit one line at 900/1280 CSS pixels and scale 1.5. Workspace, profile, DM, Settings, Team, usage,
+background notification actions and updater-off checks passed with no renderer errors.
+The package doctor's temporary "dead-at-load" verdict during hidden QA is a visible-window
+heuristic; these deliberate hidden windows were running successful tests. No repair or process
+kill was based on that heuristic.
+
+## Installed reasoning and final launch
+
+`TUCANO_ELECTRON=Programs/tucanonext/TucanoNext.exe node scripts/qa-streaming-thought.mjs
+C:/tmp/r245-installed-thought` passed in a fresh hidden instance at scale 1.5. All windows stayed
+hidden and unfocusable. Retention removed 3,665 / 3,596 / 3,736 units for sm/md/lg; maximum
+reading-line drift was 0.03125 / 0.32294 / 0.3125 CSS pixels. Completion drift was zero in each
+size. Returning to the end resumed following. Explicit open survived completion; manual folding,
+automatic completion folding and disable/re-enable clearing passed. No renderer errors occurred.
+
+The report includes source SHA, exact installed executable, version, display scale, real viewport,
+font, available width, character/line counts and overflow results. Evidence lives at
+`C:/tmp/r245-installed-thought/report.json` and adjacent PNG captures. Native label measurements
+pass at actual 900, 1280 and minimum 886 CSS pixels; requested 360 is explicitly clamped to 886.
+The fresh pushed-source component fixture separately passes all nine size/width combinations
+at actual 360/900/1280. English labels Thinking/Thought are unchanged established wording;
+the restored folding flow and rendered screenshots were reviewed, with no new hint or warning.
+
+After the scratch runs closed, the regular installed app was restarted with `--background` and
+its normal environment, without test variables. `node scripts/self-build.mjs doctor --json`
+reported `running`, window TucanoNext, sameAsBuild true, 114 packages and zero missing runtime
+dependencies. No foreground input, live database edits or released-app changes were made.
+
+The intervening local-next instruction commit `bb6af43c` was preserved through merge `71ed863e`.
+That merge changes instructions only. Application source/package manifests remain byte-identical
+to build source `a0537d763ef3700dfc8f223b65ff5ab1051efebd`. The primary checkout retains its
+16 concurrent copy edits; its local branch was not advanced by this delivery task. No release,
+tag or asset was published for this targeted repair.

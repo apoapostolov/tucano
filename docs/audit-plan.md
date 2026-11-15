@@ -55,7 +55,11 @@ Published integration code and a clean delivery worktree are available at `C:/gi
 do not build the primary checkout's older package until its source is reconciled. Documentation
 and intake tools can be delivered there independently without committing unrelated source.
 
-Latest installed/released build: `37a139ea`, containing upstream main `3e8162eb` and the #245
+Latest targeted installed build: `a0537d76`, published through `5efb3b44` and the later
+instruction/evidence-only commits. F-005/F-006 and installed three-size reasoning checks pass;
+the regular app is freshly running. This targeted repair did not refresh release assets.
+
+Previous installed/released build: `37a139ea`, containing upstream main `3e8162eb` and the #245
 retention repair. The final combined suite passed **2,656 tests**, with 61 skipped and zero failures.
 Installed checks cover all three reasoning sizes, clearing on disable/re-enable, Skills, pause,
 Settings and the new artifact panel. The fork's `next-v0.2.32` assets and tag were refreshed and
@@ -79,7 +83,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **Active: R-245.** Repair F-006's reproduced reading-position jump across retained-text trimming, compose missing reasoning folding with reading-line ownership and size controls, and complete audience and neighboring-control checks. A bounded role/preference transition probe passes; broader audience coverage remains open. The cache repair and `3e8162eb` reconciliation are delivered. [Boundary review batch](audit-245-boundary-batch-2026-11-15.md), [original packet](audit-reasoning-245-2026-11-15.md).
+- [ ] **Active: R-245 full audit.** F-005 folding and F-006 retained-reading repairs are delivered: public head `899933e5`, pushed integration, real local packaging, installed three-size checks and a fresh regular launch. The combined suite passed 2,660 tests with 61 skipped. Broader audience, concurrency, provider and maintainability coverage remains open. A bounded role/preference transition probe passes. [Targeted delivery](audit-245-delivery-2026-11-15.md), [boundary batch](audit-245-boundary-batch-2026-11-15.md), [original packet](audit-reasoning-245-2026-11-15.md).
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
