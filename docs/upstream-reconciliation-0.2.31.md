@@ -8,7 +8,7 @@ Starting local committed integration: `f6e0d04f`; uncommitted copy work in the p
 - [x] Reconcile published audit records with local committed copy-review work in an isolated worktree.
 - [x] Merge all upstream changes through 0.2.31 and inspect semantic overlaps.
 - [x] Refresh PR intake and record changed heads without routinely updating their source branches.
-- [ ] Pass settings checks, typecheck, full suite and built-feature verification.
+- [x] Pass settings checks, typecheck, full suite and built-feature verification.
 - [ ] Package, install, launch and verify the installed build with isolated background QA.
 - [ ] Publish and verify the fork's `next-v0.2.31` release.
 - [x] Deliver a living daily intake and aging-PR audit plan, preserving explicit incomplete work.
@@ -31,7 +31,7 @@ that omit the field preserve it. Name/purpose fields also remain object-scoped w
 length limits and persistence.
 
 The first combined release tree passes 2,616 tests, 61 skipped, zero failed. After the additional
-entry-point commit, 82 focused org/delegation cases pass; a fresh final full-suite run is pending.
+entry-point commit, 82 focused org/delegation cases pass; the final stable application source passes 2,620 tests, with 61 skipped and zero failures.
 Settings placement has 33 sections, 54 owned keys, 57 checked writes and 14 passing tests. The new
 browser-mode Team regression verifies ordinary files stay attached while oversized files upload.
 
@@ -76,3 +76,19 @@ The first sector fixture attempted to reopen seeded data; the QA startup guard c
 it. Fixtures now go through a separate normal authorized renderer RPC port after startup. The
 entry checkbox requires waiting for the asynchronous core update; clicks are followed by observed
 badge transitions instead of assuming the state changes synchronously inside Playwright's check().
+
+## Installed source and QA helper repair
+
+The installer was built from `959ecbea345c9a02a8f43fca41a488d3dc5f5bbd`, whose application code is
+identical to `04580456`. `node scripts/self-build.mjs install --json` returned success, 114 ASAR
+packages and 37,402,875 archive bytes. The new normal process is PID 21676, executable under
+`Programs/tucanonext`, with a fresh visible, unfocused window `w-4002234`. Read-only comparison
+of existing root-workspace table IDs/counts before and after installation is exact; sector_name,
+sector_does and entry are present after migration. No conversation content was exported.
+
+Installed QA initially failed before launch because the recent copy-runtime helper handed
+`out/main/index.js` to @electron/asar on Windows, whose archive keys use native separators. Listing
+the installed archive confirms `\out\main\index.js` exists. Using `join('out', 'main', 'index.js')`
+repairs inspection without weakening the hidden-QA source guard or changing the packaged app.
+This is a development-helper defect in the concurrent committed copy work, not missing installer
+content. Installed runtime verification is being repeated after that repair.
