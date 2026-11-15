@@ -6,7 +6,7 @@ Upstream release/main: `d175567b0a12d885544d74c45792717a883287f5`.
 - [x] Inherit the 0.2.32 release and confirm application source is unchanged from tested 0.2.31 plus entry points.
 - [x] Preserve all fork identities, controls, fixes and the concurrent uncommitted copy work.
 - [x] Pass nine focused identity, background-QA and launch-environment cases.
-- [ ] Complete the required full suite for the final versioned source.
+- [x] Complete the required full suite for the final versioned source.
 - [ ] Build, package, install and observe the new regular installed app.
 - [ ] Verify the installed version, archive hash, existing workspace and hidden feature flow.
 - [ ] Publish and verify `next-v0.2.32` and its assets on the fork.
@@ -16,7 +16,7 @@ The application changes and conflict decisions are documented in
 [the 0.2.31 record](upstream-reconciliation-0.2.31.md). The version-only upstream commit changes
 package.json, package-lock.json and CHANGELOG.md; `git diff` confirms no src changes. The release
 entry is retained without duplicating its existing English feature paragraph. The completed prior
-version's suite passed 2,620 tests, 61 skipped and zero failed; a new full run is underway for 0.2.32.
+version's suite passed 2,620 tests, 61 skipped and zero failed; the final 0.2.32 run also passes 2,620 tests, with 61 skipped and zero failed.
 The 0.2.31 release remains available, but 0.2.32 is now the requested final delivery.
 
 The living plan, exact-head open-PR queue and daily 09:00 Europe/Kyiv intake continue unchanged.
@@ -35,3 +35,7 @@ Screenshot review rejected the first narrow capture: the sidebar was midway thro
 transition and covered the left of the panel even though text geometry passed. The QA helper now
 waits for finite CSS animations/transitions and explicitly asserts the mobile drawer is closed and
 offscreen before measurement. Earlier narrow screenshots are not accepted layout evidence.
+
+Final suite artifact: `C:/tmp/tucano-0232-full.json`. Application source stayed unchanged from
+`c25531f` throughout the run; subsequent commits only maintain documentation and development QA.
+No timeout or assertion was weakened. Nine focused identity/background/launch checks also pass.
