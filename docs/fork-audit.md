@@ -1,4 +1,7 @@
-# Maintaining Apo's Tucano PRs
+# Tucano audit operating workflow
+
+The [master audit plan](audit-plan.md) owns current priorities, all workstreams and completion
+criteria. This file supplies operating details; dated sections below are historical evidence.
 
 This document is fork-local operating context. Upstream is `eduwxyz/tucano`; the publishing
 target for every product fix is its `main` branch. The fork's `next` branch is a personal
@@ -6,7 +9,8 @@ integration and QA environment. Keep that context out of upstream reports.
 
 ## Inventory and review evidence
 
-Run `node scripts/audit-prs.mjs --fetch --patches --report docs/pr-inventory.md` from this checkout. It queries all of
+Run `node scripts/audit-prs.mjs --next HEAD --fetch --patches --report docs/pr-inventory.md`
+from a reconciled worktree. Use the master plan's complete sequence for release/main and all-author intake. It queries all of
 `apoapostolov`'s upstream PRs, including merged and closed ones, fetches current open heads,
 and writes `.tucano-local/audit/inventory.md` and `inventory.json`. The default output is
 ignored by Git; `--report` also updates the tracked inventory at the requested path.
@@ -16,7 +20,7 @@ a previously collected `gh pr list` response without changing its metadata.
 The script uses the authenticated GitHub CLI because the inventory is an executable local
 maintenance workflow. It only reads GitHub and fetches Git objects; it never pushes, changes
 a PR, opens an issue or touches application data. `--patches` caches each open PR's diff with
-its head SHA in the filename. The files, descriptions and CI results remain evidence from
+its head/base SHAs in the filename, with content-hash provenance. The files, descriptions and CI results remain evidence from
 that snapshot, not a continuous monitor.
 
 Each refresh also saves a timestamped inventory and review snapshot under the ignored
@@ -28,6 +32,9 @@ Keep semantic review records in `.tucano-local/audit/reviews.json`, keyed by PR 
 {
   "355": {
     "head": "the exact reviewed commit SHA",
+    "baseCommit": "the exact reviewed base SHA",
+    "integrationSource": "the checked integration SHA",
+    "reviewedRange": "base..head, including all feature commits",
     "status": "reviewed; follow-up remains",
     "findings": ["Describe the observed behavior and its reproduction."],
     "validation": ["Record the commands, outcomes, platform and limitations."],
@@ -37,7 +44,7 @@ Keep semantic review records in `.tucano-local/audit/reviews.json`, keyed by PR 
 }
 ```
 
-A record whose SHA differs from the current head is marked stale. Unreviewed PRs remain
+A record whose head/base differs from the current PR is marked stale. Unreviewed PRs remain
 explicitly unreviewed. Changed tests, screenshot URLs, GitHub mergeability and commit ancestry
 are inventory signals; none establishes that the behavior works or is ready to publish.
 
@@ -102,17 +109,26 @@ script's file MI is 20.95. Do not claim the entire audit or production preparati
 most feature PRs still need an individual semantic review, upstream-platform validation and
 load testing.
 
-## Daily maintenance policy (15 November 2026)
+## Current daily maintenance
 
-Keep TucanoNext current and audit the open features without routinely rebasing their public PR
-branches. Each daily intake refreshes refs and `scripts/audit-prs.mjs`, then runs
-`node scripts/audit-backlog.mjs --inventory C:/git-ext/tucano/.tucano-local/audit/inventory.json`
-to update `docs/open-pr-audit.md`. Preserve completed exact-head checks; changed heads become
-unchecked. Review upstream changes and new/revised PR discussions before integrating behavior.
-Record each run in a dated intake record, with refs, findings, validation and deferred work.
+Follow the [master plan](audit-plan.md), its maintained commands and canonical queues. The daily
+run covers upstream releases/main commits, all Apo PR states, other contributors and a bounded
+full-stack audit packet. The existing 09:00 Europe/Kyiv automation has been updated to that scope, with Apo PRs as the
+primary queue and explicit approval required for independent non-Apo reviews or changes. The
+full-stack roadmap does not grant blanket approval; see `docs/audit-approvals.md`.
+Do not create a second schedule. Preserve the historical intake snapshots in ignored directories.
 
-Use the oldest unchecked work within each risk group as the default next review, after urgent
-privacy, data-loss and stuck-run defects. An implementation can be audited at its existing head
-without bringing that head up to current main. Repairs belong on the feature's existing PR;
-new main defects require a clean-main reproduction and a focused modular PR. Public branches
-are updated for concrete findings, not to keep every old branch cosmetically current.
+`docs/apo-pr-audit.md` owns Apo completion; `docs/open-pr-audit.md` is a generated view that reads
+it. `docs/contributor-pr-audit.md` owns other-author completion. Head or base changes reopen boxes.
+Merged/closed states are dispositions, not proof of quality. The all-author inventory is metadata
+only until a selected review collects its complete diff, file list, checks and discussions.
+
+`docs/upstream-intake.md` derives release and main-delta status from actual refs plus the explicit
+`docs/audit-state.json`. Record a verified delivery only after installation/release checks, and
+semantic main review only after reading/testing the delta. Baseline source still needs the whole-tree
+work packages even when no newer main commit exists.
+
+Public aging PRs are not routinely rebased. Review them at their existing heads; update their own
+branches for concrete repairs. Reproduce new main defects on current upstream/main, then open
+focused modular fixes/proposals on the original project. Keep large design proposals distinct
+from bug repairs. The full master plan defines evidence, UI/copy checks and delivery criteria.

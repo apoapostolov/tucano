@@ -1,0 +1,15 @@
+{
+  "upstream": "eduwxyz/tucano",
+  "deltaBaselineMain": "d175567b0a12d885544d74c45792717a883287f5",
+  "legacyBaselineAuditComplete": false,
+  "reviewedMainCommits": [],
+  "deliveries": [
+    {
+      "tag": "v0.2.32",
+      "upstreamCommit": "d175567b0a12d885544d74c45792717a883287f5",
+      "source": "d797e0c45a8b8c882274aad385b5e1c037caed8a",
+      "evidence": "docs/upstream-reconciliation-0.2.32.md"
+    }
+  ],
+  "releaseBaselineTag": "v0.2.32"
+}
