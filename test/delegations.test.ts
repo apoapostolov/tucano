@@ -211,7 +211,8 @@ describe('work handed down the tree', () => {
     expect(by('orion', 'dm')).toHaveLength(3)
     expect(codex.turns.at(-1)!.prompt).not.toContain('Clara, #clientes')
     expect(db.openDelegations()).toEqual([])
-  })
+    // Nico's own 8 s have to run out inside the test, so the default 5 s wouldn't hold the fixture.
+  }, 30_000)
 
   it('calls no one when the answer names whoever asked, even in a channel they share', async () => {
     db.setAgentChannels('orion', ['clientes'])
