@@ -1,0 +1,31 @@
+{
+  "source": "5f4a1a2170adaf88745a509adcebe498937cb90d",
+  "failed": 5,
+  "passed": 1,
+  "cases": [
+    {
+      "title": "forgets retained reasoning when the settings event turns it off",
+      "status": "failed"
+    },
+    {
+      "title": "forgets retained reasoning when the local preference turns it off",
+      "status": "failed"
+    },
+    {
+      "title": "forgets the removed conversation alongside its messages",
+      "status": "failed"
+    },
+    {
+      "title": "drops cached reasoning when a replacement snapshot is installed",
+      "status": "failed"
+    },
+    {
+      "title": "preserves reasoning for unrelated settings and conversations",
+      "status": "passed"
+    },
+    {
+      "title": "bounds retained replies across a sustained stream of different runs",
+      "status": "failed"
+    }
+  ]
+}

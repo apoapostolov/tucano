@@ -1,0 +1,14 @@
+{
+  "dirty": false,
+  "source": "ff6364e7a4d34f85c6c61070656bb23301274dea",
+  "measurements": [],
+  "captures": [],
+  "errors": [],
+  "checks": [
+    "real fake-engine reasoning rendered",
+    "completed reasoning remained readable",
+    "disable removed rendered reasoning",
+    "re-enable did not restore discarded reasoning"
+  ],
+  "passed": true
+}
