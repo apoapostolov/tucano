@@ -34,6 +34,8 @@ auditing their implementation and the integrated behavior. Update an existing PR
 review finding requires a focused repair; propose new upstream bugs from current upstream/main.
 Do not spend a daily run refreshing every old PR merely to remove its GitHub conflict indicator.
 
+Daily intake is scheduled for 09:00 Europe/Kyiv in this chat (automation `tucanonext-daily-intake-and-pr-audit`).
+
 The original 43-feature cohort below remains a stable historical denominator. The generated open
 queue covers later PRs too, with its own current denominator. Intake coverage and targeted repairs
 must never be reported as full feature audit completion. Use exact snapshots rather than a fixed

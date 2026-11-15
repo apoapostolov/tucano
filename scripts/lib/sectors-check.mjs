@@ -64,6 +64,7 @@ export async function checkSectors(page, output, guard, resize) {
     assert.ok(a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y, 'Sector zones overlap')
     await page.locator('.org-zone__name').first().click()
     await page.locator('.org-side input[maxlength="40"]').waitFor()
+    await page.locator('.org-side').evaluate(async node => { await Promise.all(node.getAnimations({ subtree: true }).filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished)) })
     const copy = await measureCopy(page, [
       { selector: '.org-side .field__label:visible', maxLines: 1 },
       { selector: '.org-side .hint:visible', maxLines: 2 }

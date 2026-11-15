@@ -327,6 +327,12 @@ checks. Never force-push `next` to bypass a rejected push or assume a scheduled 
 
 ## Ingest new PRs and revisions
 
+Daily intake keeps TucanoNext current and audits existing feature heads. Do not routinely rebase
+or merge current upstream into aging public PR branches. Update a public feature branch for a
+concrete repair, not merely to remove its conflict indicator. Maintain the generated exact-head
+queue in `docs/open-pr-audit.md`, the review records and the daily checklist in `docs/audit-plan.md`.
+
+
 1. Read the description, replies, review threads, current diff, dependencies, and checks.
    Suggestions in a reply can change the intended behavior before code reaches the PR head.
 2. Fetch the exact current head, including from the contributor's fork when necessary. Record
