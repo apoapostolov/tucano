@@ -1,0 +1,26 @@
+{
+  "source": "93c2a5a36d351219e8c3267fd2c2ee28cdd38d4e",
+  "viewport": {
+    "width": 900,
+    "height": 700
+  },
+  "appended": 2000,
+  "trimmed": 1000,
+  "before": {
+    "mark": "Line 0120 xxxxxxxxxx",
+    "top": 51.25,
+    "length": 19000,
+    "font": {
+      "family": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+      "size": "12px",
+      "lineHeight": "18.6px"
+    }
+  },
+  "after": {
+    "mark": "Line 0120 xxxxxxxxxx",
+    "offset": 8120,
+    "top": -190.46875,
+    "length": 20000
+  },
+  "drift": -241.71875
+}

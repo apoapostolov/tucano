@@ -5,6 +5,12 @@ Scope: Apo #245, head `5f4a1a2170adaf88745a509adcebe498937cb90d`, base
 Integration started at `7dce2af8`. Upstream advanced to `3e8162eb`; the release remains 0.2.32.
 Other-contributor checks in this packet are limited to upstream ingestion compatibility.
 
+Continuation: the [delegated boundary batch](audit-245-boundary-batch-2026-11-15.md) at current
+public head `6e383851` reproduces F-006 in the integrated renderer: prefix trimming moves a
+still-retained passage by -241.71875 CSS pixels; the below-limit control has zero drift.
+A bounded role/preference transition probe passes. No product repair or completed audit is
+claimed; folding, broader audience paths and installed repair checks remain open.
+
 - [x] Identify exact feature head/base, read its discussion and enumerate the complete commit range.
 - [x] Read the engine, event, audience, setting and renderer-cache changes across that range.
 - [x] Inspect incoming main commits and resolve overlapping integrated behavior without dropping features.

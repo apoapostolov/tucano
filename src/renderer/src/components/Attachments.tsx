@@ -1,6 +1,7 @@
 // What a message can carry besides its text: images and files, picked, pasted or dropped. The
 // conversation's composer and the Team page's ask box share it, so both take the same things.
 import { L } from '../../../shared/lang'
+import { withMessage } from '../../../shared/attach'
 import { useCallback, useState, type ReactNode } from 'react'
 import { IMAGE_MIMES, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, MAX_IMAGES_PER_MESSAGE, type FileUpload, type ImageUpload } from '../../../shared/types'
 import { Icon } from './ui'
@@ -92,11 +93,12 @@ export function useAttachments(focus: () => void, onText: (update: (text: string
   const add = useCallback(
     async (all: File[]): Promise<void> => {
       if (!all.length) return
-      // On a server, a file that isn't an image goes up to it (~/Enviados) and the message says where:
-      // an agent on that computer opens it there, and the link brings it back down.
+      // Keep browser files with the message when they fit; only oversized files use server paths.
       const upload = window.tucano?.upload
-      const files = upload ? all.filter((f) => IMAGE_MIMES.includes(f.type)) : all
-      const others = upload ? all.filter((f) => !IMAGE_MIMES.includes(f.type)) : []
+      const held = items.filter(isFile).reduce((n, a) => n + (a.size ?? 0), 0)
+      const goes = upload ? withMessage(all, held) : all.map(() => true)
+      const files = all.filter((_, i) => goes[i])
+      const others = all.filter((_, i) => !goes[i])
       if (others.length && upload) {
         setNote(L(`Enviando ${others.length === 1 ? others[0]!.name : `${others.length} arquivos`}…`, `Sending ${others.length === 1 ? others[0]!.name : `${others.length} files`}…`))
         setUploading(true)
@@ -123,7 +125,7 @@ export function useAttachments(focus: () => void, onText: (update: (text: string
       setNote([...errors, over].filter(Boolean).join(' '))
       focus()
     },
-    [focus, onText]
+    [focus, onText, items]
   )
   return { items, setItems, note, setNote, add, uploading }
 }

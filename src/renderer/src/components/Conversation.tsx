@@ -1,10 +1,14 @@
 import { L, lang, locale } from '../../../shared/lang'
 import { hourStyle, timeOpts } from '../../../shared/clock'
 import { overMonthlyLimit } from '../../../shared/limits'
+import { sectorName } from '../../../shared/org'
 import { actionLabel, innerActions, isRunner } from '../../../shared/composio'
 import { neverAllowedForGood, ruleTool, runnerRules } from '../../../shared/classify'
 import { kindLabel, actionVerb, COMPUTADOR, shellActions } from '../../../shared/actions'
 import { InitiativeLine } from './Initiative'
+import { Reading } from '../reading-context'
+import { Thought, followsTheEnd } from './Thought'
+export { Thought, followsTheEnd } from './Thought'
 import { createContext, memo, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
@@ -36,7 +40,6 @@ import { canEditChannel,
   repliesOf,
   timelineOf,
   useLiveText,
-  useLiveThought,
   workingIds,
   openDialog,
   decideApproval,
@@ -96,6 +99,7 @@ import { canEditChannel,
 } from '../store'
 import { AttachedList, isFile, pastedFiles, touchScreen, uploadsOf, useAttachments, type Attached } from './Attachments'
 import { AgentAvatar, Icon, MeAvatar, ago, ownColor, duration, time, tokens, usd, useJustEnded, type IconName } from './ui'
+import { askWay } from './OrgSectors'
 import { PanelResize } from './SidebarResize'
 import { canRecord, NoSound, record, type Recording } from '../voice'
 import { useVoice, VoicePopover } from './VoiceSetup'
@@ -352,19 +356,7 @@ const JumpTo = createContext<(id: string) => void>(() => {})
 // How a reply's reasoning tells the list it is being read further up: `hold` stops the list following
 // the end of the reply, `release` gives it back. A block that is not inside a list of messages gets
 // the no-ops.
-const Reading = createContext<{
-  hold: (el: HTMLElement | null) => void
-  release: () => void
-  forget: () => void
-  // Whether the list around the block is still following the reply's end: a block that keeps taking its
-  // own stream up while the person reads by scrolling the page is the same fault one level in.
-  follows: () => boolean
-}>({
-  hold: () => {},
-  release: () => {},
-  forget: () => {},
-  follows: () => true
-})
+
 
 // Whether a reply's own prompt is somewhere else in the list: right above it, there is nothing to
 // jump to, and a reply with no prompt of its own (a routine's, one an agent called for) has none.
@@ -419,6 +411,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   // place on the page while the rest arrives below. Coming back to the block's end lets the list
   // follow again.
   const paused = useRef(false)
+  const pageGesture = useRef(0)
   // The line being read, and where it sits in the window. Holding the line is what the person asks for
   // when they scroll up: a reply's steps and its text grow above it as it works, and growth above moves
   // everything below it down the page, so the line has to be given back the height that appeared above
@@ -426,15 +419,17 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
   const anchor = useRef<{ el: HTMLElement; top: number } | null>(null)
   const selfScroll = useRef(false)
   const [holding, setHolding] = useState(false)
-  const contentTop = (el: HTMLElement, list: HTMLElement): number =>
-    el.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop
+  // Measure the visible position: a correction (including Chromium's own scroll anchoring)
+  // must reduce the next frame's displacement, rather than repeat a content-coordinate delta.
+  const readingTop = (el: HTMLElement, list: HTMLElement): number =>
+    el.getBoundingClientRect().top - list.getBoundingClientRect().top
   // The line being read is a place in the content, not a scroll offset: what is under the reading edge
   // when the person stops is what they are reading. Only something actually on screen can be read.
   const takeAnchor = (el: HTMLElement, list: HTMLElement): void => {
     const box = list.getBoundingClientRect()
     const r = el.getBoundingClientRect()
     if (r.bottom <= box.top || r.top >= box.bottom) return
-    anchor.current = { el, top: contentTop(el, list) }
+    anchor.current = { el, top: readingTop(el, list) }
     setHolding(true)
   }
   const pickAnchor = (): void => {
@@ -445,74 +440,62 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     if (!el || el === list || !list.contains(el)) return
     takeAnchor(el, list)
   }
+  const heldBlock = useRef<{ el: HTMLElement; preserve: () => void; rebase: () => void } | null>(null)
+  // Every caller uses the same visible anchor. Layout effects and ResizeObserver settle it before
+  // paint; the frame loop also covers asynchronous growth in other replies.
+  const preserveLine = (): void => {
+    const list = ref.current
+    const a = anchor.current
+    if (!list || !a || stick.current) return
+    if (!a.el.isConnected) return pickAnchor()
+    const moved = readingTop(a.el, list) - a.top
+    if (Math.abs(moved) < 1) { heldBlock.current?.el === a.el && heldBlock.current.preserve(); return }
+    const want = Math.max(0, Math.min(list.scrollHeight - list.clientHeight, list.scrollTop + moved))
+    if (Math.abs(want - list.scrollTop) < 1) {
+      a.top = readingTop(a.el, list)
+      heldBlock.current?.el === a.el && heldBlock.current.preserve()
+      return
+    }
+    selfScroll.current = true
+    list.scrollTop = want
+    if (Math.abs(list.scrollTop - want) >= 1) a.top = readingTop(a.el, list)
+    heldBlock.current?.el === a.el && heldBlock.current.preserve()
+  }
   const reading = useMemo(
     () => ({
-      hold: (el: HTMLElement | null) => {
+      hold: (el: HTMLElement | null, preserve: () => void, rebase: () => void) => {
+        if (!el || !ref.current) return
+        heldBlock.current = { el, preserve, rebase }
         paused.current = true
         stick.current = false
-        // The block keeps its own line, in the layout pass, because it knows when its text changes. The
-        // list's frame loop is for a page the person scrolled themselves: two keepers of one line would
-        // give the same height back twice.
-        anchor.current = null
-        setHolding(false)
-        void el
+        takeAnchor(el, ref.current)
       },
-      // Back at the block's end: the list follows again, and takes the end now rather than at the next
-      // word, which may never come if the reply has already finished.
-      release: () => {
+      release: (el: HTMLElement | null) => {
+        if (!el || heldBlock.current?.el !== el) return
+        heldBlock.current = null
         paused.current = false
         stick.current = true
         anchor.current = null
         setHolding(false)
-        const el = ref.current
-        if (el) el.scrollTop = el.scrollHeight
+        if (ref.current) ref.current.scrollTop = ref.current.scrollHeight
       },
-      // The block went away (a reply ended, a row unmounted) while it was being read: nothing is being
-      // read there any more, so the list may follow again, but going to the end would move the page
-      // under the person for no reason of theirs.
-      forget: () => {
+      forget: (el: HTMLElement | null) => {
+        if (!el || heldBlock.current?.el !== el) return
+        heldBlock.current = null
         paused.current = false
         anchor.current = null
         setHolding(false)
       },
+      preserve: preserveLine,
       follows: () => stick.current
     }),
     []
   )
-
-  // Frame by frame while the list is not following its end: whatever grew above the reading line is
-  // given back as scroll, so the line itself does not move under the person's eyes.
   useEffect(() => {
     if (!holding) return
     let raf = 0
     const tick = (): void => {
-      const list = ref.current
-      const a = anchor.current
-      if (!list || !a || stick.current) {
-        raf = requestAnimationFrame(tick)
-        return
-      }
-      // The row the line was in went away (the list draws only what it shows): pick the line afresh
-      // from where the reading edge is now.
-      if (!a.el.isConnected) {
-        pickAnchor()
-      } else {
-        // Growth above the line moves it down the content: give the list back exactly that height, so
-        // the line stays where it is in the window. A shrink is given the other way, down to the top.
-        const now = contentTop(a.el, list)
-        const grew = now - a.top
-        if (Math.abs(grew) >= 1) {
-          const max = list.scrollHeight - list.clientHeight
-          const want = Math.max(0, Math.min(max, list.scrollTop + grew))
-          if (Math.abs(want - list.scrollTop) >= 1) {
-            selfScroll.current = true
-            list.scrollTop = want
-            if (Math.abs(list.scrollTop - want) >= 1) a.top = now // at an end of the list: nothing to give
-          } else {
-            a.top = now
-          }
-        }
-      }
+      preserveLine()
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -531,6 +514,7 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     if (!el) return
     const watch = new ResizeObserver(() => {
       if (stick.current && Date.now() >= held.current) el.scrollTop = el.scrollHeight
+      else preserveLine()
     })
     for (const row of el.children) watch.observe(row)
     return () => watch.disconnect()
@@ -676,6 +660,14 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
     <div
       className="messages"
       ref={ref}
+      onWheelCapture={(e) => {
+        const block = (e.target as HTMLElement).closest('.thought')
+        if (block && ((e.deltaY < 0 && block.scrollTop > 0) || (e.deltaY > 0 && !followsTheEnd(block)))) return
+        pageGesture.current = Date.now() + 250
+      }}
+      onPointerDownCapture={(e) => { if (e.target === e.currentTarget) pageGesture.current = Date.now() + 250 }}
+      onTouchStartCapture={() => { pageGesture.current = Date.now() + 500 }}
+      onKeyDownCapture={(e) => { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) pageGesture.current = Date.now() + 250 }}
       onScroll={(e) => {
         const el = e.currentTarget
         const fromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
@@ -693,6 +685,13 @@ export function MessageList({ messages: all, replies, older, conversationId, emp
             anchor.current = null
             setHolding(false)
           }
+        } else if (paused.current && !mine && anchor.current) {
+          // Moving the page while a block is held establishes a new reading position.
+          if (Date.now() < pageGesture.current) {
+            takeAnchor(anchor.current.el, el)
+            heldBlock.current?.rebase()
+            pageGesture.current = Date.now() + 150
+          } else preserveLine()
         } else if (!paused.current && !mine) {
           // The person scrolled the list themselves: the line under the reading edge is theirs now.
           pickAnchor()
@@ -957,8 +956,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         {(message.run?.agentDraft || proposalsOf(message.run).length > 0) && <Proposals message={message} />}
         {message.run?.memoryIds?.map((mid) => <MemoryChip key={mid} id={mid} />)}
         {message.run?.routineIds?.map((rid) => <RoutineChip key={rid} id={rid} />)}
-        {message.run?.delegations?.map((d) => <DelegationChip key={d.id} at={d} asked />)}
-        {message.run?.delegation && message.conversationId !== message.run.delegation.conversationId && <DelegationChip at={message.run.delegation} />}
+        {message.run?.delegations?.map((d) => <DelegationChip key={d.id} at={d} from={agent?.id} asked />)}
+        {message.run?.delegation && message.conversationId !== message.run.delegation.conversationId && <DelegationChip at={message.run.delegation} from={agent?.id} />}
         {message.run?.delegation && message.id === message.run.delegation.rootId && <RequestNote at={message.run.delegation} from={agent?.name} />}
         {message.run?.wikiChanges?.map((cid) => <WikiChip key={cid} id={cid} />)}
         {message.run?.artifactIds && (
@@ -1652,15 +1651,32 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
 }
 
 // reply that handed it; otherwise on what came back from it (an answer, a question).
-function DelegationChip({ at, asked }: { at: DelegationRef; asked?: boolean }): ReactNode {
+function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolean; from?: string }): ReactNode {
   const to = useStore((s) => agentById(s, at.to))
+  const agents = useStore((s) => s.agents)
+  const kind = from && to ? askWay(agents, { from, to: at.to }) : undefined
+  const label =
+    kind === 'up'
+      ? asked ? L('Passou ao chefe', 'Passed to the head') : L('Do pedido ao chefe', 'From the request to the head')
+      : kind === 'sector' && to
+        ? asked ? L(`Pediu para ${sectorName(to, 'Setor de')}`, `Asked ${sectorName(to, 'Sector of')}`) : L(`Do pedido para ${sectorName(to, 'Setor de')}`, `From the request to ${sectorName(to, 'Sector of')}`)
+        : undefined
   const channel = useStore((s) => s.conversations.find((c) => c.id === at.conversationId))
   if (!channel) return null // a channel this person doesn't see, or one that's gone
   return (
     <div className="memory-chip delegation-chip">
       <Icon name="users" size={13} />
-      <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
-      <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+      {label ? (
+        <>
+          <span className="memory-chip__label">{label}</span>
+          {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
+        </>
+      ) : (
+        <>
+          <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
+          <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+        </>
+      )}
       <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
       <button
         className="link"
@@ -2137,105 +2153,6 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// How close to the end of the block counts as reading its end: a little over one line, so a wheel's
-// fraction of a line and a subpixel scroll still count as the end.
-const THOUGHT_END = 24
-
-// Whether the block sits at the end of what it shows: the place a person is reading, not where the
-// stream stopped. Content arriving below it does not move that place.
-export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; clientHeight: number }): boolean {
-  return box.scrollHeight - box.scrollTop - box.clientHeight < THOUGHT_END
-}
-
-// What the model is thinking, dim and small, as it arrives: not what it said, and not a step.
-// It stays after the reply ends (the window keeps it in memory) so it can be read back. Off unless
-// the person turned it on in Settings: a reply's reasoning is its own, and most people want the answer.
-export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
-  const on = useStore((s) => s.settings?.showThinking === true)
-  // How much of it shows before it scrolls: a line or two when it is only a hint, most of the
-  // window when the reasoning is the thing being read.
-  const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
-  const thought = useLiveThought(message.id, STREAM_MS)
-  const box = useRef<HTMLDivElement>(null)
-  // The block follows what arrives only while the person is at its end. Someone who scrolled up to
-  // read an earlier passage keeps that place as the rest streams in below it, and the block takes
-  // the stream up again by itself once they are back at the end.
-  const follow = useRef(true)
-  // The list around the block follows the reply's end, which carries the block up the page while the
-  // answer arrives below it. Reading above the block's end holds the list too, and coming back hands
-  // it back (`Reading`, above). Only a block that holds it may give it back: another reply's block
-  // folding or scrolling away must not take the list back to the end while this one is being read.
-  const reading = useContext(Reading)
-  const holding = useRef(false)
-  // Where the block sat on the page when the person started reading it: the steps and the route above it
-  // keep growing while the reply works, and growth above moves the block down. Giving the height back in
-  // the same layout pass, before the frame is drawn, is what keeps the line still instead of nudging it.
-  const keepLine = useRef<number | null>(null)
-  const holdList = (): void => {
-    if (holding.current) return
-    holding.current = true
-    keepLine.current = box.current?.getBoundingClientRect().top ?? null
-    reading.hold(box.current)
-  }
-  const releaseList = (): void => {
-    if (!holding.current) return
-    holding.current = false
-    keepLine.current = null
-    reading.release()
-  }
-  useEffect(
-    () => () => {
-      // Unmounted while being read: give the list back, without moving the page.
-      if (!holding.current) return
-      holding.current = false
-      keepLine.current = null
-      reading.forget()
-    },
-    [reading]
-  )
-  useLayoutEffect(() => {
-    if (!holding.current) return
-    const el = box.current
-    const list = el?.closest('.messages') as HTMLElement | null
-    const want = keepLine.current
-    if (!el || !list || want === null) return
-    const now = el.getBoundingClientRect().top
-    if (Math.abs(now - want) >= 1) list.scrollTop += now - want
-  }, [thought])
-  useEffect(() => {
-    const el = box.current
-    // Only while the page is at the reply's end too: reading a long reply means scrolling the list, and
-    // the block must not carry its own text up while it is being read from there.
-    if (working && follow.current && reading.follows() && el) el.scrollTop = el.scrollHeight
-  }, [thought, working])
-  if (!on || !thought) return null
-  return (
-    <div
-      ref={box}
-      className={`thought thought--${size}`}
-      aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
-      onScroll={(e) => {
-        const el = e.currentTarget
-        const end = followsTheEnd(el)
-        follow.current = end
-        if (end) releaseList()
-        else holdList()
-      }}
-      onWheel={(e) => {
-        // A wheel up is the person reading back into it: the block stops following at once, before the
-        // piece that is already on its way lands and pulls the place away.
-        if (e.deltaY < 0) {
-          follow.current = false
-          holdList()
-        }
-      }}
-    >
-      <div className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</div>
-      <div className="thought__text">{thought}</div>
     </div>
   )
 }

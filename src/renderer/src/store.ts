@@ -1,6 +1,7 @@
 // Renderer state. Everything except the current view comes from the core and
 // is kept in sync by its events; actions go to the core over RPC.
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { ThoughtCache, type RetainedThought } from './thoughts'
 import { L, setLang } from '../../shared/lang'
 import { setClock } from '../../shared/clock'
 import type { Answer } from '../../shared/questions'
@@ -515,19 +516,20 @@ export const liveText = (id: string): string | undefined => live.get(id)
 
 // What the model is thinking, streamed apart from the reply: kept here, in memory, because it is
 // something to watch as it goes and not part of what the agent said.
-const thoughts = new Map<string, string>()
-const THOUGHT_KEEP = 20_000 // a very long one is trimmed from the front, never allowed to grow forever
+const thoughts = new ThoughtCache((id) => wake(thoughtListeners, id))
 
 function streamThought(id: string, text: string): void {
-  const all = (thoughts.get(id) ?? '') + text
-  thoughts.set(id, all.length > THOUGHT_KEEP ? all.slice(all.length - THOUGHT_KEEP) : all)
-  wake(thoughtListeners, id)
+  thoughts.append(id, text)
 }
 
 export const liveThought = (id: string): string | undefined => thoughts.get(id)
 
 // The thinking as it is now, woken as it arrives. `every`: wake at most that often (ms).
 export function useLiveThought(id: string, every = 0): string | undefined {
+  return useLiveThoughtState(id, every)?.text
+}
+
+export function useLiveThoughtState(id: string, every = 0): RetainedThought | undefined {
   const subscribe = useCallback(
     (l: () => void) => {
       let timer: ReturnType<typeof setTimeout> | undefined
@@ -546,7 +548,9 @@ export function useLiveThought(id: string, every = 0): string | undefined {
     },
     [id, every]
   )
-  return useSyncExternalStore(subscribe, () => thoughts.get(id), () => thoughts.get(id))
+  // No thoughts before the window exists: a reply drawn to markup (a test, a server-side first
+  // frame) has none, and asking for them there would throw instead of drawing the steps.
+  return useSyncExternalStore(subscribe, () => thoughts.snapshot(id), () => undefined)
 }
 
 // The message's text as it is now. `every`: wake at most that often (ms), for what is costly to draw.
@@ -605,6 +609,7 @@ function withMe(s: State): State {
 }
 
 function withSettings(s: State, settings: Settings): State {
+  if (settings.showThinking !== true) thoughts.clear()
   setLang(settings.language)
   setClock(settings.clock)
   return withMe({ ...s, settings })
@@ -679,6 +684,7 @@ function apply(e: CoreEvent): void {
       case 'routine':
         return { ...s, routines: upsert(s.routines, e.routine) }
       case 'conversation_removed': {
+        thoughts.clear(messagesIn(s, e.id).map((message) => message.id))
         const left = s.conversations.filter((c) => c.id !== e.id)
         const here = s.view?.kind === 'conversation' && s.view.id === e.id
         const first = left.find((c) => c.kind === 'channel') ?? left[0]
@@ -758,6 +764,7 @@ export async function start(): Promise<void> {
   }
   await connect(apply)
   const snap = await call('snapshot')
+  thoughts.clear() // A replacement snapshot may no longer grant access to previously shown replies.
   for (const b of snap.browsers) showFrame(b.agentId, b.frame)
   set((s) => {
     const first = snap.conversations.find((c) => c.kind === 'channel') ?? snap.conversations[0]
@@ -1172,6 +1179,7 @@ export function patchAgent(agentId: string, patch: Partial<Agent>): void {
 }
 
 export const localPath = (messageId: string, path: string): Promise<LocalInfo | null> => call('localPath', { messageId, path })
+export const revealArtifact = (id: string): void => void fire(L('Não consegui mostrar o arquivo.', "I couldn't show the file."), 'revealArtifact', { id })
 export const openLocal = (messageId: string, path: string, how: 'open' | 'reveal'): void => void call('openLocal', { messageId, path, how })
 export const openPanel = (panel: Panel | null): void => set((s) => ({ ...s, panel }))
 export const openThread = (messageId: string): void => openPanel({ kind: 'thread', id: messageId })

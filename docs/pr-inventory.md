@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-15T10:38:15.602Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-15T13:21:35.750Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 94 total: 60 open, 22 merged, 12 closed.
 
-Upstream main: `3e8162ebbb8c1d432d6973cedde7444a21910f4f`. Daily driver HEAD: `dff035f10793eb68898df8147678a994aec09b71`. Upstream main is contained: yes.
+Upstream main: `3e8162ebbb8c1d432d6973cedde7444a21910f4f`. Daily driver HEAD: `a0537d763ef3700dfc8f223b65ff5ab1051efebd`. Upstream main is contained: yes.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -13,15 +13,15 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#232](https://github.com/eduwxyz/tucano/pull/232) | apoapostolov | MERGED | Fix the high-risk hold button losing the press before it fills | object unavailable | 0 | 2 | not reviewed |
 | [#243](https://github.com/eduwxyz/tucano/pull/243) | apoapostolov | MERGED | Read an agent limit of 0 as no ceiling, not as already spent | object unavailable | 3 | 0 | not reviewed |
 | [#244](https://github.com/eduwxyz/tucano/pull/244) | apoapostolov | MERGED | Filter and group the skills in an agent's tab, and fix where a skill came from | no: inspect patch equivalence | 1 | 4 | not reviewed |
-| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | yes | 8 | 16 | not reviewed |
+| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | yes | 10 | 16 | not reviewed |
 | [#246](https://github.com/eduwxyz/tucano/pull/246) | apoapostolov | MERGED | Close a reply when its approval is decided, and repair the ones already stuck | object unavailable | 1 | 0 | not reviewed |
 | [#247](https://github.com/eduwxyz/tucano/pull/247) | apoapostolov | OPEN | Add a Questions section above Approvals, with every agent's question in one place | no: inspect patch equivalence | 7 | 23 | not reviewed |
 | [#248](https://github.com/eduwxyz/tucano/pull/248) | apoapostolov | OPEN | Keep the open question next to the field, not only where it was asked | no: inspect patch equivalence | 1 | 3 | not reviewed |
 | [#249](https://github.com/eduwxyz/tucano/pull/249) | apoapostolov | OPEN | Clear a conversation's history without deleting the conversation | no: inspect patch equivalence | 2 | 4 | not reviewed |
-| [#250](https://github.com/eduwxyz/tucano/pull/250) | apoapostolov | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 5 | 9 | reviewed; browser checks pass; platform coverage remains (stale) |
+| [#250](https://github.com/eduwxyz/tucano/pull/250) | apoapostolov | OPEN | Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard | no: inspect patch equivalence | 5 | 9 | not reviewed |
 | [#251](https://github.com/eduwxyz/tucano/pull/251) | apoapostolov | MERGED | Stop the guide's Portuguese from leaking into what agents write (dates by locale, guide labelled) | object unavailable | 1 | 0 | not reviewed |
-| [#258](https://github.com/eduwxyz/tucano/pull/258) | apoapostolov | OPEN | Wiki: let "Write the page" hand a missing page to an agent you pick | no: inspect patch equivalence | 7 | 3 | reviewed; stack repaired; load follow-up remains (stale) |
-| [#259](https://github.com/eduwxyz/tucano/pull/259) | apoapostolov | OPEN | Wiki: let "Nothing links to them" hand the orphan pages to an agent that links them | no: inspect patch equivalence | 7 | 3 | reviewed; stack repaired; suite follow-up remains (stale) |
+| [#258](https://github.com/eduwxyz/tucano/pull/258) | apoapostolov | OPEN | Wiki: let "Write the page" hand a missing page to an agent you pick | no: inspect patch equivalence | 7 | 3 | not reviewed |
+| [#259](https://github.com/eduwxyz/tucano/pull/259) | apoapostolov | OPEN | Wiki: let "Nothing links to them" hand the orphan pages to an agent that links them | no: inspect patch equivalence | 7 | 3 | not reviewed |
 | [#261](https://github.com/eduwxyz/tucano/pull/261) | apoapostolov | OPEN | A new prompt in a thread: parallel, queued, steer or interrupt, on a setting and on the keys | no: inspect patch equivalence | 5 | 14 | not reviewed |
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | apoapostolov | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | apoapostolov | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | no: inspect patch equivalence | 2 | 6 | not reviewed |
@@ -42,7 +42,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#305](https://github.com/eduwxyz/tucano/pull/305) | apoapostolov | OPEN | Show each provider's quota in Usage and limits, and the ones a session's bots run on in its header | no: inspect patch equivalence | 6 | 3 | not reviewed |
 | [#308](https://github.com/eduwxyz/tucano/pull/308) | apoapostolov | CLOSED | Read skills from every harness's folder, and let the person add or turn off folders | no: inspect patch equivalence | 3 | 6 | not reviewed |
 | [#310](https://github.com/eduwxyz/tucano/pull/310) | apoapostolov | MERGED | Stop teaching a model Portuguese in an English workspace: language-free screen ids, the guide index, and a test that notices | yes | 2 | 0 | not reviewed |
-| [#311](https://github.com/eduwxyz/tucano/pull/311) | apoapostolov | OPEN | Read a Hermes skill library as it is: categories one level down, versions, and the facets it is navigated by | yes | 5 | 3 | targeted source-label repair verified; full skills audit remains |
+| [#311](https://github.com/eduwxyz/tucano/pull/311) | apoapostolov | OPEN | Read a Hermes skill library as it is: categories one level down, versions, and the facets it is navigated by | yes | 5 | 3 | not reviewed |
 | [#313](https://github.com/eduwxyz/tucano/pull/313) | apoapostolov | OPEN | Settings › Models: change the thinking on the bulk change and on every agent | no: inspect patch equivalence | 2 | 8 | not reviewed |
 | [#316](https://github.com/eduwxyz/tucano/pull/316) | apoapostolov | MERGED | Stop calling a slow Chrome and a starved Windows test a failure: 90 s to open, 60 s on Windows | yes | 8 | 0 | not reviewed |
 | [#319](https://github.com/eduwxyz/tucano/pull/319) | apoapostolov | OPEN | Let the Tuca set the skills a bot follows, and show them in ver_estado | no: inspect patch equivalence | 3 | 0 | not reviewed |
@@ -63,9 +63,9 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#351](https://github.com/eduwxyz/tucano/pull/351) | apoapostolov | MERGED | Read 0 as no monthly limit on the screens too, not as spent | no: inspect patch equivalence | 1 | 13 | not reviewed |
 | [#352](https://github.com/eduwxyz/tucano/pull/352) | apoapostolov | CLOSED | Let a configured MCP server wear the image the person gives it, from a file or an https address | yes | 1 | 7 | not reviewed |
 | [#353](https://github.com/eduwxyz/tucano/pull/353) | apoapostolov | OPEN | Give a connector the picture it wears, instead of a black terminal | no: inspect patch equivalence | 2 | 9 | not reviewed |
-| [#355](https://github.com/eduwxyz/tucano/pull/355) | apoapostolov | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | no: inspect patch equivalence | 6 | 3 | reviewed; prospective DM privacy repaired; further privacy review remains (stale) |
+| [#355](https://github.com/eduwxyz/tucano/pull/355) | apoapostolov | OPEN | Give the wiki a tool card on the agent's Tools tab, with a level that writes pages | no: inspect patch equivalence | 6 | 3 | not reviewed |
 | [#366](https://github.com/eduwxyz/tucano/pull/366) | apoapostolov | OPEN | Let a routine say nothing when it has nothing to report | no: inspect patch equivalence | 2 | 4 | not reviewed |
-| [#367](https://github.com/eduwxyz/tucano/pull/367) | apoapostolov | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | reviewed; upstream PR opened (stale) |
+| [#367](https://github.com/eduwxyz/tucano/pull/367) | apoapostolov | MERGED | Check wiki SSH key cleanup without requiring a shell on PATH | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#368](https://github.com/eduwxyz/tucano/pull/368) | apoapostolov | MERGED | Update the locked runtime packages past their security advisories | no: inspect patch equivalence | 0 | 0 | not reviewed |
 | [#372](https://github.com/eduwxyz/tucano/pull/372) | apoapostolov | OPEN | Run isolated UI checks without taking desktop focus | no: inspect patch equivalence | 1 | 2 | not reviewed |
 | [#373](https://github.com/eduwxyz/tucano/pull/373) | apoapostolov | MERGED | Recheck wiki permissions and private pages during running replies | no: inspect patch equivalence | 1 | 0 | not reviewed |
@@ -90,16 +90,16 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#419](https://github.com/eduwxyz/tucano/pull/419) | apoapostolov | MERGED | Draw the wiki map in its first frame, and fit it again when the window changes size | no: inspect patch equivalence | 0 | 2 | not reviewed |
 | [#422](https://github.com/eduwxyz/tucano/pull/422) | apoapostolov | MERGED | Skin the toast in the app's orange instead of the primary that inverts to white | no: inspect patch equivalence | 1 | 4 | not reviewed |
 | [#424](https://github.com/eduwxyz/tucano/pull/424) | apoapostolov | OPEN | Control room visibility and agent read access | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#432](https://github.com/eduwxyz/tucano/pull/432) | apoapostolov | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 7 | 5 | targeted safety repairs verified; full feature audit remains (stale) |
+| [#432](https://github.com/eduwxyz/tucano/pull/432) | apoapostolov | OPEN | Keep the history only as long as its period says, with a wipe for every bot and for one bot | no: inspect patch equivalence | 7 | 5 | not reviewed |
 | [#435](https://github.com/eduwxyz/tucano/pull/435) | apoapostolov | OPEN | A bot can look after something for you between conversations | no: inspect patch equivalence | 8 | 3 | not reviewed |
-| [#437](https://github.com/eduwxyz/tucano/pull/437) | apoapostolov | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 3 | 3 | migration-compatible counter assertion repaired; full feature audit remains (stale) |
-| [#445](https://github.com/eduwxyz/tucano/pull/445) | apoapostolov | MERGED | Give the two core-boot tests the budget Windows already has | no: inspect patch equivalence | 2 | 0 | CI explanation corrected; budget changes not integrated |
+| [#437](https://github.com/eduwxyz/tucano/pull/437) | apoapostolov | OPEN | Give the file its space back, and say whether it is sound | no: inspect patch equivalence | 3 | 3 | not reviewed |
+| [#445](https://github.com/eduwxyz/tucano/pull/445) | apoapostolov | MERGED | Give the two core-boot tests the budget Windows already has | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#446](https://github.com/eduwxyz/tucano/pull/446) | apoapostolov | OPEN | Organize settings by task with accessible section navigation | no: inspect patch equivalence | 3 | 2 | not reviewed |
 | [#447](https://github.com/eduwxyz/tucano/pull/447) | apoapostolov | CLOSED | Give the OpenCode retry test the engine's own wait, not 200 ms | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#448](https://github.com/eduwxyz/tucano/pull/448) | apoapostolov | MERGED | Fix the forwarder test's port race, which fails on the macOS runner | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#451](https://github.com/eduwxyz/tucano/pull/451) | apoapostolov | OPEN | Write the guide's 24 pages in English too, and hand each workspace its own | no: inspect patch equivalence | 3 | 0 | not reviewed |
 | [#453](https://github.com/eduwxyz/tucano/pull/453) | apoapostolov | MERGED | Give the delegation test's parked request 8 s, so it is still at it when Clara's answer lands | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#457](https://github.com/eduwxyz/tucano/pull/457) | apoapostolov | OPEN | Pause a reply before its next step, and resume it there | yes | 2 | 4 | targeted cancellation/concurrency repair verified and installed; broader feature audit remains |
+| [#457](https://github.com/eduwxyz/tucano/pull/457) | apoapostolov | OPEN | Pause a reply before its next step, and resume it there | yes | 2 | 4 | not reviewed |
 | [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | 6 | 6 | not reviewed |
 | [#468](https://github.com/eduwxyz/tucano/pull/468) | apoapostolov | OPEN | fix: bound skill comparisons and preserve complete large versions | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#471](https://github.com/eduwxyz/tucano/pull/471) | apoapostolov | OPEN | Keep older retries within their original conversation context | no: inspect patch equivalence | 1 | 0 | not reviewed |

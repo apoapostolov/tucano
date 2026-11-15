@@ -6,9 +6,11 @@
 // Run after `npm run build`: node scripts/e2e-kill-restart.mjs [out-dir]
 import { _electron as electron } from 'playwright'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, mkdtempSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { canContinue, workedOn, WORKLESS_LABELS } from '../src/shared/run-progress.ts'
 
@@ -17,26 +19,61 @@ mkdirSync(out, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-kill-'))
 const HOLD = 30_000
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_FAKE_HOLD_MS: String(HOLD), TUCANO_LOCALE: 'en-US' }
+delete env.ELECTRON_RUN_AS_NODE
+delete env.ELECTRON_RENDERER_URL
+const reservations = await Promise.all([0, 1].map(async () => {
+  const server = createServer()
+  await new Promise((yes, no) => { server.once('error', no); server.listen(0, '127.0.0.1', yes) })
+  return server
+}))
+env.TUCANO_WEBHOOK_PORT = String(reservations[0].address().port)
+env.TUCANO_GIT_PORT = String(reservations[1].address().port)
+await Promise.all(reservations.map(server => new Promise((yes, no) => server.close(error => error ? no(error) : yes()))))
+// Test-only entry point: the production bundle stays unchanged and every window stays hidden.
+const bootstrap = join(data, 'background.cjs')
+writeFileSync(bootstrap, `
+const { app } = require('electron')
+app.setAppPath(${JSON.stringify(process.cwd())})
+globalThis.__qaExposure = []
+app.on('browser-window-created', (_event, win) => {
+  const setFocusable = win.setFocusable.bind(win)
+  setFocusable(false)
+  win.setFocusable = () => setFocusable(false)
+  win.show = win.showInactive = win.focus = () => {}
+  for (const event of ['show', 'focus']) win.on(event, () => globalThis.__qaExposure.push(event))
+})
+import(${JSON.stringify(pathToFileURL(join(process.cwd(), 'out/main/index.js')).href)})
+`)
 const errors = []
+const checks = []
 const dbFile = join(data, 'tucano.db')
 
 let failed = 0
 const check = (name, ok, detail) => {
+  checks.push({ name, passed: !!ok, detail })
   if (!ok) failed++
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail === undefined ? '' : ` :: ${JSON.stringify(detail)}`}`)
 }
 const report = (name, value) => console.log(`     ${name}: ${JSON.stringify(value)}`)
 
 const launch = async () => {
-  const app = await electron.launch({ args: ['.'], env })
+  const app = await electron.launch({ args: [bootstrap], env })
   const win = await app.firstWindow()
   await win.setViewportSize({ width: 1280, height: 880 })
   await win.waitForSelector('.sidebar')
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+  await guard(app)
   return { app, win }
 }
-const shot = (win, name) => win.screenshot({ path: `${out}/${name}.png` })
+const guard = async app => {
+  const state = await app.evaluate(({ BrowserWindow }) => ({ events: globalThis.__qaExposure, safe: BrowserWindow.getAllWindows().every(w => !w.isVisible() && !w.isFocused() && !w.isFocusable()) }))
+  if (!state.safe || state.events.length) throw new Error(`Background isolation failed: ${JSON.stringify(state)}`)
+}
+const shot = async (win, name) => {
+  await guard(app)
+  return win.screenshot({ path: `${out}/${name}.png` })
+}
 const open = async (win, name) => {
   await win.locator('.section .nav-item', { hasText: name }).first().click()
   await win.waitForSelector('.composer textarea')
@@ -103,6 +140,10 @@ const buttons = (win) => win.evaluate(() => [...document.querySelectorAll('.retr
   const { app: first } = await launch()
   await first.close()
   const db = new DatabaseSync(dbFile)
+  // Exercise the manual Continue path even on branches that also offer startup recovery.
+  db.prepare("INSERT INTO settings (key, value) VALUES ('resumeInterrupted', 'false') ON CONFLICT(key) DO UPDATE SET value = excluded.value").run()
+  db.prepare("UPDATE people SET name = 'Review user' WHERE role = 'owner'").run()
+  db.prepare("INSERT INTO settings (key, value) VALUES ('workspaceName', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(JSON.stringify('Review user'))
   const now = Date.now()
   const me = db.prepare("SELECT id FROM people WHERE role = 'owner' LIMIT 1").get()
   const put = db.prepare(
@@ -205,4 +246,9 @@ check('the window raised no errors across four launches', errors.length === 0)
 await app.close()
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
+writeFileSync(join(out, 'report.json'), JSON.stringify({
+  source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  dirty: !!execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim(),
+  checks, errors, passed: failed === 0
+}, null, 2))
 process.exitCode = failed ? 1 : 0

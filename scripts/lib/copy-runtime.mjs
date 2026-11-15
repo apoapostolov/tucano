@@ -6,7 +6,7 @@ import { extractFile } from '@electron/asar'
 // that has no implementation of that flag.
 export function supportsBackgroundCopyQA(executable) {
   const source = executable
-    ? extractFile(join(dirname(resolve(executable)), 'resources', 'app.asar'), 'out/main/index.js').toString('utf8')
-    : readFileSync(resolve('out/main/index.js'), 'utf8')
+    ? extractFile(join(dirname(resolve(executable)), 'resources', 'app.asar'), join('out', 'main', 'index.js')).toString('utf8')
+    : readFileSync(resolve(join('out', 'main', 'index.js')), 'utf8')
   return source.includes('--qa-background') && source.includes('Background QA requires fake engines')
 }
