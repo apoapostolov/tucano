@@ -51,6 +51,11 @@ const CHAIN = (open: boolean, summary = 'Working · 2 steps'): string => `
     </div>
   </div></article>`
 
+// How much of their height two boxes share vertically: a whole pill when they are on one row, nothing
+// when one has wrapped under the other.
+const band = (a: { top: number; bottom: number }, b: { top: number; bottom: number }) =>
+  Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)
+
 const box = (page: import('playwright').Page, sel: string) =>
   page.locator(sel).first().evaluate((el) => {
     const r = el.getBoundingClientRect()
@@ -82,8 +87,9 @@ it.skipIf(!existsSync(chromium.executablePath()))('gives the open steer field th
     expect(field.top).toBeGreaterThan(pill.bottom)
     expect(pill.left).toBeCloseTo(pause.right + 8, 0)
     // Pause and Steer share that row, side by side: the open field must not carry the steer pill down
-    // with it, which is what a row-taking wrapper did.
-    expect(Math.abs(pause.top - pill.top)).toBeLessThan(1)
+    // with it, which is what a row-taking wrapper did. Their bands overlap by most of a pill's height;
+    // a wrapped pill would sit a whole row lower, so the overlap is what tells the two apart.
+    expect(band(pause, pill)).toBeGreaterThan(14)
     expect(pause.right).toBeLessThan(pill.left)
     // The send row follows the field, as wide as it.
     expect(row.top).toBeGreaterThan(field.bottom)
@@ -125,7 +131,7 @@ it.skipIf(!existsSync(chromium.executablePath()))('keeps the open steer field in
     expect(field.right).toBeCloseTo(chain.right, 0)
     expect(field.w).toBeCloseTo(chain.w - 17, 0)
     // A phone's width is where a footer wraps first: the two pills still share the row above the field.
-    expect(Math.abs(pause.top - steer.top)).toBeLessThan(1)
+    expect(band(pause, steer)).toBeGreaterThan(14)
     expect(field.top).toBeGreaterThan(steer.bottom)
     const measured = await page.evaluate(() => ({ page: document.documentElement.scrollWidth, window: window.innerWidth }))
     expect(measured.page).toBeLessThanOrEqual(measured.window)
