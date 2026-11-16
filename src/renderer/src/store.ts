@@ -68,7 +68,8 @@ import {
   type VoiceModelId,
   type VoiceStatus,
   type ProposalsResult,
-  type BackupSummary
+  type BackupSummary,
+  type NodeInfo
 } from '../../shared/types'
 import { covers } from '../../shared/access'
 import { call, connect, disconnect } from './rpc'
@@ -97,6 +98,7 @@ export type View =
 export interface State {
   webhookPort: number
   defaultWorkspace: boolean
+  node: NodeInfo | null // this computer's lines to the servers it's lent to (Settings › Servers), as they change
   ready: boolean
   threadSeen: Record<string, number> // thread root id → when I last had it open (what came after is new)
   navOpen: boolean // on a phone, the sidebar slid in over the view
@@ -176,6 +178,7 @@ const loadSeen = (): Record<string, number> => {
 let state: State = {
   webhookPort: 47717,
   defaultWorkspace: true,
+  node: null,
   ready: false,
   threadSeen: loadSeen(),
   wikiRev: 0,
@@ -628,6 +631,8 @@ function apply(e: CoreEvent): void {
   if (e.type === 'history_wiped') return void e.conversationIds.forEach((id) => void refreshHistory(id))
   set((s) => {
     switch (e.type) {
+      case 'node':
+        return { ...s, node: e.info }
       case 'message': {
         const id = e.message.conversationId
         const messages = { ...s.messages, [id]: upsertMessage(messagesIn(s, id), e.message) }
