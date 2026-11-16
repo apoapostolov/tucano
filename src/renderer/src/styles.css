@@ -1611,6 +1611,7 @@ h3 {
    steer pill alone did. */
 .steps__hold {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin: 2px 0 4px 3px;
@@ -1622,6 +1623,17 @@ h3 {
 .steps__hold .steps__ask {
   margin: 0;
   padding: 0;
+  flex: 0 0 auto;
+}
+/* Open, the steer's field takes the chain's whole width: the pills keep the row they are on and the
+   field goes under them, from the chain's left edge to its right one. Left to itself the note took the
+   width of the textarea's own twenty columns — 200 px, a phone's field, in a 600 px chain. */
+.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) {
+  flex: 1 1 100%;
+}
+.steps__hold .steps__ask-note {
+  width: 100%;
+  max-width: none;
 }
 .steps__hold .steps__ask-pill[disabled] {
   opacity: 0.55;

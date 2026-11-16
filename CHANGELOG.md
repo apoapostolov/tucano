@@ -11,6 +11,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > - **Novo:** os avisos do Tucano agora são **notificações por cima de todas as janelas**: uma pilha no canto da tela, que empurra as anteriores quando chegam outras, recolhe as mais antigas quando chegam muitas, para com o ponteiro em cima e some aos poucos quando o tempo acaba (e volta se você trouxer o ponteiro de volta). Em **Configurações › Notificações** você escolhe quantos segundos cada uma fica, se ela espera o ponteiro, se dá pra decidir por ela, se elas aparecem empilhadas uma de cada vez, o **tema** (claro, escuro ou o do sistema, com o destaque do Windows) e **desenha na tela** o retângulo, com os cantos, do canto onde elas devem aparecer. A roda do mouse sobre um aviso abre ele inteiro, com as imagens e os arquivos que a resposta trouxe.
 > - **Novo:** aprovações e perguntas se decidem **no próprio aviso**, com o mesmo cartão da conversa: as opções com a recomendada marcada, "Outra resposta", as setas entre as decisões e o envio. Aprovar pede que você segure o botão, como na conversa. Uma ação de alto risco nunca fica permitida pra sempre.
 > - **Correção:** uma orientação agora é uma linha da cadeia da resposta, não uma mensagem sua. Orientar uma resposta em curso pela pílula dela salvava antes o que você escreveu como mensagem na conversa: aquilo aparecia no canal ou na DM como algo a responder, e uma resposta que terminava antes de ler deixava as palavras parecendo sem resposta. Agora as palavras vão direto pra resposta que está trabalhando, antes de existir qualquer mensagem: nada de uma orientação é publicado, e ela aparece na cadeia daquela resposta como uma linha própria, com o que você escreveu inteiro (duas linhas, o resto no clique), marcada como ainda esperando até o chamado de ferramenta que a lê, e como não lida se a resposta terminar antes. (#331)
+> - **Correção:** o campo de uma orientação abre na largura da cadeia. A pílula "Orientar" abria um campo de 200 px — a largura das vinte colunas do campo de texto — no meio de uma cadeia de 600 px, em qualquer tamanho de janela, e uma orientação saía três palavras por linha. As pílulas ficam na linha delas e o campo vai embaixo, da borda esquerda da cadeia à direita, com a largura dos passos acima dele e sem rolagem lateral em janela estreita. (#331)
 
 ### Added
 
@@ -49,6 +50,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Let Jev reach tier 4 on its own, and a chain card that reads.** Tier 4 had no switch of its own: the reading could always spend the expensive pool. Its page gains **Let Jev reach tier 4 on its own**, on by default so a setup keeps behaving as it did, and off the reading stops at tier 3 while a role's floor can still bring a reply there; tier 5 needs it on as well as its own switch. Each step of a pool's chain is a card, with the harness, the model and the thinking one under the other at the card's full width, and the chain's title and its note now sit on two lines instead of sharing one.
 
 ### Fixed
+
+- **The steer's field opens the width of the reply's chain.** Steering a reply that is still working
+  opened a field 200 px wide — the width of the textarea's own twenty columns — in the middle of a
+  600 px chain, at any window size, so a direction had to be written a few words to a line. The pills
+  keep their row and the field now runs from the chain's left edge to its right one, as wide as the
+  steps above it, and stays inside a narrow window without a sideways scroll. (#331)
 
 - **Temporary reasoning is forgotten when its display is disabled.** Previously cached text could return when the setting was enabled again, and removed conversations left it behind in memory. Disabling the display, removing a conversation or replacing the snapshot now clears the corresponding cache. Retention is limited to the 200 most recently streamed replies, with at most 20,000 characters per reply. (#235)
 
