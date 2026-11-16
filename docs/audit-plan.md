@@ -8,10 +8,11 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-The 16 November intake found release **0.2.34** at `ab1b9d0f` and newer main at
-`15370a0b`. They are **not integrated or installed yet**. Upgrade reconciliation is the first
-queue item; the installed version remains the verified 0.2.33 build below. See
-[the daily checkpoint](audit-intake-2026-11-16.md) for changed PR heads and compatibility limits.
+TucanoNext **0.2.34 is installed and freshly running**, built from `8962b690`, containing
+upstream/main `15370a0b` (release plus #492/#493). The full suite passed 2,756 tests, 61 skipped,
+zero failures. Installed hidden verification and its limits are recorded in
+[the reconciliation log](upstream-reconciliation-0.2.34.md). The daily plan and 09:00 automation
+now require live installation and fresh installed verification whenever application code advances.
 
 TucanoNext 0.2.33 is installed, freshly launched and released from `4a5daa47`, containing upstream `9474545f`. The full suite passed 2,710 tests, with 61 skipped and no failures. Installed hidden QA passes at 900/1280 CSS pixels and 150% scaling. Apo interface precedence and seven additional merged Apo PRs are recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Full feature audits remain open; the older records below describe earlier builds.
 
@@ -74,7 +75,7 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
-| Versions and main commits | 0.2.33 delivered; 12 new main events reconciled for compatibility | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
+| Versions and main commits | 0.2.34 installed; 10 incoming main events reconciled for compatibility | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
 | All Apo PRs | 94 captured: 51 open, 31 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
 | Apo open wall | 0/51 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
 | Other contributors, including maintainer PRs | Intake only: 253 captured, 32 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
@@ -89,7 +90,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **First: ingest 0.2.34 and subsequent main commits through `15370a0b`.** Reconcile endpoint/web execution, per-request delegation ownership, permission approval, Hermes import and renderer overlaps against the verified 0.2.33 tree. Preserve existing thread controls, Memory copy, reasoning and access protections. No new application delivery is claimed by the intake checkpoint. Complete combined checks, real packaging, installed hidden QA and fork release verification before checking this item.
+- [ ] Triage F-007's upstream security follow-up as a separate bounded task; the credential-scoping repair is already installed. Keep its public disclosure/submission status explicit.
 - [ ] **Active: R-245 full audit, current public head `749311e1`.** After upgrade reconciliation, verify the endpoint thinking contract, broader audience/concurrency/provider cases and maintainability. The bounded revision comparison preserves equivalent delivered F-005/F-006 repairs; current-head isolated execution remains open. Preserve the stronger integrated Thought component. [Targeted delivery](audit-245-delivery-2026-11-15.md), [current checkpoint](audit-intake-2026-11-16.md), [original packet](audit-reasoning-245-2026-11-15.md).
 - [ ] Revalidate revised #391 head `33dea61c` after upgrade reconciliation; preserve the selected local recovery defaults while checking the public opt-in contract.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.

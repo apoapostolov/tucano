@@ -21,7 +21,17 @@
     "347146dcf4ca15ec40faf32df45b90383254a687",
     "5df1feb783fe9b2f1afc674369db91abf7a5bbf0",
     "54f92fe5e6e430830623745e26e5d6b989602496",
-    "9474545f0415f4bb2a439e1a7727912254b69972"
+    "9474545f0415f4bb2a439e1a7727912254b69972",
+    "af74298254ae20b41a77c3c2a3ecafde1e8ed563",
+    "6ae2a4c48f7a342c256c694fc5305db7e548aae8",
+    "9a0155bb143ef807da7623c32dc41a78f8685ce0",
+    "2cfcafa8c2fd2243fc528f2036d204df8b8b2da9",
+    "57624f2887ac9dde16522a9b070af08f8f01aeb2",
+    "ece9f144205b6eeded5c62444ce7354106f96a1c",
+    "75eaba5dac2801910e82a0461a69aeed6546fe59",
+    "ab1b9d0f5b2a85a78d7992cb27a9ef299b0c5c30",
+    "f719e0b9bc8d9373b9ba5511faee6a3dc024f886",
+    "15370a0b41f54aec11d542bc2114d6acb9588535"
   ],
   "deliveries": [
     {
@@ -62,6 +72,19 @@
       "forkRelease": "next-v0.2.33",
       "asarBytes": 37482572,
       "asarSHA256": "d71376bec56addea7f75ce76eb5894b30416830f74464157d615c535c9c4f631"
+    },
+    {
+      "upstreamCommit": "15370a0b41f54aec11d542bc2114d6acb9588535",
+      "integration": "8962b690b207f107431475f07b3f44e5733be8e5",
+      "scope": "Necessary compatibility and semantic reconciliation of 10 incoming main events; not independent contributor feature audits",
+      "evidence": "docs/upstream-reconciliation-0.2.34.md",
+      "installed": true,
+      "freshLaunchVerified": true,
+      "installedBehaviorVerified": true,
+      "buildSource": "8962b690b207f107431475f07b3f44e5733be8e5",
+      "forkRelease": null,
+      "asarBytes": 37564841,
+      "asarSHA256": "70797051ec387b8d203ea7a4b5b55702122ed6126397f6a9afb1df6034e450bb"
     }
   ],
   "targetedDeliveries": [

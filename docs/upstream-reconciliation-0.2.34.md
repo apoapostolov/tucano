@@ -12,9 +12,9 @@ Fork main `c42d1f323a2927084d0cc06366160ea21aa0788b` is already contained.
 - [x] Reproduce endpoint credential scoping with synthetic loopback tests and verify the repair.
 - [x] Pass typecheck, Settings placement and focused delegation/endpoint tests.
 - [x] Pass final combined suite and built rendered checks.
-- [ ] Verify pushed source in a fresh checkout.
-- [ ] Build/package, install, freshly launch and verify the installed application.
-- [ ] Record installed source and archive identity; push completed delivery evidence.
+- [x] Verify pushed source in a fresh checkout.
+- [x] Build/package, install, freshly launch and verify the installed application.
+- [x] Record installed source and archive identity; push completed delivery evidence.
 
 The daily automation remains active at 09:00 Europe/Kyiv. Its prompt and the master checklist now
 require installation of the latest validated integration when application code changes, followed
@@ -88,3 +88,37 @@ Final combined application suite: `npm test` passed **2,756 tests**, 61 skipped,
 Hermes error, preview and empty selection. Parent inspected the 900px endpoint and Hermes
 screenshots. All measured copy fits; no wrapping exception was needed. The harness corrections
 were target scoping and accepting the browser's canonical `14px auto` background size.
+
+## Installed delivery
+
+Source `8962b690b207f107431475f07b3f44e5733be8e5` is pushed to origin/next and fast-forwarded
+into the primary next checkout. A fresh detached checkout of that remote SHA passed typecheck
+and 14 focused tests. Main compatibility work is already merged upstream; this ingestion is not
+a new public PR or a claim that the newly found credential repair is submitted upstream.
+
+`node scripts/self-build.mjs install --json` returned exit 0, installed true, version 0.2.34 and
+fresh window TucanoNext. The installed archive is 37,564,841 bytes, 114 runtime packages, no
+missing dependencies. Built and installed archive SHA256 both equal
+`70797051ec387b8d203ea7a4b5b55702122ed6126397f6a9afb1df6034e450bb`.
+The normal app launched with `--background`; no foreground automation was used. Before closing
+the old app, a read-only status aggregation showed no active runs. Tests used scratch data and
+separate ephemeral ports. No live database writes were made by test tooling.
+
+Installed background QA at 900/1280 CSS pixels and native 150% scaling passed Settings
+navigation/copy, pause, Skills origin/comparison, artifact panel, sectors, endpoint setup,
+Hermes preview/error/empty selection and light/dark native selects. All 12 upgrade copy
+measurements pass; no page errors or exposed/focused QA windows. Parent reviewed the installed
+Hermes 1280px and native-select 900px screenshots. Role/access QA also passed. Evidence folders:
+`C:/tmp/tucano-0234-installed-qa`, `C:/tmp/tucano-0234-installed-access`.
+
+Installed streaming reasoning passed all three sizes, folding, lifecycle/reading-line checks
+and clearing on disable/re-enable, with no page errors at 150% scaling. Evidence:
+`C:/tmp/tucano-0234-installed-thought`. The built run passed the same checks. The maintainability gate remains blocked;
+[all changed-file scores](upstream-0.2.34-maintainability.md) record 145→150 red files and
+137,657→140,636 NLOC. No full feature audit is closed by this delivery. Fork release assets
+remain the earlier 0.2.33 release; this request updates the local installation, not a public tag.
+
+All local-installation checkpoints are complete. The upstream release tracker still leaves its
+0.2.34 release-delivery box open because no new fork release/tag was published during this
+local-installation request. This does not mean that 0.2.34 is absent from the live installation.
+Public credentials follow-up, broad maintainability work and full feature audits remain open.
