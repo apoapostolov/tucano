@@ -9,8 +9,9 @@ and [current deep-audit checkpoint](audit-deep-2026-11-16.md).
 
 - [x] **Secondary bosses, “Also answers to”.** A specialist keeps one primary boss and can also
   answer to other team leaders. The installed 0.2.34 preview contains this feature; published next
-  `514c94be` does not. [Fork PR #5](https://github.com/apoapostolov/tucano/pull/5) is draft at
-  `658693b8`, alongside [upstream #467](https://github.com/eduwxyz/tucano/pull/467).
+  `514c94be` does not. Preview source is `658693b8`;
+  [upstream PR #467](https://github.com/eduwxyz/tucano/pull/467) is the feature's review home.
+  Integration and repairs go directly into next. The mistakenly opened fork PR #5 is closed.
   Export/import, side-panel pointer interaction and rapid selection have reproduced defects;
   local repair `3eba2507` passes 50 focused tests but still needs porting and delivery.
 - [x] **Wider steer input and aligned steer controls.** Recent fork

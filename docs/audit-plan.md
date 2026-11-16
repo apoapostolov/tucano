@@ -8,9 +8,12 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-Current published next is `514c94be`. The installed **TucanoNext 0.2.34** is a secondary-boss
+The current published application source is unchanged from next `514c94be`; audit documentation
+was subsequently published at `1c03961f`. The installed **TucanoNext 0.2.34** is a secondary-boss
 preview whose archive matches the package in checkout `658693b8`; it is ahead of next and now
-preserved in [draft fork PR #5](https://github.com/apoapostolov/tucano/pull/5). Fresh hidden installed
+preserved on branch `feat/multi-boss-next`. Its product PR is
+[upstream #467](https://github.com/eduwxyz/tucano/pull/467); integrate repairs directly into next.
+Fork PR #5 was opened in error and is now closed. Fresh hidden installed
 QA passes for Settings, pause and upgrade layouts at 900/1280 pixels and 150% scaling. Secondary-boss
 changed-behavior verification remains open. See [the current checkpoint](audit-deep-2026-11-16.md)
 for archive identity, exact source limits and reproduced defects, and
@@ -99,7 +102,7 @@ historical comparisons; new PRs enter the canonical current queues.
 
 - [ ] Triage F-007's upstream security follow-up as a separate bounded task; the credential-scoping repair is already installed. Keep its public disclosure/submission status explicit.
 - [ ] **Active: R-245 full audit, current public head `749311e1`.** Repair F-008/F-009 deletion and retry cache boundaries; then verify broader audience/concurrency/provider cases and maintainability. Pi-only scope is confirmed; endpoint thinking is unsupported, not a demonstrated defect. The bounded revision comparison preserves equivalent delivered F-005/F-006 repairs; current-head retry execution now reproduces F-009; remaining isolated scenarios are open. Preserve the stronger integrated Thought component. [Targeted delivery](audit-245-delivery-2026-11-15.md), [current checkpoint](audit-deep-2026-11-16.md), [original packet](audit-reasoning-245-2026-11-15.md).
-- [ ] Repair and verify **secondary bosses (#467 / fork #5)**: F-010/F-011/F-012 reproduce on the public head; local repair passes 50 tests but is not delivered. [Current evidence](audit-deep-2026-11-16.md).
+- [ ] Repair and verify **secondary bosses (upstream #467)**: F-010/F-011/F-012 reproduce on the public head; local repair passes 50 tests but is not delivered. [Current evidence](audit-deep-2026-11-16.md).
 - [ ] Reconcile upstream `67b66d93`, `2c4f0552` and `9901b9e5`, retaining the installed preview and compatible interface improvements.
 - [ ] Revalidate revised #391 head `33dea61c` after upgrade reconciliation; preserve the selected local recovery defaults while checking the public opt-in contract.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.

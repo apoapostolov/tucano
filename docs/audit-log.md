@@ -7,7 +7,7 @@ an active task's report.
 
 | Date | Record | Scope and limits |
 | --- | --- | --- |
-| 16 November 2026 | [Deep audit and installed preview](audit-deep-2026-11-16.md) | Current inventories and 905-path map; parent-reproduced reasoning/cache and secondary-boss defects; fork PR #5 draft; fresh installed hidden QA passes with feature-specific gaps open. |
+| 16 November 2026 | [Deep audit and installed preview](audit-deep-2026-11-16.md) | Current inventories and 905-path map; parent-reproduced reasoning/cache and secondary-boss defects; upstream #467 confirmed as the feature PR; erroneous fork #5 closed; fresh installed hidden QA passes with feature-specific gaps open. |
 | 16 November 2026 | [0.2.34 reconciliation](upstream-reconciliation-0.2.34.md) | Historical completed integration/install at `8962b690`; current installation is the later secondary-boss preview documented above. |
 | 16 November 2026 | [Daily intake and upgrade checkpoint](audit-intake-2026-11-16.md) | 0.2.34 plus subsequent main detected; queues refreshed, three bounded Apo compatibility checks and parent regressions. At that earlier checkpoint upgrade was not yet integrated or installed; later reconciliation supersedes this state. |
 | 15 November 2026 | [0.2.33 reconciliation](upstream-reconciliation-0.2.33.md) | Upstream ingestion, Apo UI precedence and seven merged dispositions; delivery checkpoints tracked in the record. |

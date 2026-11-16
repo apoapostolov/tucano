@@ -10,7 +10,7 @@ The [master plan](audit-plan.md) and [finding register](audit-findings.md) retai
 - [x] Fast-forward clean local next from `8ade33e4` to published `514c94be`.
 - [x] Refresh all-state inventories: 94 Apo PRs (51 open, 31 merged, 12 closed), plus 260 other-contributor PRs (36 open).
 - [x] Review exact heads of #245 and #467 through independent children; reproduce findings in the parent.
-- [x] Identify the installed secondary-boss preview and open its fork PR.
+- [x] Identify the installed secondary-boss preview and confirm its existing upstream PR #467.
 - [x] Run fresh hidden installed QA and review screenshots and measurement results.
 - [x] Enumerate 905 tracked paths and produce a provisional ownership map.
 - [x] Document recent improvements and separate published integration from installed preview.
@@ -29,7 +29,7 @@ The [master plan](audit-plan.md) and [finding register](audit-findings.md) retai
 | Fetched upstream/main | `9901b9e5f209433bcfc04f6bc05d90e580a888db` |
 | Secondary-boss public PR #467 | `1f1fa3a5b358d5ffb1b4470817cae0cbcb859335` |
 | Existing local secondary-boss repair | `3eba2507a897dfc5faa6c5aa6c8a6b7b85a19730` |
-| Installed preview packaging checkout / fork PR #5 | `658693b87174f29a74bc5e8db0277ccc02e77cc7` |
+| Installed preview packaging checkout | `658693b87174f29a74bc5e8db0277ccc02e77cc7` |
 | Reasoning public PR #245 | `749311e133dd52c31c9958bc4ca8991e32f5ef81` |
 
 Installed TucanoNext is version **0.2.34**, with “Also answers to” in its renderer. Its 37,563,849-byte
@@ -42,10 +42,12 @@ The older `8962b690` installation record is historical; it does not identify tod
 The published fork release remains `next-v0.2.33`; no tag or release was published in this run.
 
 The installed preview contains two commits above next: secondary-boss support and its connector/
-picker revision. It is now preserved on origin as `feat/multi-boss-next`, with draft
-[fork PR #5](https://github.com/apoapostolov/tucano/pull/5) against next. The remote head was
-verified as `658693b8`. The repair at `3eba2507` is not included there. Keep this distinction
-visible until repair, pushed-head checks and installed changed-behavior verification finish.
+picker revision. It is preserved on origin as `feat/multi-boss-next`; the remote head was
+verified as `658693b8`. Fork PR #5 was mistakenly opened and has been closed following the
+user's correction. Integrate and repair directly on `apoapostolov/tucano:next`; the existing
+product review belongs to [upstream #467](https://github.com/eduwxyz/tucano/pull/467), whose branch
+is `feat/multi-boss`. The repair at `3eba2507` is not yet published there or integrated into next.
+Keep pushed-head and installed changed-behavior checks open until the repair is delivered.
 
 Upstream commits `67b66d93`, `2c4f0552` and `9901b9e5` are not in next: Hermes import follow-ups,
 site content and SOUL/gateway semantics. Compatibility review and integration remain pending.
@@ -145,7 +147,7 @@ rendering. Metadata and patch refresh do not count as feature review. New other-
 Assignments are filename/path heuristics pending semantic review. The CSV includes every tracked
 path at that revision once; newly authored audit documents are outside that frozen tree.
 
-Next: port the secondary-boss repair onto fork PR #5 and its owning upstream feature as appropriate;
+Next: update the secondary-boss repair on existing upstream PR #467 and integrate directly into next;
 repair retry/cache event boundaries with meaningful regressions; then complete their remaining
 feature checks and required code delivery. Reconcile newer upstream commits before final integration.
 None of those unfinished steps is closed by a successful documentation push.

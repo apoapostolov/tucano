@@ -6,6 +6,8 @@ criteria. This file supplies operating details; dated sections below are histori
 This document is fork-local operating context. Upstream is `eduwxyz/tucano`; the publishing
 target for every product fix is its `main` branch. The fork's `next` branch is a personal
 integration and QA environment. Keep that context out of upstream reports.
+Integrate and repair directly on `apoapostolov/tucano:next`, without a fork PR. Open or update
+product PRs on `eduwxyz/tucano`; retain the existing feature PR rather than creating a duplicate.
 
 ## Inventory and review evidence
 

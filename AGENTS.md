@@ -134,6 +134,11 @@ feature adds a setting or moves one; do not wait for a second cleanup project to
 
 ## Repositories and branches
 
+Integrate and repair TucanoNext directly on `apoapostolov/tucano:next`; do not open PRs against
+the fork for this work. Product PRs target the original project, `eduwxyz/tucano:main`, using the
+feature's existing upstream PR when one is open. Git remote `origin` names the fork in this
+checkout; a request for the original Tucano developer repository means `eduwxyz/tucano` (`upstream`).
+
 Check `git remote -v` before fetching, merging, or pushing. In this checkout:
 
 | Reference | Meaning |

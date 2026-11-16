@@ -111,9 +111,11 @@
       "publishedNextAtObservation": "514c94bec373d8156845879968ffccb4efae2bd1",
       "sourceAttestation": "Byte-identical preview package; no embedded source SHA",
       "evidence": "docs/audit-deep-2026-11-16.md",
-      "forkPullRequest": "https://github.com/apoapostolov/tucano/pull/5",
       "fullFeatureVerified": false,
-      "freshHiddenQaPassed": true
+      "freshHiddenQaPassed": true,
+      "productPullRequest": "https://github.com/eduwxyz/tucano/pull/467",
+      "integrationTarget": "apoapostolov/tucano:next",
+      "closedErroneousForkPullRequest": "https://github.com/apoapostolov/tucano/pull/5"
     }
   ]
 }
