@@ -52,6 +52,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+- **A prompt's pencil stands in line with its trash and its thread button.** Editing a prompt put a
+  13 px glyph in a set of 20 px ones: on a prompt tall enough for the three to stand in a column the
+  pencil sat 7 px in from their edge, with 4 px above it and 11 below it, and on a short prompt it
+  broke the even 6 px between them. It wears the other two glyphs' own box now, so the column is one
+  column, the fanned set one set, at any window width. (#427)
+
 - **The steer's field opens the width of the reply's chain.** Steering a reply that is still working
   opened a field 200 px wide — the width of the textarea's own twenty columns — in the middle of a
   600 px chain, at any window size, so a direction had to be written a few words to a line. The pills

@@ -4112,6 +4112,9 @@ body.is-resizing webview {
    enough to hold three in a column stands them up instead, so they stay beside the words they act on
    rather than running away from them. Every offset is anchored to the bubble's edge, so the set cannot
    drift when the bubble's width changes. */
+/* The pencil wears the other two glyphs' own box (icon-btn--sm, 20x20): in the column they stand in,
+   and in the fan they make on a short prompt, a glyph of another size reads as one out of line — a 13 px
+   pencil gave 4 px above it and 11 below, and pulled its own centre off the set's. */
 .msg__edit {
   position: absolute;
   top: 6px;
