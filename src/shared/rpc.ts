@@ -239,7 +239,7 @@ export type Result<M extends Method> = Awaited<ReturnType<Api[M]>>
 export type CoreEvent =
   | { type: 'voice' } // dictation's model: downloading, done, removed
   | { type: 'node'; info: NodeInfo } // this computer's lines to the servers it's lent to, as they change
-  | { type: 'message'; message: Message }
+  | { type: 'message'; message: Message; attemptStart?: true }
   | { type: 'delta'; id: string; text: string } // appended to message text while streaming
   | { type: 'thinking'; id: string; text: string } // appended to what the model is thinking, shown apart from the reply
   | { type: 'agent'; agent: Agent }

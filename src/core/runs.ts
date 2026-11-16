@@ -838,10 +838,10 @@ export class Runner {
     return m
   }
 
-  private update(m: Message, patch: Partial<Message>): void {
+  private update(m: Message, patch: Partial<Message>, attemptStart = false): void {
     Object.assign(m, patch)
     this.deps.db.saveMessage(m)
-    this.deps.emit({ type: 'message', message: { ...m } })
+    this.deps.emit({ type: 'message', message: { ...m }, ...(attemptStart ? { attemptStart: true } : {}) })
   }
 
   // The router reads the thread it picks for, and the conversation's other threads in a line each.
@@ -1069,7 +1069,12 @@ export class Runner {
     const again = { ...(task ? { task } : {}), ...(handedId ? { handed: handedId } : {}) }
     const replyTo = opts.trigger ?? opts.replyTo ?? opts.existing?.run?.replyTo
     msg.run = { status: 'working', depth: opts.depth, steps: [thinking()], ...again, ...(replyTo ? { replyTo } : {}) }
-    const save = (patch: Partial<Message> = {}): void => this.update(msg, patch)
+    // Only a new execution replaces this reply's reasoning; tool/steering updates do not.
+    let attemptStart = true
+    const save = (patch: Partial<Message> = {}): void => {
+      this.update(msg, patch, attemptStart)
+      attemptStart = false
+    }
     // What it writes before using a tool is narration ("Vou abrir o Studio"): it
     // goes with that step, and the reply keeps only what it says at the end.
     // What the model is thinking, streamed to the window and never added to the reply: it is shown
