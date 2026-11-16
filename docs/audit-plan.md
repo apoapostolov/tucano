@@ -8,21 +8,15 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-The current published application source is unchanged from next `514c94be`; audit documentation
-was subsequently published at `1c03961f`. The installed **TucanoNext 0.2.34** is a secondary-boss
-preview whose archive matches the package in checkout `658693b8`; it is ahead of next and now
-preserved on branch `feat/multi-boss-next`. Its product PR is
-[upstream #467](https://github.com/eduwxyz/tucano/pull/467); integrate repairs directly into next.
-Fork PR #5 was opened in error and is now closed. Fresh hidden installed
-QA passes for Settings, pause and upgrade layouts at 900/1280 pixels and 150% scaling. Secondary-boss
-changed-behavior verification remains open. See [the current checkpoint](audit-deep-2026-11-16.md)
-for archive identity, exact source limits and reproduced defects, and
-[the improvement catalogue](tucanonext-improvements.md) for recent additions.
-
-Fetched upstream/main is `9901b9e5`; three newer commits remain outside next and await compatibility
-reconciliation. The earlier [0.2.34 delivery](upstream-reconciliation-0.2.34.md) and
-[0.2.33 release](upstream-reconciliation-0.2.33.md) are historical evidence, not today's package
-identity. The published fork release remains `next-v0.2.33`.
+The 0.2.35 reconciliation is in delivery. It combines published next `5525abfb`, local
+next `124e95dd`, installed secondary-boss preview `658693b8`, upstream 0.2.35 and the Windows
+Hermes hash repair submitted as [upstream #512](https://github.com/eduwxyz/tucano/pull/512).
+See [the live delivery checklist](upstream-reconciliation-0.2.35.md) for exact checks and
+installation status. The preceding 0.2.34 preview remains the installed baseline until that
+checklist records installation and fresh verification. Secondary-boss F-010–F-012 and the
+broader feature audit remain open on [upstream #467](https://github.com/eduwxyz/tucano/pull/467).
+Integration goes directly to next; fork PR #5 is closed. The downloadable fork release remains
+`next-v0.2.33`. Newer upstream main `d02bfeb3` is deferred from this bounded release intake.
 
 Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
 parent reproduction, repair, existing PR update (or an appropriate new PR), pushed-head verification,
