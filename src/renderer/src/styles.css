@@ -1625,13 +1625,16 @@ h3 {
   padding: 0;
   flex: 0 0 auto;
 }
-/* Open, the steer's field takes the chain's whole width: the pills keep the row they are on and the
-   field goes under them, from the chain's left edge to its right one. Left to itself the note took the
-   width of the textarea's own twenty columns — 200 px, a phone's field, in a 600 px chain. */
+/* Open, only the field takes the row: Pause and the steer pill keep the row they are on, and the field
+   goes under the two of them, from the chain's left edge to its right one. The wrapper is dissolved so
+   its pill and its field are the row's own items: left whole, the field's box took the row and carried
+   the pill down with it, which read as a wrap. Left to itself the note took the width of the textarea's
+   own twenty columns — 200 px, a phone's field, in a 600 px chain. */
 .steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) {
-  flex: 1 1 100%;
+  display: contents;
 }
-.steps__hold .steps__ask-note {
+.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) .steps__ask-note {
+  flex: 1 1 100%;
   width: 100%;
   max-width: none;
 }

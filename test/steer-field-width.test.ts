@@ -1,8 +1,8 @@
-// The steer's field, open: it takes the width of the reply's chain, not a column in the middle of it.
-// Laid out as the app draws it (Conversation.tsx, RunSteps + SteerPill): the pills hold their own row
-// and the field goes under them, from the chain's left edge to its right one. Left to itself, the note
-// took the width of the textarea's own twenty columns — 200 px in a 600 px chain — which is what this
-// pins.
+// The steer's field, open: it takes the width of the reply's chain, not a column in the middle of it,
+// and it goes under Pause and Steer, which keep the row they were on. Laid out as the app draws it
+// (Conversation.tsx, RunSteps + PillPrompt). Left to itself, the note took the width of the textarea's
+// own twenty columns — 200 px in a 600 px chain; given the row, it carried the steer pill down with it.
+// Both are what this pins.
 import { existsSync } from 'node:fs'
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
@@ -64,7 +64,8 @@ it.skipIf(!existsSync(chromium.executablePath()))('gives the open steer field th
     await page.setContent(`<style>${css}</style><main class="main"><div class="messages">${CHAIN(true)}</div></main>`)
 
     const chain = await box(page, '.steps')
-    const pill = await box(page, '.steps__hold .steps__ask-pill')
+    const pause = await box(page, '.steps__hold > .steps__ask-pill')
+    const pill = await box(page, '.steps__hold .steps__ask .steps__ask-pill')
     const field = await box(page, '.steps__ask-note textarea')
     const note = await box(page, '.steps__ask-note')
     const row = await box(page, '.steps__ask-row')
@@ -79,7 +80,11 @@ it.skipIf(!existsSync(chromium.executablePath()))('gives the open steer field th
     expect(note.w).toBeCloseTo(chain.w - 17, 0)
     // Under the pills, not beside them: they keep the row they were on.
     expect(field.top).toBeGreaterThan(pill.bottom)
-    expect(pill.left).toBeCloseTo(contentLeft, 0)
+    expect(pill.left).toBeCloseTo(pause.right + 8, 0)
+    // Pause and Steer share that row, side by side: the open field must not carry the steer pill down
+    // with it, which is what a row-taking wrapper did.
+    expect(Math.abs(pause.top - pill.top)).toBeLessThan(1)
+    expect(pause.right).toBeLessThan(pill.left)
     // The send row follows the field, as wide as it.
     expect(row.top).toBeGreaterThan(field.bottom)
     expect(row.w).toBeLessThanOrEqual(note.w + 0.5)
@@ -115,8 +120,13 @@ it.skipIf(!existsSync(chromium.executablePath()))('keeps the open steer field in
 
     const chain = await box(page, '.steps')
     const field = await box(page, '.steps__ask-note textarea')
+    const pause = await box(page, '.steps__hold > .steps__ask-pill')
+    const steer = await box(page, '.steps__hold .steps__ask .steps__ask-pill')
     expect(field.right).toBeCloseTo(chain.right, 0)
     expect(field.w).toBeCloseTo(chain.w - 17, 0)
+    // A phone's width is where a footer wraps first: the two pills still share the row above the field.
+    expect(Math.abs(pause.top - steer.top)).toBeLessThan(1)
+    expect(field.top).toBeGreaterThan(steer.bottom)
     const measured = await page.evaluate(() => ({ page: document.documentElement.scrollWidth, window: window.innerWidth }))
     expect(measured.page).toBeLessThanOrEqual(measured.window)
   } finally {
