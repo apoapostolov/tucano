@@ -8,13 +8,12 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-The 0.2.35 reconciliation is in delivery. It combines published next `5525abfb`, local
-next `124e95dd`, installed secondary-boss preview `658693b8`, upstream 0.2.35 and the Windows
-Hermes hash repair submitted as [upstream #512](https://github.com/eduwxyz/tucano/pull/512).
-See [the live delivery checklist](upstream-reconciliation-0.2.35.md) for exact checks and
-installation status. The preceding 0.2.34 preview remains the installed baseline until that
-checklist records installation and fresh verification. Secondary-boss F-010–F-012 and the
-broader feature audit remain open on [upstream #467](https://github.com/eduwxyz/tucano/pull/467).
+**TucanoNext 0.2.35 is built, installed and freshly verified** from source `3d0d7b9b`.
+It combines the late published/local next commits, the installed secondary-boss preview,
+upstream 0.2.35 and the Windows Hermes import repair in upstream #512. The shortened boss hint
+is on existing upstream #467. See [delivery evidence and remaining limits](upstream-reconciliation-0.2.35.md)
+for archive identity, commands, exact heads and installed checks. Secondary-boss interaction and
+export/import repairs, reasoning cache findings and the broader audit remain open.
 Integration goes directly to next; fork PR #5 is closed. The downloadable fork release remains
 `next-v0.2.33`. Newer upstream main `d02bfeb3` is deferred from this bounded release intake.
 
@@ -79,8 +78,8 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
-| Versions and main commits | 0.2.34 preview installed; three newer main commits await reconciliation | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 94 captured: 51 open, 31 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Versions and main commits | 0.2.35 installed and verified; newer main changes deferred | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
+| All Apo PRs | 95 captured: 52 open, 31 merged, 12 closed; 0/95 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [metadata inventory](pr-inventory.md) |
 | Apo open wall | 0/51 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
 | Other contributors, including maintainer PRs | Intake only: 260 captured, 36 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; 905 paths inventoried, 268 unassigned; independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |

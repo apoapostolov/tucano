@@ -45,6 +45,14 @@
       "upstreamCommit": "9474545f0415f4bb2a439e1a7727912254b69972",
       "source": "4a5daa474230a7742f155250e5fe58a077e5f86f",
       "evidence": "docs/upstream-reconciliation-0.2.33.md"
+    },
+    {
+      "tag": "v0.2.35",
+      "upstreamCommit": "e61f6e463c1cf0d21c66f218a2e67acf1033663f",
+      "source": "3d0d7b9b675ae9de265d07b3da4d341acb96a063",
+      "evidence": "docs/upstream-reconciliation-0.2.35.md",
+      "installed": true,
+      "asarSHA256": "097bf6185669d8f75893723348cbd864bef847e696c2eb08b5701ff87c3a8e4f"
     }
   ],
   "releaseBaselineTag": "v0.2.32",

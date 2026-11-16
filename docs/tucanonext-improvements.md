@@ -8,12 +8,13 @@ and [current deep-audit checkpoint](audit-deep-2026-11-16.md).
 ## Team and conversation improvements
 
 - [x] **Secondary bosses, “Also answers to”.** A specialist keeps one primary boss and can also
-  answer to other team leaders. The 0.2.35 candidate integrates the previously installed 0.2.34 preview
+  answer to other team leaders. Installed 0.2.35 integrates the previously installed 0.2.34 preview
   `658693b8`; [the upgrade checklist](upstream-reconciliation-0.2.35.md) tracks delivery.
   [upstream PR #467](https://github.com/eduwxyz/tucano/pull/467) is the feature's review home.
   Integration and repairs go directly into next. The mistakenly opened fork PR #5 is closed.
   Export/import, side-panel pointer interaction and rapid selection have reproduced defects;
   local repair `3eba2507` passes 50 focused tests but still needs porting and delivery.
+  Primary/secondary persistence and profile layout now pass installed 0.2.35 checks; Team side-panel selection remains an open interaction failure.
 - [x] **Wider steer input and aligned steer controls.** Recent fork
   [PR #2](https://github.com/apoapostolov/tucano/pull/2) and
   [PR #3](https://github.com/apoapostolov/tucano/pull/3) are merged into next. This is separate
@@ -62,7 +63,7 @@ and [current deep-audit checkpoint](audit-deep-2026-11-16.md).
 - [x] **Restricted Hermes import.** Owner-only preview/import, restricted imported agents, disabled
   routines and memory confirmation are integrated under Workspace transfer. Fresh preview/error/
   empty-state layout checks pass; real profile import was not performed. Newer upstream SOUL/
-  gateway changes at `9901b9e5` remain pending reconciliation.
+  gateway changes at `9901b9e5` are integrated in 0.2.35.
 - [x] **Native select polish.** Theme-specific carets and padding are retained; the installed
   light/dark upgrade checks pass. [0.2.34 evidence](upstream-reconciliation-0.2.34.md).
 
@@ -71,12 +72,13 @@ and [current deep-audit checkpoint](audit-deep-2026-11-16.md).
 - [ ] Finish and deliver secondary-boss repairs; verify real team sharing, permissions, cycles,
   restart persistence, keyboard operation and installed layout.
 - [ ] Repair reasoning cache retry and deletion boundaries, preserving prior reading/folding fixes.
-- [ ] Review the three incoming upstream commits and complete compatibility integration.
+- [x] Reconcile 0.2.35 and the late next commits; build, install and verify the combined app.
+- [ ] Review newer main changes after the recorded 0.2.35 intake.
 - [ ] Complete full feature audits, whole-tree ownership and representative performance coverage.
 
 This catalogue describes current and recently integrated improvements. The changelog and linked
 historical records retain earlier additions; their presence is not a claim of fresh verification.
-The installed preview, published next and downloadable fork release currently have different heads.
+The installed 0.2.35 source is on next; the downloadable fork release remains older.
 
 ## 0.2.35 intake
 

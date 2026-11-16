@@ -1,6 +1,6 @@
 # Upstream version and commit intake
 
-Captured 2026-11-16T17:11:33.988Z. Main: `d02bfeb3c041275db308590b7416b3d0d2c69299`; integration: `72d6e698048540a7d6e8e65a6f257f8399969dc9`.
+Captured 2026-11-16T17:25:35.407Z. Main: `d02bfeb3c041275db308590b7416b3d0d2c69299`; integration: `3d0d7b9b675ae9de265d07b3da4d341acb96a063`.
 
 Release boxes mean verified integration, installation and release evidence recorded in audit-state.json,
 not a complete audit of the release code. The baseline whole-tree audit remains separate.
@@ -10,7 +10,7 @@ not a complete audit of the release code. The baseline whole-tree audit remains 
 - [x] [v0.2.32](https://github.com/eduwxyz/tucano/releases/tag/v0.2.32) — published; target `d175567b0a12d885544d74c45792717a883287f5`; [delivery evidence](upstream-reconciliation-0.2.32.md).
 - [x] [v0.2.33](https://github.com/eduwxyz/tucano/releases/tag/v0.2.33) — published; target `9474545f0415f4bb2a439e1a7727912254b69972`; [delivery evidence](upstream-reconciliation-0.2.33.md).
 - [ ] [v0.2.34](https://github.com/eduwxyz/tucano/releases/tag/v0.2.34) — published; target `ab1b9d0f5b2a85a78d7992cb27a9ef299b0c5c30`; intake/delivery pending.
-- [ ] [v0.2.35](https://github.com/eduwxyz/tucano/releases/tag/v0.2.35) — published; target `e61f6e463c1cf0d21c66f218a2e67acf1033663f`; intake/delivery pending.
+- [x] [v0.2.35](https://github.com/eduwxyz/tucano/releases/tag/v0.2.35) — published; target `e61f6e463c1cf0d21c66f218a2e67acf1033663f`; [delivery evidence](upstream-reconciliation-0.2.35.md).
 
 ## Main changes after the baseline
 
