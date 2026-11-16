@@ -11,6 +11,7 @@ import { safeUrl } from '../links'
 import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
 import { saidAt } from '../../../shared/types'
+import { CUT, canContinue } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -455,6 +456,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
   const said = useLiveText(message, message.run?.status === 'working' ? STREAM_MS : 0)
   // A request written before what counts as finished left the conversation still carries that line: not shown.
   const text = message.run?.delegation?.rootId === message.id ? said.replace(/\n\n\*\*(Pronto quando|Done when):\*\* [^\n]*/, '') : said
+  // A reply that only handed work on says what's going on in the line under it, not in words: whatever it
+  // wrote anyway waits behind a link, and the agent speaks when the work comes back.
+  const [showSaid, setShowSaid] = useState(false)
+  const quiet = message.author.kind === 'agent' && !!message.run?.delegations?.length && message.run.status === 'done' && questionsOf(message.run).length === 0
 
   // The same object between renders, or every link would start over.
   const agentMarkdown = useMemo(() => ({ pre: CodeBlock, a: localLinkFor(message.id), span: MentionSpan }), [message.id])
@@ -474,12 +479,14 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
   // What came back from handed work, where it was asked: a line, not a voice. Whoever did it speaks in
   // its own channel; here only whoever I asked does.
   const from = message.run?.delegation
-  if (agent && from && from.to === agent.id && message.conversationId !== from.conversationId) return <ReturnedLine message={message} at={from} agent={agent} text={text} components={agentMarkdown} />
+  if (message.author.kind === 'agent' && from && from.to === message.author.id && message.conversationId !== from.conversationId) return <ReturnedLine message={message} at={from} agent={agent} text={text} components={agentMarkdown} />
 
-  const name = agent ? agent.name : (other ?? me.name)
+  // An agent the server hides from this member (restricted view): a neutral voice, never my own name.
+  const ghost = message.author.kind === 'agent' && !agent
+  const name = agent ? agent.name : ghost ? L('Agente', 'Agent') : (other ?? me.name)
   return (
     // Someone else's message reads like any other voice in the conversation: on the left, with their name.
-    <article className={`msg ${agent ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
+    <article className={`msg ${agent || ghost ? 'msg--agent' : other ? 'msg--agent msg--person' : 'msg--me'} ${grouped ? 'msg--grouped' : ''} ${threadOpen ? 'is-thread-open' : ''}`} data-id={message.id}>
       <div className="msg__gutter">
         {!grouped &&
           (agent ? (
@@ -487,7 +494,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
               <AgentAvatar agent={agent} size={34} busy={message.run?.status === 'working'} />
             </AgentCardButton>
           ) : (
-            <MeAvatar initials={other ? initials(other) : me.initials} size={34} />
+            <MeAvatar initials={ghost ? 'A' : other ? initials(other) : me.initials} size={34} />
           ))}
       </div>
       <div className="msg__body">
@@ -508,8 +515,26 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
             <span className="msg__time">{time(saidAt(message))}</span>
           </div>
         )}
-        {message.run && <RunSteps message={message} />}
-        {text ? (
+        {/* A run is taller than the screen, so the way into the thread can't sit at its start: it rides the
+            top of the run here, in the same block, and leaves with the run's last line. Without threads, or
+            without a run, it stays where it was, at the corner of the message (ThreadLink). */}
+        {message.run ? (
+          replies ? (
+            <div className="msg__anchor">
+              <div className="msg__anchor-pin">
+                <ThreadButton message={message} />
+              </div>
+              <RunSteps message={message} />
+            </div>
+          ) : (
+            <RunSteps message={message} />
+          )
+        ) : null}
+        {text && quiet && !showSaid ? (
+          <button className="link small msg__said" onClick={() => setShowSaid(true)}>
+            {L('Ver o que escreveu', 'See what it wrote')}
+          </button>
+        ) : text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
               <MessageMarkdown urlTransform={safeUrl} remarkPlugins={AGENT_PLUGINS} components={agentMarkdown}>{wikiLinks(text)}</MessageMarkdown>
@@ -571,6 +596,13 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
             </button>
           </>
         )}
+        {/* Cut with work behind it, the reply goes on instead of starting over: what it read, wrote and ran
+            is in the task the new reply reads, so nothing it already did is done twice (#390). */}
+        {message.run && CUT.includes(message.run.status) && canContinue(message.run) && (
+          <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
+            {L('Continuar', 'Continue')}
+          </button>
+        )}
         {/* At the limit, trying again only helps once the limit went up: until then, the way out is raising it.
             With no monthly limit set, nothing is ever over it: the reply is just to be tried again. */}
         {message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit)))) && (
@@ -590,11 +622,26 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies }: { mes
             {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
           </div>
         )}
-        {replies && <ThreadLink message={message} replies={replies} />}
+        {message.author.kind === 'person' && !message.threadId && <AskedFromHere message={message} />}
+        {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
       </div>
     </article>
   )
 })
+
+// What was asked of the team because of a person's message, under it: a status line per request (whom,
+// where, how it stands, an approval it waits on), while the asker's replies stay in the message's thread.
+function AskedFromHere({ message }: { message: Message }): ReactNode {
+  const asked = useStore((s) => s.delegations.filter((d) => d.originConversationId === message.conversationId && d.originThreadId === message.id))
+  if (!asked.length) return null
+  return (
+    <div className="asked-here">
+      {asked.map((d) => (
+        <DelegationChip key={d.id} at={{ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) }} from={d.from} asked />
+      ))}
+    </div>
+  )
+}
 
 // What a routine asked, posted at its time; the agent's reply comes next.
 function RoutineMessage({ message, replies }: { message: Message; replies?: Message[] }): ReactNode {
@@ -674,10 +721,22 @@ function Faces({ authors, busy }: { authors: Author[]; busy: Set<string> }): Rea
   )
 }
 
-// "Reply in thread" on hover and, under a message with replies, a small pill: who took part,
-// how many replies and when the last came (or who's replying, or what waits on me). It opens
-// the thread on the side. With no reply yet, the system's note says what happened.
-function ThreadLink({ message, replies }: { message: Message; replies: Message[] }): ReactNode {
+// The way into the thread. It is its own piece because where it lives depends on the message: at the
+// corner of a short one (ThreadLink), or riding the top of a run too tall for the screen (MessageRow).
+function ThreadButton({ message }: { message: Message }): ReactNode {
+  const label = L('Responder na thread', 'Reply in thread')
+  return (
+    <button className="icon-btn icon-btn--sm msg__reply" title={label} aria-label={label} onClick={() => openThread(message.id)}>
+      <Icon name="thread" size={13} />
+    </button>
+  )
+}
+
+// The reply button on a short message, and, under a message with replies, a small pill: who took part,
+// how many replies and when the last came (or who's replying, or what waits on me). It opens the thread
+// on the side. With no reply yet, the system's note says what happened. `noReply` when the button is
+// already riding the run above (MessageRow).
+function ThreadLink({ message, replies, noReply }: { message: Message; replies: Message[]; noReply?: boolean }): ReactNode {
   const agents = useStore((s) => s.agents)
   const you = useStore((s) => s.you)
   const people = useStore((s) => s.people)
@@ -707,9 +766,7 @@ function ThreadLink({ message, replies }: { message: Message; replies: Message[]
   const go = (): void => openThread(message.id)
   return (
     <>
-      <button className="icon-btn icon-btn--sm msg__reply" title={L('Responder na thread', 'Reply in thread')} aria-label={L('Responder na thread', 'Reply in thread')} onClick={go}>
-        <Icon name="thread" size={13} />
-      </button>
+      {!noReply && <ThreadButton message={message} />}
       {note && (
         <button className={`thread-note ${note.run?.status === 'working' ? 'is-pending' : ''}`} onClick={go} title={note.text.replace(/\*\*/g, '')}>
           <Icon name="spark" size={12} />
@@ -1006,24 +1063,26 @@ function RequestNote({ at, from }: { at: DelegationRef; from?: string }): ReactN
           {state.text}
         </span>
       )}
-      <span className="request-note__where">{from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', 'what this thread ends with goes back to whoever asked')}</span>
+      <span className="request-note__where">{at.threadId ? (from ? L(`a resposta volta pra ${from}`, `the answer goes back to ${from}`) : L('a resposta volta pra quem pediu', 'the answer goes back to whoever asked')) : from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', 'what this thread ends with goes back to whoever asked')}</span>
     </div>
   )
 }
 
-// What came back from handed work, where it was asked: a line saying who answered (or asks), with the
-// whole of it one click away and a way to its thread. Whoever asked says what came of it right after.
-function ReturnedLine({ message, at, agent, text, components }: { message: Message; at: DelegationRef; agent: Agent; text: string; components: ComponentProps<typeof MessageMarkdown>['components'] }): ReactNode {
-  const [open, setOpen] = useState(false)
-  const seen = useStore((s) => s.conversations.some((c) => c.id === at.conversationId))
+// What came back from handed work, where it was asked: a line saying who answered (or asks), with a way
+// to its thread, and whoever asked says what came of it right after. An answer reads folded, one click
+// away; a question opens by itself — it is the one thing here waiting on me, and folding it would hide
+// the only text that needs an answer.
+function ReturnedLine({ message, at, agent, text, components }: { message: Message; at: DelegationRef; agent: Agent | undefined; text: string; components: ComponentProps<typeof MessageMarkdown>['components'] }): ReactNode {
   const answer = at.back === 'result'
+  const [open, setOpen] = useState(!answer)
+  const seen = useStore((s) => s.conversations.some((c) => c.id === at.conversationId))
   const cut = text.indexOf(':\n\n') // after "Sobre o pedido em #canal:"
   const body = cut < 0 ? text : text.slice(cut + 3)
   return (
     <div className={`system-line returned-line ${open ? 'is-open' : ''}`} data-id={message.id}>
-      <AgentAvatar agent={agent} size={16} />
+      {agent ? <AgentAvatar agent={agent} size={16} /> : <MeAvatar initials="A" size={16} />}
       <p>
-        <strong>{agent.name}</strong> {answer ? L('respondeu', 'answered') : L('tem uma pergunta', 'has a question')}
+        <strong>{agent?.name ?? L('Agente', 'Agent')}</strong> {answer ? L('respondeu', 'answered') : L('tem uma pergunta', 'has a question')}
       </p>
       <button className="link" aria-expanded={open} onClick={() => setOpen(!open)}>
         {open ? L('Recolher', 'Fold') : answer ? L('Ver resposta', 'See the answer') : L('Ver pergunta', 'See the question')}
@@ -1032,8 +1091,8 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
         <button
           className="link"
           onClick={() => {
-            navigate({ kind: 'conversation', id: at.conversationId, message: at.rootId })
-            openThread(at.rootId)
+            navigate({ kind: 'conversation', id: at.conversationId, message: at.threadId ?? at.rootId })
+            openThread(at.threadId ?? at.rootId)
           }}
         >
           {L('Abrir a thread', 'Open the thread')}
@@ -1049,10 +1108,14 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
   )
 }
 
-// reply that handed it; otherwise on what came back from it (an answer, a question).
+// reply that handed it; otherwise on what came back from it (an answer, a question). Under the reply that
+// handed it, it is the request's status line: how it stands now, the approval its work waits on (approved
+// right there), and, once it's done, a way to the answer in the thread of what the person asked.
 function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolean; from?: string }): ReactNode {
   const to = useStore((s) => agentById(s, at.to))
   const agents = useStore((s) => s.agents)
+  const d = useStore((s) => (asked ? s.delegations.find((x) => x.id === at.id) : undefined))
+  const approval = useStore((s) => (d?.state === 'open' && d.approval ? s.approvals.find((a) => a.id === d.approval && a.state === 'pending') : undefined))
   const kind = from && to ? askWay(agents, { from, to: at.to }) : undefined
   const label =
     kind === 'up'
@@ -1062,31 +1125,59 @@ function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolea
         : undefined
   const channel = useStore((s) => s.conversations.find((c) => c.id === at.conversationId))
   if (!channel) return null // a channel this person doesn't see, or one that's gone
+  const state = !d
+    ? null
+    : d.state === 'open'
+      ? d.asking
+        ? { tone: 'is-warn', text: L('com uma dúvida', 'has a question') }
+        : approval
+          ? { tone: 'is-warn', text: L('esperando sua aprovação', 'waiting for your approval') }
+          : { tone: 'is-live', text: L('trabalhando', 'working') }
+      : d.state === 'done'
+        ? { tone: 'is-done', text: L('concluído', 'done') }
+        : d.state === 'cancelled'
+          ? { tone: '', text: L('cancelado', 'cancelled') }
+          : { tone: 'is-warn', text: L('não terminou', 'did not finish') }
+  const answer = d && d.state !== 'open' && d.originThreadId ? d.originThreadId : undefined
   return (
-    <div className="memory-chip delegation-chip">
-      <Icon name="users" size={13} />
-      {label ? (
-        <>
-          <span className="memory-chip__label">{label}</span>
-          {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
-        </>
-      ) : (
-        <>
-          <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
-          <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
-        </>
-      )}
-      <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
-      <button
-        className="link"
-        onClick={() => {
-          navigate({ kind: 'conversation', id: at.conversationId, message: at.rootId })
-          openThread(at.rootId)
-        }}
-      >
-        {L('Abrir a thread', 'Open the thread')}
-      </button>
-    </div>
+    <>
+      <div className="memory-chip delegation-chip">
+        <Icon name="users" size={13} />
+        {label ? (
+          <>
+            <span className="memory-chip__label">{label}</span>
+            {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
+          </>
+        ) : (
+          <>
+            <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
+            <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+          </>
+        )}
+        <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
+        {state && (
+          <span className={`request-note__state ${state.tone}`}>
+            <i />
+            {state.text}
+          </span>
+        )}
+        <button
+          className="link"
+          onClick={() => {
+            navigate({ kind: 'conversation', id: at.conversationId, message: at.threadId ?? at.rootId })
+            openThread(at.threadId ?? at.rootId)
+          }}
+        >
+          {L('Abrir a thread', 'Open the thread')}
+        </button>
+        {answer && (
+          <button className="link" onClick={() => openThread(answer)}>
+            {L('Ver a resposta', 'See the answer')}
+          </button>
+        )}
+      </div>
+      {approval && <ApprovalCard approval={approval} compact />}
+    </>
   )
 }
 
@@ -1470,7 +1561,7 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
   const canAlways = approval.tool !== ACCESS_REQUEST && approval.tool !== 'abrir_pr' && approval.connectorId !== 'navegador' && approval.connectorId !== 'apps' && !runner && !neverAllowedForGood(approval.tool) && (!onComputer || kinds.length > 0)
   const alwaysTitle = onComputer
     ? L(`Daqui pra frente ${agent?.name ?? 'o agente'} faz sozinho: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. Dá pra mudar na página dele.`, `From now on ${agent?.name ?? 'the agent'} does it alone: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. You can change it on its page.`)
-    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir. Dá pra tirar na página dele.`, `From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking. You can take it back on its page.`)
+    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. Dá pra tirar na página dele.`, `From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking, in any call, even after reading something from outside. You can take it back on its page.`)
 
   return (
     <div className={`approval approval--${approval.state} ${compact ? 'approval--compact' : ''}`}>
@@ -1639,8 +1730,8 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
                 <button
                   className="btn approval__always"
                   title={L(
-                    `Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada. As outras ações continuam pedindo. Dá pra tirar na página dele.`,
-                    `From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call. Other actions still ask. You can take it back on its page.`
+                    `Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. As outras ações continuam pedindo. Dá pra tirar na página dele.`,
+                    `From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call, even after reading something from outside. Other actions still ask. You can take it back on its page.`
                   )}
                   onClick={() => decideApproval(approval.id, 'approved', undefined, true)}
                 >
