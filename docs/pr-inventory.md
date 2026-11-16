@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-15T21:44:33.023Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-16T07:14:17.840Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
-94 total: 53 open, 29 merged, 12 closed.
+94 total: 51 open, 31 merged, 12 closed.
 
-Upstream main: `9474545f0415f4bb2a439e1a7727912254b69972`. Daily driver HEAD: `1047c2e5c6522aed0ea7b412a95bf103e365580f`. Upstream main is contained: yes.
+Upstream main: `15370a0b41f54aec11d542bc2114d6acb9588535`. Daily driver HEAD: `3c539212af7e54e465ccc658de1e4f570f32efb7`. Upstream main is contained: no: inspect patch equivalence.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -13,7 +13,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#232](https://github.com/eduwxyz/tucano/pull/232) | apoapostolov | MERGED | Fix the high-risk hold button losing the press before it fills | object unavailable | 0 | 2 | not reviewed |
 | [#243](https://github.com/eduwxyz/tucano/pull/243) | apoapostolov | MERGED | Read an agent limit of 0 as no ceiling, not as already spent | object unavailable | 3 | 0 | not reviewed |
 | [#244](https://github.com/eduwxyz/tucano/pull/244) | apoapostolov | MERGED | Filter and group the skills in an agent's tab, and fix where a skill came from | no: inspect patch equivalence | 1 | 4 | not reviewed |
-| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | no: inspect patch equivalence | 10 | 16 | in progress; retained-text reading-position defect reproduced; full audit incomplete (stale) |
+| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | no: inspect patch equivalence | 10 | 16 | targeted compatibility checkpoint; full audit incomplete |
 | [#246](https://github.com/eduwxyz/tucano/pull/246) | apoapostolov | MERGED | Close a reply when its approval is decided, and repair the ones already stuck | object unavailable | 1 | 0 | not reviewed |
 | [#247](https://github.com/eduwxyz/tucano/pull/247) | apoapostolov | OPEN | Add a Questions section above Approvals, with every agent's question in one place | no: inspect patch equivalence | 7 | 23 | not reviewed |
 | [#248](https://github.com/eduwxyz/tucano/pull/248) | apoapostolov | OPEN | Keep the open question next to the field, not only where it was asked | no: inspect patch equivalence | 1 | 3 | not reviewed |
@@ -26,7 +26,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | apoapostolov | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | apoapostolov | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | no: inspect patch equivalence | 2 | 6 | not reviewed |
 | [#274](https://github.com/eduwxyz/tucano/pull/274) | apoapostolov | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | no: inspect patch equivalence | 7 | 11 | not reviewed |
-| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | OPEN | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | 0 | 5 | not reviewed |
+| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | MERGED | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | 0 | 5 | targeted compatibility checkpoint; full audit incomplete |
 | [#279](https://github.com/eduwxyz/tucano/pull/279) | apoapostolov | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | 6 | 10 | not reviewed |
 | [#282](https://github.com/eduwxyz/tucano/pull/282) | apoapostolov | CLOSED | A drawer above the field: the sessions running right now, and the prompts still queued | object unavailable | 2 | 6 | not reviewed |
 | [#284](https://github.com/eduwxyz/tucano/pull/284) | apoapostolov | OPEN | An agent's question can mark the option Jev would pick | no: inspect patch equivalence | 2 | 5 | not reviewed |
@@ -78,7 +78,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#391](https://github.com/eduwxyz/tucano/pull/391) | apoapostolov | OPEN | Resume interrupted replies after restart when enabled | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#392](https://github.com/eduwxyz/tucano/pull/392) | apoapostolov | MERGED | Stop reading a date that opens a sentence as a missing wiki page | yes | 1 | 0 | not reviewed |
 | [#395](https://github.com/eduwxyz/tucano/pull/395) | apoapostolov | OPEN | Let the person read times as a 24-hour clock, or a 12-hour one | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | OPEN | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | 3 | 0 | not reviewed |
+| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | MERGED | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | 2 | 0 | targeted compatibility checkpoint; full audit incomplete |
 | [#401](https://github.com/eduwxyz/tucano/pull/401) | apoapostolov | CLOSED | A reply the app cut goes on with what it already did, instead of starting over | no: inspect patch equivalence | 2 | 0 | not reviewed |
 | [#402](https://github.com/eduwxyz/tucano/pull/402) | apoapostolov | MERGED | Kill the app in the middle of a reply and check what it offers afterwards | object unavailable | 1 | 0 | not reviewed |
 | [#408](https://github.com/eduwxyz/tucano/pull/408) | apoapostolov | CLOSED | Attach images and files when asking from the Team page | no: inspect patch equivalence | 2 | 6 | not reviewed |
@@ -112,10 +112,10 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 
 | File | PRs |
 | --- | --- |
-| src/renderer/src/styles.css | #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #397, #411, #432, #435, #446, #457, #467 |
 | src/shared/types.ts | #245, #247, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #305, #311, #319, #322, #332, #333, #334, #336, #338, #353, #355, #366, #379, #383, #385, #391, #395, #411, #416, #417, #424, #432, #435, #457, #467 |
-| src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #275, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #383, #385, #395, #410, #411, #435, #446, #457 |
+| src/renderer/src/styles.css | #245, #247, #248, #249, #250, #258, #259, #261, #268, #272, #274, #279, #284, #288, #290, #298, #303, #305, #311, #313, #321, #322, #327, #329, #332, #333, #334, #336, #338, #353, #375, #383, #385, #411, #432, #435, #446, #457, #467 |
 | src/core/index.ts | #247, #249, #258, #259, #261, #268, #272, #274, #279, #288, #305, #311, #313, #319, #321, #322, #332, #333, #338, #353, #375, #379, #383, #385, #391, #395, #411, #416, #417, #432, #435, #437, #457, #467 |
+| src/renderer/src/components/Conversation.tsx | #245, #247, #248, #249, #261, #272, #274, #279, #284, #288, #290, #298, #303, #305, #321, #322, #327, #329, #332, #333, #334, #336, #338, #366, #375, #383, #385, #395, #410, #411, #435, #446, #457 |
 | src/core/runs.ts | #245, #247, #258, #259, #261, #272, #274, #279, #284, #288, #298, #319, #321, #322, #332, #333, #334, #338, #355, #366, #375, #379, #383, #385, #391, #395, #411, #417, #432, #435, #457 |
 | src/renderer/src/components/Pages.tsx | #245, #247, #258, #259, #261, #274, #284, #288, #298, #311, #322, #332, #333, #338, #353, #355, #379, #383, #385, #391, #395, #410, #411, #416, #417, #432, #435, #437, #446, #467 |
 | src/shared/rpc.ts | #245, #247, #249, #258, #259, #261, #268, #272, #279, #288, #305, #311, #313, #321, #322, #332, #338, #353, #375, #379, #383, #385, #411, #416, #417, #432, #435, #437, #457 |
@@ -125,11 +125,11 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/core/settings-patch.ts | #245, #247, #250, #261, #268, #274, #284, #288, #298, #311, #322, #332, #333, #336, #338, #379, #383, #385, #391, #395, #411, #417, #432 |
 | src/core/policy-people.ts | #245, #247, #249, #250, #258, #259, #268, #305, #311, #322, #336, #338, #353, #375, #379, #383, #385, #417, #432, #435, #437, #457 |
 | src/core/engines/fake.ts | #245, #258, #259, #268, #274, #298, #319, #322, #332, #338, #355, #366, #383, #385, #435 |
-| CHANGELOG.md | #245, #261, #305, #332, #333, #383, #391, #395, #397, #410, #435, #446 |
+| CHANGELOG.md | #245, #261, #305, #332, #333, #383, #391, #395, #410, #435, #446 |
 | src/core/people.ts | #245, #247, #274, #284, #298, #322, #375, #383, #385, #432 |
 | src/shared/workspaces.ts | #268, #274, #379, #383, #385, #391, #395, #411, #417 |
-| test/opencode.test.ts | #261, #279, #290, #319, #334, #355, #397, #437 |
 | src/renderer/src/components/Dialogs.tsx | #247, #272, #279, #383, #410, #435, #446 |
+| test/opencode.test.ts | #261, #279, #290, #319, #334, #355, #437 |
 | src/core/context.ts | #258, #259, #274, #355, #395, #411 |
 | src/core/jev.ts | #279, #284, #298, #379, #383, #385 |
 | src/shared/questions.ts | #247, #298, #383, #385, #417 |
@@ -176,7 +176,6 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/shared/classifiers.ts | #379, #383, #385 |
 | test/classifiers.test.ts | #379, #383, #385 |
 | src/renderer/src/components/Routines.tsx | #395, #410, #446 |
-| src/renderer/src/components/Memory.tsx | #397, #410, #446 |
 | src/renderer/src/components/WorkspaceManager.tsx | #410, #416, #446 |
 | scripts/screens-thinking.mjs | #245, #322 |
 | src/core/engines/pi.ts | #245, #322 |
@@ -212,6 +211,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | docs/english-copy-validation.md | #410, #446 |
 | scripts/check-english-copy.mjs | #410, #446 |
 | src/renderer/src/components/Intro.tsx | #410, #446 |
+| src/renderer/src/components/Memory.tsx | #410, #446 |
 | src/renderer/src/components/Servers.tsx | #410, #446 |
 | src/renderer/src/components/Update.tsx | #410, #446 |
 | src/shared/actions.ts | #410, #446 |

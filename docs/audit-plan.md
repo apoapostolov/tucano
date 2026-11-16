@@ -8,6 +8,11 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+The 16 November intake found release **0.2.34** at `ab1b9d0f` and newer main at
+`15370a0b`. They are **not integrated or installed yet**. Upgrade reconciliation is the first
+queue item; the installed version remains the verified 0.2.33 build below. See
+[the daily checkpoint](audit-intake-2026-11-16.md) for changed PR heads and compatibility limits.
+
 TucanoNext 0.2.33 is installed, freshly launched and released from `4a5daa47`, containing upstream `9474545f`. The full suite passed 2,710 tests, with 61 skipped and no failures. Installed hidden QA passes at 900/1280 CSS pixels and 150% scaling. Apo interface precedence and seven additional merged Apo PRs are recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Full feature audits remain open; the older records below describe earlier builds.
 
 Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
@@ -70,26 +75,27 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
 | Versions and main commits | 0.2.33 delivered; 12 new main events reconciled for compatibility | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
-| All Apo PRs | 94 captured: 53 open, 29 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
-| Apo open wall | 0/53 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
-| Other contributors, including maintainer PRs | Intake only: 244 captured, 30 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
+| All Apo PRs | 94 captured: 51 open, 31 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
+| Apo open wall | 0/51 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
+| Other contributors, including maintainer PRs | Intake only: 253 captured, 32 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
 | Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
 | Findings and proposals | Confirmed defects, repairs and open questions have separate states | [Finding register](audit-findings.md) |
 
-Counts above describe the 15 November intake snapshots. Refresh the table from generated records;
+Counts above describe the 16 November intake snapshots. Refresh the table from generated records;
 never infer review completion from PR state, ancestry, a screenshot or green CI. Do not sum these
 unlike denominators into a software-completion percentage. The 43-feature cohort stays fixed for
 historical comparisons; new PRs enter the canonical current queues.
 
 ## Immediate queue
 
-- [ ] **Active: R-245 full audit.** F-005 folding and F-006 retained-reading repairs are delivered: public head `899933e5`, pushed integration, real local packaging, installed three-size checks and a fresh regular launch. The combined suite passed 2,660 tests with 61 skipped. Broader audience, concurrency, provider and maintainability coverage remains open. A bounded role/preference transition probe passes. [Targeted delivery](audit-245-delivery-2026-11-15.md), [boundary batch](audit-245-boundary-batch-2026-11-15.md), [original packet](audit-reasoning-245-2026-11-15.md).
+- [ ] **First: ingest 0.2.34 and subsequent main commits through `15370a0b`.** Reconcile endpoint/web execution, per-request delegation ownership, permission approval, Hermes import and renderer overlaps against the verified 0.2.33 tree. Preserve existing thread controls, Memory copy, reasoning and access protections. No new application delivery is claimed by the intake checkpoint. Complete combined checks, real packaging, installed hidden QA and fork release verification before checking this item.
+- [ ] **Active: R-245 full audit, current public head `749311e1`.** After upgrade reconciliation, verify the endpoint thinking contract, broader audience/concurrency/provider cases and maintainability. The bounded revision comparison preserves equivalent delivered F-005/F-006 repairs; current-head isolated execution remains open. Preserve the stronger integrated Thought component. [Targeted delivery](audit-245-delivery-2026-11-15.md), [current checkpoint](audit-intake-2026-11-16.md), [original packet](audit-reasoning-245-2026-11-15.md).
+- [ ] Revalidate revised #391 head `33dea61c` after upgrade reconciliation; preserve the selected local recovery defaults while checking the public opt-in contract.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
 - [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
 - [ ] Keep #414/#463/#464/#465 and other non-Apo PRs in the intake/approval queue. Prepare a bounded review request only when useful; wait for explicit approval before an independent audit or change.
-- [ ] Reconcile the primary copy task only when its changes are ready; preserve its separate review and evidence.
 
 Urgent privacy, data-loss, corrupted state, exposed credentials and unrecoverable/stalled execution
 findings take precedence. After intake, advance one bounded audit packet rather than spending the

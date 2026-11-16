@@ -1,6 +1,6 @@
 # Open PR audit queue
 
-Inventory captured 2026-11-15T21:44:33.023Z. Full exact-head audits: **0/53** (OPEN).
+Inventory captured 2026-11-16T07:14:17.840Z. Full exact-head audits: **0/51** (OPEN).
 
 Completion is read from docs/apo-pr-audit.md; edit that canonical queue rather than this generated view.
 
@@ -23,34 +23,30 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #249 [Clear a conversation's history without deleting the conversation](https://github.com/eduwxyz/tucano/pull/249) <!-- head:acef2d7464f61cfc2d693ca3c9154da76bf89e68 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `acef2d7464f6`; OPEN; author apoapostolov; age 6 days; updated 2026-11-14T10:31:37Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #258 [Wiki: let "Write the page" hand a missing page to an agent you pick](https://github.com/eduwxyz/tucano/pull/258) <!-- head:ebe9c960af03b0291ab3ca6edc1a98769f368308 base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `ebe9c960af03`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T12:43:51Z; integration ancestry: inspect equivalence; review: reviewed; stack repaired; load follow-up remains (stale).
+  Head `ebe9c960af03`; OPEN; author apoapostolov; age 6 days; updated 2026-11-14T12:43:51Z; integration ancestry: inspect equivalence; review: reviewed; stack repaired; load follow-up remains (stale).
 - [ ] #259 [Wiki: let "Nothing links to them" hand the orphan pages to an agent that links them](https://github.com/eduwxyz/tucano/pull/259) <!-- head:a7c1f5f0ebb7b49a8d5c33da6aa2e20eab43dfa8 base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `a7c1f5f0ebb7`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T12:43:52Z; integration ancestry: inspect equivalence; review: reviewed; stack repaired; suite follow-up remains (stale).
+  Head `a7c1f5f0ebb7`; OPEN; author apoapostolov; age 6 days; updated 2026-11-14T12:43:52Z; integration ancestry: inspect equivalence; review: reviewed; stack repaired; suite follow-up remains (stale).
 - [ ] #268 [Wiki: give a finding the review can't settle a Resolve button and a built-in resolver](https://github.com/eduwxyz/tucano/pull/268) <!-- head:ed990873335a1fc8ed2549242097b2117a67d52c base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `ed990873335a`; OPEN; author apoapostolov; age 5 days; updated 2026-11-15T10:33:53Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #334 [Approval card: lead with the action and its target, and say what became of the call](https://github.com/eduwxyz/tucano/pull/334) <!-- head:dd2b0497b78a86caccdf174a1ea25c479852d2aa base:04539404e545323124e5dd4737098892cd746226 -->
   Head `dd2b0497b78a`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T12:43:58Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #353 [Give a connector the picture it wears, instead of a black terminal](https://github.com/eduwxyz/tucano/pull/353) <!-- head:ad9b9a5c53e0c722dc95a28317e3a4bafd826594 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
-  Head `ad9b9a5c53e0`; OPEN; author apoapostolov; age 4 days; updated 2026-11-14T09:18:38Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `ad9b9a5c53e0`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T09:18:38Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #355 [Give the wiki a tool card on the agent's Tools tab, with a level that writes pages](https://github.com/eduwxyz/tucano/pull/355) <!-- head:ee672432d4adca5ef7889b7d82804c5f3068ba46 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `ee672432d4ad`; OPEN; author apoapostolov; age 4 days; updated 2026-11-14T12:44:00Z; integration ancestry: inspect equivalence; review: reviewed; prospective DM privacy repaired; further privacy review remains (stale).
 - [ ] #375 [Delete a session from the room: a trash under its thread button, in two presses](https://github.com/eduwxyz/tucano/pull/375) <!-- head:9ea02e47e530156673c07cc5bb566dc628dc6d97 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `9ea02e47e530`; OPEN; author apoapostolov; age 3 days; updated 2026-11-14T09:20:36Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #385 [Next steps open with every box clear; the classifier that ticks the ones worth doing now is a job in Classifiers](https://github.com/eduwxyz/tucano/pull/385) <!-- head:0c5dd260c1fcb829444450369e1b28851b0eced6 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `0c5dd260c1fc`; OPEN; author apoapostolov; age 3 days; updated 2026-11-14T12:44:03Z; integration ancestry: inspect equivalence; review: not reviewed.
-- [ ] #397 [Keep the Memory bot tabs inside the bar, and page them with two borderless arrows](https://github.com/eduwxyz/tucano/pull/397) <!-- head:0d90c46f829ad356bcdc70e0e04b3e712a82997b base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `0d90c46f829a`; OPEN; author apoapostolov; age 3 days; updated 2026-11-14T12:44:06Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #432 [Keep the history only as long as its period says, with a wipe for every bot and for one bot](https://github.com/eduwxyz/tucano/pull/432) <!-- head:35070e863690f3fceff566a530fa5aab79800875 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `35070e863690`; OPEN; author apoapostolov; age 2 days; updated 2026-11-14T13:18:22Z; integration ancestry: inspect equivalence; review: targeted safety repairs verified; full feature audit remains (stale).
 
 ## Execution, cancellation and reliability
 
 - [ ] #261 [A new prompt in a thread: parallel, queued, steer or interrupt, on a setting and on the keys](https://github.com/eduwxyz/tucano/pull/261) <!-- head:5b3e294a72b77ae8ce96aa63761ddebd85ab7b5c base:04539404e545323124e5dd4737098892cd746226 -->
-  Head `5b3e294a72b7`; OPEN; author apoapostolov; age 5 days; updated 2026-11-15T10:32:58Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `5b3e294a72b7`; OPEN; author apoapostolov; age 6 days; updated 2026-11-15T10:32:58Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #274 [Team-ups: an agent that calls one outside the room gets a channel that carries the work](https://github.com/eduwxyz/tucano/pull/274) <!-- head:f81c4a1d426f676f68d2d47524196df1b117c04b base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `f81c4a1d426f`; OPEN; author apoapostolov; age 5 days; updated 2026-11-15T10:32:45Z; integration ancestry: inspect equivalence; review: not reviewed.
-- [ ] #275 [In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll](https://github.com/eduwxyz/tucano/pull/275) <!-- head:3faac071e76d38be7d21607e392aeeb76257fa75 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
-  Head `3faac071e76d`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T10:31:43Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #288 [Attach a work drawer above the field: the replies running now, and the prompts queued behind them](https://github.com/eduwxyz/tucano/pull/288) <!-- head:94b4d2792b453cf008f3ab93694f4f472ca88cb3 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `94b4d2792b45`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T11:43:30Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #298 [Give a reply a card of next steps: every box ticked, so nothing it proposed is buried](https://github.com/eduwxyz/tucano/pull/298) <!-- head:d6342dc64bc5f248a533cd2ca671b55a3274246a base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
@@ -71,19 +67,19 @@ integrated behavior; make focused repairs when evidence warrants them.
   Head `12a4f4526e65`; OPEN; author apoapostolov; age 5 days; updated 2026-11-15T10:32:54Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #338 [A finished reply goes on from where it stopped: Follow Up (#337)](https://github.com/eduwxyz/tucano/pull/338) <!-- head:856b97742b89a39be8ca4fac18184fad4c9d34bd base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `856b97742b89`; OPEN; author apoapostolov; age 5 days; updated 2026-11-14T11:43:26Z; integration ancestry: inspect equivalence; review: not reviewed.
-- [ ] #391 [Resume interrupted replies after restart when enabled](https://github.com/eduwxyz/tucano/pull/391) <!-- head:f55ce3fbfec482281ad73fe8b376137dad246b99 base:3e8162ebbb8c1d432d6973cedde7444a21910f4f -->
-  Head `f55ce3fbfec4`; OPEN; author apoapostolov; age 3 days; updated 2026-11-15T10:33:09Z; integration ancestry: inspect equivalence; review: not reviewed.
+- [ ] #391 [Resume interrupted replies after restart when enabled](https://github.com/eduwxyz/tucano/pull/391) <!-- head:33dea61c9b29537e8fd17063bbffcaa36dc90e38 base:15370a0b41f54aec11d542bc2114d6acb9588535 -->
+  Head `33dea61c9b29`; OPEN; author apoapostolov; age 3 days; updated 2026-11-16T06:24:50Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #411 [Reply to a message, and to the selected excerpt with ⌘L, stacked on #32](https://github.com/eduwxyz/tucano/pull/411) <!-- head:4eef728c8baa903a36f50086102682e347bceaa4 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `4eef728c8baa`; OPEN; author apoapostolov; age 2 days; updated 2026-11-14T10:32:09Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #457 [Pause a reply before its next step, and resume it there](https://github.com/eduwxyz/tucano/pull/457) <!-- head:925c557a9583a5b5b67466cd206e947ada0be928 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `925c557a9583`; OPEN; author apoapostolov; age 1 days; updated 2026-11-14T18:45:44Z; integration ancestry: present; review: targeted cancellation/concurrency repair verified and installed; broader feature audit remains.
 - [ ] #467 [One agent can answer to more than one boss, so a shared specialist serves several teams](https://github.com/eduwxyz/tucano/pull/467) <!-- head:1f1fa3a5b358d5ffb1b4470817cae0cbcb859335 base:d175567b0a12d885544d74c45792717a883287f5 -->
-  Head `1f1fa3a5b358`; OPEN; author apoapostolov; age 0 days; updated 2026-11-15T10:07:03Z; integration ancestry: inspect equivalence; review: not reviewed.
+  Head `1f1fa3a5b358`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:07:03Z; integration ancestry: inspect equivalence; review: not reviewed.
 
 ## Features, usability and accessibility
 
-- [ ] #245 [Show the model's thinking as dim, small, live text, not only a Thinking… label](https://github.com/eduwxyz/tucano/pull/245) <!-- head:359c199db4ad8c6a7ef616237d9d23e0ad781e12 base:6a7153994b7b98488402df206e5a8f4fdc4da853 -->
-  Head `359c199db4ad`; OPEN; author apoapostolov; age 6 days; updated 2026-11-15T15:26:06Z; integration ancestry: inspect equivalence; review: in progress; retained-text reading-position defect reproduced; full audit incomplete (stale).
+- [ ] #245 [Show the model's thinking as dim, small, live text, not only a Thinking… label](https://github.com/eduwxyz/tucano/pull/245) <!-- head:749311e133dd52c31c9958bc4ca8991e32f5ef81 base:15370a0b41f54aec11d542bc2114d6acb9588535 -->
+  Head `749311e133dd`; OPEN; author apoapostolov; age 6 days; updated 2026-11-16T06:34:26Z; integration ancestry: inspect equivalence; review: targeted compatibility checkpoint; full audit incomplete.
 - [ ] #248 [Keep the open question next to the field, not only where it was asked](https://github.com/eduwxyz/tucano/pull/248) <!-- head:f32b6ece5d5f849d8da9a480c6ee16a6457fd66b base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
   Head `f32b6ece5d5f`; OPEN; author apoapostolov; age 6 days; updated 2026-11-14T10:31:36Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #250 [Modern, accessible reordering for every sidebar list: hold a row, see where it lands, move it with the keyboard](https://github.com/eduwxyz/tucano/pull/250) <!-- head:a80371891b99ec739eee6a9af762b184676dea21 base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
@@ -125,7 +121,7 @@ integrated behavior; make focused repairs when evidence warrants them.
 - [ ] #435 [A bot can look after something for you between conversations](https://github.com/eduwxyz/tucano/pull/435) <!-- head:efa3cbe7c5bc5b1e06bbb0902d2fb63980a59999 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `efa3cbe7c5bc`; OPEN; author apoapostolov; age 2 days; updated 2026-11-15T10:33:28Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #437 [Give the file its space back, and say whether it is sound](https://github.com/eduwxyz/tucano/pull/437) <!-- head:a31233ed53f8d690b6d0e23253fe6c184546e7cd base:68cf5da1cb5a1f589926ac819c46d9ffd7645988 -->
-  Head `a31233ed53f8`; OPEN; author apoapostolov; age 1 days; updated 2026-11-15T10:33:15Z; integration ancestry: inspect equivalence; review: migration-compatible counter assertion repaired; full feature audit remains (stale).
+  Head `a31233ed53f8`; OPEN; author apoapostolov; age 2 days; updated 2026-11-15T10:33:15Z; integration ancestry: inspect equivalence; review: migration-compatible counter assertion repaired; full feature audit remains (stale).
 - [ ] #446 [Organize settings by task with accessible section navigation](https://github.com/eduwxyz/tucano/pull/446) <!-- head:ea0f090c2be51671ab71f71293100ce3ff6cb345 base:04539404e545323124e5dd4737098892cd746226 -->
   Head `ea0f090c2be5`; OPEN; author apoapostolov; age 1 days; updated 2026-11-14T13:15:11Z; integration ancestry: inspect equivalence; review: not reviewed.
 - [ ] #451 [Write the guide's 24 pages in English too, and hand each workspace its own](https://github.com/eduwxyz/tucano/pull/451) <!-- head:6dcfa7a99ddee2de957d4ead5e27ecc0348dc86f base:04539404e545323124e5dd4737098892cd746226 -->

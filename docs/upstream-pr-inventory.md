@@ -1,10 +1,10 @@
 # Upstream contributor PR inventory
 
-Captured 2026-11-15T21:44:50.358Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-16T07:04:31.966Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
-338 total: 83 open, 223 merged, 32 closed.
+347 total: 83 open, 232 merged, 32 closed.
 
-Upstream main: `9474545f0415f4bb2a439e1a7727912254b69972`. Daily driver HEAD: `1047c2e5c6522aed0ea7b412a95bf103e365580f`. Upstream main is contained: yes.
+Upstream main: `15370a0b41f54aec11d542bc2114d6acb9588535`. Daily driver HEAD: `3c539212af7e54e465ccc658de1e4f570f32efb7`. Upstream main is contained: no: inspect patch equivalence.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -221,7 +221,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | apoapostolov | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | apoapostolov | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#274](https://github.com/eduwxyz/tucano/pull/274) | apoapostolov | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | OPEN | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | MERGED | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#277](https://github.com/eduwxyz/tucano/pull/277) | felipcsousa | OPEN | Add per-agent tables: dados_tabelas, dados_consultar, dados_alterar | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#279](https://github.com/eduwxyz/tucano/pull/279) | apoapostolov | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#280](https://github.com/eduwxyz/tucano/pull/280) | eduwxyz | MERGED | Take a computer's Tucano to a server whole: Export everything and Restore a backup | object unavailable | not collected | not collected | not reviewed |
@@ -297,7 +297,7 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#392](https://github.com/eduwxyz/tucano/pull/392) | apoapostolov | MERGED | Stop reading a date that opens a sentence as a missing wiki page | yes | not collected | not collected | not reviewed |
 | [#394](https://github.com/eduwxyz/tucano/pull/394) | b7s | OPEN | Show what a reply changed in the code, as a diff opened file by file | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#395](https://github.com/eduwxyz/tucano/pull/395) | apoapostolov | OPEN | Let the person read times as a 24-hour clock, or a 12-hour one | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | OPEN | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | MERGED | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#399](https://github.com/eduwxyz/tucano/pull/399) | stefanosandes | OPEN | Let each person choose how a routine's request shows: full, compact or hidden | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#400](https://github.com/eduwxyz/tucano/pull/400) | stefanosandes | MERGED | Keep the agent card open while the chat auto-scrolls | yes | not collected | not collected | not reviewed |
 | [#401](https://github.com/eduwxyz/tucano/pull/401) | apoapostolov | CLOSED | A reply the app cut goes on with what it already did, instead of starting over | no: inspect patch equivalence | not collected | not collected | not reviewed |
@@ -343,17 +343,25 @@ Metadata-only intake: descriptions, checks and file lists were not collected; re
 | [#471](https://github.com/eduwxyz/tucano/pull/471) | apoapostolov | MERGED | Keep older retries within their original conversation context | yes | not collected | not collected | not reviewed |
 | [#472](https://github.com/eduwxyz/tucano/pull/472) | apoapostolov | MERGED | Extract Skills components without changing behavior or copy | object unavailable | not collected | not collected | not reviewed |
 | [#474](https://github.com/eduwxyz/tucano/pull/474) | eialanjones | OPEN | ElevenLabs in the connector store, signing in on a server by client metadata document | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#476](https://github.com/eduwxyz/tucano/pull/476) | eialanjones | OPEN | WhatsApp for agents: numbers with per-conversation access, approvals and send limits | no: inspect patch equivalence | not collected | not collected | not reviewed |
-| [#477](https://github.com/eduwxyz/tucano/pull/477) | eduwxyz | OPEN | Keep a dropdown's arrow off the right edge | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#476](https://github.com/eduwxyz/tucano/pull/476) | eialanjones | OPEN | WhatsApp for agents(QR Code and Cloud API): numbers with per-conversation access, approvals and send limits | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#477](https://github.com/eduwxyz/tucano/pull/477) | eduwxyz | MERGED | Keep a dropdown's arrow off the right edge | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#478](https://github.com/eduwxyz/tucano/pull/478) | eduwxyz | MERGED | Keep a restricted member's wiki to what they see | object unavailable | not collected | not collected | not reviewed |
 | [#479](https://github.com/eduwxyz/tucano/pull/479) | eduwxyz | MERGED | Run an answer back for whoever asked, within what they all see | object unavailable | not collected | not collected | not reviewed |
-| [#482](https://github.com/eduwxyz/tucano/pull/482) | eduwxyz | OPEN | Site: guides in Markdown (/guias, /docs), llms.txt, PostHog on every page | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#482](https://github.com/eduwxyz/tucano/pull/482) | eduwxyz | MERGED | Site: guides in Markdown (/guias, /docs), llms.txt, PostHog on every page | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#484](https://github.com/eduwxyz/tucano/pull/484) | eialanjones | OPEN | Calls on a WhatsApp number, answered by an agent with a voice service's voice | no: inspect patch equivalence | not collected | not collected | not reviewed |
 | [#485](https://github.com/eduwxyz/tucano/pull/485) | hendrixfreire | OPEN | Add the QG engine (Quebra-Galho CLI) | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#488](https://github.com/eduwxyz/tucano/pull/488) | eduwxyz | MERGED | Keep each request in its thread, and tell the person once, in theirs | object unavailable | not collected | not collected | not reviewed |
+| [#489](https://github.com/eduwxyz/tucano/pull/489) | eduwxyz | MERGED | Honor "Always allow" after the agent reads something from outside | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#490](https://github.com/eduwxyz/tucano/pull/490) | eduwxyz | MERGED | Run agents on your own endpoint, with no harness, and give them the web | object unavailable | not collected | not collected | not reviewed |
+| [#491](https://github.com/eduwxyz/tucano/pull/491) | RDyego | OPEN | Harden agents' computers without getting in root's way | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#492](https://github.com/eduwxyz/tucano/pull/492) | eduwxyz | MERGED | Refuse installing or signing in to the endpoint, saying where it's set up | object unavailable | not collected | not collected | not reviewed |
+| [#493](https://github.com/eduwxyz/tucano/pull/493) | eduwxyz | MERGED | Import from Hermes Agent: read its folder where it is, into agents (spec §26) | object unavailable | not collected | not collected | not reviewed |
+| [#494](https://github.com/eduwxyz/tucano/pull/494) | eduwxyz | OPEN | Let a server's Tucano work on this computer, as a node (from pedrojaques99's fork) | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#495](https://github.com/eduwxyz/tucano/pull/495) | HelbertMoura | OPEN | Fix Antigravity agents appearing signed out on a headless Linux server | no: inspect patch equivalence | not collected | not collected | not reviewed |
+| [#496](https://github.com/eduwxyz/tucano/pull/496) | HelbertMoura | OPEN | Let TUCANO_CONNECTOR_TIMEOUT_MS raise the connector call timeout | no: inspect patch equivalence | not collected | not collected | not reviewed |
 
 ## Commit dependencies
 
-- #476 → #484
 
 ## Shared files among open PRs
 
