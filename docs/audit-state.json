@@ -100,5 +100,20 @@
       "asarSHA256": "ecd8f3d93dc091e4586d7c63f495dae9584595abde02e3509b602ad9c6cc73fe",
       "evidence": "docs/audit-245-delivery-2026-11-15.md"
     }
+  ],
+  "installationObservations": [
+    {
+      "observedOn": "2026-11-16",
+      "version": "0.2.34",
+      "archiveSha256": "e2499bcb2fc77479452a7aeaa873f22b25e7a3b4be0dc6676f5745a737a18ce8",
+      "archiveBytes": 37563849,
+      "matchingPreviewCheckout": "658693b87174f29a74bc5e8db0277ccc02e77cc7",
+      "publishedNextAtObservation": "514c94bec373d8156845879968ffccb4efae2bd1",
+      "sourceAttestation": "Byte-identical preview package; no embedded source SHA",
+      "evidence": "docs/audit-deep-2026-11-16.md",
+      "forkPullRequest": "https://github.com/apoapostolov/tucano/pull/5",
+      "fullFeatureVerified": false,
+      "freshHiddenQaPassed": true
+    }
   ]
 }

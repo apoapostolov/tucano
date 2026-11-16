@@ -13,6 +13,16 @@ configuration, script and test module to a primary package before claiming whole
 shared flows can have secondary packages. Generated products and third-party dependency source are
 excluded from authored-code coverage but remain part of dependency/runtime risk review.
 
+## Current partial progress — 16 November 2026
+
+- [x] Freeze a 905-path inventory at next `514c94be`, with one CSV row per tracked path.
+- [x] Record 625 provisional package assignments, 12 evidence artifacts and 268 unassigned paths.
+- [ ] Validate semantic ownership and resolve every unassigned path before closing FS-01.
+- [ ] Finish FS-05/15 cache-boundary repairs F-008/F-009 and FS-08/16 secondary-boss findings F-010–F-012.
+
+[File map and explicit gaps](full-stack-file-map-2026-11-16.md),
+[dated evidence and commands](audit-deep-2026-11-16.md). Package completion remains **0/18**.
+
 ## Architecture and data foundations
 
 - [ ] **FS-01 — Whole-tree inventory and architecture.** Map main/preload/renderer/core/shared boundaries, module ownership, entry points, cross-module cycles and existing maintainability hotspots. Reconcile the file map against the actual tree; identify orphaned/dead paths and duplicated contracts. Record baseline source/metrics and design debt without hiding low-quality edited files behind averages.

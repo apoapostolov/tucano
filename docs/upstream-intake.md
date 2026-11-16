@@ -1,6 +1,6 @@
 # Upstream version and commit intake
 
-Captured 2026-11-16T08:49:53.130Z. Main: `15370a0b41f54aec11d542bc2114d6acb9588535`; integration: `8962b690b207f107431475f07b3f44e5733be8e5`.
+Captured 2026-11-16T12:05:06.042Z. Main: `9901b9e5f209433bcfc04f6bc05d90e580a888db`; integration: `514c94bec373d8156845879968ffccb4efae2bd1`.
 
 Release boxes mean verified integration, installation and release evidence recorded in audit-state.json,
 not a complete audit of the release code. The baseline whole-tree audit remains separate.
@@ -46,3 +46,6 @@ does not check a box. Baseline code is covered by the full-stack work packages, 
 - [x] [ab1b9d0f5b2a](https://github.com/eduwxyz/tucano/commit/ab1b9d0f5b2a85a78d7992cb27a9ef299b0c5c30) Release 0.2.34; integrated: yes.
 - [x] [f719e0b9bc8d](https://github.com/eduwxyz/tucano/commit/f719e0b9bc8d9373b9ba5511faee6a3dc024f886) Refuse installing or signing in to the endpoint, saying where it's set up (#492); integrated: yes.
 - [x] [15370a0b41f5](https://github.com/eduwxyz/tucano/commit/15370a0b41f54aec11d542bc2114d6acb9588535) Import from Hermes Agent: read its folder where it is, into agents (spec §26) (#493); integrated: yes.
+- [ ] [67b66d93c3cf](https://github.com/eduwxyz/tucano/commit/67b66d93c3cf0b3ab113058851b76f59414ea8c2) Hermes import: follow-ups from #493's review (#502); integrated: no.
+- [ ] [2c4f0552396f](https://github.com/eduwxyz/tucano/commit/2c4f0552396f3c36dcd53db07f2c033128501d5f) site: página /alternativa-hermes/ (PT e EN) e ajustes na do OpenClaw (#501); integrated: no.
+- [ ] [9901b9e5f209](https://github.com/eduwxyz/tucano/commit/9901b9e5f209433bcfc04f6bc05d90e580a888db) Hermes import: Hermes's own SOUL.md is no instructions; gateways as Hermes turns them on (#503); integrated: no.

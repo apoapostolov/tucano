@@ -8,13 +8,18 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
-TucanoNext **0.2.34 is installed and freshly running**, built from `8962b690`, containing
-upstream/main `15370a0b` (release plus #492/#493). The full suite passed 2,756 tests, 61 skipped,
-zero failures. Installed hidden verification and its limits are recorded in
-[the reconciliation log](upstream-reconciliation-0.2.34.md). The daily plan and 09:00 automation
-now require live installation and fresh installed verification whenever application code advances.
+Current published next is `514c94be`. The installed **TucanoNext 0.2.34** is a secondary-boss
+preview whose archive matches the package in checkout `658693b8`; it is ahead of next and now
+preserved in [draft fork PR #5](https://github.com/apoapostolov/tucano/pull/5). Fresh hidden installed
+QA passes for Settings, pause and upgrade layouts at 900/1280 pixels and 150% scaling. Secondary-boss
+changed-behavior verification remains open. See [the current checkpoint](audit-deep-2026-11-16.md)
+for archive identity, exact source limits and reproduced defects, and
+[the improvement catalogue](tucanonext-improvements.md) for recent additions.
 
-TucanoNext 0.2.33 is installed, freshly launched and released from `4a5daa47`, containing upstream `9474545f`. The full suite passed 2,710 tests, with 61 skipped and no failures. Installed hidden QA passes at 900/1280 CSS pixels and 150% scaling. Apo interface precedence and seven additional merged Apo PRs are recorded in [the reconciliation log](upstream-reconciliation-0.2.33.md). Full feature audits remain open; the older records below describe earlier builds.
+Fetched upstream/main is `9901b9e5`; three newer commits remain outside next and await compatibility
+reconciliation. The earlier [0.2.34 delivery](upstream-reconciliation-0.2.34.md) and
+[0.2.33 release](upstream-reconciliation-0.2.33.md) are historical evidence, not today's package
+identity. The published fork release remains `next-v0.2.33`.
 
 Delivery remains parent-owned after a child's report. Use explicit checkpoints for child report,
 parent reproduction, repair, existing PR update (or an appropriate new PR), pushed-head verification,
@@ -37,25 +42,27 @@ checks, not completed full feature audits. The safe restart-harness improvements
 TucanoNext retains its own strings, component organization, recovery defaults and dismissal
 behavior. The underlying comparison and older-retry repairs were already present.
 
-TucanoNext 0.2.32 is installed and released. Upstream baseline is
+## Historical delivery checkpoints
+
+TucanoNext 0.2.32 was installed and released. Upstream baseline was
 `d175567b0a12d885544d74c45792717a883287f5`; installer source is
 `d797e0c45a8b8c882274aad385b5e1c037caed8a`. The application suite passed **2,620 tests**,
 with 61 skipped and zero failures, plus installed background QA. See
 [the delivery record](upstream-reconciliation-0.2.32.md). This verifies that delivery, not the whole
 product or every integrated feature. Broad production readiness remains unclaimed.
 
-The later local installation contains the scrolling repair from `4fef95c1`: its complete suite
+A later historical installation contained the scrolling repair from `4fef95c1`: its complete suite
 passed 2,622 tests with 61 skipped, and installed reasoning checks measured zero reading-line
 drift in all three panel sizes at 150% display scaling. See the
 [repair and delivery record](scroll-reading-repair-2026-11-15.md). This targeted repair does not
 advance the exact-head audit counts below.
 
-The current local installation also contains the bounded Skills comparison repair, integrated in
+The historical local delivery also contains the bounded Skills comparison repair, integrated in
 `c2829873`, with application source unchanged through delivery record `db5aef86`. The combined
 suite passed **2,634 tests**, with 61 skipped and zero failures. Installed background checks pass
 at 150% scaling; [PR #468](https://github.com/eduwxyz/tucano/pull/468) has six passing CI jobs.
 See [S-454's completed repair record](audit-skill-comparison-2026-11-15.md). This is one targeted
-repair, not a complete audit of #311. The public fork release remains the earlier 0.2.32 asset;
+repair, not a complete audit of #311. At that checkpoint the public fork release remained the earlier 0.2.32 asset;
 this single-bug delivery does not replace that release.
 
 The earlier concurrent copy task is reconciled: its three local commits are preserved in the
@@ -75,11 +82,11 @@ the unfinished folding composition, retained-text boundary, audience and maintai
 
 | Workstream | Baseline and progress | Maintained record |
 | --- | --- | --- |
-| Versions and main commits | 0.2.34 installed; 10 incoming main events reconciled for compatibility | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
+| Versions and main commits | 0.2.34 preview installed; three newer main commits await reconciliation | [Upstream intake](upstream-intake.md), [explicit delivery/review state](audit-state.json) |
 | All Apo PRs | 94 captured: 51 open, 31 merged, 12 closed; 0/94 complete exact-head audits | [Canonical Apo queue](apo-pr-audit.md), [rich inventory](pr-inventory.md) |
 | Apo open wall | 0/51 complete; this is a subset, not another completion ledger | [Generated open view](open-pr-audit.md) |
-| Other contributors, including maintainer PRs | Intake only: 253 captured, 32 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
-| Original code and cross-feature behavior | 0/18 complete; Apo-support checks are in scope, independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
+| Other contributors, including maintainer PRs | Intake only: 260 captured, 36 open; independent reviews await approval | [Contributor queue](contributor-pr-audit.md), [metadata inventory](upstream-pr-inventory.md) |
+| Original code and cross-feature behavior | 0/18 complete; 905 paths inventoried, 268 unassigned; independent expansion awaits approval | [Full-stack coverage](full-stack-audit.md) |
 | Original historical cohort | 6/43 targeted repairs; 0/43 complete audits | [Stable cohort](apo-original-cohort.md) |
 | Findings and proposals | Confirmed defects, repairs and open questions have separate states | [Finding register](audit-findings.md) |
 
@@ -91,11 +98,13 @@ historical comparisons; new PRs enter the canonical current queues.
 ## Immediate queue
 
 - [ ] Triage F-007's upstream security follow-up as a separate bounded task; the credential-scoping repair is already installed. Keep its public disclosure/submission status explicit.
-- [ ] **Active: R-245 full audit, current public head `749311e1`.** After upgrade reconciliation, verify the endpoint thinking contract, broader audience/concurrency/provider cases and maintainability. The bounded revision comparison preserves equivalent delivered F-005/F-006 repairs; current-head isolated execution remains open. Preserve the stronger integrated Thought component. [Targeted delivery](audit-245-delivery-2026-11-15.md), [current checkpoint](audit-intake-2026-11-16.md), [original packet](audit-reasoning-245-2026-11-15.md).
+- [ ] **Active: R-245 full audit, current public head `749311e1`.** Repair F-008/F-009 deletion and retry cache boundaries; then verify broader audience/concurrency/provider cases and maintainability. Pi-only scope is confirmed; endpoint thinking is unsupported, not a demonstrated defect. The bounded revision comparison preserves equivalent delivered F-005/F-006 repairs; current-head retry execution now reproduces F-009; remaining isolated scenarios are open. Preserve the stronger integrated Thought component. [Targeted delivery](audit-245-delivery-2026-11-15.md), [current checkpoint](audit-deep-2026-11-16.md), [original packet](audit-reasoning-245-2026-11-15.md).
+- [ ] Repair and verify **secondary bosses (#467 / fork #5)**: F-010/F-011/F-012 reproduce on the public head; local repair passes 50 tests but is not delivered. [Current evidence](audit-deep-2026-11-16.md).
+- [ ] Reconcile upstream `67b66d93`, `2c4f0552` and `9901b9e5`, retaining the installed preview and compatible interface improvements.
 - [ ] Revalidate revised #391 head `33dea61c` after upgrade reconciliation; preserve the selected local recovery defaults while checking the public opt-in contract.
 - [ ] Complete #355's in-flight Wiki permission/provenance review before expanding its workflows.
 - [ ] Continue #423/#424 room access: separate people/agent controls, private defaults, persistence, authorization and Tuca proposals connected to the same room settings.
-- [ ] Establish the full-stack file/module map, representative workloads and observed performance baselines before setting acceptance thresholds.
+- [ ] Complete semantic ownership of the [provisional 905-path map](full-stack-file-map-2026-11-16.md), including 268 unassigned paths; establish representative workloads and observed performance baselines before setting acceptance thresholds.
 - [ ] Keep #414/#463/#464/#465 and other non-Apo PRs in the intake/approval queue. Prepare a bounded review request only when useful; wait for explicit approval before an independent audit or change.
 
 Urgent privacy, data-loss, corrupted state, exposed credentials and unrecoverable/stalled execution

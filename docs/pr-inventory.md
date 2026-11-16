@@ -1,10 +1,10 @@
 # Tucano PR inventory
 
-Captured 2026-11-16T07:14:17.840Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
+Captured 2026-11-16T12:18:01.751Z. Upstream: [eduwxyz/tucano](https://github.com/eduwxyz/tucano); fork: [apoapostolov/tucano](https://github.com/apoapostolov/tucano).
 
 94 total: 51 open, 31 merged, 12 closed.
 
-Upstream main: `15370a0b41f54aec11d542bc2114d6acb9588535`. Daily driver HEAD: `3c539212af7e54e465ccc658de1e4f570f32efb7`. Upstream main is contained: no: inspect patch equivalence.
+Upstream main: `9901b9e5f209433bcfc04f6bc05d90e580a888db`. Daily driver HEAD: `514c94bec373d8156845879968ffccb4efae2bd1`. Upstream main is contained: no: inspect patch equivalence.
 
 Containment compares commit ancestry. A rebased or independently integrated feature may be present without its current PR head. Screenshot links and changed tests are inventory signals; they do not establish quality or passing tests. GitHub mergeability compares each PR to its base, not to the other PRs.
 
@@ -13,7 +13,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#232](https://github.com/eduwxyz/tucano/pull/232) | apoapostolov | MERGED | Fix the high-risk hold button losing the press before it fills | object unavailable | 0 | 2 | not reviewed |
 | [#243](https://github.com/eduwxyz/tucano/pull/243) | apoapostolov | MERGED | Read an agent limit of 0 as no ceiling, not as already spent | object unavailable | 3 | 0 | not reviewed |
 | [#244](https://github.com/eduwxyz/tucano/pull/244) | apoapostolov | MERGED | Filter and group the skills in an agent's tab, and fix where a skill came from | no: inspect patch equivalence | 1 | 4 | not reviewed |
-| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | no: inspect patch equivalence | 10 | 16 | targeted compatibility checkpoint; full audit incomplete |
+| [#245](https://github.com/eduwxyz/tucano/pull/245) | apoapostolov | OPEN | Show the model's thinking as dim, small, live text, not only a Thinking… label | no: inspect patch equivalence | 10 | 16 | in progress; parent-reproduced defects; full audit incomplete |
 | [#246](https://github.com/eduwxyz/tucano/pull/246) | apoapostolov | MERGED | Close a reply when its approval is decided, and repair the ones already stuck | object unavailable | 1 | 0 | not reviewed |
 | [#247](https://github.com/eduwxyz/tucano/pull/247) | apoapostolov | OPEN | Add a Questions section above Approvals, with every agent's question in one place | no: inspect patch equivalence | 7 | 23 | not reviewed |
 | [#248](https://github.com/eduwxyz/tucano/pull/248) | apoapostolov | OPEN | Keep the open question next to the field, not only where it was asked | no: inspect patch equivalence | 1 | 3 | not reviewed |
@@ -26,8 +26,8 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#268](https://github.com/eduwxyz/tucano/pull/268) | apoapostolov | OPEN | Wiki: give a finding the review can't settle a Resolve button and a built-in resolver | no: inspect patch equivalence | 2 | 4 | not reviewed |
 | [#272](https://github.com/eduwxyz/tucano/pull/272) | apoapostolov | OPEN | Channels: mention mode — an agent in the room that answers only when mentioned | no: inspect patch equivalence | 2 | 6 | not reviewed |
 | [#274](https://github.com/eduwxyz/tucano/pull/274) | apoapostolov | OPEN | Team-ups: an agent that calls one outside the room gets a channel that carries the work | no: inspect patch equivalence | 7 | 11 | not reviewed |
-| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | MERGED | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | no: inspect patch equivalence | 0 | 5 | targeted compatibility checkpoint; full audit incomplete |
-| [#279](https://github.com/eduwxyz/tucano/pull/279) | apoapostolov | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | 6 | 10 | not reviewed |
+| [#275](https://github.com/eduwxyz/tucano/pull/275) | apoapostolov | MERGED | In a long run, keep "Reply in thread" at the top-right corner of the steps while they scroll | yes | 0 | 5 | targeted compatibility checkpoint; full audit incomplete |
+| [#279](https://github.com/eduwxyz/tucano/pull/279) | apoapostolov | OPEN | Channels: a listen mode — Jev brings the expensive agent in when the message needs it and the room can't do without it | no: inspect patch equivalence | 5 | 10 | not reviewed |
 | [#282](https://github.com/eduwxyz/tucano/pull/282) | apoapostolov | CLOSED | A drawer above the field: the sessions running right now, and the prompts still queued | object unavailable | 2 | 6 | not reviewed |
 | [#284](https://github.com/eduwxyz/tucano/pull/284) | apoapostolov | OPEN | An agent's question can mark the option Jev would pick | no: inspect patch equivalence | 2 | 5 | not reviewed |
 | [#288](https://github.com/eduwxyz/tucano/pull/288) | apoapostolov | OPEN | Attach a work drawer above the field: the replies running now, and the prompts queued behind them | no: inspect patch equivalence | 2 | 11 | not reviewed |
@@ -52,7 +52,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#325](https://github.com/eduwxyz/tucano/pull/325) | apoapostolov | MERGED | Stop a busy CI machine from reddening the core startup test | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#327](https://github.com/eduwxyz/tucano/pull/327) | apoapostolov | OPEN | Let the line beside a run's steps fold them: a double-click, from wherever the run has scrolled to | no: inspect patch equivalence | 1 | 12 | not reviewed |
 | [#329](https://github.com/eduwxyz/tucano/pull/329) | apoapostolov | OPEN | Remember a conversation's steps folded, so coming back to it finds them folded (#328) | no: inspect patch equivalence | 2 | 8 | not reviewed |
-| [#332](https://github.com/eduwxyz/tucano/pull/332) | apoapostolov | OPEN | Steer a reply that's still working from the bottom of its steps (#331) | no: inspect patch equivalence | 3 | 14 | not reviewed |
+| [#332](https://github.com/eduwxyz/tucano/pull/332) | apoapostolov | OPEN | Steer a reply that's still working from the bottom of its steps (#331) | no: inspect patch equivalence | 4 | 18 | not reviewed |
 | [#333](https://github.com/eduwxyz/tucano/pull/333) | apoapostolov | OPEN | Route each reply by what Jev reads in the prompt: six pools, roles with their own specialists, and a thin line that says why | no: inspect patch equivalence | 3 | 25 | not reviewed |
 | [#334](https://github.com/eduwxyz/tucano/pull/334) | apoapostolov | OPEN | Approval card: lead with the action and its target, and say what became of the call | no: inspect patch equivalence | 3 | 10 | not reviewed |
 | [#336](https://github.com/eduwxyz/tucano/pull/336) | apoapostolov | OPEN | Right-click a picture: save it, copy it, or put it back in the prompt (#335) | no: inspect patch equivalence | 1 | 16 | not reviewed |
@@ -78,9 +78,9 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#391](https://github.com/eduwxyz/tucano/pull/391) | apoapostolov | OPEN | Resume interrupted replies after restart when enabled | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#392](https://github.com/eduwxyz/tucano/pull/392) | apoapostolov | MERGED | Stop reading a date that opens a sentence as a missing wiki page | yes | 1 | 0 | not reviewed |
 | [#395](https://github.com/eduwxyz/tucano/pull/395) | apoapostolov | OPEN | Let the person read times as a 24-hour clock, or a 12-hour one | no: inspect patch equivalence | 1 | 0 | not reviewed |
-| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | MERGED | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | no: inspect patch equivalence | 2 | 0 | targeted compatibility checkpoint; full audit incomplete |
+| [#397](https://github.com/eduwxyz/tucano/pull/397) | apoapostolov | MERGED | Keep the Memory bot tabs inside the bar, and page them with two borderless arrows | yes | 2 | 0 | targeted compatibility checkpoint; full audit incomplete |
 | [#401](https://github.com/eduwxyz/tucano/pull/401) | apoapostolov | CLOSED | A reply the app cut goes on with what it already did, instead of starting over | no: inspect patch equivalence | 2 | 0 | not reviewed |
-| [#402](https://github.com/eduwxyz/tucano/pull/402) | apoapostolov | MERGED | Kill the app in the middle of a reply and check what it offers afterwards | object unavailable | 1 | 0 | not reviewed |
+| [#402](https://github.com/eduwxyz/tucano/pull/402) | apoapostolov | MERGED | Kill the app in the middle of a reply and check what it offers afterwards | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#408](https://github.com/eduwxyz/tucano/pull/408) | apoapostolov | CLOSED | Attach images and files when asking from the Team page | no: inspect patch equivalence | 2 | 6 | not reviewed |
 | [#410](https://github.com/eduwxyz/tucano/pull/410) | apoapostolov | OPEN | Clarify English settings labels and shorten interface hints | no: inspect patch equivalence | 1 | 2 | not reviewed |
 | [#411](https://github.com/eduwxyz/tucano/pull/411) | apoapostolov | OPEN | Reply to a message, and to the selected excerpt with ⌘L, stacked on #32 | no: inspect patch equivalence | 5 | 4 | not reviewed |
@@ -100,7 +100,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | [#451](https://github.com/eduwxyz/tucano/pull/451) | apoapostolov | OPEN | Write the guide's 24 pages in English too, and hand each workspace its own | no: inspect patch equivalence | 3 | 0 | not reviewed |
 | [#453](https://github.com/eduwxyz/tucano/pull/453) | apoapostolov | MERGED | Give the delegation test's parked request 8 s, so it is still at it when Clara's answer lands | no: inspect patch equivalence | 1 | 0 | not reviewed |
 | [#457](https://github.com/eduwxyz/tucano/pull/457) | apoapostolov | OPEN | Pause a reply before its next step, and resume it there | yes | 2 | 4 | targeted cancellation/concurrency repair verified and installed; broader feature audit remains |
-| [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | 6 | 6 | not reviewed |
+| [#467](https://github.com/eduwxyz/tucano/pull/467) | apoapostolov | OPEN | One agent can answer to more than one boss, so a shared specialist serves several teams | no: inspect patch equivalence | 6 | 6 | in progress; parent-reproduced defects; full audit incomplete |
 | [#468](https://github.com/eduwxyz/tucano/pull/468) | apoapostolov | MERGED | fix: bound skill comparisons and preserve complete large versions | yes | 2 | 0 | not reviewed |
 | [#471](https://github.com/eduwxyz/tucano/pull/471) | apoapostolov | MERGED | Keep older retries within their original conversation context | yes | 1 | 0 | not reviewed |
 | [#472](https://github.com/eduwxyz/tucano/pull/472) | apoapostolov | MERGED | Extract Skills components without changing behavior or copy | object unavailable | 1 | 0 | not reviewed |
@@ -129,8 +129,8 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | src/core/people.ts | #245, #247, #274, #284, #298, #322, #375, #383, #385, #432 |
 | src/shared/workspaces.ts | #268, #274, #379, #383, #385, #391, #395, #411, #417 |
 | src/renderer/src/components/Dialogs.tsx | #247, #272, #279, #383, #410, #435, #446 |
-| test/opencode.test.ts | #261, #279, #290, #319, #334, #355, #437 |
 | src/core/context.ts | #258, #259, #274, #355, #395, #411 |
+| test/opencode.test.ts | #261, #290, #319, #334, #355, #437 |
 | src/core/jev.ts | #279, #284, #298, #379, #383, #385 |
 | src/shared/questions.ts | #247, #298, #383, #385, #417 |
 | src/renderer/src/components/Wiki.tsx | #258, #259, #268, #410, #446 |
@@ -200,6 +200,7 @@ Containment compares commit ancestry. A rebased or independently integrated feat
 | test/steps-rail.test.tsx | #327, #329 |
 | scripts/screens-steer-pill.mjs | #332, #338 |
 | test/steer-pill.test.tsx | #332, #338 |
+| scripts/e2e-routing-add-model.mjs | #333, #383 |
 | scripts/screens-jev-routing.mjs | #333, #383 |
 | src/core/model-routing.ts | #333, #383 |
 | src/renderer/src/components/Routing.tsx | #333, #383 |
