@@ -21,7 +21,7 @@ declare global {
         subscribe: (cb: (list: WorkspaceList) => void) => () => void
       }
       connect: () => void
-      pickFolder: () => Promise<string | null>
+      pickFolder: (o?: { start?: string; hidden?: boolean }) => Promise<string | null>
       // desktop only: a right-clicked picture, saved where the person says or put in the clipboard.
       // `dir` without `dialog` is the one click into the last folder; `dialog` opens the system's.
       image?: {

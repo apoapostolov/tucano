@@ -12,6 +12,7 @@
   --text: #1d1a16;
   --text-2: #5f584e;
   --text-3: #948b7f;
+  --select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23948b7f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); /* the caret of the Select component, as an image */
   --accent: #d9581a;
   --accent-soft: rgba(228, 99, 28, 0.12);
   --accent-text: #ffffff;
@@ -76,6 +77,7 @@
     --text: #efeae2;
     --text-2: #aaa39a;
     --text-3: #7a746b;
+    --select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a746b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); /* the caret of the Select component, as an image */
     --accent: #ff8a3d;
     --accent-soft: rgba(255, 138, 61, 0.14);
     --accent-text: #1a1917;
@@ -109,6 +111,7 @@
   --text: #efeae2;
   --text-2: #aaa39a;
   --text-3: #7a746b;
+  --select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a746b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); /* the caret of the Select component, as an image */
   --accent: #ff8a3d;
   --accent-soft: rgba(255, 138, 61, 0.14);
   --accent-text: #1a1917;
@@ -175,6 +178,16 @@ select {
   width: 100%;
   outline: none;
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+/* The system's arrow sits flush against the right edge, and a padding doesn't move it. Ours keeps the
+   field's own inset from the edge and wears the theme's color. */
+select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: var(--select-caret);
+  background-position: right 10px center;
+  background-size: 14px;
+  background-repeat: no-repeat;
 }
 input:focus,
 textarea:focus,
@@ -2857,7 +2870,7 @@ h3 {
   border-top: 1px solid var(--border);
 }
 .tools__row select {
-  padding: 3px 8px;
+  padding: 3px 28px 3px 8px;
   font-size: 12.5px;
 }
 .tools__row.is-off code {
@@ -5781,6 +5794,49 @@ table.csv th {
   font-size: 12.5px;
   user-select: all;
 }
+/* Your own endpoint: the address and key, then the models it lists, to tick. */
+.endpoint {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.endpoint__presets,
+.endpoint__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.endpoint__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.endpoint__filter {
+  max-width: 220px;
+}
+.endpoint__models {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2px 12px;
+  max-height: 240px;
+  overflow: auto;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.endpoint__model {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  min-width: 0;
+}
+.endpoint__model span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .harness__test {
   display: flex;
   gap: 8px;
@@ -5985,6 +6041,72 @@ table.csv th {
 }
 .whats-new__back svg {
   transform: scaleX(-1);
+}
+/* Importing from Hermes: where it reads, then what comes in, scrolling while the buttons stay. */
+.modal__card.hermes-import {
+  width: min(520px, calc(100vw - 32px));
+}
+/* Profiles are boxes here, not the divided skill list: the last one keeps its border. */
+.hermes-import .checks--skills {
+  gap: 6px;
+}
+.hermes-import .check--skill,
+.hermes-import .check--skill:last-child {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+.hermes-import .check--skill:has(input:checked) {
+  border-color: var(--accent);
+}
+.hermes-import__where {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hermes-import__where > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hermes-import__body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.hermes-import__body h4 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.hermes-import__body ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+}
+.hermes-import__names {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.hermes-import__names > div {
+  display: flex;
+  gap: 8px;
+}
+.hermes-import__names dt {
+  flex: 0 0 110px;
+}
+.hermes-import__names dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .modal__foot {
   display: flex;
@@ -14030,6 +14152,22 @@ button.agent-card__now:hover {
   font-size: 14px;
 }
 
+/* Under a person's message: the requests it set off, one status line each. */
+.asked-here {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.msg--me .asked-here .delegation-chip {
+  margin-top: 6px;
+}
+/* What a reply that only handed work on wrote anyway: behind a link, under its steps. */
+.msg__said {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 12.5px;
+}
 /* Under a request, where it was delivered: how it stands and where its answer goes. */
 .request-note {
   display: flex;

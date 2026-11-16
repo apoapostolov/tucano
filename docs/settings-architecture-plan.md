@@ -36,7 +36,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | Workspace / `workspace-context` | Workspace label, owner's name, shared agent context and introduction/checklist actions | Admin; owner's name remains owner-only |
 | Workspace / `workspace-people` | People, profile, coverage, roles and member/invite access | Existing team-mode/member/admin/owner rules |
 | Workspace / `workspace-activity` | Audit activity | Team-mode admins |
-| Workspace / `workspace-transfer` | Import/export team configuration | Existing admin restrictions and warnings |
+| Workspace / `workspace-transfer` | Import/export team configuration; Hermes profile preview/import | Existing admin restrictions; Hermes filesystem import is owner-only and user memories require confirmation |
 | Workspace / `workspace-backups` | Backup export, restore and replacement warnings | Owner, as required by the existing component; automatic-backup timing is not a new configurable control |
 | Workspace / `workspace-danger` | File health/space reclamation, history retention/wipe, workspace deletion | Admins manage data and retention; workspace deletion remains owner-only inside the existing component. Last in the page |
 | Agents / `agents-replies` | Send mode and consecutive agent reply cap | Workspace defaults; per-agent/conversation controls stay in their existing local editors |
@@ -47,7 +47,7 @@ Section order is intentional: common choices first, advanced setup later, destru
 | Agents / `agents-collaboration` | Team-up retention | Workspace retention; zero still keeps channels |
 | Agents / `agents-skills` | Detected/custom skill folders and enable/disable controls | Workspace defaults; individual skill assignments remain on agent profiles |
 | Models / `models-agents` | Bulk and per-agent model/reasoning assignment panel | Admin; keep per-agent model settings accessible in the profile too, using existing implementation |
-| Models / `models-runtimes` | Runtime detection and setup | Admin; preserve credentials and gateway disclosures |
+| Models / `models-runtimes` | Runtime detection/setup and OpenAI-compatible endpoint (`endpoint`) | Admin; workspace endpoint configuration, locally encrypted key; preserve credentials and gateway disclosures |
 | Models / `models-accounts` | Claude Code, Codex and Grok accounts where implemented | Admin; sign-in remains in the CLI |
 | Models / `models-classifiers` | Provider configuration, job assignments, browser matching, suggested answers and next steps | Admin; keep external-data disclosures beside the relevant controls |
 | Models / `models-routing` | Smart routing enablement and pools, when implemented | Admin; agent-specific routing can keep pools available while the global default is off |
@@ -220,3 +220,19 @@ Upstream reconciliation includes `04539404`: monthly limits are normalized safel
 The latest incoming notification and reasoning fixes are retained through `f5ae97a7`. The settings registry still owns 54 keys in 33 declared sections, with 57 literal writes checked. The upstream counterpart declares 28 sections for the capabilities already on upstream main.
 
 The previous 18 published feature revisions were each verified in a fresh worktree, rebuilt and captured at 900 and 1280 pixels. Their exact checked heads and measurements are [recorded immutably](https://github.com/apoapostolov/tucano/tree/0688939edcda4a746ed5c74b3e3f58b896ff1822/settings-organization/features). Several branches have since been rebased or revised; those earlier screenshots are not attributed to newer heads. The follow-up copy round must review the newer strings and retain these placements.
+
+## 0.2.34 endpoint and import placement
+
+The endpoint control answers which compatible service and models agents may use. It belongs in
+Models / Runtimes (`models-runtimes`), alongside runtime setup, rather than a second connection
+page. `endpoint` is workspace configuration; administration RPC authorization is retained.
+Unconfigured is the default. URL, selected models and Web support persist in workspace settings;
+the API key is stored locally encrypted. Saving takes effect without restarting. Agents opt into
+this runtime in their existing model editor. A changed URL clears an omitted key; a probe may
+reuse the saved key only for the same normalized address. An explicit replacement applies to
+the selected address. This avoids silently sending an existing credential to another service.
+
+Hermes preview/import remains Workspace / Import and export (`workspace-transfer`). Both RPCs
+require the owner because they read server-side files. Previewing adds no workspace data.
+Import creates selected agents with restricted access, disabled routines and memories awaiting
+confirmation. No new preference or duplicated section is introduced.

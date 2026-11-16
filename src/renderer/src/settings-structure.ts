@@ -44,7 +44,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
     { id: 'models-agents', page: 'models', label: L('Modelos dos agentes', 'Agent models'), keys: [], scope: 'workspace', visible: admin },
-    { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses'], scope: 'mixed', visible: admin },
+    { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'mixed', visible: admin },
     { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevRecommend', 'jevNextSteps'], scope: 'workspace', visible: admin },
     { id: 'models-routing', page: 'models', label: L('Roteamento', 'Routing'), keys: ['routing'], scope: 'workspace', visible: admin },

@@ -60,7 +60,7 @@ const engines = (): Record<EngineId, Engine> => {
         return reply
       }
     })
-  return { claude: one('claude'), codex: one('codex'), opencode: one('opencode'), pi: one('pi'), antigravity: one('antigravity'), cursor: one('cursor'), grok: one('grok'), cline: one('cline'), hermes: one('hermes') }
+  return { claude: one('claude'), codex: one('codex'), opencode: one('opencode'), pi: one('pi'), antigravity: one('antigravity'), cursor: one('cursor'), grok: one('grok'), cline: one('cline'), hermes: one('hermes'), endpoint: one('endpoint') }
 }
 
 beforeEach(async () => {
@@ -76,7 +76,7 @@ beforeEach(async () => {
   settings = {
     workspaceName: 'Ana',
     context: '',
-    engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready, hermes: ready },
+    engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready, hermes: ready, endpoint: ready },
     routerModel: 'haiku',
     memoryModel: 'haiku',
     memory: 'off',

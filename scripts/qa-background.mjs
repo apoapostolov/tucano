@@ -13,6 +13,7 @@ import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
 import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
 import { seedSkillComparisons, checkSkillComparisons } from './lib/skill-comparison-check.mjs'
 import { checkArtifactIngest } from './lib/artifact-ingest-check.mjs'
+import { seedUpgrade034, checkUpgrade034 } from './lib/upgrade-034-check.mjs'
 
 // Reserve both ports together; let the app bind immediately after releasing them.
 const reserve = async () => {
@@ -27,6 +28,7 @@ const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US', TUCANO_WEBHOOK_PORT: String(reservations[0].port), TUCANO_GIT_PORT: String(reservations[1].port) }
 if (process.argv.includes('--skill-origins')) Object.assign(env, seedSkillOrigins())
+if (process.argv.includes('--upgrade-034')) Object.assign(env, seedUpgrade034(data))
 delete env.ELECTRON_RUN_AS_NODE
 delete env.ELECTRON_RENDERER_URL
 const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(), data, ports: reservations.map((r) => r.port), checks: [], errors: [], passed: false }
@@ -88,6 +90,7 @@ try {
     report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
   }
   if (process.argv.includes('--upstream-artifact')) report.artifactIngest = await checkArtifactIngest(window, output, guard, resize)
+  if (process.argv.includes('--upgrade-034')) report.upgrade034 = await checkUpgrade034(window, output, guard, resize, data, report.source)
   report.updater = await window.evaluate(() => window.tucano.updateState())
   assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')
   const hasNotices = await window.evaluate(async () => {

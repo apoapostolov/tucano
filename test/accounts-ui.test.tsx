@@ -54,6 +54,7 @@ const engines = (extra: Partial<Record<EngineId, EngineStatus>> = {}): Record<En
   grok: ready,
   cline: off,
   hermes: off,
+  endpoint: off,
   ...extra
 })
 beforeEach(() => {

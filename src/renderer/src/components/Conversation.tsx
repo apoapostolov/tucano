@@ -768,6 +768,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
   const said = useLiveText(message, message.run?.status === 'working' ? STREAM_MS : 0)
   // A request written before what counts as finished left the conversation still carries that line: not shown.
   const text = message.run?.delegation?.rootId === message.id ? said.replace(/\n\n\*\*(Pronto quando|Done when):\*\* [^\n]*/, '') : said
+  // A reply that only handed work on says what's going on in the line under it, not in words: whatever it
+  // wrote anyway waits behind a link, and the agent speaks when the work comes back.
+  const [showSaid, setShowSaid] = useState(false)
+  const quiet = message.author.kind === 'agent' && !!message.run?.delegations?.length && message.run.status === 'done' && questionsOf(message.run).length === 0
 
   // My own prompt can be picked up again: the pencil in the rail on its left opens the words where they
   // stand, and sending posts the edited ask as a new prompt in the same place. What was sent before
@@ -923,6 +927,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
               </button>
             </div>
           </div>
+        ) : text && quiet && !showSaid ? (
+          <button className="link small msg__said" onClick={() => setShowSaid(true)}>
+            {L('Ver o que escreveu', 'See what it wrote')}
+          </button>
         ) : text ? (
           <div className="md">
             {agent && message.run?.status !== 'working' ? (
@@ -1018,6 +1026,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
             {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
           </div>
         )}
+        {message.author.kind === 'person' && !message.threadId && <AskedFromHere message={message} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
       </div>
     </article>
@@ -1091,6 +1100,20 @@ function TryAgain({ messageId }: { messageId: string }): ReactNode {
         </div>
       )}
     </>
+  )
+}
+
+// What was asked of the team because of a person's message, under it: a status line per request (whom,
+// where, how it stands, an approval it waits on), while the asker's replies stay in the message's thread.
+function AskedFromHere({ message }: { message: Message }): ReactNode {
+  const asked = useStore((s) => s.delegations.filter((d) => d.originConversationId === message.conversationId && d.originThreadId === message.id))
+  if (!asked.length) return null
+  return (
+    <div className="asked-here">
+      {asked.map((d) => (
+        <DelegationChip key={d.id} at={{ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) }} from={d.from} asked />
+      ))}
+    </div>
   )
 }
 
@@ -1607,7 +1630,7 @@ function RequestNote({ at, from }: { at: DelegationRef; from?: string }): ReactN
           {state.text}
         </span>
       )}
-      <span className="request-note__where">{from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', "The final result is returned to the requester.")}</span>
+      <span className="request-note__where">{at.threadId ? (from ? L(`a resposta volta pra ${from}`, `the answer goes back to ${from}`) : L('a resposta volta pra quem pediu', 'The final result is returned to the requester.')) : from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', 'The final result is returned to the requester.')}</span>
     </div>
   )
 }
@@ -1635,8 +1658,8 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
         <button
           className="link"
           onClick={() => {
-            navigate({ kind: 'conversation', id: at.conversationId, message: at.rootId })
-            openThread(at.rootId)
+            navigate({ kind: 'conversation', id: at.conversationId, message: at.threadId ?? at.rootId })
+            openThread(at.threadId ?? at.rootId)
           }}
         >
           {L('Abrir a thread', 'Open the thread')}
@@ -1652,10 +1675,14 @@ function ReturnedLine({ message, at, agent, text, components }: { message: Messa
   )
 }
 
-// reply that handed it; otherwise on what came back from it (an answer, a question).
+// reply that handed it; otherwise on what came back from it (an answer, a question). Under the reply that
+// handed it, it is the request's status line: how it stands now, the approval its work waits on (approved
+// right there), and, once it's done, a way to the answer in the thread of what the person asked.
 function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolean; from?: string }): ReactNode {
   const to = useStore((s) => agentById(s, at.to))
   const agents = useStore((s) => s.agents)
+  const d = useStore((s) => (asked ? s.delegations.find((x) => x.id === at.id) : undefined))
+  const approval = useStore((s) => (d?.state === 'open' && d.approval ? s.approvals.find((a) => a.id === d.approval && a.state === 'pending') : undefined))
   const kind = from && to ? askWay(agents, { from, to: at.to }) : undefined
   const label =
     kind === 'up'
@@ -1665,31 +1692,59 @@ function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolea
         : undefined
   const channel = useStore((s) => s.conversations.find((c) => c.id === at.conversationId))
   if (!channel) return null // a channel this person doesn't see, or one that's gone
+  const state = !d
+    ? null
+    : d.state === 'open'
+      ? d.asking
+        ? { tone: 'is-warn', text: L('com uma dúvida', 'has a question') }
+        : approval
+          ? { tone: 'is-warn', text: L('esperando sua aprovação', 'waiting for your approval') }
+          : { tone: 'is-live', text: L('trabalhando', 'working') }
+      : d.state === 'done'
+        ? { tone: 'is-done', text: L('concluído', 'done') }
+        : d.state === 'cancelled'
+          ? { tone: '', text: L('cancelado', 'cancelled') }
+          : { tone: 'is-warn', text: L('não terminou', 'did not finish') }
+  const answer = d && d.state !== 'open' && d.originThreadId ? d.originThreadId : undefined
   return (
-    <div className="memory-chip delegation-chip">
-      <Icon name="users" size={13} />
-      {label ? (
-        <>
-          <span className="memory-chip__label">{label}</span>
-          {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
-        </>
-      ) : (
-        <>
-          <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
-          <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
-        </>
-      )}
-      <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
-      <button
-        className="link"
-        onClick={() => {
-          navigate({ kind: 'conversation', id: at.conversationId, message: at.rootId })
-          openThread(at.rootId)
-        }}
-      >
-        {L('Abrir a thread', 'Open the thread')}
-      </button>
-    </div>
+    <>
+      <div className="memory-chip delegation-chip">
+        <Icon name="users" size={13} />
+        {label ? (
+          <>
+            <span className="memory-chip__label">{label}</span>
+            {kind === 'up' && <span className="memory-chip__text">{to?.name}</span>}
+          </>
+        ) : (
+          <>
+            <span className="memory-chip__label">{asked ? L('Pediu a', 'Asked') : L('Do pedido a', 'From the request to')}</span>
+            <span className="memory-chip__text">{to?.name ?? L('um agente', 'an agent')}</span>
+          </>
+        )}
+        <span className="muted small">{channel.kind === 'dm' ? 'DM' : `#${channel.name}`}</span>
+        {state && (
+          <span className={`request-note__state ${state.tone}`}>
+            <i />
+            {state.text}
+          </span>
+        )}
+        <button
+          className="link"
+          onClick={() => {
+            navigate({ kind: 'conversation', id: at.conversationId, message: at.threadId ?? at.rootId })
+            openThread(at.threadId ?? at.rootId)
+          }}
+        >
+          {L('Abrir a thread', 'Open the thread')}
+        </button>
+        {answer && (
+          <button className="link" onClick={() => openThread(answer)}>
+            {L('Ver a resposta', 'See the answer')}
+          </button>
+        )}
+      </div>
+      {approval && <ApprovalCard approval={approval} compact />}
+    </>
   )
 }
 
@@ -2353,7 +2408,7 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
   const canAlways = approval.tool !== ACCESS_REQUEST && approval.tool !== 'abrir_pr' && approval.connectorId !== 'navegador' && approval.connectorId !== 'apps' && !runner && !neverAllowedForGood(approval.tool) && (!onComputer || kinds.length > 0)
   const alwaysTitle = onComputer
     ? L(`Daqui pra frente ${agent?.name ?? 'o agente'} faz sozinho: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. Dá pra mudar na página dele.`, `From now on ${agent?.name ?? 'the agent'} does it alone: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. You can change it on its page.`)
-    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir. Dá pra tirar na página dele.`, `From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking. You can take it back on its page.`)
+    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir. Dá pra tirar na página dele.`, `From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking, in any call, even after reading something from outside. You can take it back on its page.`)
   const face = approvalFace(approval)
   const status = approvalStatus(approval, mayDecide)
   const idArg = typeof approval.args['id'] === 'string' || typeof approval.args['id'] === 'number' ? String(approval.args['id']) : ''
@@ -2510,8 +2565,8 @@ export function ApprovalCard({ approval, compact }: { approval: Approval; compac
                   className="btn approval__allow"
                   disabled={asking}
                   title={L(
-                    `Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada. As outras ações continuam pedindo. Dá pra tirar na página dele.`,
-                    `From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call. Other actions still ask. You can take it back on its page.`
+                    `Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. As outras ações continuam pedindo. Dá pra tirar na página dele.`,
+                    `From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call, even after reading something from outside. Other actions still ask. You can take it back on its page.`
                   )}
                   onClick={() => decide('approved', undefined, true)}
                 >

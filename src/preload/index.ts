@@ -22,7 +22,7 @@ contextBridge.exposeInMainWorld('tucano', {
     }
   },
   connect: (): void => ipcRenderer.send('core:connect'),
-  pickFolder: (): Promise<string | null> => ipcRenderer.invoke('pick-folder') as Promise<string | null>,
+  pickFolder: (o?: { start?: string; hidden?: boolean }): Promise<string | null> => ipcRenderer.invoke('pick-folder', o) as Promise<string | null>,
   // A picture right-clicked in a conversation: saved where the person says, or into the clipboard.
   image: {
     save: (

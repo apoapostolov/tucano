@@ -1,6 +1,7 @@
 // The contract between the renderer and the core, carried over a MessagePort.
 import type { Answer } from './questions'
 import type { NoticeFeed } from './notice'
+import type { HermesPreview } from './hermes-import'
 import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion } from './types'
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
 import type { Commitment, CommitmentInput, InitiativeConfig, InitiativeInput, InitiativeView } from './initiative'
@@ -134,6 +135,8 @@ export interface Api {
   saveRoutine(p: { routine: RoutineInput }): Routine // throws a message for the form
   setJevKey(p: { key: string | null }): Promise<void> // checks the key with TypeSafe; throws why it's refused
   setClassifierKey(p: { id: string; key: string | null }): Promise<void> // checks the key with that classifier's provider before saving; null removes it
+  probeEndpoint(p: { baseUrl: string; key?: string }): Promise<{ models: string[]; error?: string }> // an OpenAI-format address tried: what it lists, or why not
+  setEndpoint(p: { baseUrl: string; models: string[]; key?: string | null }): Promise<void> // saved; key undefined keeps the saved one, null removes it
   engineModels(p: { engine: EngineId }): Promise<{ models: string[]; labels?: Record<string, { label: string; hint?: string }>; error?: string }> // a harness's own list (OpenCode, Pi, a gateway)
   testEngine(p: { model: string }): Promise<{ ok: boolean; message: string; seconds?: number }> // one real reply through that model
   saveSkill(p: { skill: SkillInput }): Skill // throws a message for the form
@@ -151,6 +154,10 @@ export interface Api {
   exportTeam(): string // the team as Markdown
   importTeam(p: { text: string }): string // what was added; throws if it isn't a team file
   importAgents(p: { path?: string; data?: string }): string // agents from another app's .zip (a path on this computer, or base64); what was added
+  // Hermes Agent's folder, read where it is (no path: $HERMES_HOME or ~/.hermes): what would come in,
+  // adding nothing. Throws, in the person's words, when the folder isn't Hermes's or has nothing to bring.
+  hermesPreview(p: { path?: string }): HermesPreview
+  importHermes(p: { path: string; profiles: string[] }): string // the chosen profiles (by key) as agents; what was added
   backupNow(): string // where the copy went
   // The file itself: what it takes on disk, how much of that is free pages, and whether it reads back sound.
   dbHealth(): { bytes: number; free: number; sound: boolean; said: string }

@@ -14,6 +14,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Added
 
+- **Bring your Hermes Agent over.** Someone who has used Hermes (Nous Research) for a long time had no way to bring what they built there. **Settings › General › Team › Import from Hermes…** reads the Hermes folder where it is, on this computer (`$HERMES_HOME`, `~/.hermes`, or one you pick), and shows what comes in before adding anything; with profiles, you choose which. Each profile becomes an agent: its `SOUL.md` as instructions, its memories, what it knew about you (as your memories), the skills you made or installed, and the scheduled jobs that fit a routine here. As with OpenBot and Grok Bot, the agents come with no connector, web search off and no computer, the routines off and every memory waiting for your yes; MCP servers, messaging gateways (Telegram, Discord…), jobs whose schedule has no match here and the model are only named in the summary. Only a list of files is opened, by name: never `.env`, `auth.json`, the sessions or the logs.
+
 - **A bot can look after something for you between conversations.** Give any of your bots an
   initiative: a brief in your own words, how often it checks, when it may interrupt you, the
   conversations it may look at and the actions it may take. It then reads that work on its own clock,
@@ -38,7 +40,6 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
   resolver rather than failing the pass.
 
 - **What each provider has left, read from the logins already on this computer.** Usage and limits gains a column per provider that answers for a quota, with its own windows in its own unit: a percentage left for a subscription, the money left in a wallet, requests against a cap, and when each window resets. A provider whose login expired says so in its own column instead of hiding the others. The core reads them once as it comes up and every twenty minutes after that, and keeps the last reading, so the panel is on screen the moment the page opens: what it draws is the reading the core already holds, and when the fresh one lands the figures count from the old value to the new one instead of jumping. **Read again** forces a read, and the line above the panel says when the numbers were taken.
-- **The Memory page's bot tabs stay in the bar, however many bots there are.** The strip of tabs (All, You, one per bot with notes, Forgotten) was a plain row that ran past the 720 px column as soon as a few bots had notes, so the tabs after the first few, and the search control with them, could not be reached at all. The strip now scrolls inside the bar, the tab you pick slides to the middle of it, and two borderless arrows page it a screenful at a time, each offered only while there is strip in that direction. (#396)
 
 - **Smart routing is one more classifier feature, not a card of its own.** Settings › Models had a **Router** card of its own for the switch that turns smart routing on, next to the Classifiers section that holds every other job a classifier does. It is the last line of **Classifiers** now, under the six jobs, and the **Configure routing** link became an accent button beside its switch, offered only while the switch is on. The Router model the "who replies in a channel" job falls back to moved under that job, so nothing the old card held is lost.
 - **The clock is yours to pick: 24 hours, or 12 with am and pm.** Every time the app drew was 24-hour, except message times in English, which came out as `3:05 PM` because the shape was picked from the language, so the same conversation showed two clocks in two languages and the agent's own text disagreed with both. Settings › The conversation gains **Clock**, and one helper (`src/shared/clock.ts`) now formats every time the app draws and every time it writes into an agent's context: message times, routine schedules, the panel, usage charts, and the dates a reply or a routine carries into its prompt. Untouched, it reads exactly as it did before. Each person keeps their own. (#393)
@@ -115,6 +116,38 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
   to 817 and carried the block from 334 to -63.
 ### Added
 
+
+## [0.2.34] - 2026-11-15
+
+> **Em português:**
+> - **Novo:** um **endpoint próprio**, sem instalar nada. Em **Configurações › Modelos**, cole o endereço de um endpoint no padrão da OpenAI (OpenRouter, OmniRoute, Ollama, LM Studio, vLLM) e a chave, busque os modelos e marque os que os agentes podem usar. O Tucano conversa direto com ele, sem Claude Code nem Codex, com todas as ferramentas dos agentes. Com **Web** ligada, eles também buscam na web e leem páginas.
+> - **Mudou:** pedir algo a um agente que passa adiante agora parece uma thread de trabalho. O pedido acontece numa thread no canal de quem faz, embaixo da sua mensagem aparece uma linha com quem está fazendo e como está (com a aprovação ali mesmo, quando houver), e você recebe uma resposta só, na thread da sua mensagem, quando tudo voltar. Responder nessa thread continua o mesmo assunto, na mesma thread de quem fez.
+> - **Correção:** "Aprovar e sempre permitir" vale sempre, mesmo depois de o agente ler algo de fora (um e-mail, uma issue). O botão de responder em thread não some numa resposta longa, a seta das listas fica dentro do campo e as abas da Memória não fogem da tela com muitos agentes.
+
+### Added
+
+- **Your own endpoint, with nothing to install.** Agents could only run on a program installed on the computer (Claude Code, Codex, OpenCode…), so a fresh PC or a bare VPS had to install and set one up first. Now **Settings › Models › Your own endpoint** takes an address in OpenAI's format and its key: OpenRouter, OmniRoute, Ollama, LM Studio, vLLM or a company's proxy, with shortcuts for the first ones. **Fetch the models** lists what it offers, you tick the ones the agents may use, and each agent picks one like any other model. There's no harness in between: the app calls `/chat/completions` itself, with the app's own tools (asking another agent, asking you, connectors, memory, the wiki, the computer), runs the ones the model asks for, and calls again until it answers. The key is kept encrypted in the app and never reaches the window. The model must handle tool calls. Billed per token, on the endpoint.
+- **Web search and page reading for agents on an endpoint.** A harness brings its own web search; an endpoint doesn't. An agent on one, with Web on, gets the app's own: **buscar_na_web** searches through Exa's public search (the one OpenCode uses by default, no key needed), and **ler_pagina** reads a page or a PDF the way the wiki reads a link, its main text only, through the guard that keeps the inside of the network out of reach.
+- **The Memory page's bot tabs stay in the bar, however many bots there are.** The strip of tabs (All, You, one per bot with notes, Forgotten) was a plain row that ran past the 720 px column as soon as a few bots had notes, so the tabs after the first few, and the search control with them, could not be reached at all. The strip now scrolls inside the bar, the tab you pick slides to the middle of it, and two borderless arrows page it a screenful at a time, each offered only while there is strip in that direction. Thanks, apoapostolov! (#397)
+
+### Changed
+
+- **A request to the team reads like a thread at work.** Asking the agent on top for something it passes on used to fill your conversation with it: a line from it right away saying whom it asked, the answer in the name of whoever did the work, a question from them, and then the agent's summary. Now each piece of work happens in a thread in the channel of whoever does it, and nothing reaches you until it's done.
+  - **While it works,** there's no new message. The agent's reply that passed it on goes into the thread of your message, and under your message a line per request says whom it asked, where, and how it stands: working, has a question, waiting for your approval, done. An approval shows right there, and you approve it from there.
+  - **When it's done,** the agent answers once, in the thread of your message, and the line offers **See the answer**. What came back from the team goes to the agent, not to your conversation, and the whole answer stays in the request's thread.
+  - **A question** from whoever is doing it goes to the agent that asked, which answers it without writing to you; if it's yours to decide, it asks you in your message's thread.
+  - **A follow-up** written in that thread goes on in the same thread where the work was done, so whoever did it sees what it already did, instead of a new thread starting from nothing.
+  - **What you write in a request's thread** goes to whoever is doing it, and the request ends with their answer to it.
+  - **Work passed on inside the same channel stays in the same thread.** When whoever does a request asks someone else in that channel, the request is a message in its thread, not a new thread loose in the channel, and the answer comes back there.
+  - **A request isn't done while its parts are out.** Whoever does it may ask others and end its turn; the request stays open until what it asked comes back and it answers again, and only that answer goes back.
+  - **What an agent writes after only handing work on** is folded behind **See what it wrote**, and it no longer tells you it's done.
+  - **A request asked in a DM stays in a DM** when other people use the workspace, unless you write the channel's name yourself: it never ends up more visible than where you asked.
+
+### Fixed
+
+- **A dropdown's arrow sits inside the field.** Every native dropdown (a member's role, the invite's role, who covers for you, the activity filters) drew the system's arrow flush against its right border, whatever the padding. It now draws the same caret as the app's other dropdowns, 10 px in from the edge, in the theme's color, light or dark. Thanks, eialanjones! (#477)
+- **"Approve and always allow" holds after the agent reads something from outside.** Allowing a tool for good already saved it for that agent, with no expiry and for any arguments. But at the **No guardrails** level, or under a "does it alone" rule, the guard against outside content was checked before that: once the agent had read an issue, an email or a connector's result, a tool you had allowed for good asked again on every call. It now runs, as it already did at the Normal level. Thanks, FernandoBolzan, for pinning it down! (#489)
+- **The way into a thread stays on screen in a long run.** In a reply with a run taller than the window, **Reply in thread** sat at the top corner of the message and scrolled away with the first steps. It now rides the top of the run as you scroll through it. Thanks, apoapostolov! (#275)
 
 ## [0.2.33] - 2026-11-15
 
@@ -229,7 +262,6 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **An English workspace no longer teaches a model Portuguese words for the app.** The screen links the Tuca is taught (`#abrir/conectores`), the areas of `ver_estado` and the guide's index it carries on every message were in Portuguese whatever the workspace's language, and the model wrote those words back into replies, skills and wiki pages. The ids are now language-free (`#abrir/connectors`, `#abrir/settings/models`), the guide's index has an English version, and the old ids in messages and memories keep working. The body of a guide page is still Portuguese.
 
 - **A Hermes skill says it came from Hermes.** In the skills list and in an agent's tab, a skill linked from Hermes was tagged "from your Claude Code".
-
 
 ## [0.2.28] - 2026-11-12
 

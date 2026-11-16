@@ -23,7 +23,7 @@ describe('a session deleted while its reply is still at work', () => {
   let heard: string[]
 
   const runner = (delayMs: number): Runner => {
-    const engines = { claude: fakeEngine('claude', { delayMs, reply: () => 'uma resposta bem longa que demora pra chegar inteira' }), codex: fakeEngine('codex'), opencode: fakeEngine('opencode'), pi: fakeEngine('pi'), antigravity: fakeEngine('antigravity'), cursor: fakeEngine('cursor'), grok: fakeEngine('grok'), cline: fakeEngine('cline'), hermes: fakeEngine('hermes') }
+    const engines = { claude: fakeEngine('claude', { delayMs, reply: () => 'uma resposta bem longa que demora pra chegar inteira' }), codex: fakeEngine('codex'), opencode: fakeEngine('opencode'), pi: fakeEngine('pi'), antigravity: fakeEngine('antigravity'), cursor: fakeEngine('cursor'), grok: fakeEngine('grok'), cline: fakeEngine('cline'), hermes: fakeEngine('hermes'), endpoint: fakeEngine('endpoint') }
     return new Runner({
       db,
       engines: engines as Record<EngineId, Engine>,
@@ -37,7 +37,7 @@ describe('a session deleted while its reply is still at work', () => {
   beforeEach(() => {
     db = new Db(join(mkdtempSync(join(tmpdir(), 'del-db-')), 'test.db'))
     heard = []
-    settings = { workspaceName: 'Ana', context: '', engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready, hermes: ready }, routerModel: 'haiku', memoryModel: 'haiku', memoryLearning: 'approve', defaultLimit: 1000, approvalTtlHours: 24, theme: 'system', language: 'pt' }
+    settings = { workspaceName: 'Ana', context: '', engines: { claude: ready, codex: ready, opencode: ready, pi: ready, antigravity: ready, cursor: ready, grok: ready, cline: ready, hermes: ready, endpoint: ready }, routerModel: 'haiku', memoryModel: 'haiku', memoryLearning: 'approve', defaultLimit: 1000, approvalTtlHours: 24, theme: 'system', language: 'pt' }
     db.saveAgent(agent('a1', 'lia'))
     db.createConversation({ id: 'dm', kind: 'dm', name: 'a1', members: ['a1'] })
   })

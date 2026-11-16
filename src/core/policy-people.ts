@@ -237,6 +237,9 @@ export const NEEDS: Record<Method, Need> = {
   exportTeam: 'admin',
   importTeam: 'admin',
   importAgents: 'admin',
+  // Owner: with no path, these read the server's own ~/.hermes (the owner's SOUL.md and USER.md).
+  hermesPreview: 'owner',
+  importHermes: 'owner',
   exportBackup: 'owner',
   restoreCheck: 'owner',
   restoreApply: 'owner',
@@ -275,6 +278,8 @@ export const NEEDS: Record<Method, Need> = {
   testEngine: 'admin',
   setJevKey: 'admin',
   setClassifierKey: 'admin',
+  probeEndpoint: 'admin',
+  setEndpoint: 'admin',
   voiceDownload: 'admin',
   voiceCancelDownload: 'admin',
   voiceRemoveModel: 'admin',

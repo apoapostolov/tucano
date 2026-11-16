@@ -31,7 +31,7 @@ const arm = async (): Promise<Rig> => {
   const settings = {
     workspaceName: 'Ana',
     context: '',
-    engines: { claude: { installed: true, loggedIn: true }, codex: { installed: true, loggedIn: true }, opencode: { installed: true, loggedIn: true }, pi: { installed: true, loggedIn: true }, antigravity: { installed: true, loggedIn: true }, cursor: { installed: true, loggedIn: true }, grok: { installed: true, loggedIn: true }, cline: { installed: true, loggedIn: true }, hermes: { installed: true, loggedIn: true } },
+    engines: { claude: { installed: true, loggedIn: true }, codex: { installed: true, loggedIn: true }, opencode: { installed: true, loggedIn: true }, pi: { installed: true, loggedIn: true }, antigravity: { installed: true, loggedIn: true }, cursor: { installed: true, loggedIn: true }, grok: { installed: true, loggedIn: true }, cline: { installed: true, loggedIn: true }, hermes: { installed: true, loggedIn: true }, endpoint: { installed: true, loggedIn: true } },
     routerModel: 'haiku',
     memoryModel: 'haiku',
     memory: 'off',
@@ -45,7 +45,7 @@ const arm = async (): Promise<Rig> => {
         return reply
       }
     })
-  const engines = (): Record<EngineId, Engine> => ({ claude: one('claude'), codex: one('codex'), opencode: one('opencode'), pi: one('pi'), antigravity: one('antigravity'), cursor: one('cursor'), grok: one('grok'), cline: one('cline'), hermes: one('hermes') })
+  const engines = (): Record<EngineId, Engine> => ({ claude: one('claude'), codex: one('codex'), opencode: one('opencode'), pi: one('pi'), antigravity: one('antigravity'), cursor: one('cursor'), grok: one('grok'), cline: one('cline'), hermes: one('hermes'), endpoint: one('endpoint') })
   db.saveAgent({ id: 'lia', name: 'Lia', handle: 'lia', role: '', color: 'sky', instructions: '', modelId: 'sonnet', effort: 'low', limit: 10_000_000, used: 0, grants: {}, memory: 'auto', computer: false, archived: false })
   db.createConversation({ id: 'dm', kind: 'dm', name: 'lia', members: ['lia'], owner: db.ownerId() })
   const gateway = new Gateway()
