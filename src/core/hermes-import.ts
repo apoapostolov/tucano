@@ -13,14 +13,20 @@
 //   memories/USER.md            what it knows about the person, the same way
 //   skills/<name>/SKILL.md      and skills/<category>/<name>/SKILL.md; dot folders (.hub,
 //                               .archive…) are Hermes's own, and the ones in .bundled_manifest
-//                               came with Hermes, not from the person
+//                               came with Hermes, not from the person, unless they edited one:
+//                               its v2 line keeps the folder's MD5 from when Hermes put it there
+//                               (tools/skills_sync.py dir_hash), and only then are that skill's
+//                               own files opened, to hash them (never a credential's name)
 //   cron/jobs.json              { jobs: [{ name, prompt, schedule: { kind: once|interval|cron,
 //                               run_at | minutes | expr }, timezone?, no_agent?, script? }] }
 //   config.yaml                 model, agent.reasoning_effort, mcp_servers, platforms (gateways)
+//   gateway_state.json          what the gateway wrote when it last ran; only its platforms' names
+//                               are taken (a gateway set up in .env alone shows only here)
 //   profiles/<name>/            each one the same layout again: one more agent
-import { lstatSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { lstatSync, readdirSync, readFileSync, realpathSync, statSync, type Stats } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename, dirname, join, resolve, sep } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { L } from '../shared/lang'
 import { customModel, type Effort, type Schedule } from '../shared/types'
@@ -37,7 +43,7 @@ const ENTRY = '\n§\n' // Hermes's memory entries
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6]
 
 // The only files read, relative to a profile's folder. Skills are read as <dir>/SKILL.md under skills/.
-const ALLOWED = new Set(['SOUL.md', 'config.yaml', 'memories/MEMORY.md', 'memories/USER.md', 'cron/jobs.json', 'skills/.bundled_manifest'])
+const ALLOWED = new Set(['SOUL.md', 'config.yaml', 'memories/MEMORY.md', 'memories/USER.md', 'cron/jobs.json', 'skills/.bundled_manifest', 'gateway_state.json'])
 
 // Where Hermes lives when the person doesn't say: $HERMES_HOME (a profile's folder points back to
 // its root, profiles/<name> → the folder above) or ~/.hermes.
@@ -51,6 +57,10 @@ export function hermesRoot(env: NodeJS.ProcessEnv = process.env, home = homedir(
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {})
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : [])
 const str = (v: unknown, max = 10_000): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+const uniq = (xs: string[]): string[] => [...new Set(xs)]
+// Hermes's is_truthy_value / _bool_token (utils.py, gateway/config.py): a bool, a number, or 1/true/yes/on.
+const truthy = (v: unknown): boolean => (typeof v === 'string' ? ['1', 'true', 'yes', 'on'].includes(v.trim().toLowerCase()) : !!v)
+const falsy = (v: unknown): boolean => (typeof v === 'string' ? ['0', 'false', 'no', 'off'].includes(v.trim().toLowerCase()) : v === false || v === 0)
 
 export interface HermesReadOpts {
   // Every file opened, for the tests that prove .env and auth.json never are.
@@ -58,20 +68,29 @@ export interface HermesReadOpts {
   now?: number
 }
 
-// A reader confined to one folder: only regular files, only inside it (a link out isn't followed).
+// A reader confined to one folder: only regular files and folders, never through a link. Hermes
+// makes none in its folder, so a link (out of it, or to .env, auth.json, sessions/ inside it) isn't
+// followed. Only the folder itself may be a link (~/.hermes -> elsewhere).
 function reader(root: string, opts: HermesReadOpts) {
   const real = realpathSync(root)
-  const within = (p: string): boolean => {
-    try {
-      const r = realpathSync(p)
-      return r === real || r.startsWith(real + sep)
-    } catch {
-      return false
+  const base = resolve(root)
+  // What p is, without following a link at any step below the folder; undefined when not plain.
+  const plain = (p: string): Stats | undefined => {
+    const rel = relative(base, resolve(p))
+    if (rel === '') return statSync(real)
+    if (isAbsolute(rel) || rel === '..' || rel.startsWith('..' + sep)) return undefined
+    let here = real
+    let st: Stats | undefined
+    for (const part of rel.split(sep)) {
+      here = join(here, part)
+      st = lstatSync(here)
+      if (!st.isFile() && !st.isDirectory()) return undefined
     }
+    return st
   }
   const isDir = (p: string): boolean => {
     try {
-      return within(p) && statSync(p).isDirectory()
+      return !!plain(p)?.isDirectory()
     } catch {
       return false
     }
@@ -84,9 +103,8 @@ function reader(root: string, opts: HermesReadOpts) {
       return undefined
     }
     try {
-      if (!within(p)) return null
-      const st = statSync(p)
-      if (!st.isFile() || st.size > max) return null
+      const st = plain(p)
+      if (!st?.isFile() || st.size > max) return null
       opts.onRead?.(p)
       return readFileSync(p, 'utf8').replace(/^﻿/, '')
     } catch {
@@ -110,7 +128,34 @@ function reader(root: string, opts: HermesReadOpts) {
       return []
     }
   }
-  return { real, text, list, isDir, exists }
+  // Every name in a folder, dot ones too (for a skill's hash).
+  const all = (p: string): string[] => {
+    if (!isDir(p)) return []
+    try {
+      return readdirSync(p)
+    } catch {
+      return []
+    }
+  }
+  // The bytes of a regular file inside the folder, or undefined.
+  const bytes = (p: string, max: number): Buffer | undefined => {
+    try {
+      const st = plain(p)
+      if (!st?.isFile() || st.size > max) return undefined
+      opts.onRead?.(p)
+      return readFileSync(p)
+    } catch {
+      return undefined
+    }
+  }
+  const isFile = (p: string): boolean => {
+    try {
+      return !!plain(p)?.isFile()
+    } catch {
+      return false
+    }
+  }
+  return { real, text, list, isDir, exists, all, bytes, isFile }
 }
 type Reader = ReturnType<typeof reader>
 
@@ -122,9 +167,30 @@ const allowed = (r: Reader, dir: string, file: string, max?: number): string | u
 
 // ---------- the parts of one profile ----------
 
-// SOUL.md, unless it's only the comment scaffold old installers wrote (it carries nothing).
+// The SOUL.md texts Hermes writes by itself, with no word from the person (hermes_cli/default_soul.py):
+// DEFAULT_SOUL_MD, seeded on the first run and by `hermes profile create`, its "--" variant
+// (install.ps1), and _LEGACY_TEMPLATE_SOULS (the comment scaffolds and the previous default).
+const H_DEFAULT =
+  'You are Hermes Agent, built by Nous Research. Be direct: match the length of your reply to the weight of the ask \u2014 a one-line question gets a one-line answer, and finished work gets a short report of what changed, what\'s verified, and what\'s left, never a replay of the process. No filler ("Great question," "I\'d be happy to"), no restating the request back, no re-summarizing what you already said, no narrating tool calls the user can see. Plain claims over adjectives; when unsure, say so plainly. Agree because it\'s right, not because the user said it. Depth is earned \u2014 give it when the user asks for detail, teaches, or the stakes demand it, not by default.'
+const H_HEAD = "# Hermes Agent Persona\n\n<!--\nThis file defines the agent's personality and tone.\nThe agent will embody whatever you write here.\nEdit this to customize how Hermes communicates with you.\n\n"
+const H_TAIL = 'This file is loaded fresh each message -- no restart needed.\nDelete the contents (or this file) to use the default personality.\n-->'
+// Hermes's _normalize_soul: line endings unified, no BOM, trimmed.
+const normalSoul = (t: string): string => t.replace(/\r\n?/g, '\n').replace(/^\uFEFF/, '').trim()
+const SEEDED_SOULS = new Set(
+  [
+    H_DEFAULT,
+    H_DEFAULT.split('\u2014').join('--'),
+    H_HEAD + 'Examples:\n  - "You are a warm, playful assistant who uses kaomoji occasionally."\n  - "You are a concise technical expert. No fluff, just facts."\n  - "You speak like a friendly coworker who happens to know everything."\n\n' + H_TAIL,
+    H_HEAD + H_TAIL,
+    'You are Hermes Agent, an intelligent AI assistant created by Nous Research. You are helpful, knowledgeable, and direct. You assist users with a wide range of tasks including answering questions, writing and editing code, analyzing information, creative work, and executing actions via your tools. You communicate clearly, admit uncertainty when appropriate, and prioritize being genuinely useful over being verbose unless otherwise directed below. Be targeted and efficient in your exploration and investigations.'
+  ].map(normalSoul)
+)
+
+// SOUL.md, unless Hermes wrote it by itself (it carries nothing of the person): one of the texts it
+// seeds, or only a comment scaffold.
 function soulOf(text: string): string {
-  const t = text.replace(/\r\n?/g, '\n').trim()
+  const t = normalSoul(text)
+  if (SEEDED_SOULS.has(t)) return ''
   const bare = t.replace(/<!--[\s\S]*?-->/g, '').replace(/^#\s*Hermes Agent Persona\s*$/m, '').trim()
   return bare ? t : ''
 }
@@ -159,15 +225,72 @@ function memoriesOf(text: string | undefined | null, which: 'agent' | 'user', no
   return fit.slice(0, IMPORT_CAPS.memories)
 }
 
-// The names of the skills that came with Hermes (v2 "name:hash" lines, v1 a name alone).
-function bundled(r: Reader, dir: string): Set<string> {
+// The skills that came with Hermes, by name, with the hash of the folder Hermes put there (v2
+// "name:hash" lines; v1, a name alone, has none: '').
+function bundled(r: Reader, dir: string): Map<string, string> {
   const t = allowed(r, dir, 'skills/.bundled_manifest')
-  return new Set(
-    (t || '')
-      .split(/\r?\n/)
-      .map((l) => l.split(':')[0]!.trim())
-      .filter(Boolean)
-  )
+  const out = new Map<string, string>()
+  for (const line of (t || '').split(/\r?\n/)) {
+    const l = line.trim()
+    if (!l) continue
+    const i = l.indexOf(':')
+    const name = (i < 0 ? l : l.slice(0, i)).trim()
+    if (name) out.set(name, i < 0 ? '' : l.slice(i + 1).trim())
+  }
+  return out
+}
+
+// Hermes's dir_hash (tools/skills_sync.py): MD5 over every file under the skill's folder, sorted
+// by path parts, each as its relative path then its bytes, leaving out runtime caches
+// (__pycache__ and the like, a .pyc beside its .py). The legacy form keeps the caches.
+const CACHE_DIRS = new Set(['__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache'])
+const SECRET_NAME = /^(\.env(\..*)?|auth\.json|.*\.(pem|key))$/i
+const HASH_FILES = 300
+const HASH_BYTES = 5_000_000
+const cmpParts = (a: string[], b: string[]): number => {
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i]! < b[i]! ? -1 : 1
+  return a.length - b.length
+}
+
+// Whether a skill that came with Hermes is still as Hermes put it. undefined: can't tell (too big, a
+// link out, a credential's name in it): the caller keeps it out, as before.
+function unchanged(r: Reader, folder: string, origin: string): boolean | undefined {
+  const files: string[][] = []
+  const walk = (parts: string[]): boolean => {
+    if (parts.length > 6) return false
+    for (const n of r.all(join(folder, ...parts))) {
+      const here = [...parts, n]
+      const p = join(folder, ...here)
+      if (r.isDir(p)) {
+        if (!walk(here)) return false
+      } else if (r.isFile(p)) {
+        files.push(here)
+        if (files.length > HASH_FILES) return false
+      } else if (r.exists(p)) return false // a link out, or something else: can't prove it
+    }
+    return true
+  }
+  if (!walk([])) return undefined
+  files.sort(cmpParts)
+  // A credential's name never ships with a skill: it was put there, so it's not as it came.
+  if (files.some((f) => SECRET_NAME.test(f[f.length - 1]!))) return false
+  const isCache = (f: string[]): boolean => {
+    if (f.slice(0, -1).some((x) => CACHE_DIRS.has(x))) return true
+    const last = f[f.length - 1]!
+    return /\.py[co]$/.test(last) && files.some((g) => g.length === f.length && g.slice(0, -1).join(sep) === f.slice(0, -1).join(sep) && g[g.length - 1] === last.slice(0, -1))
+  }
+  const clean = createHash('md5')
+  const legacy = createHash('md5')
+  let total = 0
+  for (const f of files) {
+    const b = r.bytes(join(folder, ...f), HASH_BYTES - total)
+    if (!b) return undefined
+    total += b.length
+    const rel = Buffer.from(f.join(sep), 'utf8')
+    legacy.update(rel).update(b)
+    if (!isCache(f)) clean.update(rel).update(b)
+  }
+  return clean.digest('hex') === origin || legacy.digest('hex') === origin
 }
 
 const countFiles = (r: Reader, dir: string, depth = 0): number =>
@@ -187,25 +310,42 @@ function skillDirs(r: Reader, root: string): string[] {
   })
 }
 
+// Only what's needed is opened: once 20 skills are in, the rest are counted by their folder,
+// unopened (one that came with Hermes is told by its folder's name then, and counted as such).
 function skillsOf(r: Reader, dir: string, notes: string[]): { skills: ForeignSkill[]; stock: number } {
   const root = join(dir, 'skills')
   const stock = bundled(r, dir)
   const mine: { folder: string; text: string | null }[] = []
   let came = 0
+  let beyond = 0
+  // A skill that came with Hermes stays out, unless its folder isn't as Hermes put it.
+  const stays = (folder: string, name: string): boolean => {
+    const origin = stock.get(name)
+    if (!origin) return true // v1 line: no hash to tell
+    return unchanged(r, folder, origin) !== false
+  }
   for (const folder of skillDirs(r, root)) {
+    const full = mine.length >= IMPORT_CAPS.skills
+    const byFolder = stock.has(basename(folder))
+    if (full) {
+      if (byFolder) came++
+      else beyond++
+      continue
+    }
+    if (byFolder && stays(folder, basename(folder))) {
+      came++
+      continue
+    }
     const text = r.text(join(folder, 'SKILL.md')) ?? null
     const fm = text ? frontmatter(text) : undefined
-    if (stock.has(basename(folder)) || (fm?.name && stock.has(fm.name))) {
+    if (!byFolder && fm?.name && stock.has(fm.name) && stays(folder, fm.name)) {
       came++
       continue
     }
     mine.push({ folder, text })
   }
-  if (mine.length > IMPORT_CAPS.skills) {
-    const n = mine.length - IMPORT_CAPS.skills
-    notes.push(L(`${n} skill${n > 1 ? 's' : ''} além de ${IMPORT_CAPS.skills}`, `${n} skill${n > 1 ? 's' : ''} beyond ${IMPORT_CAPS.skills}`))
-  }
-  const skills = mine.slice(0, IMPORT_CAPS.skills).flatMap(({ folder, text }) => {
+  if (beyond) notes.push(L(`${beyond} skill${beyond > 1 ? 's' : ''} além de ${IMPORT_CAPS.skills}`, `${beyond} skill${beyond > 1 ? 's' : ''} beyond ${IMPORT_CAPS.skills}`))
+  const skills = mine.flatMap(({ folder, text }) => {
     const where = basename(folder)
     if (!text) {
       notes.push(L(`a skill ${where} (grande demais ou ilegível)`, `the ${where} skill (too big or unreadable)`))
@@ -321,28 +461,42 @@ const PLATFORMS: Record<string, string> = {
 interface Config {
   servers: string[]
   gateways: string[]
+  off: string[] // platforms config.yaml turns off by name: an older gateway_state.json doesn't bring them back
   model?: { provider: string; model: string }
   effort?: Effort
 }
 
 function configOf(r: Reader, dir: string, notes: string[]): Config {
   const raw = allowed(r, dir, 'config.yaml')
-  if (raw === undefined) return { servers: [], gateways: [] }
+  if (raw === undefined) return { servers: [], gateways: [], off: [] }
   let c: Record<string, unknown>
   try {
     if (raw === null) throw new Error()
     c = obj(parseYaml(raw, { maxAliasCount: 100 }))
   } catch {
     notes.push(L('as configurações (config.yaml grande demais ou ilegível)', 'the settings (config.yaml too big or unreadable)'))
-    return { servers: [], gateways: [] }
+    return { servers: [], gateways: [], off: [] }
   }
-  // Names only: nothing of a server's command, URL or env is kept.
-  const servers = Object.entries(obj(c['mcp_servers']))
-    .filter(([, v]) => obj(v)['enabled'] !== false && obj(v)['disabled'] !== true)
-    .map(([k]) => k.slice(0, 128))
-  // A platform block may sit in platforms:, gateway.platforms: or at the top, by its name.
-  const blocks = { ...obj(obj(c['gateway'])['platforms']), ...obj(c['platforms']), ...Object.fromEntries(Object.keys(PLATFORMS).filter((k) => k in c).map((k) => [k, c[k]])) }
-  const gateways = [...new Set(Object.entries(blocks).filter(([k, v]) => PLATFORMS[k] && obj(v)['enabled'] !== false).map(([k]) => PLATFORMS[k]!))]
+  // Names only: nothing of a server's command, URL or env is kept. One turned off in Hermes (hermes
+  // mcp add saves it so when its connection test fails) is said, not dropped without a word.
+  const all = Object.entries(obj(c['mcp_servers'])).map(([k, v]) => [k.slice(0, 128), falsy(obj(v)['enabled']) || truthy(obj(v)['disabled'])] as const)
+  const servers = all.filter(([, off]) => !off).map(([k]) => k)
+  const off = all.filter(([, off]) => off).map(([k]) => k)
+  if (off.length) notes.push(L(`os servidores MCP desligados no Hermes: ${off.slice(0, 10).join(', ')}${off.length > 10 ? ` e mais ${off.length - 10}` : ''}`, `the MCP servers turned off in Hermes: ${off.slice(0, 10).join(', ')}${off.length > 10 ? ` and ${off.length - 10} more` : ''}`))
+  // Where Hermes reads a platform block (gateway/config_loader.py merge_platform_sections), later
+  // winning: gateway.platforms, platforms, then gateway.<platform>. A block at the top, by its name,
+  // wins over them all when it has `enabled` (bridge_platform_shared_keys); without it, it is only
+  // settings (discord.require_mention…). With no `enabled` anywhere, Hermes keeps it off.
+  const gw = obj(c['gateway'])
+  const on = new Map<string, boolean>()
+  for (const source of [obj(gw['platforms']), obj(c['platforms']), Object.fromEntries(Object.entries(gw).filter(([k]) => k !== 'platforms' && PLATFORMS[k]))])
+    for (const [k, v] of Object.entries(source)) if (PLATFORMS[k] && v && typeof v === 'object' && 'enabled' in obj(v)) on.set(k, truthy(obj(v)['enabled']))
+  for (const k of Object.keys(PLATFORMS)) {
+    const top = c[k]
+    if (top && typeof top === 'object' && !Array.isArray(top) && 'enabled' in obj(top)) on.set(k, truthy(obj(top)['enabled']))
+  }
+  const gateways = [...new Set([...on].filter(([, yes]) => yes).map(([k]) => PLATFORMS[k]!))]
+  const offNames = [...new Set([...on].filter(([, yes]) => !yes).map(([k]) => PLATFORMS[k]!))].filter((n) => !gateways.includes(n))
   const m = c['model']
   const mo = obj(m)
   const model = typeof m === 'string' ? str(m, 256) : str(mo['default'], 256) || str(mo['model'], 256)
@@ -350,8 +504,30 @@ function configOf(r: Reader, dir: string, notes: string[]): Config {
   const re = obj(c['agent'])['reasoning_effort']
   const e = typeof re === 'string' ? re : str(obj(re)['effort'], 32)
   const effort: Effort | undefined = e === 'xhigh' ? 'xhigh' : e === 'high' ? 'high' : e === 'medium' ? 'medium' : e === 'low' || e === 'minimal' || e === 'none' ? 'low' : undefined
-  return { servers, gateways, ...(model ? { model: { provider, model } } : {}), ...(effort ? { effort } : {}) }
+  return { servers, gateways, off: offNames, ...(model ? { model: { provider, model } } : {}), ...(effort ? { effort } : {}) }
 }
+
+// The platforms in the gateway_state.json the gateway writes as it runs: { platforms: { telegram: {…},
+// "<profile>:discord": {…} } } (gateway/status.py write_runtime_status; the second form when one
+// gateway serves many profiles, gateway/run_adapters_recovery.py). Only the names are taken, less
+// the ones it stood down (state "disabled"); it's a hint, so one that can't be read is nothing.
+function gatewayState(r: Reader, dir: string): string[] {
+  const raw = allowed(r, dir, 'gateway_state.json')
+  if (!raw) return []
+  try {
+    return Object.entries(obj(obj(JSON.parse(raw))['platforms'])).filter(([, v]) => obj(v)['state'] !== 'disabled').map(([k]) => k).slice(0, 200)
+  } catch {
+    return []
+  }
+}
+
+// The ones of a profile: bare in its own folder's file, "<profile>:<platform>" in the root's.
+const statePlatforms = (keys: string[], profile?: string): string[] =>
+  keys.flatMap((k) => {
+    const i = k.indexOf(':')
+    const name = i < 0 ? (profile ? undefined : k) : profile && k.slice(0, i) === profile ? k.slice(i + 1) : undefined
+    return name && PLATFORMS[name] ? [PLATFORMS[name]!] : []
+  })
 
 // ---------- one profile, the whole folder ----------
 
@@ -368,7 +544,7 @@ const titled = (key: string): string => {
   return words ? words[0]!.toUpperCase() + words.slice(1) : key
 }
 
-function readProfile(r: Reader, dir: string, key: string, now: number): HermesProfileRead {
+function readProfile(r: Reader, dir: string, key: string, now: number, running: string[] = []): HermesProfileRead {
   const notes: string[] = []
   const soulText = allowed(r, dir, 'SOUL.md')
   if (soulText === null) notes.push(L('o SOUL.md (grande demais ou ilegível)', 'SOUL.md (too big or unreadable)'))
@@ -377,9 +553,10 @@ function readProfile(r: Reader, dir: string, key: string, now: number): HermesPr
   const memories = memoriesOf(allowed(r, dir, 'memories/MEMORY.md'), 'agent', notes)
   const userMemories = memoriesOf(allowed(r, dir, 'memories/USER.md'), 'user', notes)
   const { skills, stock } = skillsOf(r, dir, notes)
-  if (stock) notes.push(L(`${stock} skill${stock > 1 ? 's' : ''} que já ${stock > 1 ? 'vêm' : 'vem'} com o Hermes (não são suas)`, `${stock} skill${stock > 1 ? 's' : ''} that come${stock > 1 ? '' : 's'} with Hermes (not yours)`))
+  if (stock) notes.push(L(`${stock} skill${stock > 1 ? 's' : ''} que já ${stock > 1 ? 'vêm' : 'vem'} com o Hermes, sem mudança (não ${stock > 1 ? 'são suas' : 'é sua'})`, `${stock} skill${stock > 1 ? 's' : ''} that come${stock > 1 ? '' : 's'} with Hermes, unchanged (not yours)`))
   const { routines, asNames } = routinesOf(r, dir, now, notes)
   const config = configOf(r, dir, notes)
+  config.gateways = uniq([...config.gateways, ...running.filter((n) => !config.off.includes(n))])
   // The same model on the Hermes engine here, when its provider is named; else this app's default.
   const m = config.model
   const modelId = m && m.provider && m.provider !== 'auto' ? customModel('hermes', `${m.provider}/${m.model}`) : undefined
@@ -394,8 +571,21 @@ function readProfile(r: Reader, dir: string, key: string, now: number): HermesPr
   }
 }
 
-const hasAny = (r: Reader, dir: string): boolean =>
-  ['SOUL.md', 'config.yaml', 'memories/MEMORY.md', 'memories/USER.md', 'cron/jobs.json'].some((f) => allowed(r, dir, f) !== undefined) || r.isDir(join(dir, 'skills'))
+// A folder is Hermes's only by a sign Hermes leaves and others don't: the SOUL.md it writes on its
+// first run, its memory files, its skills manifest, its state.db (only there, never opened), or a
+// config.yaml with its `_config_version`. A config.yaml or a skills/ alone (~/.claude, any
+// project) is not enough.
+const isHermes = (r: Reader, dir: string): boolean => {
+  if (['SOUL.md', 'memories/MEMORY.md', 'memories/USER.md', 'skills/.bundled_manifest'].some((f) => allowed(r, dir, f) !== undefined)) return true
+  if (r.exists(join(dir, 'state.db'))) return true
+  const c = allowed(r, dir, 'config.yaml')
+  if (!c) return false
+  try {
+    return '_config_version' in obj(parseYaml(c, { maxAliasCount: 100 }))
+  } catch {
+    return false
+  }
+}
 
 export interface HermesRead {
   path: string
@@ -416,19 +606,21 @@ export function readHermes(path: string, opts: HermesReadOpts = {}): HermesRead 
   const now = opts.now ?? Date.now()
   const profiles: HermesProfileRead[] = []
   const notes: string[] = []
-  if (hasAny(r, root)) profiles.push(readProfile(r, root, 'default', now))
-  const names = r.list(join(root, 'profiles')).filter((n) => PROFILE.test(n) && r.isDir(join(root, 'profiles', n)) && hasAny(r, join(root, 'profiles', n)))
+  const rootState = gatewayState(r, root)
+  if (isHermes(r, root)) profiles.push(readProfile(r, root, 'default', now, statePlatforms(rootState)))
+  const names = r.list(join(root, 'profiles')).filter((n) => PROFILE.test(n) && r.isDir(join(root, 'profiles', n)) && isHermes(r, join(root, 'profiles', n)))
   const room = IMPORT_CAPS.agents - profiles.length
-  for (const n of names.slice(0, room)) profiles.push(readProfile(r, join(root, 'profiles', n), n, now))
+  for (const n of names.slice(0, room)) {
+    const dir = join(root, 'profiles', n)
+    profiles.push(readProfile(r, dir, n, now, [...statePlatforms(rootState, n), ...statePlatforms(gatewayState(r, dir))]))
+  }
   const over = names.length - room
   if (over > 0) notes.push(L(`${over} perfi${over > 1 ? 's' : 'l'} além de ${IMPORT_CAPS.agents}`, `${over} profile${over > 1 ? 's' : ''} beyond ${IMPORT_CAPS.agents}`))
-  if (!profiles.length) throw new Error(L(`${root} não parece uma pasta do Hermes: não tem SOUL.md, memórias, skills, tarefas agendadas nem config.yaml.`, `${root} doesn't look like a Hermes folder: it has no SOUL.md, memories, skills, scheduled jobs or config.yaml.`))
+  if (!profiles.length) throw new Error(L(`${root} não parece uma pasta do Hermes: não tem SOUL.md, memórias, a lista de skills do Hermes nem um config.yaml do Hermes.`, `${root} doesn't look like a Hermes folder: it has no SOUL.md, memories, Hermes's skills list or a Hermes config.yaml.`))
   // What never comes, said once.
   if (r.isDir(join(root, 'sessions')) || r.exists(join(root, 'state.db'))) notes.push(L('as conversas e o histórico (sessions, state.db)', 'the conversations and history (sessions, state.db)'))
   return { path: r.real, profiles, notes }
 }
-
-const uniq = (xs: string[]): string[] => [...new Set(xs)]
 
 export function hermesPreview(read: HermesRead): HermesPreview {
   const all = read.profiles
@@ -442,13 +634,21 @@ export function hermesPreview(read: HermesRead): HermesPreview {
   }
 }
 
+// Where Hermes chatted: only the ones it had, and Telegram's place here only when Telegram was one.
+export function gatewaysNote(gateways: string[]): string {
+  const list = gateways.join(', ')
+  return gateways.includes('Telegram')
+    ? L(`onde o Hermes conversava (${list}): não vem; aqui, o Telegram se liga em Configurações`, `where Hermes chatted (${list}): it doesn't come; here, Telegram is turned on in Settings`)
+    : L(`onde o Hermes conversava (${list}): não vem`, `where Hermes chatted (${list}): it doesn't come`)
+}
+
 // The chosen profiles (by key; none chosen: all) as a team for applyForeignTeam.
 export function hermesTeam(read: HermesRead, keys: string[]): ForeignTeam {
   const chosen = keys.length ? read.profiles.filter((p) => keys.includes(p.meta.key)) : read.profiles
   if (!chosen.length) throw new Error(L('Escolha pelo menos um perfil do Hermes.', 'Choose at least one Hermes profile.'))
   const gateways = uniq(chosen.flatMap((p) => p.config.gateways))
   const notes = [...read.notes]
-  if (gateways.length) notes.push(L(`onde o Hermes conversava (${gateways.join(', ')}): não vem; aqui, o Telegram se liga em Configurações`, `where Hermes chatted (${gateways.join(', ')}): it doesn't come; here, Telegram is turned on in Settings`))
+  if (gateways.length) notes.push(gatewaysNote(gateways))
   return {
     source: 'Hermes',
     agents: chosen.map((p) => ({ ...p.agent, userMemories: p.userMemories })),
