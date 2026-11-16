@@ -802,10 +802,7 @@ other half, and they belong to the same session.
 | --- | --- | --- |
 | Settings organization and maintained placement rules | | 446 |
 | English labels and hints across Settings and Wiki | 409 | 410 |
-| Skills: filter and group an agent's tab | 228 | 244 |
 | Skills: read a Hermes library as it is | 102 | 311 |
-| Bound large skill comparison memory and render work | 454 | 468 |
-| Extract Skills components without changing behavior or copy | 454 | 472 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
 | Thinking streamed as dim live text | 235, 452 | 245 |
@@ -823,14 +820,12 @@ other half, and they belong to the same session.
 | Work drawer above the field | 287 | 288 |
 | Follow up a finished reply | 337 | 338 |
 | Try again in a direction you write | 320 | 321 |
-| Kill and restart in the middle of a reply (check) | 390 | 402 |
 | Resume interrupted replies after a restart | 389 | 391 |
 | Keep an older retry within its original conversation context | 389 | 471 |
 | Steps: all, the latest few, or an expandable line | 314 | 322 |
 | Steps: fold them from the line beside them | 326 | 327 |
 | Steps: remember them folded | 328 | 329 |
 | Steer a working reply from the bottom of its steps | 331 | 332 |
-| Reply in thread stays in the corner while steps scroll | 270 | 275 |
 | Channels: mention mode | 269 | 272 |
 | Team-ups: an agent calls one outside the room | 273 | 274 |
 | Channels: Jev's listen mode | 278 | 279 |
@@ -844,26 +839,17 @@ other half, and they belong to the same session.
 | Wiki: hand orphan pages to an agent | 256 | 259 |
 | Wiki: a resolver for findings the review can't settle | 267 | 268 |
 | Wiki: a tool card with a level that writes pages | 354 | 355 |
-| Wiki: recheck permissions during running replies | | 373 |
-| Wiki: a date that opens a sentence is not a page | | 392 |
-| Wiki: the map fitted to the window it mounted in | 418 | 419 |
-| The toast in the app's orange, in both themes | 421 | 422 |
 | Usage and limits: the quota each provider has left | 304, 309 | 305 |
 | Right-click a picture: save, copy, back in the prompt | 335 | 336 |
 | A reply's pictures as one album | 302 | 303 |
 | A connector wears the picture you give it | | 353 |
 | A routine with nothing to report says nothing | 365 | 366 |
-| Memory: the bot tabs stay inside the bar | 396 | 397 |
 | Times as a 12-hour or a 24-hour clock | 393 | 395 |
-| Isolated UI checks without taking focus | | 372 |
 | Notifications over every window | | 417 |
-| Emit fake sign-in output before resolving the exit | | 386 |
 | Reply to a message, and to the selected excerpt with ⌘L | 407 | 411 |
-| A hand-off answer comes back however the reply ends | 376 | 377 |
 | Delete a session from the room, in two presses | 374 | 375 |
 | Keep a conversation only as long as its period says, and wipe a bot's history | 431 | 432 |
 | Give the file its space back, and say whether it is sound | 433 | 437 |
-| Core boot test budgets, pending evidence review | | 445 |
 | Control room visibility and cross-room agent read access | 423 | 424 |
 | Per-bot initiative and bounded responsibilities | 434 | 435 |
 
