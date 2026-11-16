@@ -59,6 +59,11 @@ describe('a prompt of mine, edited where it stands', () => {
     expect(pencil()).toBeTruthy()
     expect(pencil()!.closest('.msg')!.getAttribute('data-id')).toBe('m1')
     expect(pencil()!.getAttribute('title')).toBe('Editar este pedido')
+    // It wears the same box as the glyphs beside it — the thread button and the trash are 20 px icons —
+    // so it stands in their column and fans out with them instead of reading as a smaller glyph out of
+    // line (the geometry is pinned in test/prompt-glyphs-column.test.ts).
+    expect(pencil()!.className).toContain('icon-btn')
+    expect(pencil()!.className).toContain('icon-btn--sm')
     // One pencil for the one prompt in the room: the reply above has none, and nothing else offers one.
     expect(document.querySelectorAll('.msg__edit')).toHaveLength(1)
     // While the words stand as words, there is no field.

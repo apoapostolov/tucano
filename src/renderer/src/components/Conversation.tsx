@@ -855,7 +855,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, away }:
         {mineToEdit && !editing && (
           <>
             <button
-              className="msg__edit"
+              className="icon-btn icon-btn--sm msg__edit"
               title={L('Editar este pedido', "Edit prompt")}
               aria-label={L('Editar este pedido', "Edit prompt")}
               onClick={() => {
