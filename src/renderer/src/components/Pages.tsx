@@ -4058,8 +4058,10 @@ export function SettingsPage(): ReactNode {
       {defaultWorkspace ? <PhoneCard info={settings.telegram} /> : <WorkspaceTelegramNotice />}</>
     ),
     'connections-servers': (
-      <ServersCard />
-      <NodeCard />
+      <>
+        <ServersCard />
+        <NodeCard />
+      </>
     )
   }
   return (

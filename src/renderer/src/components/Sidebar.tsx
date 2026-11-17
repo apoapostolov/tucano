@@ -215,6 +215,7 @@ export function Sidebar(): ReactNode {
   const navRows: { id: string; item: ReactNode }[] = [
     ...(showAsks ? [{ id: 'asks', item: <NavItem view={{ kind: 'asks' }} icon="ask" label={L('Perguntas', 'Asks')} badge={asks} /> }] : []),
     ...(showApprovals ? [{ id: 'approvals', item: <NavItem view={{ kind: 'approvals' }} icon="shield" label={team ? L('Pra você', 'For you') : L('Aprovações', 'Approvals')} badge={pending} /> }] : []),
+    ...(agents.some(isTeam) && parts.shows('board') ? [{ id: 'board', item: <NavItem view={{ kind: 'board' }} icon="board" label={L('Quadro', 'Board')} fresh={fresh('board')} /> }] : []),
     ...(parts.shows('memory') || suggestions > 0 ? [{ id: 'memory', item: <NavItem view={{ kind: 'memory' }} icon="book" label={L('Memória', 'Memory')} badge={suggestions} fresh={fresh('memory')} /> }] : []),
     ...(parts.shows('wiki') ? [{ id: 'wiki', item: <NavItem view={{ kind: 'wiki' }} icon="layers" label="Wiki" fresh={fresh('wiki')} /> }] : []),
     ...(parts.shows('routines') ? [{ id: 'routines', item: <NavItem view={{ kind: 'routines' }} icon="clock" label={L('Rotinas', 'Routines')} fresh={fresh('routines')} /> }] : []),

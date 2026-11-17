@@ -5,6 +5,8 @@ import { setTimeout as sleep } from 'node:timers/promises'
 import { SILENT } from '../../shared/silent'
 import { QUIET_MARKER } from '../../shared/initiative'
 import { memorySystem } from '../memory'
+import { titleSystem } from '../titles'
+import { shortTitle } from '../../shared/titles'
 import { curatorSystem } from '../wiki-curator'
 import { resolverSystem } from '../wiki-resolver'
 import { handoffSystem, routerSystem } from '../router'
@@ -49,6 +51,9 @@ export function fakeEngine(id: Engine['id'], opts: { delayMs?: number; reply?: (
         reply = JSON.stringify(fakeHandoff(turn.prompt))
       } else if (turn.system === memorySystem()) {
         reply = JSON.stringify(fakeConsolidation(turn.prompt))
+      } else if (turn.system === titleSystem()) {
+        // A request's title: its own words, short (the real one is a cheap model's).
+        reply = shortTitle(turn.prompt.split('\n').filter((l) => !/^(?:demore|pergunte|delegue|me ajuda a decidir)/i.test(l.trim())).join('\n'), 40)
       } else if (turn.system === curatorSystem()) {
         reply = JSON.stringify(fakeCuration(turn.prompt))
       } else if (turn.system === resolverSystem()) {

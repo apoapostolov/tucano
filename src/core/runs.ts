@@ -9,10 +9,8 @@ import { friendly, toolLabel } from '../shared/errors'
 import { NODE_APPROVED, NODE_BASH } from './node-server'
 import { nodeOf } from '../shared/node-link'
 import type { CoreEvent } from '../shared/rpc'
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type InitiativeRun, type SendMode, type Settings, type Step, type StepStatus, delegating, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isTeam } from '../shared/types'
 import { ErrorCode, McpError, type CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, RUN_STALL_MINUTES, chainDepthCap, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { decideRoute, readPrompt, unavailableTrace } from './model-routing'
@@ -23,9 +21,8 @@ import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './app
 import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, stepFor, type Computers } from './computer'
 import { extractFile } from './wiki-extract'
 import { BUSCAR_NA_WEB, formatResults, LER_PAGINA, readPage, searchWeb, WEB_TOOLS, type WebResult } from './web-tools'
-import { AGENDAR, CANCELAR, outcome, ROUTINE_TOOL_NAMES, type Routines } from './routines'
-import { isQuiet } from '../shared/initiative'
 import { AGENDAR, CANCELAR, outcome, ROUTINE_TOOL_NAMES, whenText, type Routines } from './routines'
+import { isQuiet } from '../shared/initiative'
 import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills'
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom } from './tuca'
 import { LER_GUIA, readGuide } from './guide'
@@ -1206,10 +1203,9 @@ export class Runner {
     const { event } = when
     const person = r.scope === 'channel' ? undefined : r.owner && r.owner !== this.deps.db.ownerId() ? this.deps.db.person(r.owner) : undefined
     const me = r.scope === 'channel' ? L('o time', 'the team') : (person?.name ?? owner)
-    const hm = new Date(when.scheduledAt).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
     // Late for whatever reason (the app closed, the Mac asleep, quiet hours, paused): it only says when.
     const sameDay = new Date(when.scheduledAt).toDateString() === new Date().toDateString()
-    const hm = sameDay ? new Date(when.scheduledAt).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }) : whenText(when.scheduledAt)
+    const hm = sameDay ? new Date(when.scheduledAt).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' })) : whenText(when.scheduledAt)
     return [
       event
         ? L(
@@ -3640,7 +3636,6 @@ ${note}`,
       } else {
         try {
           attempted = true
-          const r = await this.deps.connectors!.call(ap.connectorId, ap.tool, ap.args)
           const onNode = ap.tool === NODE_BASH && db.tools(ap.connectorId).some((t) => t.name === NODE_BASH)
           const r = await this.deps.connectors!.call(ap.connectorId, ap.tool, ap.args, onNode ? { timeoutMs: nodeCommandMs(ap.args) } : {})
           ok = !r.isError

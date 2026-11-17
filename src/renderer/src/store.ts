@@ -41,6 +41,7 @@ import {
   type Person,
   type PersonAccess,
   type Delegation,
+  type Task,
   type Inbox,
   type Device,
   type Invite,
@@ -92,6 +93,7 @@ export type View =
   | { kind: 'skills' }
   | { kind: 'report' }
   | { kind: 'org' } // who answers to whom (src/shared/org.ts)
+  | { kind: 'board' } // every agent's work as cards (components/Board.tsx)
   | { kind: 'settings' }
   | { kind: 'missions' } // what to try next, each bringing a part of the sidebar on a new install
 
@@ -110,6 +112,7 @@ export interface State {
   inbox: Inbox // what waits on me: approvals I can decide, questions to me, (admins) cards members sent
   delegations: Delegation[] // work handed down the tree (src/shared/org.ts): open, or ended in the last day
   initiative: InitiativeView[] | null // my own proactive coordinators, one per bot: null until read, then every one
+  tasks: Task[] | null // my to-dos on the board (Quadro), in order; null until the board first asks
   needsName: boolean // a server's first access: the owner says what the agents call them
   settings: Settings
   models: Model[]
@@ -193,6 +196,7 @@ let state: State = {
   inbox: { approvals: [], questions: [] },
   delegations: [],
   initiative: null,
+  tasks: null,
   needsName: false,
   settings: {
     workspaceName: '',
@@ -488,6 +492,12 @@ export function loadOlder(conversationId: string, through?: string): Promise<voi
 }
 
 // A thread from before what's here (a notification about it, say): the message that started it, and its replies.
+// My to-dos, read again: when the board opens, and whenever they change (here or on another device).
+export async function loadTasks(): Promise<void> {
+  const tasks = await call('tasks').catch(() => null)
+  if (tasks) set((s) => ({ ...s, tasks }))
+}
+
 export async function loadThread(rootId: string): Promise<void> {
   const list = await call('threadMessages', { rootId }).catch((): Message[] => [])
   const id = list[0]?.conversationId
@@ -629,6 +639,7 @@ function apply(e: CoreEvent): void {
   if (e.type === 'browser_frame') return showFrame(e.agentId, e.frame)
   // History went in these conversations: each is read again, so what's on screen is what's left.
   if (e.type === 'history_wiped') return void e.conversationIds.forEach((id) => void refreshHistory(id))
+  if (e.type === 'tasks') return void (state.tasks && loadTasks())
   set((s) => {
     switch (e.type) {
       case 'node':

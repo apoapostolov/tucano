@@ -412,6 +412,7 @@ const fold = (s: string): string =>
 const PAGES = (admin = true): { label: string; view: View; icon: IconName }[] => [
   { label: L('Perguntas', 'Asks'), view: { kind: 'asks' }, icon: 'ask' },
   { label: L('Aprovações', 'Approvals'), view: { kind: 'approvals' }, icon: 'shield' },
+  { label: L('Quadro', 'Board'), view: { kind: 'board' }, icon: 'board' },
   { label: L('Memória', 'Memory'), view: { kind: 'memory' }, icon: 'book' },
   { label: 'Wiki', view: { kind: 'wiki' }, icon: 'layers' },
   { label: L('Rotinas', 'Routines'), view: { kind: 'routines' }, icon: 'clock' },

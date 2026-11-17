@@ -323,10 +323,9 @@ const dayAt = (week: number, i: number): number => {
   d.setDate(d.getDate() + i)
   return d.getTime()
 }
-const hm = (t: number): string => new Date(t).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
+const hm = (t: number): string => new Date(t).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
 // The next midnight: a day is 23 or 25 hours long when the clock changes.
 const dayEnd = (d: number): number => dayAt(d, 1)
-const hm = (t: number): string => new Date(t).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
 
 // What actually ran: each request a routine posted, with the agent's reply after it. Worked out per
 // conversation, once per change of it, so a reply elsewhere doesn't redo the calendar.

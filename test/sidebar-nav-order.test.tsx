@@ -37,7 +37,7 @@ const agent = (p: Partial<Agent>): Agent => ({ id: 'a1', name: 'Lia', handle: 'l
 type Setup = Partial<Omit<State, 'settings'>> & { settings?: Partial<State['settings']> }
 
 // The core order of every screen, which is what the sidebar draws until the person moves one.
-const CORE = ['asks', 'approvals', 'memory', 'wiki', 'routines', 'skills', 'org', 'report']
+const CORE = ['asks', 'approvals', 'board', 'memory', 'wiki', 'routines', 'skills', 'org', 'report']
 
 let root: Root
 const render = async (s: Setup = {}): Promise<void> => {
@@ -103,24 +103,24 @@ describe("the sidebar's own screens", () => {
 
   it('follow in the saved order, and show a screen it does not name last', async () => {
     await render({ ...team, settings: { navOrder: ['wiki', 'approvals'] } })
-    expect(navOrder()).toEqual(['wiki', 'approvals', 'asks', 'memory', 'routines', 'skills', 'org', 'report'])
+    expect(navOrder()).toEqual(['wiki', 'approvals', 'asks', 'board', 'memory', 'routines', 'skills', 'org', 'report'])
   })
 
   it('forget a screen the order names that is not there', async () => {
     await render({ ...team, settings: { navOrder: ['wiki', 'gone', 'approvals'] } })
-    expect(navOrder()).toEqual(['wiki', 'approvals', 'asks', 'memory', 'routines', 'skills', 'org', 'report'])
+    expect(navOrder()).toEqual(['wiki', 'approvals', 'asks', 'board', 'memory', 'routines', 'skills', 'org', 'report'])
   })
 
   it('move one place down with Alt+ArrowDown, saving the list as it is shown', async () => {
     await render(team)
     key(navButton('wiki'), 'ArrowDown')
-    expect(saved).toEqual([{ navOrder: ['asks', 'approvals', 'memory', 'routines', 'wiki', 'skills', 'org', 'report'], navHidden: [] }])
+    expect(saved).toEqual([{ navOrder: ['asks', 'approvals', 'board', 'memory', 'routines', 'wiki', 'skills', 'org', 'report'], navHidden: [] }])
   })
 
   it('move one place up with Alt+ArrowUp, from the saved order, not the core one', async () => {
     await render({ ...team, settings: { navOrder: ['wiki', 'approvals'] } })
     key(navButton('approvals'), 'ArrowUp')
-    expect(saved).toEqual([{ navOrder: ['approvals', 'wiki', 'asks', 'memory', 'routines', 'skills', 'org', 'report'], navHidden: [] }])
+    expect(saved).toEqual([{ navOrder: ['approvals', 'wiki', 'asks', 'board', 'memory', 'routines', 'skills', 'org', 'report'], navHidden: [] }])
   })
 
   it('stay put at the ends of the list', async () => {
@@ -140,7 +140,7 @@ describe("the sidebar's own screens", () => {
     await render({ ...team, settings: { navOrder: ['report', 'org'] } })
     const scroll = document.querySelector('.sidebar__scroll')!
     expect(scroll.firstElementChild!.textContent).toContain('Tuca')
-    expect(navOrder()).toEqual(['report', 'org', 'asks', 'approvals', 'memory', 'wiki', 'routines', 'skills'])
+    expect(navOrder()).toEqual(['report', 'org', 'asks', 'approvals', 'board', 'memory', 'wiki', 'routines', 'skills'])
     expect(document.querySelector('.sidebar__foot .nav-item')).not.toBeNull()
   })
 })
@@ -148,7 +148,7 @@ describe("the sidebar's own screens", () => {
 // Under the line a screen leaves the sidebar but keeps its place in the order, so the line is both
 // the way out and the way back.
 describe('the line under the screens', () => {
-  const all = ['asks', 'memory', 'wiki', 'routines', 'skills', 'org', 'report']
+  const all = ['asks', 'memory', 'board', 'wiki', 'routines', 'skills', 'org', 'report']
 
   it('is absent until a screen is carried, and says what it does while it is', async () => {
     await render(team)
@@ -194,7 +194,7 @@ describe('the line under the screens', () => {
     fire(line(), 'pointerdown')
     fire(line(), 'click')
     key(navButton('wiki'), 'ArrowUp')
-    expect(saved).toEqual([{ navOrder: ['asks', 'approvals', 'wiki', 'memory', 'routines', 'skills', 'org', 'report'], navHidden: [] }])
+    expect(saved).toEqual([{ navOrder: ['asks', 'approvals', 'board', 'wiki', 'memory', 'routines', 'skills', 'org', 'report'], navHidden: [] }])
   })
 
   it('does not open on a press that began on a row: that press was a drop', async () => {

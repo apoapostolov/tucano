@@ -55,7 +55,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'knowledge-wiki-import', page: 'knowledge', label: L('Importar notas', 'Import notes'), keys: [], scope: 'workspace', visible: admin },
     { id: 'knowledge-wiki-rules', page: 'knowledge', label: L('Regras das páginas', 'Page rules'), keys: [], scope: 'workspace', visible: admin },
     { id: 'connections-phone', page: 'connections', label: L('Celular e Telegram', 'Phone and Telegram'), keys: ['telegram'], scope: 'mixed', visible: owner },
-    { id: 'connections-servers', page: 'connections', label: L('Servidores', 'Servers'), keys: [], scope: 'computer', visible: admin && servers }
+    { id: 'connections-servers', page: 'connections', label: L('Servidores', 'Servers'), keys: ['paused'], scope: 'computer', visible: admin && servers }
   ] as const satisfies readonly Section[]
 }
 
