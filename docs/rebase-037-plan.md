@@ -237,6 +237,21 @@ Pushed 2026-11-18, all verified at the pushed tip and now **MERGEABLE** on GitHu
 | #322 | feat/steps-mode | `e02be453` | 30/30 | [6978573877](https://github.com/eduwxyz/tucano/pull/322#issuecomment-6978573877) |
 | #410 | fix/english-interface-copy | `1fb81df7` | 10/10 | [6978574456](https://github.com/eduwxyz/tucano/pull/410#issuecomment-6978574456) |
 
+Pushed 2026-11-18. Second batch, all verified at the pushed tip and **MERGEABLE**:
+
+| PR | Branch | New head | Tests | Comment |
+| --- | --- | --- | --- | --- |
+| #298 | feat/next-steps | `cf823d35` | 83/83 | [6979284537](https://github.com/eduwxyz/tucano/pull/298#issuecomment-6979284537) |
+| #385 | feat/next-steps-ticks | `bcf6253b` | 97/97 | [6979285077](https://github.com/eduwxyz/tucano/pull/385#issuecomment-6979285077) |
+| #248 | feat/ask-strip | `9a12a7a8` | 3/3 | [6979285605](https://github.com/eduwxyz/tucano/pull/248#issuecomment-6979285605) |
+| #395 | feat/clock-setting | `a3701393` | 154/154 | [6979286224](https://github.com/eduwxyz/tucano/pull/395#issuecomment-6979286224) |
+
+#385 is stacked on #298. GitHub refused `--base feat/next-steps` because that branch lives in the
+fork and cannot be an upstream PR base, so its diff shows #298's commits until #298 merges; the
+comment says to merge #298 first. #395 carries one extra commit extending the clock to pages added
+in 0.2.37 (Board, servers log, approval times, routine spans); it is separate and can be dropped
+for a byte-faithful port.
+
 Old heads are kept as `pr-backup/<branch>-20261118` tags on origin. All four branches were clean,
 based on `upstream/main` `4522704e`, and typechecked at 0 errors from the main checkout.
 #322 dropped one commit whose patch is already upstream (`6edcf8ce`). #410 re-applied 129 English
