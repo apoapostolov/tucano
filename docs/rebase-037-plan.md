@@ -82,8 +82,9 @@ immediately after "Turn dictation on" on the same row; asar **37500147** bytes, 
 tree `9b5c7183` after Apo's wave 3 polish: Models now shows Classifiers before Router, the add and
 router-model forms use the same indented row as their entries with the glyph column reserved, and
 "Where each one is used" became its own **Classifier Uses** card (`models-classifier-uses`); the
-dictation Advanced toggle moved onto the button row. Current asar **37502502** bytes, SHA-256
-`97f208c542a39067034a094b0515daf1c2d57056d8a7a02b97174e9af5b139cb`. Gate: typecheck 0 errors and 91/91
+dictation Advanced toggle moved onto the button row and aligned to the card's right edge. Current
+asar **37502593** bytes, SHA-256
+`16ad27ad1feadc17a1553c8ae82c5efcf96dd309d08f0958b96a38df9a9acf13` (tree `b76237c7`). Gate: typecheck 0 errors and 91/91
 across the seven wave-2 and wave-3 suites, plus 51/51 on the wider listen, recommend, routing and
 settings suites. Visible checks: a routed reply carries a reason line, the Classifiers card sits
 beside the Router card in Models, a channel can be put in listen or mention mode, a question can
