@@ -48,7 +48,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'mixed', visible: admin },
     { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevNextSteps'], scope: 'workspace', visible: admin },
-    { id: 'models-classifier-uses', page: 'models', label: L('Usos dos classificadores', 'Classifier Uses'), keys: ['jevRecommend'], scope: 'workspace', visible: admin },
+    { id: 'models-classifier-uses', page: 'models', label: L('Usos dos classificadores', 'Classifier Uses'), keys: [], scope: 'workspace', visible: admin },
     { id: 'models-router', page: 'models', label: L('Roteador', 'Router'), keys: [], scope: 'workspace', visible: admin },
     { id: 'models-routing', page: 'models', label: L('Roteamento', 'Routing'), keys: ['routing'], scope: 'workspace', visible: admin },
     { id: 'knowledge-memory', page: 'knowledge', label: L('Memória', 'Memory'), keys: ['memoryModel', 'memoryLearning'], scope: 'workspace', visible: admin },

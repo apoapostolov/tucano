@@ -608,7 +608,7 @@ export interface Settings {
   agentOrder?: string[] // the person's order for the agents, by agent id
   navOrder?: string[] // the person's order for the sidebar's own screens (Approvals, Wiki…), by row id
   navHidden?: string[] // the screens this person put under the sidebar's line, by row id: out of the way, not forgotten
-  jevRecommend?: boolean // Jev marks the best option on an agent's question (each such question goes to TypeSafe); off when unset
+  jevRecommend?: boolean // legacy: the recommended option used to be one switch, now the `recommend` classifier job; read only when migrating (classifierJobsOf)
   jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset
   sendMode?: SendMode // what Enter does while a reply is running: alongside it (the default), after it, into it, or stopping it
   quotaView?: QuotaView // how the quota panels draw: the table of windows (the default) or a ring per window

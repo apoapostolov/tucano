@@ -1138,9 +1138,9 @@ const runner = new Runner({
   jev: {
     key: async (job) => {
       if (fakeListen) return LISTEN_STUB_KEY
-      // The recommended option is TypeSafe's Jev itself — the switch names it, not a job slot — so it
-      // reads the key Jev's own row or the JevKey field saved.
-      const c = job && job !== 'recommend' ? classifierFor(settings(), job) : JEV_CLASSIFIER
+      // A job reads the classifier chosen for it; with no job, Jev's own classifier, which is also
+      // what an install from before the classifiers keeps using.
+      const c = job ? classifierFor(settings(), job) : JEV_CLASSIFIER
       return c ? classifierKeyOf(c) : undefined
     },
     target: (job) => classifierFor(settings(), job ?? 'routing'),

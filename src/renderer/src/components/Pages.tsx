@@ -3432,39 +3432,14 @@ export function ClassifierUsesCard(): ReactNode {
                 what={
                   job === 'routing'
                     ? L(`cada mensagem sem @menção vai pro ${providerSpec(c.provider).label} escolher quem responde.`, `every message without an @mention goes to ${providerSpec(c.provider).label} to pick who replies.`)
-                    : L(`a lista de elementos das páginas, e às vezes o print delas, vai pro ${providerSpec(c.provider).label}.`, `the pages’ element list, and sometimes their screenshot, goes to ${providerSpec(c.provider).label}.`)
+                    : job === 'recommend'
+                      ? L(`o texto da pergunta e as opções vão pro ${providerSpec(c.provider).label} sugerir uma delas.`, `the question's text and options go to ${providerSpec(c.provider).label} to suggest one of them.`)
+                      : L(`a lista de elementos das páginas, e às vezes o print delas, vai pro ${providerSpec(c.provider).label}.`, `the pages’ element list, and sometimes their screenshot, goes to ${providerSpec(c.provider).label}.`)
                 }
               />
             )
           })}
         </>
-      )}
-      {/* The recommended option is a use like the ones above, and the one that answers on a card
-          instead of in a job: TypeSafe's Jev names the option it would pick on an agent's question. */}
-      <div className="key-row">
-        <Icon name="spark" />
-        <div className="grow">
-          <strong>{L('Marcar a opção recomendada', 'Mark the recommended option')}</strong>
-          <p className="muted small">
-            {L(
-              'Desligado por padrão. Ligado, cada pergunta de agente com duas ou mais opções vai pro TypeSafe com o texto e as opções, e volta com a sugestão. É só uma sugestão: quem escolhe continua sendo você, e "Outra coisa" nunca é sugerida.',
-              'Off by default. On, every agent question with two or more options goes to TypeSafe with its text and options, and comes back with a suggestion. It is only a suggestion: you still choose, and "Something else" is never suggested.'
-            )}
-          </p>
-        </div>
-        <Toggle label={L('Marcar a opção recomendada', 'Mark the recommended option')} on={!!settings.jevRecommend} onChange={(v) => updateSettings({ jevRecommend: v })} />
-      </div>
-      {settings.jevRecommend && work && (
-        <OutsideGateway what={L('cada pergunta de agente com opções, com o texto da pergunta e das opções, vai pro TypeSafe.', "every agent question with options, with the question's and the options' text, goes to TypeSafe.")} />
-      )}
-      {settings.jevRecommend && (
-        <JevKey
-          saved={!!settings.jevKey}
-          hint={L(
-            'Sem a chave, o selo não aparece e a pergunta fica como está hoje: nenhuma opção marcada.',
-            'Without the key, the pill never shows and the question stays as it is today: no option marked.'
-          )}
-        />
       )}
     </>
   )
