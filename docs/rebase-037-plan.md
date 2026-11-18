@@ -275,11 +275,13 @@ cleanly and keep their 0.2.37 base until their own rebase is due.
 | #250 | accessible channel reorder: hold a row, see where it lands, move it by keyboard |
 | #435 | **Held, obsolete in the current implementation, pending redesign. Do not port.** |
 
-Wave 7 is being rebased onto upstream 0.2.38 at `9c246bac`, not the earlier 0.2.37 base. Five workers
-own #274, #467, #272, #416 and the narrowed #250 in isolated `rb-*` worktrees. The channel-agent
-modal polish was applied first in checkpoint 6 and pushed to #279 at `ea49e058` with comments
-`6990337321` and `6990670162`; the badge is a plain `?` inside its circle, not literal `(?)`. #272's
-worker is mirroring the same second-row layout. Draft #424 was
+Wave 7 is complete on upstream 0.2.38 at `9c246bac`: #274 `0aa2d2bc`, #467 `14bf8edc`, #272
+`5be98db0`, #416 `04f709b7` and the narrowed #250 `012ae5d6`, all clean, 0 TypeScript errors,
+pushed, MERGEABLE and commented (`6990937835`, `6990938503`, `6990939205`, `6990939867`,
+`6990940594`). #274's interoperability assessment found one real 0.2.38 gap: team-up rooms now go
+through `agentsFor(requester, …)` and grant the room to restricted people who could see the source
+conversation. #467's multi-boss exclusion is a noted coordination item, not a defect on this base.
+Draft #424 was
 rebased locally for study only (`8b851981`) and stays unpushed and uncommented until Apo decides
 whether it is dropped; #435 stays excluded. The shared contract, including gates, is
 `C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
