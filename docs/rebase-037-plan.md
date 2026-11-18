@@ -326,7 +326,11 @@ reordered by hold and keyboard.
 
 Apo found that #247's whole feature set is missing from the new base, so wave 8 now includes the full
 asks port (sidebar Asks section, dedicated asks page, next-steps improvements, classifier
-recommendation and the hide-empty Asks/Approvals settings) on top of the tail PRs. Apo also found
+recommendation and the hide-empty Asks/Approvals settings) on top of the tail PRs. The full #247 asks port is gated at `rb-247` `0b1b9e07` (15 files / 182 tests, 0 TypeScript
+errors): sidebar Asks before Approvals, dedicated asks page with history, hide-empty Asks/Approvals
+settings, and the PR's next-steps/classifier area found no applicable hunks on 0.2.38 because that
+behavior already lives in checkpoint 6. It is held for the 0.2.39 rollup.
+Apo also found
 that commit `26c88ab1` removed the Agents’ browser Jev-vs-page-text selector and left only a hint;
 wave 8 restores a real selector in that card, backed by `classifierJobs.browser`. #334 (approval
 card) is a drop candidate per triage; #411 reply shortcut stacked on #32, #288 work drawer, #290
