@@ -1,4 +1,4 @@
-import { CLASSIFIER_JOBS, classifierFor, classifierLabel, jobAbout, jobLabel, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
+import { CLASSIFIER_JOBS, classifierFor, classifierJobsOf, classifierLabel, classifierList, JEV_CLASSIFIER, jobAbout, jobLabel, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
 import { L, lang, locale, type Lang } from '../../../shared/lang'
 import { timeOpts } from '../../../shared/clock'
 import { hasMonthlyLimit, safeLimit } from '../../../shared/limits'
@@ -3445,6 +3445,80 @@ export function ClassifierUsesCard(): ReactNode {
   )
 }
 
+// Settings › Agents: who finds the element an agent asks to click. A card of its own, beside the
+// other things agents do, because the choice is about the browser and not about a classifier row —
+// but it writes the same `classifierJobs.browser` as Classifier Uses, so either surface shows the
+// other's answer. Jev is offered on an install with no classifier rows: a fresh install has none to
+// pick from, and picking it makes the row the rest of the app reads.
+export function BrowserClickCard(): ReactNode {
+  const settings = useStore((s) => s.settings)
+  const work = onGateway(settings)
+  // Read through the migration: an install from before the section has no list, only the old
+  // browserJev switch, and the card shows that as its choice until it is changed here.
+  const list = classifierList(settings)
+  const jobs = classifierJobsOf(settings)
+  const chosen = jobs.browser ? list.find((c) => c.id === jobs.browser) : undefined
+  const choose = (id: string): void => {
+    const next = { ...jobs }
+    if (!id) {
+      delete next.browser
+      updateSettings({ classifierJobs: next })
+      return
+    }
+    // The id is one of the rows the selector was built from, or TypeSafe's Jev before there is a
+    // row: the job may only point at a classifier the list holds, so the row is written with it.
+    const known = list.some((c) => c.id === id)
+    updateSettings({ ...(known ? {} : { classifiers: [...list, { ...JEV_CLASSIFIER }] }), classifierJobs: { ...next, browser: id } })
+  }
+  return (
+    <Card
+      title={L('Navegador dos agentes', 'Agents’ browser')}
+      lead={L(
+        'Como o app acha o que o agente pede pra clicar (“o botão Buscar”). Pelo texto é de graça e resolve a maioria; quando não acha, o agente usa o número do elemento.',
+        'How the app finds what the agent asks to click (“the Search button”). By text it’s free and handles most cases; when it can’t find it, the agent uses the element’s number.'
+      )}
+    >
+      <Field
+        label={L('Quem acha o clique', 'Who finds the click')}
+        hint={
+          chosen
+            ? L(
+                'Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.',
+                'Finds the element in under 1 second, even without text when the classifier reads the screenshot. Every click text can’t resolve sends the page’s element list, and sometimes its screenshot, to the chosen provider, including signed-in areas.'
+              )
+            : L(
+                'De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.',
+                'Free, and it handles most cases: the agent uses the text and, when it can’t find it, the element’s number.'
+              )
+        }
+      >
+        <Select
+          value={jobs.browser ?? ''}
+          onChange={(v) => choose(v ?? '')}
+          options={[
+            { value: '', label: L('Só pelo texto da página', 'Only by the page’s text') },
+            { value: JEV_CLASSIFIER.id, label: 'Jev (TypeSafe)', hint: providerSpec(JEV_CLASSIFIER.provider).label },
+            ...list
+              .filter((c) => c.id !== JEV_CLASSIFIER.id)
+              .map((c) => ({ value: c.id, label: classifierLabel(c), hint: providerSpec(c.provider).label }))
+          ]}
+        />
+      </Field>
+      {chosen && work && (
+        <OutsideGateway
+          what={L(
+            `a lista de elementos das páginas, e às vezes o print delas, vai pro ${providerSpec(chosen.provider).label}.`,
+            `the pages’ element list, and sometimes their screenshot, goes to ${providerSpec(chosen.provider).label}.`
+          )}
+        />
+      )}
+      <p className="hint">
+        <Icon name="sliders" size={13} /> {L('Dá pra mudar aqui ou em Classifiers, no trabalho “O que o agente clica na página”: é a mesma escolha.', 'Change it here or in Classifiers, under “What an agent clicks in a page”: it is the same choice.')}
+      </p>
+    </Card>
+  )
+}
+
 // How the quotas are drawn, and which providers draw at all: one card for both, because the choice is
 // the same one in the header strip and in Usage and limits, and it belongs beside the other display
 // settings instead of in each panel.
@@ -3733,7 +3807,6 @@ export function SettingsPage(): ReactNode {
   // At work, Jev and Telegram stay: the person decides, told what leaves the gateway.
   const work = onGateway(settings)
   const routingClassifier = classifierFor(settings, 'routing')
-  const browserClassifier = classifierFor(settings, 'browser')
   const team = useStore(teamMode)
   const admin = useStore(amAdmin)
   const owner = useStore(amOwner)
@@ -4052,24 +4125,7 @@ export function SettingsPage(): ReactNode {
           </Card>
         )}
 
-        {pane('agentes') && (
-          <Card title={L('Navegador dos agentes', 'Agents’ browser')} lead={L('Como o app acha o que o agente pede pra clicar (“o botão Buscar”). Pelo texto é de graça e resolve a maioria; quando não acha, o agente usa o número do elemento.', 'How the app finds what the agent asks to click (“the Search button”). By text it’s free and handles most cases; when it can’t find it, the agent uses the element’s number.')}>
-            <div className="key-row">
-              <Icon name="spark" />
-              <div className="grow">
-                <strong>{browserClassifier ? classifierLabel(browserClassifier) : L('Só pelo texto da página', 'Only by the page’s text')}</strong>
-                <p className="muted small">
-                  {browserClassifier
-                    ? L('Acha o elemento em menos de 1 segundo, até sem texto quando o classificador lê o print da tela. Cada clique que o texto não resolve manda a lista de elementos da página, e às vezes o print dela, pro provedor escolhido, inclusive em áreas logadas.', 'Finds the element in under 1 second, even without text when the classifier reads the screenshot. Every click text can’t resolve sends the page’s element list, and sometimes its screenshot, to the chosen provider, including signed-in areas.')
-                    : L('De graça e resolve a maioria: o agente usa o texto e, quando não acha, o número do elemento.', 'Free, and it handles most cases: the agent uses the text and, when it can’t find it, the element’s number.')}
-                </p>
-              </div>
-            </div>
-            <p className="hint">
-              <Icon name="sliders" size={13} /> {L('Quem acha o clique é escolhido em Classifiers, no trabalho “O que o agente clica na página”.', 'Who finds the click is chosen in Classifiers, under “What an agent clicks in a page”.')}
-            </p>
-          </Card>
-        )}
+        {pane('agentes') && <BrowserClickCard />}
 
         {pane('integracoes') && (
           <SectionAnchor id="connections-phone" label={sectionLabel('connections-phone')}>
