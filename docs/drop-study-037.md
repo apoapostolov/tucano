@@ -120,3 +120,13 @@ back keep and stays in its wave. Recommendations are the agent's, not decisions.
    keeping both engines and the Windows account-folder sweep.
 9. **#451 English guide** (wave 6) - add the missing `setores` page so both languages have 25.
 10. **#435 initiative** - already held, obsolete and pending redesign; no port.
+
+## Cleaning #383 (started, 2026-11-18)
+
+Apo clarified that cleaning means isolating what #383 uniquely brings, not repairing the whole PR
+for merge: it was improperly made because it carried a mess of other PRs' commits. PR #383 was
+converted to draft so the defective branch cannot be merged by accident. An isolated branch
+`rb/iso-383` is being built from `upstream/main` with only the four unique commits (six Jev jobs,
+router row and tab button, English labels, changelog line), the stale next-steps wording fixed,
+and no duplicated #298/#272/#279/#333/#379/#385 code. It will not be pushed; it is the artifact
+for a later merge-or-clean decision.
