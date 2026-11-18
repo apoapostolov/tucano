@@ -114,16 +114,22 @@ and a notice can be raised from any window.
 | #272 | mention mode: answer only when mentioned |
 | #416 | Grok login as another account in the new account code |
 | #424 | room visibility and agent read access |
-| #250 | sidebar reordering by hold and keyboard |
+| #250 | accessible channel reorder: hold a row, see where it lands, move it by keyboard |
 | #435 | initiative between conversations — held pending a feature comparison with Board |
 
-#250's hide-sections half is dropped: upstream already hides top items with Undo. Port reorder only.
+Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
+job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
+**channels only**, on top of upstream's existing `moveChannel`/`nudgeChannel` context menu in
+`Sidebar.tsx`: bring the hold-a-row, show-where-it-lands and keyboard interaction to channel rows.
+Freeform agent reordering is dropped entirely, because agents are now ordered by their sector in a
+team. Sidebar screen ordering is dropped as well. `agentOrder` and `navOrder` stay as restored
+settings keys for backward compatibility, but no new UI writes them.
 #435 stays held until the Board comparison is done; do not quietly fold it into this wave. Quarantined
 source: `src/core/initiative.ts`, `src/core/initiative-heartbeat.ts`, `src/core/team-up.ts`,
 `src/shared/team-up-privacy.ts`, `src/renderer/src/components/Initiative.tsx`. Checkpoint 7 checks:
 a team-up creates a carry-over channel, a shared specialist serves two teams, mention-only agents stay
-quiet until named, the Grok account appears in the new accounts UI, and a sidebar row can be reordered
-by keyboard.
+quiet until named, the Grok account appears in the new accounts UI, and a channel row can be
+reordered by hold and keyboard.
 
 ### Wave 8 — Tail and tooling
 
