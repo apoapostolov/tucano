@@ -226,9 +226,9 @@ node scripts/self-build.mjs doctor --json
 
 ### Wave 2 (done)
 
-Checkpoint 2 installed 2026-11-18 from the union tree `505126b5` in
-`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37352940** bytes, SHA-256
-`cf25ba0b83f125eedb15ddde8399542015f1094755040d4ca360067dc3d13759`. Verify with
+Checkpoint 2 installed 2026-11-18 from the union tree `3db137e2` in
+`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37354401** bytes, SHA-256
+`8105325edd57d489a975a7de88020f344ebc43314c43e008c9726c8616eebe07`. Verify with
 `cd C:/git-ext/tucano-wt/ckpt2-build && node scripts/self-build.mjs doctor --json`; it reports
 `verdict: running`, window "Tucano", `sameAsBuild: true`.
 
@@ -243,6 +243,12 @@ Gate for the union tree: typecheck 0 errors and 40/40 across thinking lifecycle,
 restart runs, settings organization, steer and steps. Full suite had two known load flakes, both
 reproducing on unmodified branches. The Recovery card has no section anchor, so the Agents rail
 keeps its live-tested link list.
+
+Apo rejected the first rail build: it was a narrow pill strip inside the 720 px `agent-form` column.
+A follow-up commit moved it between the tabs and the cards, gave it the full-width tab treatment,
+put Workspace name and What agents call you side by side, and put the two dictation model choices
+side by side. The live install now carries that fix; the same changes are being baked into #446 and
+the wave 3 checkpoint tree. Both are recorded in `tucano-next-dev`/layout-rulings.
 
 The live main checkout now mounts #446's section navigation inside each existing `SETTINGS_TABS`
 pane: a sticky strip of section links that scrolls to the card, focuses it and tracks the reading
