@@ -325,6 +325,12 @@ First union landed at `03cdccc8`: #290 prompt jump and the full #411 reply serie
 two remaining failures are pre-existing or load flakes (`thought-boundary` reproduces at clean
 `1c0e4b82`, `team-stress` passes alone). #288 and the #379 port are still running.
 
+#379 port landed at `5abd3491` (0.2.39 ancestor, tsc clean, 5 files / 56 classifier tests, full
+suite 2144 passed) and was pushed, but upstream moved to 0.2.40 `2c071863` during wave 8, so #379
+and most earlier wave branches now report CONFLICTING until a 0.2.40 rebase. I held the #379 comment
+instead of claiming a compatibility that GitHub does not report. The 0.2.39 release remains the
+wave 8 target; 0.2.40 is the next backport wave.
+
 The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
 The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
 both notice windows now receive the selected language on first paint and follow later settings
