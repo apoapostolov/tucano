@@ -22,7 +22,9 @@ Requested by Apo 2026-11-18; each checked against the new base rather than the h
 
 ## Apo's decisions on the rest (2026-11-18)
 
-- #435 initiative bot: hold pending a feature comparison against the new Board.
+- #435 initiative bot (2026-11-18): **held, obsolete in the current implementation, pending
+  redesign.** Apo says it was never completed well; do not migrate it. PR stays draft, no rebase,
+  no compatibility comment, no port.
 - #416 Grok account: keep and re-port to the new account code.
 - #250 / #248 sidebar scope (2026-11-18): the Lite Desktop owns hiding core sidebar features. Reordering is channels only, built on upstream's `moveChannel`/`nudgeChannel`. Freeform agent reordering is dropped because agents are ordered by sector in teams; sidebar screens are not reorderable. `agentOrder` and `navOrder` remain as settings keys only for old data.
 - All quarantined feature groups: keep all and rebase in waves.
@@ -40,7 +42,7 @@ Requested by Apo 2026-11-18; each checked against the new base rather than the h
 
 | PR | Feature | Why it is not a clean drop |
 | --- | --- | --- |
-| #435 | Proactive initiative bot | Upstream Board (#524) shows work as cards, but has no autonomous coordinator |
+| #435 | Proactive initiative bot — obsolete, pending redesign, do not port | Apo ruled the current implementation incomplete. The PR is held as a draft; the upstream Board comparison no longer drives this decision. |
 | #416 | Grok as another account | Upstream now has Antigravity accounts (#538); the account machinery changed, so this needs a fresh port, not a rebase of the old patch |
 | #417 | Notifications over every window | Still fork-only; upstream has no equivalent in 0.2.37 |
 | #432 | History retention | Still fork-only |

@@ -20,7 +20,7 @@ changes so the installed TucanoNext can be tested between waves.
 | 4 | Quotas, retention | checkpoint 4 |
 | 5 | Wiki resolver and wiki tools | checkpoint 5 |
 | 6 | Images, connector icons, notices | checkpoint 6 |
-| 7 | Team-ups, initiative, mentions, sidebar ordering | checkpoint 7 |
+| 7 | Team-ups, mentions, sidebar ordering | checkpoint 7 |
 | 8 | Remaining individual fixes and PR tails; sweep the open-PR backlog | final build |
 
 ## Waves 3+ (planned detail)
@@ -105,7 +105,7 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
-### Wave 7 — Team, initiative, mentions and accounts
+### Wave 7 — Team, mentions and accounts
 
 | PR | Role |
 | --- | --- |
@@ -115,7 +115,7 @@ and a notice can be raised from any window.
 | #416 | Grok login as another account in the new account code |
 | #424 | room visibility and agent read access |
 | #250 | accessible channel reorder: hold a row, see where it lands, move it by keyboard |
-| #435 | initiative between conversations — held pending a feature comparison with Board |
+| #435 | **Held, obsolete in the current implementation, pending redesign. Do not port.** |
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
@@ -124,8 +124,12 @@ job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Re
 Freeform agent reordering is dropped entirely, because agents are now ordered by their sector in a
 team. Sidebar screen ordering is dropped as well. `agentOrder` and `navOrder` stay as restored
 settings keys for backward compatibility, but no new UI writes them.
-#435 stays held until the Board comparison is done; do not quietly fold it into this wave. Quarantined
-source: `src/core/initiative.ts`, `src/core/initiative-heartbeat.ts`, `src/core/team-up.ts`,
+Apo's 2026-11-18 ruling: the initiative feature was never completed well enough to migrate. It is
+draft-only, obsolete in the current implementation and pending a full redesign. Do not rebase its PR,
+do not port any of its files, do not build it into a checkpoint, and do not post a compatibility
+comment on it. `src/core/initiative.ts` and `src/core/initiative-heartbeat.ts` stay in quarantine as
+an archive of the old design. `src/core/team-up.ts` is separate and still belongs to this wave.
+Quarantined source:
 `src/shared/team-up-privacy.ts`, `src/renderer/src/components/Initiative.tsx`. Checkpoint 7 checks:
 a team-up creates a carry-over channel, a shared specialist serves two teams, mention-only agents stay
 quiet until named, the Grok account appears in the new accounts UI, and a channel row can be
