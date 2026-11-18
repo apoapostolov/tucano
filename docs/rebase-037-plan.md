@@ -226,9 +226,9 @@ node scripts/self-build.mjs doctor --json
 
 ### Wave 2 (done)
 
-Checkpoint 2 installed 2026-11-18 from the union tree `3db137e2` in
-`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37354401** bytes, SHA-256
-`8105325edd57d489a975a7de88020f344ebc43314c43e008c9726c8616eebe07`. Verify with
+Checkpoint 2 installed 2026-11-18 from the union tree `52774ee5` in
+`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37354964** bytes, SHA-256
+`dce54334e035ad98b2e5ac075771e7c568f567101f59941a3905f208d447bfb7`. Verify with
 `cd C:/git-ext/tucano-wt/ckpt2-build && node scripts/self-build.mjs doctor --json`; it reports
 `verdict: running`, window "Tucano", `sameAsBuild: true`.
 
@@ -247,7 +247,8 @@ keeps its live-tested link list.
 Apo rejected the first rail build: it was a narrow pill strip inside the 720 px `agent-form` column.
 A follow-up commit moved it between the tabs and the cards, gave it the full-width tab treatment,
 put Workspace name and What agents call you side by side, and put the two dictation model choices
-side by side. The live install now carries that fix; the same changes are being baked into #446 and
+side by side. A second correction rendered both dictation choices in the active card with the
+current one marked, instead of collapsing them into one "switch to the other" button. The live install now carries that fix; the same changes are being baked into #446 and
 the wave 3 checkpoint tree. Both are recorded in `tucano-next-dev`/layout-rulings.
 
 The live main checkout now mounts #446's section navigation inside each existing `SETTINGS_TABS`
