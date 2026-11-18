@@ -72,6 +72,15 @@ Pushed 2026-11-18, verified at the pushed tip and **MERGEABLE**:
 survived. The single full-suite failure seen on #333 and #379 is the known `tuca-keep-and-batch-core`
 timeout under load; it reproduces on pristine upstream/main and passes solo on both branches.
 
+Checkpoint 3 installed from union tree `274e043b` in `C:/git-ext/tucano-wt/ckpt3-build`: asar
+**37499824** bytes, SHA-256 `c64c6fe5add2a8dae896c80734669182d9ca9bd4d874283182c32e00d525adb7`.
+Verify with `cd C:/git-ext/tucano-wt/ckpt3-build && node scripts/self-build.mjs doctor --json`; it
+reports `sameAsBuild: true`, `verdict: running`, window "Tucano". Gate: typecheck 0 errors and 91/91
+across the seven wave-2 and wave-3 suites, plus 51/51 on the wider listen, recommend, routing and
+settings suites. Visible checks: a routed reply carries a reason line, the Classifiers card sits
+beside the Router card in Models, a channel can be put in listen or mention mode, a question can
+show Jev's recommended option, and all wave 2 checks still hold.
+
 ### Wave 4 — Quotas, retention and storage hygiene
 
 | PR | Role |
