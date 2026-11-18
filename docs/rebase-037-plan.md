@@ -174,9 +174,12 @@ Wave 5 PRs were pushed and commented on 2026-11-18: #258 `f130d5d6`, #259 `8d696
 `cd11c7fd`, #355 `12a785a0`, #311 `30395df6` and #319 `b528d365`, all MERGEABLE. #259 sits on the
 rebased #258 head and carries only the orphan-page delta. Checkpoint 5 is installed at source tree
 `90bb8a48`, asar **37626447** bytes, SHA-256
-`2953699f8dc6e07eecd2aaf742d2d1c53f3b833d957d4a81b2a818f700417d24`. Gate: 0 conflict markers, 0
-TypeScript errors and 29 test files / 280 tests passed across the wave 5 and checkpoint 4 suites;
-`self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on screen
+`2953699f8dc6e07eecd2aaf742d2d1c53f3b833d957d4a81b2a818f700417d24`. A later polish at tree
+`7fb5a029` keeps the wiki sidebar in place when a finding is handed to an agent: the request shows a
+"Request sent" line instead of navigating to the conversation. Its asar is **37626697** bytes,
+SHA-256 `b70e8b9e34619628e58265a53fdacf4c6d751a706c058c0fc542ca4a4b2c4358`. Gate: 0 TypeScript
+errors and 8 files / 60 wiki tests passed; `self-build doctor` reports `sameAsBuild: true` and
+`verdict: running`. Confirm the wave on screen
 by opening the wiki: a missing page offers Write the page, an orphan can be handed off, an unsettled
 finding offers Resolve with a built-in resolver, an agent's Tools tab has the three-level wiki switch,
 and the skill library in Settings › Agents shows categories and versions. Tuca's ver_estado shows the
