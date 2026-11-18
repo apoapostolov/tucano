@@ -287,11 +287,11 @@ rebased locally for study only (`8b851981`) and stays unpushed and uncommented u
 whether it is dropped; #435 stays excluded. The shared contract, including gates, is
 `C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
 
-Two older gaps are being closed before wave 8: a worker is folding the standalone Jev-as-classifier
-brick into Classifier Uses in checkpoint 6, and another is porting 0.2.36's custom quota hover cards
-into #305. Wave 8 starts only after both land in the live checkpoint and are verified: the Jev-as-classifier
-fold still has a worker in `ckpt6-build`; the custom quota hover cards landed on #305 at `8a3336e4`
-and still need the same port into checkpoint 6.
+Two older gaps are being closed before wave 8. The Jev-as-classifier fold landed in `ckpt6-build` at
+`6ccb8aee` (16 files / 128 tests, 0 TypeScript errors) and is ready to install. The custom quota
+hover cards landed on #305 at `8a3336e4`; a worker is porting them into checkpoint 6 and fixing the
+0.2.36 card position so it clears 0.2.37's routines pill in the topbar. Wave 8 starts only after
+both are in the live checkpoint and verified.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
