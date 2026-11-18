@@ -273,6 +273,12 @@ cleanly and keep their 0.2.37 base until their own rebase is due.
 | #250 | accessible channel reorder: hold a row, see where it lands, move it by keyboard |
 | #435 | **Held, obsolete in the current implementation, pending redesign. Do not port.** |
 
+Wave 7 is being rebased onto upstream 0.2.38 at `9c246bac`, not the earlier 0.2.37 base. Five workers
+own #274, #467, #272, #416 and the narrowed #250 in isolated `rb-*` worktrees. Draft #424 was
+rebased locally for study only (`8b851981`) and stays unpushed and uncommented until Apo decides
+whether it is dropped; #435 stays excluded. The shared contract, including gates, is
+`C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
+
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
 **channels only**, on top of upstream's existing `moveChannel`/`nudgeChannel` context menu in
