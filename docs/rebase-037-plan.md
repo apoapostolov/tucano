@@ -320,6 +320,11 @@ The full asks port was rebased onto 0.2.39 at `3cac92b1`, pushed to #247 with a 
 reported MERGEABLE and commented at `6994635469`. Two workers are now finishing the final tail union
 and carrying the dropdown/browser fixes onto #379.
 
+First union landed at `03cdccc8`: #290 prompt jump and the full #411 reply series are folded in with
+28 files / 255 tests, tsc clean, check:settings 36 sections. Full suite: 306 files, 2778 passed;
+two remaining failures are pre-existing or load flakes (`thought-boundary` reproduces at clean
+`1c0e4b82`, `team-stress` passes alone). #288 and the #379 port are still running.
+
 The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
 The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
 both notice windows now receive the selected language on first paint and follow later settings
