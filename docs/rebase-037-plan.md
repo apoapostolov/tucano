@@ -118,6 +118,12 @@ do not let an explicit refresh join a second request. Checkpoint 4 checks: quota
 no loading gap, an explicit refresh animates the same block, retention settings are reachable, and
 the database action reports whether the file is sound.
 
+The header-strip polish was a fork change but never a PR: `ec37eceb Give every bar in a header the
+width of the longest name drawn` exists only on `feat/quota-strip-even`, and no wave 4 branch
+contains it. It is being ported onto #305, the PR that adds the strip: each provider's name goes
+above its bar, and a CSS grid with equal columns gives every bar the width of the longest name in
+the conversation. The old hover box and focus peek stay out of this port.
+
 Quota presentation shipped with checkpoint 4: the selector between **Circle ratios**, the native
 Tucano treatment, and **Table**, the view #305 brings, lives in Settings › General, in the same card
 as the provider checkboxes. One setting decides the shape for all providers, replacing the old mixed
