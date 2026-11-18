@@ -90,6 +90,14 @@ show Jev's recommended option, and all wave 2 checks still hold.
 | #437 | database vacuum and soundness report |
 | #249 | clear a conversation's history without deleting it |
 
+Prep measured 2026-11-18: #305 `217d4026` (5 commits, 22 files, +2204), #432 `35070e86` (9,
+25, +1113), #437 `a31233ed` (4, 12, +402), #249 `acef2d74` (3, 12, +375). #437 is already
+MERGEABLE on the old base; the other three are CONFLICTING. #432 and #437 each contain a commit
+titled "Group settings by their user decision", but they are different copy edits: `13fa902d`
+rewrites the retention label and hint, `47db7bad` rewrites the database storage label and hint.
+Keep both. The #446 correction was pushed as `737e9c34` with comment `6983648996`, so its section
+rail and dictation layout are the baseline these PRs must fit into.
+
 Quarantined source: `src/core/quota-cache.ts`, `src/core/quota-parsers.ts`, `src/core/quotas.ts`,
 `src/core/retention.ts`, `src/renderer/src/components/QuotaStrip.tsx`. The quota rule is fixed: a
 single core cache polls every 20 minutes whether or not the page is open; the Usage page renders the
