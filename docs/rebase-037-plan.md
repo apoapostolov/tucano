@@ -239,9 +239,10 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
-Checkpoint 6 installed from `502a8f0b` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
-`08fd5965` and `88ca2d01`, modal mode rows `2477ad44`, plain circled `?` `502a8f0b`): asar
-**37823819** bytes, SHA-256 `43198ab13f31934e82bc275ef17816f7282acc45b72c3865abef19ed353749b6`.
+Checkpoint 6 installed from `589e1aec` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
+`08fd5965` and `88ca2d01`, modal mode rows `2477ad44`, plain circled `?` `502a8f0b`, classifier fold
+`6ccb8aee`, quota hover cards `589e1aec`): asar **37828614** bytes, SHA-256
+`9485c3136474d83b188b5241cd00507bb55b05dc655d42c337e5eb828f82c0dc`.
 Doctor: `cd C:/git-ext/tucano-wt/ckpt6-build && node scripts/self-build.mjs doctor --json` reports
 `sameAsBuild: true`, `version: "0.2.38"`, `verdict: running`. To confirm on screen: the app reports
 0.2.38; a reply with several pictures shows one album and the image menu opens on album cells;
@@ -250,9 +251,12 @@ only in Enhanced and an orange time bar on done notices; the English guide carri
 folder/Docker hint; the Usage quota table keeps the provider's login or plan under its column title,
 while Settings › Quotas lists providers by name with no sentence under each row;
 quota header bars show only the conversation agents' primary/fallback
-providers, with names above equally wide bars; a wiki request stays in the wiki sidebar. In
+providers, with names above equally wide bars; hovering one opens a card under the strip that clears
+the routines pill and other topbar buttons, and focus lists all bars. Settings › Classifiers has one
+Classifier Uses card with `Mark the recommended option` inside it and no separate Jev-as-classifier
+brick. A wiki request stays in the wiki sidebar. In
 **Agents in #channel**, mention and listen modes appear on a second row under each elected agent,
-each with a `(?)` hover explanation, never beside the name. Version strings stay fixed across fork
+each with a circled `?` hover explanation, never beside the name. Version strings stay fixed across fork
 builds, so the hash is the real marker.
 
 Upstream released **0.2.38** at `9c246bac` during wave 6 with only two commits: the Canva-on-server
@@ -287,11 +291,9 @@ rebased locally for study only (`8b851981`) and stays unpushed and uncommented u
 whether it is dropped; #435 stays excluded. The shared contract, including gates, is
 `C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
 
-Two older gaps are being closed before wave 8. The Jev-as-classifier fold landed in `ckpt6-build` at
-`6ccb8aee` (16 files / 128 tests, 0 TypeScript errors) and is ready to install. The custom quota
-hover cards landed on #305 at `8a3336e4`; a worker is porting them into checkpoint 6 and fixing the
-0.2.36 card position so it clears 0.2.37's routines pill in the topbar. Wave 8 starts only after
-both are in the live checkpoint and verified.
+Both older gaps are closed in the live checkpoint: the Jev-as-classifier fold at `6ccb8aee` and the
+0.2.36 quota hover cards at `589e1aec`, including the measured fix that clears 0.2.37's routines pill.
+Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
