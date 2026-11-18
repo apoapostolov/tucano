@@ -313,10 +313,13 @@ a team-up creates a carry-over channel, a shared specialist serves two teams, me
 quiet until named, the Grok account appears in the new accounts UI, and a channel row can be
 reordered by hold and keyboard.
 
-### Wave 8 — Tail and tooling
+### Wave 8 — Tail, tooling and the full asks feature
 
-#334 (approval card) is a drop candidate per triage; #411 reply shortcut stacked on #32, #288 work
-drawer, #290 prompt-before-session and #512 Windows skill hash land here if still open. The deferred
+Apo found that #247's whole feature set is missing from the new base, so wave 8 now includes the full
+asks port (sidebar Asks section, dedicated asks page, next-steps improvements, classifier
+recommendation and the hide-empty Asks/Approvals settings) on top of the tail PRs. #334 (approval
+card) is a drop candidate per triage; #411 reply shortcut stacked on #32, #288 work drawer, #290
+prompt-before-session and #512 Windows skill hash land here if still open. The deferred
 tooling debt is fixed in this wave: `scripts/check-settings-placement.mjs` and `npm run check:settings`
 still expect the old `SettingsPage` content map, so adapt the guard to `pane()` blocks. Never rebuild
 the old shape to make the check pass. Final build closes the wave chain, then the weekly
