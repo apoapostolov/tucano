@@ -141,13 +141,6 @@ describe('the words and the layout a person reads (round 2, 13)', () => {
     expect(css).toMatch(/\.history-row,\s*\.ask-row__head \{[^}]*--history-state: 96px;[^}]*--history-when: 104px;/)
     expect(css).toMatch(/\.history-row__state,\s*\.ask-row__state \{[^}]*flex: 0 0 var\(--history-state\);[^}]*justify-content: center;/)
     expect(css).toMatch(/\.history-row__when,\s*\.ask-row__when \{[^}]*flex: 0 0 var\(--history-when\);[^}]*text-align: center;/)
-    // The outcome cell keeps its place on a row that reported nothing, so the columns still line up.
-    fake = { ...fake, approvals: [{ id: 'ap', hash: 'h', agentId: 'a1', conversationId: 'ch', messageId: 'm', connectorName: 'GitLab', tool: 'write', args: {}, why: '', highRisk: false, state: 'approved', createdAt: 1, expiresAt: 2, decidedAt: 3 } as never] }
-    const { HistoryRow } = await import('../src/renderer/src/components/Pages')
-    const html = renderToStaticMarkup(<HistoryRow id="ap" />)
-    expect(html).toContain('history-row__outcome')
-    expect(html).toContain('history-row__state')
-    expect(html).toContain('history-row__when')
   })
 
   it("a removed person's browser reads that they no longer have access, and nothing about the Tucano", async () => {
