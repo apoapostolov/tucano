@@ -310,7 +310,11 @@ guard are now rebasing in isolated worktrees. All wave 0–7 features are preser
 Tail rebases verified: #288 `6059e403`, #290 `75e97c08`, #512 `c2f8f08f` and the check:settings
 guard `6aa59744` are clean with 0 TypeScript errors; their touched tests pass (16, 3, 34 and 17),
 and `npm run check:settings` now reports `passed: true` with 36 sections. #32/#411 hit an iteration
-cap mid-fix; a replacement worker is finishing them at `rb-32`/`rb-411`.
+cap mid-fix. I stopped the replacement child when it looped on the known tuca flake and finished the
+work inline: #32 at `a8792ce8` has 0 TypeScript errors and 5 files / 76 reply tests green. Marcelo's
+fork rejected the push with 403, so Apo-owned #411 now carries the full rebased reply series at
+`a8792ce8`, pushed, MERGEABLE and commented at `6994544391`. #32 itself remains on the contributor's
+old head and should be treated as superseded by #411.
 
 The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
 The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
