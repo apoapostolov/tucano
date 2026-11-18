@@ -82,9 +82,9 @@ immediately after "Turn dictation on" on the same row; asar **37500147** bytes, 
 tree `9b5c7183` after Apo's wave 3 polish: Models now shows Classifiers before Router, the add and
 router-model forms use the same indented row as their entries with the glyph column reserved, and
 "Where each one is used" became its own **Classifier Uses** card (`models-classifier-uses`); the
-dictation Advanced toggle moved onto the button row and aligned to the card's right edge. Current
-asar **37502593** bytes, SHA-256
-`16ad27ad1feadc17a1553c8ae82c5efcf96dd309d08f0958b96a38df9a9acf13` (tree `b76237c7`). Gate: typecheck 0 errors and 91/91
+dictation microphone and Advanced controls share one row, with Advanced at the card's right edge.
+Current asar **37502515** bytes, SHA-256
+`1f9d69839cf572682b02af80a642da4df6e85088f44a98971f0f6ceeff97dd8a` (tree `64e6fc16`). Gate: typecheck 0 errors and 91/91
 across the seven wave-2 and wave-3 suites, plus 51/51 on the wider listen, recommend, routing and
 settings suites. Visible checks: a routed reply carries a reason line, the Classifiers card sits
 beside the Router card in Models, a channel can be put in listen or mention mode, a question can
@@ -121,6 +121,14 @@ view #305 brings. This replaces the current mixed rule that draws Codex as circl
 provider as a table; one setting decides the shape for all providers. In the same container add a
 checkbox row for each recognized provider configured in a harness, so the person decides which of
 those providers has quota shown at all. Unknown or unconfigured harness entries do not get a row.
+
+Wave 4 PRs were pushed and verified on 2026-11-18: #305 `72541a7f` (53 quota tests, clean build and
+three screen probes; usage lives in the Operations hub), #432 `c2445ee9` (60 retention + 18
+team-round3 + 67 people tests), #437 `b48f73fa` (27 database tests and 3 skips; the OpenCode timeout
+commit was an exact duplicate and was dropped), and #249 `ba627116` (12 clear-history tests; action
+in the sidebar row menu, emptied conversations say "Histórico limpo."). Each is MERGEABLE and has a
+Lite Desktop compatibility comment. Checkpoint 4 is the next build; its presentation follow-up is
+the quota selector and provider checkbox rows described above.
 
 ### Wave 5 — Wiki and skills
 
