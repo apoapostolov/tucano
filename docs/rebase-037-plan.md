@@ -317,7 +317,9 @@ reordered by hold and keyboard.
 
 Apo found that #247's whole feature set is missing from the new base, so wave 8 now includes the full
 asks port (sidebar Asks section, dedicated asks page, next-steps improvements, classifier
-recommendation and the hide-empty Asks/Approvals settings) on top of the tail PRs. #334 (approval
+recommendation and the hide-empty Asks/Approvals settings) on top of the tail PRs. Apo also found
+that commit `26c88ab1` removed the Agents’ browser Jev-vs-page-text selector and left only a hint;
+wave 8 restores a real selector in that card, backed by `classifierJobs.browser`. #334 (approval
 card) is a drop candidate per triage; #411 reply shortcut stacked on #32, #288 work drawer, #290
 prompt-before-session and #512 Windows skill hash land here if still open. The deferred
 tooling debt is fixed in this wave: `scripts/check-settings-placement.mjs` and `npm run check:settings`
