@@ -156,7 +156,7 @@ export function WorkspaceMenu(): ReactNode {
               <span className={`ws-menu__box ${on ? 'is-on' : ''}`} aria-hidden="true">{on && <Icon name="check" size={11} />}</span>
               <span className="grow ws-menu__part-text">
                 <span>{topLabel(item, team)}</span>
-                {item === 'approvals' && <span className="ws-menu__sub">{L('Volta quando algo espera por você', 'Comes back when something waits on you')}</span>}
+                {(item === 'approvals' || item === 'asks') && <span className="ws-menu__sub">{L('Volta quando algo espera por você', 'Comes back when something waits on you')}</span>}
               </span>
             </button>
           )

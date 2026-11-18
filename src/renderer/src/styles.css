@@ -2371,13 +2371,11 @@ h3 {
   white-space: nowrap;
 }
 .history-row__outcome {
-  /* The action's own line ("Delete · Computer"): a reserved column that wraps onto a second line
-     rather than being cut, and gives the width back on a narrow window. */
-  flex: 0 1 160px;
+  flex: 0 1 auto;
   min-width: 0;
-  max-width: 32%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .table > .table__row {
   animation: rise var(--dur-enter) var(--ease-out) backwards;
@@ -2439,26 +2437,24 @@ h3 {
   border-bottom: 0;
 }
 
-/* Both history tables give the state pill and the date the same reserved width, centred, so the
-   columns line up from row to row instead of each row drifting by the width of its own label. */
-.history-row,
+/* The Asks table gives the state pill and the date a reserved width, centred, so the columns line
+   up from row to row instead of each row drifting by the width of its own label. The approvals
+   history keeps its own widths: it is another list, with its own columns. */
 .ask-row__head {
-  --history-state: 96px;
-  --history-when: 104px;
+  --ask-state: 96px;
+  --ask-when: 104px;
 }
-.history-row__state,
 .ask-row__state {
-  flex: 0 0 var(--history-state);
-  width: var(--history-state);
+  flex: 0 0 var(--ask-state);
+  width: var(--ask-state);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
 }
-.history-row__when,
 .ask-row__when {
-  flex: 0 0 var(--history-when);
-  width: var(--history-when);
+  flex: 0 0 var(--ask-when);
+  width: var(--ask-when);
   text-align: center;
   white-space: nowrap;
 }

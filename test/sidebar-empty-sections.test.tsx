@@ -82,6 +82,16 @@ describe('the Asks and Approvals entries', () => {
     expect(has(html, 'Approvals')).toBe(true)
   })
 
+  it('sits Asks right above Approvals, before the rest of the top items', () => {
+    const html = sidebar()
+    const at = (label: string): number => html.indexOf(`nav-item__label">${label}<`)
+    expect(at('Asks')).toBeGreaterThan(at('Tuca'))
+    expect(at('Approvals')).toBeGreaterThan(at('Asks'))
+    // Nothing between the two: the only label in between is Asks' own.
+    const between = html.slice(at('Asks'), at('Approvals'))
+    expect(between.match(/nav-item__label/g)?.length).toBe(1)
+  })
+
   it('Asks leaves the sidebar while no agent asks anything', () => {
     const html = sidebar({ settings: { hideEmptyAsks: true } })
     expect(has(html, 'Asks')).toBe(false)
