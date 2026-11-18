@@ -116,6 +116,12 @@ resolved, and the skill library reads with its categories and versions.
 | #417 | notices over every window |
 | #451 | guide's 24 pages in English, per workspace |
 
+0.2.37 ships system notifications of its own. When #417 is ported, add a **Native / Enhanced**
+selector in Settings > Notifications: Native uses the 0.2.37 system notifications unchanged, and
+Enhanced turns on this PR's cross-window notices. Our notification settings must render only when
+Enhanced is selected, so the two systems never stack their controls or duplicate a notice. Keep the
+selector beside the existing notifications card and use the new settings row and tab idioms.
+
 #303 and #336 touch the same image components. Their combined wiring already lives on `next`, so
 port that behavior into the new UI first, then split it back into the two PR branches. Screenshots
 belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6 checks: a reply with
@@ -226,9 +232,9 @@ node scripts/self-build.mjs doctor --json
 
 ### Wave 2 (done)
 
-Checkpoint 2 installed 2026-11-18 from the union tree `52774ee5` in
-`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37354964** bytes, SHA-256
-`dce54334e035ad98b2e5ac075771e7c568f567101f59941a3905f208d447bfb7`. Verify with
+Checkpoint 2 installed 2026-11-18 from the union tree `42ca16bb` in
+`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37354220** bytes, SHA-256
+`95fa99bd88c62b0fc3f46f3412b1e14bdc0c4a538a6adba9214f80300e4588fc`. Verify with
 `cd C:/git-ext/tucano-wt/ckpt2-build && node scripts/self-build.mjs doctor --json`; it reports
 `verdict: running`, window "Tucano", `sameAsBuild: true`.
 
