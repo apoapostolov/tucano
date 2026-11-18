@@ -303,7 +303,9 @@ carries uncommitted earlier-wave work. Version fields become `0.2.39`. The inges
 `9c104614` (3 union conflicts, 11 files / 192 tests), and the recommend dropdown was cherry-picked
 onto it at `4450e1a4` with 4 files / 46 tests green. The browser click-finder repair was verified at
 `fa2df0f3` and cherry-picked at `ad211bdd` (3 files / 32 tests green). The full asks port at
-`0b1b9e07` is being folded in now. All wave 0–7 features are preserved.
+`0b1b9e07` was folded in at `603d5ba3` with 5 union conflicts, 39 files / 372 tests green, and the
+known `thought-boundary` timing flake. The tail PRs #32/#411, #288, #290, #512 and the check:settings
+guard are now rebasing in isolated worktrees. All wave 0–7 features are preserved.
 
 Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`, then moves to the 0.2.39 base.
 
