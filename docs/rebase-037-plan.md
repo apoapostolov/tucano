@@ -301,8 +301,9 @@ counting cache reads that came apart from the input, so usage never goes negativ
 onto that head in an isolated `ingest-0239` worktree; the main checkout is left untouched because it
 carries uncommitted earlier-wave work. Version fields become `0.2.39`. The ingest landed at
 `9c104614` (3 union conflicts, 11 files / 192 tests), and the recommend dropdown was cherry-picked
-onto it at `4450e1a4` with 4 files / 46 tests green. The browser-setting and full asks commits still
-need to be folded in. All wave 0–7 features are preserved.
+onto it at `4450e1a4` with 4 files / 46 tests green. The browser click-finder repair was verified at
+`fa2df0f3` and cherry-picked at `ad211bdd` (3 files / 32 tests green). The full asks port at
+`0b1b9e07` is being folded in now. All wave 0–7 features are preserved.
 
 Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`, then moves to the 0.2.39 base.
 
