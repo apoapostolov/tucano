@@ -127,8 +127,10 @@ three screen probes; usage lives in the Operations hub), #432 `c2445ee9` (60 ret
 team-round3 + 67 people tests), #437 `b48f73fa` (27 database tests and 3 skips; the OpenCode timeout
 commit was an exact duplicate and was dropped), and #249 `ba627116` (12 clear-history tests; action
 in the sidebar row menu, emptied conversations say "Histórico limpo."). Each is MERGEABLE and has a
-Lite Desktop compatibility comment. Checkpoint 4 is the next build; its presentation follow-up is
-the quota selector and provider checkbox rows described above.
+Lite Desktop compatibility comment. The wave 3 polish was pushed afterwards to #379 `331d2740` and
+#333 `5c945503` with correction comments, so the PR heads now match the installed layout. Checkpoint
+4 is the next build; its presentation follow-up is the quota selector and provider checkbox rows
+described above.
 
 ### Wave 5 — Wiki and skills
 
