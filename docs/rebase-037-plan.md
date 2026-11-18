@@ -239,9 +239,9 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
-Checkpoint 6 installed from `88ca2d01` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
-`08fd5965` and `88ca2d01`): asar **37822417** bytes, SHA-256
-`a01ded8ae36909f04607b3078b72dac1fc4e69ec2f8feb8fb3f8f83fa591e9ba`.
+Checkpoint 6 installed from `2477ad44` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
+`08fd5965` and `88ca2d01`, modal mode rows `2477ad44`): asar **37823823** bytes, SHA-256
+`0cb608c88759cfabeee02f6225d7df0edf188ecab12c9910c35593c6bc040a1c`.
 Doctor: `cd C:/git-ext/tucano-wt/ckpt6-build && node scripts/self-build.mjs doctor --json` reports
 `sameAsBuild: true`, `version: "0.2.38"`, `verdict: running`. To confirm on screen: the app reports
 0.2.38; a reply with several pictures shows one album and the image menu opens on album cells;
@@ -250,8 +250,10 @@ only in Enhanced and an orange time bar on done notices; the English guide carri
 folder/Docker hint; the Usage quota table keeps the provider's login or plan under its column title,
 while Settings › Quotas lists providers by name with no sentence under each row;
 quota header bars show only the conversation agents' primary/fallback
-providers, with names above equally wide bars; a wiki request stays in the wiki sidebar. Version
-strings stay fixed across fork builds, so the hash is the real marker.
+providers, with names above equally wide bars; a wiki request stays in the wiki sidebar. In
+**Agents in #channel**, mention and listen modes appear on a second row under each elected agent,
+each with a `(?)` hover explanation, never beside the name. Version strings stay fixed across fork
+builds, so the hash is the real marker.
 
 Upstream released **0.2.38** at `9c246bac` during wave 6 with only two commits: the Canva-on-server
 fix and the release bump. Apo decided to ingest them into this wave rather than leave them for a
@@ -274,7 +276,9 @@ cleanly and keep their 0.2.37 base until their own rebase is due.
 | #435 | **Held, obsolete in the current implementation, pending redesign. Do not port.** |
 
 Wave 7 is being rebased onto upstream 0.2.38 at `9c246bac`, not the earlier 0.2.37 base. Five workers
-own #274, #467, #272, #416 and the narrowed #250 in isolated `rb-*` worktrees. Draft #424 was
+own #274, #467, #272, #416 and the narrowed #250 in isolated `rb-*` worktrees. The channel-agent
+modal polish was applied first in checkpoint 6 and pushed to #279 at `a605b663` with comment
+`6990337321`; #272's worker is mirroring the same second-row layout. Draft #424 was
 rebased locally for study only (`8b851981`) and stays unpushed and uncommented until Apo decides
 whether it is dropped; #435 stays excluded. The shared contract, including gates, is
 `C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
