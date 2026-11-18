@@ -312,6 +312,12 @@ guard `6aa59744` are clean with 0 TypeScript errors; their touched tests pass (1
 and `npm run check:settings` now reports `passed: true` with 36 sections. #32/#411 hit an iteration
 cap mid-fix; a replacement worker is finishing them at `rb-32`/`rb-411`.
 
+The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
+The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
+both notice windows now receive the selected language on first paint and follow later settings
+changes. #417 was rebased onto 0.2.39, pushed, MERGEABLE and commented at `6994380438` (3 files /
+29 tests, 0 TypeScript errors).
+
 Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`, then moves to the 0.2.39 base.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
