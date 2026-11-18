@@ -242,7 +242,7 @@ Pushed 2026-11-18. Second batch, all verified at the pushed tip and **MERGEABLE*
 | PR | Branch | New head | Tests | Comment |
 | --- | --- | --- | --- | --- |
 | #298 | feat/next-steps | `cf823d35` | 83/83 | [6979284537](https://github.com/eduwxyz/tucano/pull/298#issuecomment-6979284537) |
-| #385 | feat/next-steps-ticks | `bcf6253b` | 97/97 | [6979285077](https://github.com/eduwxyz/tucano/pull/385#issuecomment-6979285077) |
+| #385 | feat/next-steps-ticks | `0ef761f6` | 97/97 | [6979285077](https://github.com/eduwxyz/tucano/pull/385#issuecomment-6979285077), [6979571136](https://github.com/eduwxyz/tucano/pull/385#issuecomment-6979571136) |
 | #248 | feat/ask-strip | `9a12a7a8` | 3/3 | [6979285605](https://github.com/eduwxyz/tucano/pull/248#issuecomment-6979285605) |
 | #395 | feat/clock-setting | `a3701393` | 154/154 | [6979286224](https://github.com/eduwxyz/tucano/pull/395#issuecomment-6979286224) |
 
