@@ -239,9 +239,9 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
-Checkpoint 6 installed from `2477ad44` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
-`08fd5965` and `88ca2d01`, modal mode rows `2477ad44`): asar **37823823** bytes, SHA-256
-`0cb608c88759cfabeee02f6225d7df0edf188ecab12c9910c35593c6bc040a1c`.
+Checkpoint 6 installed from `502a8f0b` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`, subtitle fixes
+`08fd5965` and `88ca2d01`, modal mode rows `2477ad44`, plain circled `?` `502a8f0b`): asar
+**37823819** bytes, SHA-256 `43198ab13f31934e82bc275ef17816f7282acc45b72c3865abef19ed353749b6`.
 Doctor: `cd C:/git-ext/tucano-wt/ckpt6-build && node scripts/self-build.mjs doctor --json` reports
 `sameAsBuild: true`, `version: "0.2.38"`, `verdict: running`. To confirm on screen: the app reports
 0.2.38; a reply with several pictures shows one album and the image menu opens on album cells;
@@ -277,11 +277,16 @@ cleanly and keep their 0.2.37 base until their own rebase is due.
 
 Wave 7 is being rebased onto upstream 0.2.38 at `9c246bac`, not the earlier 0.2.37 base. Five workers
 own #274, #467, #272, #416 and the narrowed #250 in isolated `rb-*` worktrees. The channel-agent
-modal polish was applied first in checkpoint 6 and pushed to #279 at `a605b663` with comment
-`6990337321`; #272's worker is mirroring the same second-row layout. Draft #424 was
+modal polish was applied first in checkpoint 6 and pushed to #279 at `ea49e058` with comments
+`6990337321` and `6990670162`; the badge is a plain `?` inside its circle, not literal `(?)`. #272's
+worker is mirroring the same second-row layout. Draft #424 was
 rebased locally for study only (`8b851981`) and stays unpushed and uncommented until Apo decides
 whether it is dropped; #435 stays excluded. The shared contract, including gates, is
 `C:/Users/theap/AppData/Local/hermes/cache/scratch/wave7-contract.md`.
+
+Two older gaps are being closed before wave 8: a worker is folding the standalone Jev-as-classifier
+brick into Classifier Uses in checkpoint 6, and another is porting 0.2.36's custom quota hover cards
+into #305. Wave 8 starts only after both land and are verified.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
