@@ -252,6 +252,17 @@ comment says to merge #298 first. #395 carries one extra commit extending the cl
 in 0.2.37 (Board, servers log, approval times, routine spans); it is separate and can be dropped
 for a byte-faithful port.
 
+Pushed 2026-11-18. Third batch, all verified at the pushed tip and **MERGEABLE**:
+
+| PR | Branch | New head | Tests | Comment |
+| --- | --- | --- | --- | --- |
+| #332 | feat/steer-pill | `b37827ab` | 13/13 | [6979380958](https://github.com/eduwxyz/tucano/pull/332#issuecomment-6979380958) |
+| #457 | feat/pause-reply | `2e347537` | 18/18 | [6979381435](https://github.com/eduwxyz/tucano/pull/457#issuecomment-6979381435) |
+
+The steer and hold tests that live only in the main checkout (`steer-run`, `steer-followup`) are not
+gate material for these single-feature branches: the hold test needs #457 and the follow-up test
+needs #338. Each branch was gated with its own tests.
+
 Old heads are kept as `pr-backup/<branch>-20261118` tags on origin. All four branches were clean,
 based on `upstream/main` `4522704e`, and typechecked at 0 errors from the main checkout.
 #322 dropped one commit whose patch is already upstream (`6edcf8ce`). #410 re-applied 129 English
