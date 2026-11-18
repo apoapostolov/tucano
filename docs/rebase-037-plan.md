@@ -293,6 +293,9 @@ whether it is dropped; #435 stays excluded. The shared contract, including gates
 
 Both older gaps are closed in the live checkpoint: the Jev-as-classifier fold at `6ccb8aee` and the
 0.2.36 quota hover cards at `589e1aec`, including the measured fix that clears 0.2.37's routines pill.
+`ckpt6-build` then moved to `9f169bf8`, where `Mark the recommended option` is the last dropdown in
+Classifier Uses with a one-line hint; `jevRecommend` is legacy-only. That commit has not been
+installed yet; it will ride on the 0.2.39 base.
 Upstream then released **0.2.39** at `c705e912` (`ee52dc48` + release commit): one functional fix
 counting cache reads that came apart from the input, so usage never goes negative. Wave 8 rebases
 onto that head in an isolated `ingest-0239` worktree; the main checkout is left untouched because it
