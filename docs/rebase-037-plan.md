@@ -274,11 +274,28 @@ each draws its own row under the chain while the reference draws one shared `.st
 the CSS should be reconciled then. `Step.kind` is `'steer'` on #332 and gains `kind?: 'thinking'` on
 #322, a one-line union conflict when both land.
 
-Old heads are kept as `pr-backup/<branch>-20261118` tags on origin. All four branches were clean,
-based on `upstream/main` `4522704e`, and typechecked at 0 errors from the main checkout.
-#322 dropped one commit whose patch is already upstream (`6edcf8ce`). #410 re-applied 129 English
-strings and reported 33 whose Portuguese source no longer exists upstream. Its CHANGELOG bullet
-landed in the already-released 0.2.37 section and should be moved to a new heading before merge.
+Old heads are kept as `pr-backup/<branch>-20261118` tags on origin. Every branch was clean, based
+on `upstream/main` `4522704e`, and typechecked at 0 errors from the main checkout. #322 dropped one
+commit whose patch is already upstream (`6edcf8ce`). #410 re-applied 129 English strings and
+reported 33 whose Portuguese source no longer exists upstream. Its CHANGELOG bullet landed in the
+already-released 0.2.37 section and should be moved to a new heading before merge.
+
+Pushed 2026-11-18. Final wave-1 batch, all verified at the pushed tip and **MERGEABLE**:
+
+| PR | Branch | New head | Tests | Comment |
+| --- | --- | --- | --- | --- |
+| #338 | feat/steer-followup | `0d66114c` | 40/40 | [6980451855](https://github.com/eduwxyz/tucano/pull/338#issuecomment-6980451855) |
+| #247 | feat/asks-section | `4a997228` | 85/85 | [6980452361](https://github.com/eduwxyz/tucano/pull/247#issuecomment-6980452361) |
+
+#338 carries the whole send-mode series (steer, queue, parallel, enter keys) with Follow Up, since
+they share the send path. Its rebase fixes a double-queue bug where wrapping `startReply` in `runIn`
+stalled six simultaneous sends at three. On #247 the sidebar Asks entry was rebuilt on 0.2.37's own
+top-item system, so it gets "Take out of the sidebar" and comes back while a question waits.
+`test/tuca-keep-and-batch-core.test.ts` is a known pre-existing flake on 0.2.37, failing at the
+same rate on a pristine base worktree.
+
+The `tucano-next-backport` cron was paused at 15:46 on Apo's request while this manual work is in
+flight; re-enable it after the wave chain is done.
 
 **#446 is not in this batch.** Apo moved it to wave 2 with the reply-recovery/reset work. Its
 section navigation is currently dead code on the new base: `settingsStructure`/`settingsPages` are
