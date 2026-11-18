@@ -74,6 +74,49 @@ No verbatim upstream implementation of any of the ten, so no full DROP. Merge ba
 - #305 provider contracts and #379's vendor model ids were asserted in comments, not verified
   offline. #333's default six pools and ten roles are a product call, not a narrowing decision.
 
-## Waves 5 and 6
+## Waves 5 and 6 (studied, 2026-11-18)
 
-Pending.
+Absence proof: `git grep -c` on `upstream/main` returns zero files for `wiki_escrever`,
+`wiki_editar`, `WIKI_WRITE_TOOLS`, `wikiAsk`, `ArtifactGallery`, `galleryLayout`, `setConnectorIcon`,
+`lastImageFolder`, `noticeFeed`, `guide/en`, `skillFolders` and `assignSkills`. Merge bases are
+`04539404` for #258/#259/#355/#311/#451 and `68cf5da1` for the rest, 93 to 96 commits behind.
+
+| PR | Verdict | Evidence and surviving scope |
+| --- | --- | --- |
+| #258 wiki write handoff | K, needs #355 | `wiki-handoff.ts` (`canHandOff`, `handOffText`, `HAND_OFF_KINDS`), `wikiAsk` RPC, agent picker. Upstream `Wiki.tsx:1675` "Write the page" only navigates to the editor; `WikiAccess` is `'none' \| 'read'`. |
+| #259 orphan handoff | K, stacked on #258 | Adds only `'orphan'` to `HAND_OFF_KINDS` and the links request in `handOffText`. |
+| #268 wiki resolver | K | `wiki-resolver.ts` (`resolverSystem`, `parseResolution`, `WikiResolver`), `wikiResolve` settings, `wikiResolveFinding` RPC, `WikiFinding.note`. Upstream review produces only `change` packages, never an on-demand finding pass. |
+| #355 wiki tool card | K | `WikiAccess 'read_write'`, `WIKI_ESCREVER`/`WIKI_EDITAR`, Tools-tab card, write privacy. Landing order: #355, then #258, then #259. |
+| #311 Hermes skill library | N | The component split is already upstream and credited to the fork author (#472): `components/skills/*` and `SkillPage`. Do not re-apply it. Surviving piece: multi-harness folder reading (`HARNESSES`, `detectedFolders`, nested categories, `skillFolders` settings/RPC, `skillHarnessName`). |
+| #319 Tuca skills | K | `AgentChanges.skills`, `skillsOf`/`assignSkills`, `ver_estado` skills. Upstream Tuca areas have no skills. |
+| #303 artifact gallery | K | `gallery.ts` (`GALLERY_HERO`, `GALLERY_MAX`, `galleryLayout`), `ArtifactGallery`, `+N` cell. Upstream still maps one `ArtifactCard` per id into a flex-wrap. |
+| #336 image menu | K, needs #303 | `ImageMenu.tsx`, `image-menu.ts`, `image:save`/`clipboard`/`read`/`folder`, `lastImageFolder`. Upstream has no `window.tucano.image`. Its album test needs #303's gallery surface. |
+| #353 connector icons | K | `Connector.icon`, `connectors.icon`, `setConnectorIcon`, `ConnectorTile`. Upstream `Connector` has no icon and shows a terminal catalog glyph. |
+| #417 notification center | K | `notice.ts`, `notice/*` renderer, `Settings.notice`, decision buttons on the card. Upstream has only Electron `Notification` and a Sounds section. Rebase replaces `NotifyTest` with `notice.demo()`. |
+| #451 English guide | K, fix count | Upstream deliberately ships only the English index and 25 Portuguese pages. PR adds 24 English pages; add `setores.md` and its slug to the model-facing-language test so both sides have 25. |
+
+Product call: whether upstream intends a notification centre is not visible in 0.2.37; #417 does
+not conflict semantically, only in `Pages.tsx` and `main/index.ts` text.
+
+## Consolidated decision sheet
+
+Evidence is complete for waves 3 to 8. These are the items that need a call; everything else came
+back keep and stays in its wave. Recommendations are the agent's, not decisions.
+
+1. **#334 approval card** (wave 8 earlier marked drop) - keep. Upstream has no approval result
+   tracking or awaited decision, so the earlier drop was too broad.
+2. **#424 room sharing** (wave 7) - keep only as the spec for #423, not as a wave feature. Its
+   fields are read by nothing.
+3. **#250 channel reorder** (wave 7) - narrow to the hold gesture plus `moveChannelTo` on channel
+   rows. Drop `list-order.ts`, the order keys, `NAV_HIDE` line and their tests.
+4. **#383 classifiers-six** (wave 3) - drop the branch as a duplicate of five others; cherry-pick
+   its four unique commits onto the merged set.
+5. **#311 skill library** (wave 5) - narrow to multi-harness folder reading; the component split is
+   already upstream (#472) and re-applying it would overwrite newer files.
+6. **#385, #457, #332** (wave 1) - already corrected and pushed; no decision needed.
+7. **#303 with #336** (wave 6) - port as one behavior before splitting back into PR branches, as
+   already planned.
+8. **#416 Grok accounts** (wave 7) - port as a union with upstream's Antigravity account (#538),
+   keeping both engines and the Windows account-folder sweep.
+9. **#451 English guide** (wave 6) - add the missing `setores` page so both languages have 25.
+10. **#435 initiative** - already held, obsolete and pending redesign; no port.
