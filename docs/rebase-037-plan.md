@@ -54,7 +54,10 @@ Quarantined source: `src/core/jev-fake.ts`, `src/renderer/src/components/Routing
 
 Placement rule: the thin reason line stays attached to the existing Jev line rather than getting its
 own rail. The Classifiers section goes where the new base already groups agent intelligence, using
-the base's section and row primitives; the old settings screen is not restored. Checkpoint 3 checks:
+the base's section and row primitives; the old settings screen is not restored. With multiple
+classifiers, the separate **Jev as a classifier** card is removed: `Mark the recommended option`
+becomes one role inside **Classifier Uses**, while the models and keys stay under **Classifiers**.
+Checkpoint 3 checks:
 a routed reply carries a visible reason line, the Classifiers section is reachable, and a question
 card can show Jev's recommended option.
 
@@ -319,6 +322,14 @@ node scripts/self-build.mjs doctor --json
   not that they hit a spending ceiling; Resume continues the same session.
 - Waiting-on-you screen: a Questions block first, above approvals, on both solo and team screens,
   answerable in place. No new sidebar item.
+
+The 0.2.36 **Agent replies** settings card (send mode and consecutive replies) was fork work from
+#338, not an upstream core setting: `v0.2.36` has the fixed `MAX_CONCURRENT` core limit but no
+`sendMode` setting, while `next-v0.2.36` exposes the four-way select and the 1–10 consecutive-replies
+number. Upstream 0.2.37 removed the UI, and no later wave restored it. Wave 1 only carried the
+server-side steer half of #338, so the setting is being restored on #338 under the existing
+`agents-replies` section of the new settings rail. There is no maximum-parallel number to restore;
+0.2.36 never exposed one.
 
 ### Wave 2 (done)
 
