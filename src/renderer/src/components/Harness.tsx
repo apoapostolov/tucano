@@ -6,6 +6,7 @@ import { L } from '../../../shared/lang'
 import { useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import {
   ACCOUNT_ENGINES,
+  accountsOn,
   addAccount,
   ENGINES,
   ENGINE_IDS,
@@ -63,10 +64,9 @@ const lists = new Map<string, Promise<Listed>>()
 // what OpenCode or Pi list; what the gateway lists.
 export function useEngineModels(engine: EngineId | undefined): { options: ModelOption[]; loading: boolean; error?: string } {
   const st = useStore((s) => (engine ? s.settings.engines[engine] : undefined))
-  const endpointModels = useStore((s) => engine === 'endpoint' ? JSON.stringify(s.settings.endpoint?.models ?? []) : '')
   const plan = !!engine && (engine === 'claude' || engine === 'codex') && st?.route !== 'gateway'
   const fixed = plan && engine === 'claude'
-  const id = engine && st?.installed && !fixed ? `${engine}|${st.route}|${st.gateway ?? ''}|${st.account ?? ''}|${endpointModels}` : ''
+  const id = engine && st?.installed && !fixed ? `${engine}|${st.route}|${st.gateway ?? ''}|${st.account ?? ''}` : ''
   const [got, setGot] = useState<({ id: string } & Listed) | null>(null)
   useEffect(() => {
     if (!id || !engine) return
@@ -108,15 +108,12 @@ const providerOf = (value: string): string => {
 }
 
 // A model to run with: the harness, then its model from the list, or another by name.
-// jev adds TypeSafe's Jev (the router); routing adds "Smart routing", where Jev picks the model from
-// the person's pools for each prompt ('smart' is never a model id: the agent keeps its own as baseline).
-// Engines limits the harnesses offered.
-export function ModelPicker({ value, onChange, engines, jev, routing }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean; routing?: boolean }): ReactNode {
+// jev adds TypeSafe's Jev (the router). Engines limits the harnesses offered.
+export function ModelPicker({ value, onChange, engines, jev }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean }): ReactNode {
   const usable = useStore((s) => usableEngines(s.settings))
   const statuses = useStore((s) => s.settings.engines)
   const choices = (engines ?? usable).filter((e) => usable.includes(e))
-  const smart = value === 'smart'
-  const m = value && value !== 'jev' && !smart ? modelInfo(value) : undefined
+  const m = value && value !== 'jev' ? modelInfo(value) : undefined
   const engine: EngineId | undefined = m && choices.includes(m.engine) ? m.engine : choices[0]
   const { options, loading, error } = useEngineModels(engine)
   const inList = options.some((o) => o.value === value)
@@ -126,8 +123,8 @@ export function ModelPicker({ value, onChange, engines, jev, routing }: { value:
 
   // Engine/harness choices for the first pick.
   const engineOptions = useMemo(
-    () => [...choices.map((e) => ({ value: e, label: ENGINES[e].label })), ...(jev ? [{ value: 'jev', label: 'TypeSafe · Jev' }] : []), ...(routing ? [{ value: 'smart', label: L('Roteamento inteligente', 'Smart routing') }] : [])],
-    [choices, jev, routing]
+    () => [...choices.map((e) => ({ value: e, label: ENGINES[e].label })), ...(jev ? [{ value: 'jev', label: 'TypeSafe · Jev' }] : [])],
+    [choices, jev]
   )
   // The models, grouped by provider (part before "/", or before ":") when there's more than one;
   // "Other model…" last either way.
@@ -141,8 +138,8 @@ export function ModelPicker({ value, onChange, engines, jev, routing }: { value:
   }, [options])
 
   // A harness's own card passes just that harness: it's already chosen there, so no select.
-  const fixed = engines?.length === 1 && !jev && !routing
-  if (!engine && !jev && !routing)
+  const fixed = engines?.length === 1 && !jev
+  if (!engine && !jev)
     return (
       <p className="hint hint--warn">
         {L('Nenhum Claude Code ou Codex pronto ainda.', 'No Claude Code or Codex ready yet.')}{' '}
@@ -155,19 +152,18 @@ export function ModelPicker({ value, onChange, engines, jev, routing }: { value:
     <div className="model-picker">
       {!fixed && (
         <Select
-          value={smart ? 'smart' : value === 'jev' ? 'jev' : engine}
+          value={value === 'jev' ? 'jev' : engine}
           onChange={(v) => {
             setTyping(false)
             const vv = v ?? ''
             // On a plan, the harness's first model; otherwise the person picks from its list.
-            const plan = vv !== 'jev' && vv !== 'smart' && statuses[vv as EngineId].route === 'plan' ? MODELS.find((x) => x.engine === vv) : undefined
-            onChange(vv === 'jev' || vv === 'smart' ? vv : (plan?.id ?? customModel(vv as EngineId, '')))
+            const plan = vv !== 'jev' && statuses[vv as EngineId].route === 'plan' ? MODELS.find((x) => x.engine === vv) : undefined
+            onChange(vv === 'jev' ? 'jev' : (plan?.id ?? customModel(vv as EngineId, '')))
           }}
           options={engineOptions}
         />
       )}
-      {smart && <span className="hint">{L('O Jev escolhe um modelo dos seus pools a cada pedido.', 'Jev chooses from your routing pools for each prompt.')}</span>}
-      {value !== 'jev' && !smart && engine && (
+      {value !== 'jev' && engine && (
         <>
           <Select
             className="grow"
@@ -296,7 +292,7 @@ function HarnessRow({ engine, st, picked, toggle }: { engine: EngineId; st: Engi
           <code className="harness__cmd">{manual}</code>
         </div>
       )}
-      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', "Complete installation in the terminal. Tucano detects it automatically.")}</p>}
+      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', 'Installing in the terminal that opened. Once it finishes, it shows up here on its own.')}</p>}
       {!st.installed && install === 'node' && (
         <p className="hint hint--warn harness__body">
           {L(`O ${ENGINES[engine].label} precisa do Node.js. Instale o Node.js e depois clique em Instalar de novo.`, `${ENGINES[engine].label} needs Node.js. Install Node.js, then click Install again.`)}{' '}
@@ -563,31 +559,22 @@ export function HarnessMcps({ onAdded }: { onAdded: (id: string) => void }): Rea
   )
 }
 
-// More logins of Claude Code, Codex and Grok: a work account beside a personal one. Each lives in a
-// folder of its own and is signed into through the CLI, in a terminal; an agent picks one on its page.
+// More logins of Claude Code, Codex and Antigravity (that one on a Mac): a work account beside a
+// personal one. Each lives in a folder of its own and is signed into through the CLI, in a terminal;
+// an agent picks one on its page.
 export function AccountsCard(): ReactNode {
   const accounts = useStore((s) => s.settings.accounts ?? [])
   const engines = useStore((s) => s.settings.engines)
+  const os = useStore((s) => s.platform)
   const [engine, setEngine] = useState<AccountEngine>('claude')
   const [name, setName] = useState('')
   const [manual, setManual] = useState<Record<string, string>>({})
   const [removing, setRemoving] = useState<string | null>(null)
-  const [leftBehind, setLeftBehind] = useState(false)
   const add = async (): Promise<void> => {
     const a = await addAccount(engine, name)
     setName('')
     const r = await loginAccount(a.id)
     if (!r.opened) setManual((m) => ({ ...m, [a.id]: r.command }))
-  }
-  // Removing takes the account out of the list whatever happens next; the folder with its login can
-  // still be held by a CLI someone left open, and then it goes at the next launch instead.
-  const drop = async (id: string): Promise<void> => {
-    try {
-      const r = await removeAccount(id)
-      setLeftBehind(!r.folder)
-    } finally {
-      setRemoving(null)
-    }
   }
   return (
     <div className="accounts">
@@ -612,8 +599,8 @@ export function AccountsCard(): ReactNode {
             </button>
           )}
           {removing === a.id ? (
-            <button className="btn btn--sm btn--danger" onClick={() => void drop(a.id)}>
-              {L('Remover', 'Remove')}
+            <button className="btn btn--sm btn--danger" onClick={() => void removeAccount(a.id).then(() => setRemoving(null))}>
+              {L('Remover mesmo', 'Remove it')}
             </button>
           ) : (
             <button className="btn btn--ghost btn--sm" onClick={() => setRemoving(a.id)}>
@@ -626,7 +613,7 @@ export function AccountsCard(): ReactNode {
         <Select
           value={engine}
           onChange={(v) => { if (v) void setEngine(v as AccountEngine) }}
-          options={ACCOUNT_ENGINES.filter((e) => engines[e].installed).map((e) => ({ value: e, label: ENGINES[e].label }))}
+          options={ACCOUNT_ENGINES.filter((e) => engines[e].installed && accountsOn(e, os)).map((e) => ({ value: e, label: ENGINES[e].label }))}
           placeholder={L('Motor', 'Engine')}
         />
         <input className="grow" placeholder={L('Nome da conta (ex.: Trabalho)', 'Account name (e.g. Work)')} value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void add()} />
@@ -634,19 +621,16 @@ export function AccountsCard(): ReactNode {
           {L('Adicionar e entrar', 'Add and sign in')}
         </button>
       </div>
+      {engine === 'antigravity' && (
+        <p className="hint">
+          {L('O login abre o Antigravity num terminal: entre com a outra conta Google, espere ele responder e saia com /quit.', 'Signing in opens Antigravity in a terminal: sign in with the other Google account, wait for it to answer and leave with /quit.')}
+        </p>
+      )}
       {removing && (
         <p className="hint hint--warn">
           {L(
             `Os agentes dessa conta voltam pro login de sempre do ${ENGINES[accounts.find((a) => a.id === removing)?.engine ?? 'claude'].label}, e o login dela sai deste computador.`,
             `Its agents go back to ${ENGINES[accounts.find((a) => a.id === removing)?.engine ?? 'claude'].label}’s usual login, and its sign-in leaves this computer.`
-          )}
-        </p>
-      )}
-      {leftBehind && (
-        <p className="hint hint--warn">
-          {L(
-            'O login dessa conta não saiu agora porque o CLI dela ainda estava aberto: feche a janela dele. Ele sai na próxima vez que o Tucano abrir.',
-            "Close the account’s CLI window to finish signing out. Otherwise, sign-out completes when Tucano restarts."
           )}
         </p>
       )}

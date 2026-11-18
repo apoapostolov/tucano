@@ -116,9 +116,9 @@ export const userAgentPlatform = (os: Os = osOf(), arch: string = process.arch):
 // Opening at login on Linux: a desktop entry in ~/.config/autostart, the freedesktop way.
 export const autostartFile = (home = homedir(), env: NodeJS.ProcessEnv = process.env): string => join(env['XDG_CONFIG_HOME'] || join(home, '.config'), 'autostart', 'tucano.desktop')
 
-export function autostartEntry(exec: string, minimized = false): string {
+export function autostartEntry(exec: string): string {
   const q = /[\s"'\\$`]/.test(exec) ? `"${exec.replace(/(["\\$`])/g, '\\$1')}"` : exec
-  return ['[Desktop Entry]', 'Type=Application', 'Name=Tucano', `Exec=${q}${minimized ? ' --minimized' : ''}`, 'Icon=tucano', 'Terminal=false', 'X-GNOME-Autostart-enabled=true', ''].join('\n')
+  return ['[Desktop Entry]', 'Type=Application', 'Name=Tucano', `Exec=${q}`, 'Icon=tucano', 'Terminal=false', 'X-GNOME-Autostart-enabled=true', ''].join('\n')
 }
 
 // The executable names a command may have on this system: on Windows, its PATHEXT

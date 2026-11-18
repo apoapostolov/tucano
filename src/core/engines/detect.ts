@@ -11,7 +11,7 @@ import { codexEnv, userCodexProvider } from './codex'
 import { opencodeMajor } from './opencode-v2'
 import { parseAntigravityModels } from './antigravity'
 import { cursorSignedIn, parseCursorModels } from './cursor'
-import { grokAccountEnv, grokLogin, parseGrokModels } from './grok'
+import { grokLogin, parseGrokModels } from './grok'
 import { readClineLogins } from './cline'
 import { hermesAppDir, userHermesProviders, warmHermes } from './hermes'
 
@@ -124,10 +124,14 @@ const gatewayHost = (url: string | undefined): string | undefined => {
 }
 
 // Checks the app's own Codex login (see codexEnv), not the user's.
-// Whether another login of Claude Code, Codex or Grok (Settings › Accounts) is signed in, and on
-// which plan, from the CLI's own status for that folder. The parsing is pure, to test it on their
-// output.
+// Whether another login of a harness (Settings › Accounts) is signed in, and on which plan, from
+// the CLI's own status for that folder. The parsing is pure, to test it on their output.
 export function accountLogin(engine: AccountEngine, out: { code: number; stdout: string; stderr: string }): { loggedIn: boolean; detail?: string } {
+  if (engine === 'antigravity') {
+    // `agy models` in that home: the models its login can run, or "Please sign in".
+    const models = parseAntigravityModels(out.stdout).length
+    return models ? { loggedIn: true, detail: `Google · ${models} ${L('modelos', 'models')}` } : { loggedIn: false }
+  }
   if (engine === 'claude') {
     let status: Record<string, unknown> = {}
     try {
@@ -141,13 +145,6 @@ export function accountLogin(engine: AccountEngine, out: { code: number; stdout:
     const what = status['authMethod'] === 'claude.ai' ? `${L('Plano Claude', 'Claude plan')}${plan ? ` ${plan[0]!.toUpperCase()}${plan.slice(1)}` : ''}` : L('Chave de API', 'API key')
     return { loggedIn: true, detail: email ? `${what} · ${email}` : what }
   }
-  if (engine === 'grok') {
-    // `grok models` says which login it found before it lists the models: "You are logged in with
-    // grok.com." on the subscription, "You are using XAI_API_KEY." on a key, "You are not
-    // authenticated." with neither. It lists the models all three ways, so only those lines count.
-    const login = grokLogin(`${out.stdout}\n${out.stderr}`)
-    return login.loggedIn ? { loggedIn: true, detail: login.plan ? L('Plano Grok', 'Grok plan') : L('Chave de API', 'API key') } : { loggedIn: false }
-  }
   const text = `${out.stdout}\n${out.stderr}`
   const loggedIn = out.code === 0 && /logged in/i.test(text) && !/not logged in/i.test(text)
   return loggedIn ? { loggedIn, detail: /chatgpt/i.test(text) ? L('Plano ChatGPT', 'ChatGPT plan') : L('Chave de API', 'API key') } : { loggedIn }
@@ -159,8 +156,8 @@ export async function accountStatus(engine: AccountEngine, bin: string, dir: str
   const out =
     engine === 'claude'
       ? await run(bin, ['auth', 'status'], 15_000, { ...process.env, CLAUDE_CONFIG_DIR: dir })
-      : engine === 'grok'
-        ? await run(bin, ['models'], 30_000, { ...grokAccountEnv(dir), NO_COLOR: '1' })
+      : engine === 'antigravity'
+        ? await run(bin, ['models'], 30_000, { ...process.env, HOME: dir })
         : await run(bin, ['login', 'status'], 15_000, codexEnv(dir, bin))
   return accountLogin(engine, out)
 }

@@ -6,10 +6,9 @@
 // there is to know and change about it; the box at the bottom asks it something without leaving.
 import { L } from '../../../shared/lang'
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { bossesOf, bossOf, channelsOf, depthBelow, directReports, entriesOf, headsOf, orgTree, possibleBosses, reportsOf, sectorName } from '../../../shared/org'
-import { above, BOARD, boundsOf, curve, fitView, MAX_K, ME, MIN_K, pathBetween, spotsOf, tidyBoard, toBoard, topSlots, under, zoomAt, type Point, type Spots, type View } from '../../../shared/org-layout'
-import { amAdmin, isTeam, navigate, openDm, openThread, openTuca, saveAgent, setTab, updateSettings, useStore, workingOn, type Agent, type Conversation, type Delegation, type Message } from '../store'
-import { OrgAsk } from './OrgAsk'
+import { bossOf, channelsOf, depthBelow, directReports, entriesOf, headsOf, orgTree, possibleBosses, reportsOf, sectorName } from '../../../shared/org'
+import { above, BOARD, boundsOf, curve, fitView, MAX_K, ME, MIN_K, pathBetween, spotsOf, tidyLayout, toBoard, under, zoomAt, type Point, type Spots, type View } from '../../../shared/org-layout'
+import { amAdmin, askAgent, isTeam, navigate, openDm, openThread, openTuca, saveAgent, setTab, updateSettings, useStore, workingOn, type Agent, type Conversation, type Delegation, type Message } from '../store'
 import { askWay, SectorPanel, SectorZones, sectorLink } from './OrgSectors'
 import { Sheet } from './Pages'
 import { Select } from './Select'
@@ -34,11 +33,7 @@ const doingNow = (m: Message | undefined): string => {
 type Gesture =
   | { kind: 'pan'; x: number; y: number; view: View }
   | { kind: 'card'; id: string; ids: string[]; x: number; y: number; k: number; dragged: boolean }
-  | { kind: 'link'; from: string; side: Side }
-
-// Which dot a line is pulled from: under a card, above it, or the one beside that for another boss it also
-// answers to (a specialist several teams share).
-type Side = 'out' | 'in' | 'also'
+  | { kind: 'link'; from: string; side: 'out' | 'in' }
 
 export function OrgPage(): ReactNode {
   const all = useStore((s) => s.agents)
@@ -55,27 +50,64 @@ export function OrgPage(): ReactNode {
   // The one the person talks to, when one agent tops teams of their own: the sectors hang from it.
   const entries = entriesOf(agents)
   const entry = entries[0]
-  const base = spotsOf([ME, ...agents.map((a) => a.id)], tidyBoard(roots, loose, BOARD, entries.map((e) => e.id)), saved)
+  const tidy = tidyLayout(roots, loose, BOARD, entries.map((e) => e.id))
+  const base = spotsOf([ME, ...agents.map((a) => a.id)], tidy.spots, saved)
 
   const board = useRef<HTMLDivElement>(null)
+  const stage = useRef<HTMLDivElement>(null)
+  const zoomLabel = useRef<HTMLButtonElement>(null)
   const gesture = useRef<Gesture | null>(null)
   const hover = useRef<string | null>(null)
-  const dotOver = useRef<string | null>(null) // the dot for another boss a line is being let go on
   const [room, setRoom] = useState({ w: 0, h: 0 })
   const [stored, setView] = useState<View | null>(null)
+  // While the board is being moved or zoomed, the view lives here and goes straight to the page: the cards,
+  // the lines and the zones aren't drawn again on every step, only once when the move ends.
+  const live = useRef<View | null>(null)
+  const storedNow = useRef<View | null>(null)
+  storedNow.current = stored
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const paint = (v: View): void => {
+    live.current = v
+    const el = board.current
+    if (stage.current) stage.current.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.k})`
+    if (el) {
+      el.classList.add('is-panning')
+      el.style.backgroundSize = `${24 * v.k}px ${24 * v.k}px`
+      el.style.backgroundPosition = `${v.x}px ${v.y}px`
+    }
+    const pct = `${Math.round(v.k * 100)}%`
+    if (zoomLabel.current && zoomLabel.current.textContent !== pct) zoomLabel.current.textContent = pct // new text lays the page out again
+  }
+  const settle = (): void => {
+    clearTimeout(settleTimer.current)
+    const v = live.current
+    board.current?.classList.remove('is-panning')
+    if (!v) return
+    live.current = null
+    setView(v)
+  }
+  useEffect(() => () => clearTimeout(settleTimer.current), [])
+  // The view right now, even in the middle of a move; and a view set from a button, which ends any move.
+  const current = (): View => live.current ?? storedNow.current ?? NO_VIEW
+  const show = (v: View): void => {
+    clearTimeout(settleTimer.current)
+    live.current = null
+    board.current?.classList.remove('is-panning')
+    setView(v)
+  }
   const [sent, setSent] = useState<string | null>(null) // whoever was just asked something, for a moment
   const mine = useRef(false) // I moved or zoomed the board: it stays where I left it
   const [moved, setMoved] = useState<{ ids: string[]; dx: number; dy: number } | null>(null)
-  const [link, setLink] = useState<{ from: string; side: Side; to: Point } | null>(null)
+  const [link, setLink] = useState<{ from: string; side: 'out' | 'in'; to: Point } | null>(null)
   const [over, setOver] = useState<string | null>(null)
-  const [overDot, setOverDot] = useState<string | null>(null) // the card whose dot for another boss is under the line
   const [picked, setPicked] = useState<string | null>(null)
   const [sector, setSector] = useState<string | null>(null) // the head of the sector picked, instead of a card
   const [edge, setEdge] = useState<string | null>(null) // the one below, of the line picked
   const [error, setError] = useState<string | null>(null)
+  const [text, setText] = useState('')
   // The last change to who answers to whom: what it was, in words, and how each one stood before it.
-  const [undo, setUndo] = useState<{ text: string; back: () => Promise<void> } | null>(null)
-  const view = stored ?? NO_VIEW
+  const [undo, setUndo] = useState<{ text: string; was: [string, string | null][] } | null>(null)
+  const view = live.current ?? stored ?? NO_VIEW
   const spot = (id: string): Point => {
     const p = base[id] ?? { x: 0, y: 0 }
     return moved?.ids.includes(id) ? { x: p.x + moved.dx, y: p.y + moved.dy } : p
@@ -88,7 +120,7 @@ export function OrgPage(): ReactNode {
     const right = (picked || sector) && wide ? SIDE_ROOM : 0
     const v = fitView(boundsOf(Object.values(spots)), { w: room.w - left - right, h: room.h - ASK_ROOM })
     mine.current = false
-    setView({ ...v, x: v.x + left })
+    show({ ...v, x: v.x + left })
   }
   const fit = (): void => fitTo(base)
 
@@ -130,14 +162,15 @@ export function OrgPage(): ReactNode {
     const el = board.current
     if (!el) return
     const onWheel = (e: WheelEvent): void => {
-      if ((e.target as Element).closest?.('.org-side, .org-ask-wrap, .org-coach')) return
+      if ((e.target as Element).closest?.('.org-side, .org-ask, .org-coach')) return
       e.preventDefault()
       mine.current = true
       const r = el.getBoundingClientRect()
-      setView((v) => {
-        const now = v ?? NO_VIEW
-        return e.ctrlKey || e.metaKey ? zoomAt(now, { x: e.clientX - r.left, y: e.clientY - r.top }, now.k * Math.exp(-e.deltaY * 0.01)) : { ...now, x: now.x - e.deltaX, y: now.y - e.deltaY }
-      })
+      const now = live.current ?? storedNow.current ?? NO_VIEW
+      paint(e.ctrlKey || e.metaKey ? zoomAt(now, { x: e.clientX - r.left, y: e.clientY - r.top }, now.k * Math.exp(-e.deltaY * 0.01)) : { ...now, x: now.x - e.deltaX, y: now.y - e.deltaY })
+      // The wheel has no end: the move is over when it stops for a moment.
+      clearTimeout(settleTimer.current)
+      settleTimer.current = setTimeout(settle, 140)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
@@ -166,78 +199,25 @@ export function OrgPage(): ReactNode {
     if (!was.length) return
     const who = byId.get(was[0]![0])?.name ?? ''
     const boss = to ? byId.get(to)?.name : undefined
-    setUndo({
-      text: said ?? (boss ? L(`${who} agora responde a ${boss}.`, `${who} answers to ${boss} now.`) : L(`${who} não responde mais a ninguém.`, `${who} answers to no one now.`)),
-      // Latest first, so a line that depended on another is undone before it. Written as it stands, even when
-      // it looks like no change: putting back is never the same as asking for it again.
-      back: async () => {
-        for (const [id, before] of [...was].reverse()) {
-          const agent = byId.get(id)
-          if (agent) await saveAgent({ ...agent, reportsTo: before ?? undefined }, channels(id).map((c) => c.id))
-        }
-      }
-    })
+    setUndo({ was, text: said ?? (boss ? L(`${who} agora responde a ${boss}.`, `${who} answers to ${boss} now.`) : L(`${who} não responde mais a ninguém.`, `${who} answers to no one now.`)) })
   }
   const move = (id: string, to: string | null): Promise<void> => moveAll([id], to)
-  // The other agents it also answers to (a specialist several teams share): saved as they are, and never its
-  // own primary boss, which is the line it hangs from. `said` is for the changes made on the board, which can
-  // be taken back for a moment; the panel's own field ticks them and there is nothing to announce.
-  const setAlso = async (id: string, ids: string[], said?: string): Promise<void> => {
-    const agent = byId.get(id)
-    if (!agent || !admin) return
-    const was = agent.alsoTo ?? []
-    const keep = ids.filter((x, i, all) => x !== id && x !== agent.reportsTo && all.indexOf(x) === i)
-    setError(null)
-    try {
-      await saveAgent({ ...agent, alsoTo: keep.length ? keep : undefined }, channels(id).map((c) => c.id))
-      if (said)
-        setUndo({
-          text: said,
-          back: async () => {
-            await saveAgent({ ...agent, alsoTo: was.length ? was : undefined }, channels(id).map((c) => c.id))
-          }
-        })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
-    }
-  }
-  // One more boss it also answers to, from the dot beside the one above its card.
-  const addAlso = async (id: string, boss: string): Promise<void> => {
-    const agent = byId.get(id)
-    if (!agent) return
-    const who = agent.name
-    const what = byId.get(boss)?.name
-    await setAlso(id, [...(agent.alsoTo ?? []).filter((x) => x !== boss), boss], L(`${who} também responde a ${what}.`, `${who} also answers to ${what}.`))
-  }
-  // And the one that unmakes it: the extra line picked on the board.
-  const dropAlso = async (id: string, boss: string): Promise<void> => {
-    const agent = byId.get(id)
-    if (!agent) return
-    const who = agent.name
-    const what = byId.get(boss)?.name
-    await setAlso(id, (agent.alsoTo ?? []).filter((x) => x !== boss), L(`${who} não responde mais a ${what}.`, `${who} no longer answers to ${what}.`))
-  }
   const takeBack = async (): Promise<void> => {
     if (!undo) return
     setUndo(null)
     setError(null)
-    await undo.back()
+    // Latest first, so a line that depended on another is undone before it.
+    for (const [id, to] of [...undo.was].reverse()) await put(id, to)
   }
   // `id` may answer to `boss` unless it already does or that closes a loop.
   const takes = (boss: string, id: string): boolean => {
     const agent = byId.get(id)
     return !!agent && agent.reportsTo !== boss && possibleBosses(agents, id).some((a) => a.id === boss)
   }
-  // A line pulled from under a card ends on whoever will answer to it; from above, on whoever it will answer to
-  // (on me: to no one); from the dot beside that one, on another boss it also answers to — never on its own
-  // primary boss, nor on one it already answers to.
-  const lands = (from: string, side: Side, target: string): boolean => {
-    if (target === from) return false
-    const agent = byId.get(from)
-    if (side === 'out') return target !== ME && takes(from, target)
-    if (side === 'also') return target !== ME && !!agent && target !== agent.reportsTo && !(agent.alsoTo ?? []).includes(target) && takes(target, from)
-    return target === ME ? !!agent?.reportsTo : takes(target, from)
-  }
+  // A line pulled from under a card ends on whoever will answer to it; from above, on whoever it will
+  // answer to (on me: to no one).
+  const lands = (from: string, side: 'out' | 'in', target: string): boolean =>
+    target !== from && (side === 'out' ? target !== ME && takes(from, target) : target === ME ? !!byId.get(from)?.reportsTo : takes(target, from))
 
   const local = (e: { clientX: number; clientY: number }): Point => {
     const r = board.current?.getBoundingClientRect?.()
@@ -246,8 +226,8 @@ export function OrgPage(): ReactNode {
   const begin = (g: Gesture): void => {
     gesture.current = g
     const onMove = (e: PointerEvent): void => {
-      if (g.kind === 'pan') (mine.current = true), setView({ ...g.view, x: g.view.x + e.clientX - g.x, y: g.view.y + e.clientY - g.y })
-      else if (g.kind === 'link') setLink({ from: g.from, side: g.side, to: toBoard(view, local(e)) })
+      if (g.kind === 'pan') (mine.current = true), paint({ ...g.view, x: g.view.x + e.clientX - g.x, y: g.view.y + e.clientY - g.y })
+      else if (g.kind === 'link') setLink({ from: g.from, side: g.side, to: toBoard(current(), local(e)) })
       else {
         const dx = e.clientX - g.x
         const dy = e.clientY - g.y
@@ -260,23 +240,12 @@ export function OrgPage(): ReactNode {
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerup', onUp)
       gesture.current = null
-      if (g.kind === 'link') {
+      if (g.kind === 'pan') settle()
+      else if (g.kind === 'link') {
         const target = hover.current
-        const dot = dotOver.current
         setLink(null)
         setOver(null)
-        setOverDot(null)
-        // Let go on the dot for another boss (pulled from under a boss): it answers to it as well, instead of
-        // to it alone, which is what letting go on the card itself does. The dot is tried first, and a dot
-        // that would not take the line swallows it, so a slip there never moves the card's own boss.
-        if (dot && g.side === 'out') {
-          dotOver.current = null
-          if (dot !== g.from && lands(dot, 'also', g.from)) void addAlso(dot, g.from)
-          return
-        }
-        dotOver.current = null
-        if (target && lands(g.from, g.side, target))
-          void (g.side === 'out' ? move(target, g.from) : g.side === 'also' ? addAlso(g.from, target) : move(g.from, target === ME ? null : target))
+        if (target && lands(g.from, g.side, target)) void (g.side === 'out' ? move(target, g.from) : move(g.from, target === ME ? null : target))
       } else if (g.kind === 'card') {
         setMoved(null)
         if (!g.dragged) return void (g.id !== ME && (setEdge(null), setSector(null), setPicked((p) => (p === g.id ? null : g.id))))
@@ -294,25 +263,24 @@ export function OrgPage(): ReactNode {
   }
   const press = (e: ReactPointerEvent): boolean => (e.button ?? 0) === 0
   const onBoard = (e: ReactPointerEvent): void => {
-    if (!press(e) || (e.target as Element).closest('.org-card, .org-side, .org-ask-wrap, .org-coach, .org-tools, .org-edge-x, .orgb__hit, .org-zone__tag')) return
+    if (!press(e) || (e.target as Element).closest('.org-card, .org-side, .org-ask, .org-coach, .org-tools, .org-edge-x, .orgb__hit, .org-zone__tag')) return
     setPicked(null)
     setSector(null)
     setEdge(null)
-    begin({ kind: 'pan', x: e.clientX, y: e.clientY, view })
+    begin({ kind: 'pan', x: e.clientX, y: e.clientY, view: current() })
   }
   // A card takes everyone below along, like a branch; with ⌥, it goes alone.
   const onCard = (id: string) => (e: ReactPointerEvent): void => {
     if (!press(e)) return
-    begin({ kind: 'card', id, ids: id === ME || e.altKey ? [id] : [id, ...reportsOf(agents, id).map((a) => a.id)], x: e.clientX, y: e.clientY, k: view.k, dragged: false })
+    begin({ kind: 'card', id, ids: id === ME || e.altKey ? [id] : [id, ...reportsOf(agents, id).map((a) => a.id)], x: e.clientX, y: e.clientY, k: current().k, dragged: false })
   }
-  const onPort = (id: string, side: Side) => (e: ReactPointerEvent): void => {
+  const onPort = (id: string, side: 'out' | 'in') => (e: ReactPointerEvent): void => {
     if (!press(e)) return
     e.stopPropagation()
     setPicked(null)
     setSector(null)
     setEdge(null)
-    dotOver.current = null
-    setLink({ from: id, side, to: toBoard(view, local(e)) })
+    setLink({ from: id, side, to: toBoard(current(), local(e)) })
     begin({ kind: 'link', from: id, side })
   }
   const enter = (id: string) => (): void => {
@@ -323,42 +291,22 @@ export function OrgPage(): ReactNode {
     if (hover.current === id) hover.current = null
     setOver((o) => (o === id ? null : o))
   }
-  // The dot beside the one above a card, where another boss is made: a line let go on it lands there instead
-  // of on the card, so a boss pulled from under a card adds one instead of replacing the one it hangs from.
-  const enterDot = (id: string) => (): void => {
-    dotOver.current = id
-    if (gesture.current?.kind === 'link') setOverDot(id)
-  }
-  const leaveDot = (id: string) => (): void => {
-    if (dotOver.current === id) dotOver.current = null
-    setOverDot((o) => (o === id ? null : o))
-  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      const typing = (e.target as Element | null)?.closest?.('input, textarea, select, [contenteditable]')
+      if (e.key === 'Escape') (setPicked(null), setSector(null), setEdge(null))
+      else if (e.key.toLowerCase() === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey && undo && !typing) (e.preventDefault(), void takeBack())
+      else if ((e.key === 'Backspace' || e.key === 'Delete') && edge && admin && !typing) (void move(edge, null), setEdge(null))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   // The lines each open request travels, and which way: down while it's being done, up while a question waits.
   // Between colleagues it goes up to the agent both answer to and down the other side.
   const flowing = new Map<string, 'down' | 'up'>()
   const bossId = (id: string): string | undefined => bossOf(agents, byId.get(id)!)?.id
-  // Every agent a card answers to, its primary one first (the line it hangs from, then the others).
-  const bossIds = (id: string): string[] => {
-    const a = byId.get(id)
-    return a ? bossesOf(agents, a).map((b) => b.id) : []
-  }
-  // Where the lines of the bosses a card answers to land: one point each along its own top edge, the one it
-  // hangs from in the middle and the others stepping out from it (topSlots), so two teams sharing an agent
-  // never draw their lines onto the same spot. `slotOf` is the one a given boss's line arrives at.
-  const slotOf = (id: string, i: number): Point => {
-    const all = topSlots(spot(id), Math.max(1, bossIds(id).length))
-    return all[Math.min(i, all.length - 1)]!
-  }
-  // The point a dot for one more boss sits on: the one its line will land on, clear of the rest. A card that
-  // answers to nobody has no such dot: its first boss is made from the one above it.
-  const nextSlot = (id: string): { at: Point; offset: number } | null => {
-    const have = bossIds(id).length
-    if (!have) return null
-    const all = topSlots(spot(id), have + 1)
-    const at = all[have]!
-    return { at, offset: Math.round(at.x - (spot(id).x + BOARD.w / 2)) }
-  }
   const heads = headsOf(agents)
   const sectorAsks = open.filter((d) => askWay(agents, d) === 'sector')
   // A request to a sector from the entry point right above its head: down the line between the two.
@@ -370,31 +318,21 @@ export function OrgPage(): ReactNode {
       continue
     }
     const hops = pathBetween(bossId, d.from, d.to)
-    // A line it answers to that isn't its primary one (a shared specialist): not on the way down the tree,
-    // so the request travels the one line between the two.
-    if (!hops.length && bossIds(d.to).includes(d.from)) {
-      flowing.set(`${d.from}>${d.to}`, d.asking ? 'up' : 'down')
-      continue
-    }
-    if (!hops.length && bossIds(d.from).includes(d.to)) {
-      flowing.set(`${d.to}>${d.from}`, d.asking ? 'down' : 'up')
-      continue
-    }
-    const shared = hops.length ? undefined : bossIds(d.from).find((b) => bossIds(d.to).includes(b))
+    const shared = hops.length ? undefined : bossId(d.from)
     const way: [string, 'down' | 'up'][] = hops.length
       ? hops.map(([boss, below]) => [`${boss}>${below}`, d.asking ? 'up' : 'down'])
-      : shared
+      : shared && shared === bossId(d.to)
         ? [[`${shared}>${d.from}`, d.asking ? 'down' : 'up'], [`${shared}>${d.to}`, d.asking ? 'up' : 'down']]
         : []
     for (const [line, dir] of way) flowing.set(line, dir === 'up' ? 'up' : flowing.get(line) ?? 'down')
   }
-  const links: { from: string; to: string; also?: boolean; slot: number }[] = [
-    ...roots.map((r) => ({ from: ME, to: r.agent.id, slot: 0 })),
-    // One line per agent it answers to: the first is the tree's own (the card hangs under it), the others
-    // reach a shared agent from the side, drawn dashed. Each arrives on its own point of the card's top edge.
-    ...agents.flatMap((a) => bossesOf(agents, a).map((boss, i) => ({ from: boss.id, to: a.id, slot: i, ...(i ? { also: true } : {}) })))
-  ]
-  const lines = links.map((l) => ({ ...l, a: under(spot(l.from)), b: slotOf(l.to, l.slot) }))
+  const lines = [
+    ...roots.map((r) => ({ from: ME, to: r.agent.id })),
+    ...agents.flatMap((a) => {
+      const boss = bossOf(agents, a)
+      return boss ? [{ from: boss.id, to: a.id }] : []
+    })
+  ].map((l) => ({ ...l, a: under(spot(l.from)), b: above(spot(l.to)) }))
 
   const levels = roots.length ? 1 + Math.max(...roots.map((r) => depthBelow(agents, r.agent.id))) : 0
   const inTree = agents.length - loose.length
@@ -413,29 +351,18 @@ export function OrgPage(): ReactNode {
   const sectorHead = sector ? heads.find((h) => h.id === sector) : undefined
   // Whoever the box at the bottom talks to: the card picked, or else whoever is at the top.
   const asked = chosen ?? entry ?? roots[0]?.agent
-  const zoom = (f: number): void => ((mine.current = true), setView(zoomAt(view, { x: room.w / 2, y: room.h / 2 }, view.k * f)))
-  const size = { width: BOARD.w, height: BOARD.h }
-  // What a picked line is: the child it reaches, for the one a card hangs from, both ends for an extra one —
-  // so two extras between the same cards never read as the same line.
-  const lineKey = (l: { from: string; to: string; also?: boolean }): string => (l.also ? `a:${l.from}>${l.to}` : l.to)
-  // The line picked, taken out: an extra one from what it also answers to, the tree's own from its boss.
-  const dropLine = (key: string | null): void => {
-    const l = key ? lines.find((x) => lineKey(x) === key) : undefined
-    if (l) void (l.also ? dropAlso(l.to, l.from) : move(l.to, null))
-    setEdge(null)
+  const send = (): void => {
+    const what = text.trim()
+    if (!asked || !what) return
+    setText('')
+    askAgent(asked.id, what).then(
+      () => setSent(asked.name),
+      (e: unknown) => (setText(what), setError(e instanceof Error ? e.message : String(e)))
+    )
   }
-  const cut = lines.find((l) => lineKey(l) === edge && l.from !== ME)
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent): void => {
-      const typing = (e.target as Element | null)?.closest?.('input, textarea, select, [contenteditable]')
-      if (e.key === 'Escape') (setPicked(null), setSector(null), setEdge(null))
-      else if (e.key.toLowerCase() === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey && undo && !typing) (e.preventDefault(), void takeBack())
-      else if ((e.key === 'Backspace' || e.key === 'Delete') && edge && admin && !typing) (e.preventDefault(), dropLine(edge))
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  })
+  const zoom = (f: number): void => ((mine.current = true), show(zoomAt(current(), { x: room.w / 2, y: room.h / 2 }, current().k * f)))
+  const size = { width: BOARD.w, height: BOARD.h }
+  const cut = lines.find((l) => l.to === edge && l.from !== ME)
 
   return (
     <Sheet
@@ -446,7 +373,7 @@ export function OrgPage(): ReactNode {
         admin ? (
           <>
             {saved && (
-              <button className="btn btn--ghost btn--sm org-tidy" title={L('Volta cada cartão pro lugar dele na árvore', 'Puts each card back in its place in the tree')} onClick={() => (updateSettings({ orgLayout: null as unknown as undefined }), fitTo(tidyBoard(roots, loose)))}>
+              <button className="btn btn--ghost btn--sm org-tidy" title={L('Volta cada cartão pro lugar dele na árvore', 'Puts each card back in its place in the tree')} onClick={() => (updateSettings({ orgLayout: null as unknown as undefined }), fitTo(tidy.spots))}>
                 {L('Organizar', 'Tidy up')}
               </button>
             )}
@@ -478,27 +405,27 @@ export function OrgPage(): ReactNode {
 
       <div
         ref={board}
-        className={`orgb ${moved ? 'is-moving' : ''} ${link ? 'is-linking' : ''} ${link?.side === 'out' ? 'is-from-above' : ''} ${chosen || sectorHead ? 'has-side' : ''}`}
+        className={`orgb ${moved ? 'is-moving' : ''} ${link ? 'is-linking' : ''} ${chosen || sectorHead ? 'has-side' : ''}`}
         style={{ backgroundSize: `${24 * view.k}px ${24 * view.k}px`, backgroundPosition: `${view.x}px ${view.y}px` }}
         onPointerDown={onBoard}
       >
-        <div className="orgb__stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
+        <div ref={stage} className="orgb__stage" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
           <SectorZones agents={agents} spot={spot} admin={admin} picked={sector} onPick={(id) => (setPicked(null), setEdge(null), setSector(sector === id ? null : id))} />
           <svg className="orgb__lines" width="1" height="1" aria-hidden="true">
             {lines.map((l) => {
               const flow = flowing.get(`${l.from}>${l.to}`)
-              const d = curve(l.a, l.b)
+              const routed = base === tidy.spots && !moved ? tidy.routes[`${l.from}>${l.to}`] : undefined
+              const d = routed ?? curve(l.a, l.b)
               const mine = l.from === ME
-              const key = lineKey(l)
               return (
-                <g key={key} className={`${mine ? 'is-me' : ''} ${l.also ? 'is-also' : ''} ${flow ? `is-flow is-${flow}` : ''} ${edge === key && !mine ? 'is-picked' : ''}`}>
+                <g key={`${l.from}>${l.to}`} className={`${mine ? 'is-me' : ''} ${flow ? `is-flow is-${flow}` : ''} ${edge === l.to && !mine ? 'is-picked' : ''}`}>
                   <path d={d} className="orgb__line" />
                   {flow && (
                     <circle r="4.5" className="orgb__dot">
                       <animateMotion dur="1.6s" repeatCount="indefinite" path={d} keyPoints={flow === 'up' ? '1;0' : '0;1'} keyTimes="0;1" calcMode="linear" />
                     </circle>
                   )}
-                  {admin && !mine && <path d={d} className="orgb__hit" onPointerDown={(e) => (e.stopPropagation(), setPicked(null), setEdge(edge === key ? null : key))} />}
+                  {admin && !mine && <path d={d} className="orgb__hit" onPointerDown={(e) => (e.stopPropagation(), setPicked(null), setEdge(edge === l.to ? null : l.to))} />}
                 </g>
               )
             })}
@@ -506,16 +433,7 @@ export function OrgPage(): ReactNode {
               const x = sectorLink(spot(d.from), spot(d.to))
               return <path key={d.id} d={x.d} className="org-xline" />
             })}
-            {link && (
-              <path
-                className={`orgb__line is-new ${link.side === 'also' ? 'is-extra' : ''}`}
-                d={
-                  link.side === 'out'
-                    ? curve(under(spot(link.from)), link.to)
-                    : curve(link.to, link.side === 'also' ? (nextSlot(link.from)?.at ?? above(spot(link.from))) : above(spot(link.from)))
-                }
-              />
-            )}
+            {link && <path className="orgb__line is-new" d={link.side === 'out' ? curve(under(spot(link.from)), link.to) : curve(link.to, above(spot(link.from)))} />}
           </svg>
           {sectorAsks.map((d) => {
             // From an entry point it travels the line already there, lit: the label sits on that line.
@@ -533,13 +451,9 @@ export function OrgPage(): ReactNode {
             <button
               className="org-edge-x"
               style={{ left: (cut.a.x + cut.b.x) / 2, top: (cut.a.y + cut.b.y) / 2 }}
-              title={
-                cut.also
-                  ? L(`${byId.get(cut.to)?.name} deixa de responder também a ${byId.get(cut.from)?.name} (Delete)`, `${byId.get(cut.to)?.name} no longer also answers to ${byId.get(cut.from)?.name} (Delete)`)
-                  : L(`${byId.get(cut.to)?.name} deixa de responder a ${byId.get(cut.from)?.name} (Delete)`, `${byId.get(cut.to)?.name} stops answering to ${byId.get(cut.from)?.name} (Delete)`)
-              }
+              title={L(`${byId.get(cut.to)?.name} deixa de responder a ${byId.get(cut.from)?.name} (Delete)`, `${byId.get(cut.to)?.name} stops answering to ${byId.get(cut.from)?.name} (Delete)`)}
               aria-label={L('Desfazer a ligação', 'Remove the link')}
-              onClick={() => dropLine(edge)}
+              onClick={() => (void move(cut.to, null), setEdge(null))}
             >
               <Icon name="x" size={12} />
             </button>
@@ -567,8 +481,6 @@ export function OrgPage(): ReactNode {
           {agents.map((a) => {
             const p = spot(a.id)
             const target = !!link && lands(link.from, link.side, a.id)
-            // The dot for another boss, while a line is pulled from under a card: the other place to let it go.
-            const alsoOffer = !!link && link.side === 'out' && lands(a.id, 'also', link.from)
             return (
               <Card
                 key={a.id}
@@ -582,7 +494,7 @@ export function OrgPage(): ReactNode {
                 team={directReports(agents, a.id).length}
                 head={heads.some((h) => h.id === a.id)}
                 entry={entries.some((e) => e.id === a.id)}
-                bossName={bossOf(agents, a)?.name}
+                bossName={a.reportsTo ? byId.get(a.reportsTo)?.name : undefined}
                 moving={!!moved?.ids.includes(a.id)}
                 picked={picked === a.id}
                 linking={link?.from === a.id}
@@ -593,11 +505,6 @@ export function OrgPage(): ReactNode {
                 onPointerEnter={enter(a.id)}
                 onPointerLeave={leave(a.id)}
                 onPort={(side) => onPort(a.id, side)}
-                alsoAt={nextSlot(a.id)?.offset ?? null}
-                alsoOffer={alsoOffer}
-                dotOver={overDot === a.id}
-                onDotEnter={enterDot(a.id)}
-                onDotLeave={leaveDot(a.id)}
                 onPick={() => (setEdge(null), setSector(null), setPicked(picked === a.id ? null : a.id))}
                 onOpen={() => void openDm(a.id)}
               />
@@ -611,7 +518,7 @@ export function OrgPage(): ReactNode {
           <button className="icon-btn" title={L('Afastar', 'Zoom out')} disabled={view.k <= MIN_K} onClick={() => zoom(1 / 1.2)}>
             −
           </button>
-          <button className="org-tools__k" title={L('Tamanho real', 'Actual size')} onClick={() => setView(zoomAt(view, { x: room.w / 2, y: room.h / 2 }, 1))}>
+          <button ref={zoomLabel} className="org-tools__k" title={L('Tamanho real', 'Actual size')} onClick={() => show(zoomAt(current(), { x: room.w / 2, y: room.h / 2 }, 1))}>
             {Math.round(view.k * 100)}%
           </button>
           <button className="icon-btn" title={L('Aproximar', 'Zoom in')} disabled={view.k >= MAX_K} onClick={() => zoom(1.2)}>
@@ -637,7 +544,15 @@ export function OrgPage(): ReactNode {
           </div>
         )}
 
-        {asked && <OrgAsk agent={asked} busy={on.has(asked.id)} sent={sent} onSent={setSent} onError={setError} />}
+        {asked && (
+          <form className="org-ask" onSubmit={(e) => (e.preventDefault(), send())}>
+            <AgentAvatar agent={asked} size={24} busy={on.has(asked.id)} />
+            <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder={sent === asked.name ? L(`Enviado a ${sent}. Acompanhe pelas linhas.`, `Sent to ${sent}. Follow it on the lines.`) : L(`Pedir algo a ${asked.name}…`, `Ask ${asked.name} something…`)} aria-label={L(`Pedir algo a ${asked.name}`, `Ask ${asked.name} something`)} />
+            <button className="btn btn--primary btn--sm" disabled={!text.trim()} title={L('Enviar na DM dele (Enter)', 'Send in their DM (Enter)')}>
+              <Icon name="send" size={14} />
+            </button>
+          </form>
+        )}
 
         {sectorHead && <SectorPanel key={sectorHead.id} head={sectorHead} agents={agents} admin={admin} asks={sectorAsks.filter((d) => d.to === sectorHead.id)} onClose={() => setSector(null)} />}
         {chosen && !sectorHead && (
@@ -657,7 +572,6 @@ export function OrgPage(): ReactNode {
               return !c ? '?' : c.kind === 'dm' ? 'DM' : `#${c.name}`
             }}
             onBoss={(to) => void move(chosen.id, to)}
-            onAlso={(ids) => void setAlso(chosen.id, ids)}
             onEntry={(on) => void saveAgent({ ...chosen, entry: on }, channels(chosen.id).map((c) => c.id)).catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))}
             onThread={goThread}
             onLive={goLive}
@@ -692,11 +606,6 @@ function Card({
   onPointerEnter,
   onPointerLeave,
   onPort,
-  alsoAt,
-  alsoOffer,
-  dotOver,
-  onDotEnter,
-  onDotLeave,
   onPick,
   onOpen
 }: {
@@ -720,12 +629,7 @@ function Card({
   onPointerDown: (e: ReactPointerEvent) => void
   onPointerEnter: () => void
   onPointerLeave: () => void
-  onPort: (side: Side) => (e: ReactPointerEvent) => void
-  alsoAt: number | null // where the dot for one more boss sits, from the card's middle; null: no such dot
-  alsoOffer: boolean // a line being pulled from under a card would land on that dot
-  dotOver: boolean // a line being pulled is over that dot
-  onDotEnter: () => void
-  onDotLeave: () => void
+  onPort: (side: 'out' | 'in') => (e: ReactPointerEvent) => void
   onPick: () => void
   onOpen: () => void
 }): ReactNode {
@@ -768,19 +672,6 @@ function Card({
         </span>
       )}
       {admin && <span className="org-port org-port--in" title={L('Puxe até quem ele vai responder', 'Pull onto whoever it will answer to')} onPointerDown={onPort('in')} />}
-      {/* Another boss it also answers to (src/shared/org.ts bossesOf): a specialist several teams share. It sits
-          on the point that line arrives at (topSlots), clear of the one above and of every other, and it is
-          also a place to let a line go on: pulled from under a boss, it adds it instead of replacing the boss. */}
-      {admin && alsoAt !== null && (
-        <span
-          className={`org-port org-port--also${alsoOffer ? ' is-offer' : ''}${dotOver ? ' is-over' : ''}`}
-          style={{ left: `calc(50% + ${alsoAt}px)` }}
-          title={L('Puxe até outro a quem ele também vai responder', 'Pull onto another one it will also answer to')}
-          onPointerDown={onPort('also')}
-          onPointerEnter={onDotEnter}
-          onPointerLeave={onDotLeave}
-        />
-      )}
       <AgentAvatar agent={agent} size={40} busy={!!live} still />
       <span className="org-card__who">
         <strong>{agent.name}</strong>
@@ -816,7 +707,6 @@ function Details({
   nameOf,
   channelOf,
   onBoss,
-  onAlso,
   onEntry,
   onThread,
   onLive,
@@ -834,7 +724,6 @@ function Details({
   nameOf: (id: string) => string
   channelOf: (id: string) => string
   onBoss: (to: string | null) => void
-  onAlso: (ids: string[]) => void
   onEntry: (on: boolean) => void
   onThread: (d: Delegation) => void
   onLive: (m: Message) => void
@@ -842,7 +731,6 @@ function Details({
 }): ReactNode {
   const none = L('Ninguém', 'No one')
   const boss = bosses.find((a) => a.id === agent.reportsTo)
-  const extra = (agent.alsoTo ?? []).filter((id) => id !== agent.reportsTo)
   const row = (d: Delegation, label: string): ReactNode => (
     <button key={d.id} className="org-pop__ask" title={d.text} onClick={() => onThread(d)}>
       <span className="org-pop__ask-top">
@@ -881,27 +769,13 @@ function Details({
           placeholder={none}
         />
       </label>
-      {/* More than one boss (src/shared/org.ts bossesOf): a specialist several teams share. Each of them may
-          hand it work, and the board draws a dashed line from each to its card. */}
-      <label className="field org-pop__boss">
-        <span className="field__label">{L('Também responde a', 'Also answers to')}</span>
-        <Select
-          multiple
-          showAllValues
-          values={extra}
-          disabled={!admin}
-          onValuesChange={(ids) => onAlso(ids)}
-          options={bosses.filter((b) => b.id !== agent.reportsTo).map((a) => ({ value: a.id, label: a.role ? `${a.name} · ${a.role}` : a.name }))}
-          placeholder={none}
-        />
-      </label>
       {/* Only for one that answers to no agent: an entry point is over the sectors, in none. */}
-      {!boss && !extra.length && (admin || agent.entry) && (
+      {!boss && (admin || agent.entry) && (
         <label className="check org-pop__entry">
           <input type="checkbox" checked={!!agent.entry} disabled={!admin} onChange={(e) => onEntry(e.target.checked)} />
           <span>
             <b>{L('Porta de entrada', 'Entry point')}</b>
-            <small>{L('Você fala com ele, e ele passa cada parte ao setor certo. Os times abaixo dele são os setores.', 'Routes your requests to sector heads. Each team below it is a sector.')}</small>
+            <small>{L('Você fala com ele, e ele passa cada parte ao setor certo. Os times abaixo dele são os setores.', 'You talk to it, and it passes each part to the right sector. The teams below it are the sectors.')}</small>
           </span>
         </label>
       )}

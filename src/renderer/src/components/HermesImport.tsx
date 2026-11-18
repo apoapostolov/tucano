@@ -67,7 +67,7 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
         { label: L('Modelo', 'Model'), items: preview.models }
       ].filter((g) => g.items.length)
     : []
-  const leftOut = preview?.profiles.flatMap((p) => p.routinesAsNames.map((r) => L(`a rotina “${r}” (a agenda não cabe aqui)`, `the “${r}” routine (not imported)`))) ?? []
+  const leftOut = preview?.profiles.flatMap((p) => p.routinesAsNames.map((r) => L(`a rotina “${r}” (a agenda não cabe aqui)`, `the “${r}” routine (its schedule doesn't fit here)`))) ?? []
 
   return (
     <Modal title={L('Importar do Hermes', 'Import from Hermes')} onClose={onClose} className="hermes-import">
@@ -84,7 +84,7 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
       {preview && (
         <div className="hermes-import__body">
           <section>
-            <h4>{many ? L('Perfis: cada um vira um agente', 'Each profile becomes an agent') : L('Vira um agente', 'Agent to import')}</h4>
+            <h4>{many ? L('Perfis: cada um vira um agente', 'Profiles: each one becomes an agent') : L('Vira um agente', 'Becomes an agent')}</h4>
             <div className="checks checks--skills">
               {preview.profiles.map((p) => (
                 <label key={p.key} className="check check--skill">
@@ -100,17 +100,17 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
           </section>
 
           <section>
-            <h4>{L('Como entra', 'Import behavior')}</h4>
+            <h4>{L('Como entra', 'How it comes in')}</h4>
             <ul className="small">
-              <li>{L('Sem nenhum conector, sem busca na web e sem computador: você libera o que quiser depois.', 'No connectors, web search, or computer access. Enable access later.')}</li>
-              <li>{L('As memórias esperam você confirmar, em Memórias.', 'Memories require confirmation in Memory.')}</li>
-              <li>{L('As rotinas chegam desligadas.', 'Routines are imported disabled.')}</li>
+              <li>{L('Sem nenhum conector, sem busca na web e sem computador: você libera o que quiser depois.', 'No connector, no web search and no computer: you turn on what you want later.')}</li>
+              <li>{L('As memórias esperam você confirmar, em Memórias.', 'Memories wait for you to confirm them, in Memories.')}</li>
+              <li>{L('As rotinas chegam desligadas.', 'Routines come in turned off.')}</li>
             </ul>
           </section>
 
           {names.length > 0 && (
             <section>
-              <h4>{L('Fica só o nome, pra configurar aqui à mão', 'Names for manual setup')}</h4>
+              <h4>{L('Fica só o nome, pra configurar aqui à mão', 'Only the name comes, to set up here by hand')}</h4>
               <dl className="hermes-import__names small">
                 {names.map((g) => (
                   <div key={g.label}>
@@ -124,7 +124,7 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
 
           {(leftOut.length > 0 || preview.notes.length > 0) && (
             <section>
-              <h4>{L('Fica de fora', 'Not imported')}</h4>
+              <h4>{L('Fica de fora', 'Stays out')}</h4>
               <ul className="small muted">
                 {[...leftOut, ...preview.notes].map((x) => (
                   <li key={x}>{x}</li>

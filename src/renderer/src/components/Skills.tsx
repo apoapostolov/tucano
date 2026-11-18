@@ -1,21 +1,30 @@
-// Skills: library navigation; each editor and review flow has its own component.
-import { useEffect, useState, type ReactNode } from 'react'
+// Skills (spec §18): recipes the agents follow, kept like pages to read. Agents
+// propose; I approve, edit, and undo any change from the history.
 import { L } from '../../../shared/lang'
-import { useStore, amAdmin, loadReport, archiveSkill, removeSkill, type Skill, type SkillInput, type SkillReport } from '../store'
+import { useEffect, useState, type ReactNode } from 'react'
+import {
+  archiveSkill,
+  loadReport,
+  removeSkill,
+  useStore,
+  type Skill,
+  type SkillInput,
+  type SkillReport,
+  amAdmin
+} from '../store'
 import { Sheet } from './Pages'
 import { AdminOnly } from './People'
-import { Icon } from './ui'
 import { confirmDialog } from './Dialogs'
+import { Icon } from './ui'
 import { Modal } from './Modal'
-import { SkillPage } from './skills/SkillPage'
+import { result, from, SkillPage } from './skills/SkillPage'
+import { Who } from './skills/SkillPeople'
 import { AddFromTerminal } from './skills/SkillImport'
-import { SkillForm } from './skills/SkillForm'
 import { Proposal } from './skills/SkillProposal'
-import { Who, result, from } from './skills/SkillPeople'
-export { AgentPicker } from './skills/SkillPeople'
+import { SkillForm } from './skills/SkillForm'
 
 type Place = { kind: 'list' } | { kind: 'skill'; id: string } | { kind: 'review' }
-
+// Skills are the admins': a member reads them (what the agents follow), changes nothing.
 export function SkillsPage(): ReactNode {
   return <Skills admin={useStore(amAdmin)} />
 }
@@ -54,7 +63,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
 
   if (place.kind === 'review' && pending.length > 0)
     return (
-      <Sheet back={{ label: 'Skills', onClick: toList }} title={L('Propostas', 'Proposals')} lede={L('Dos agentes. Só entram em uso se você aprovar.', "Agent proposals become available after your approval.")}>
+      <Sheet back={{ label: 'Skills', onClick: toList }} title={L('Propostas', 'Proposals')} lede={L('Dos agentes. Só entram em uso se você aprovar.', 'From the agents. They only go into use if you approve.')}>
         {pending.map((k) => (
           <Proposal key={k.id} proposal={k} />
         ))}
@@ -64,7 +73,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
   return (
     <Sheet
       title="Skills"
-      lede={L('Receitas que os agentes seguem pra um tipo de tarefa.', "Reusable instructions for specific tasks.")}
+      lede={L('Receitas que os agentes seguem pra um tipo de tarefa.', 'Recipes the agents follow for a kind of task.')}
       actions={
         admin && (
           <>
@@ -91,7 +100,7 @@ function Skills({ admin }: { admin: boolean }): ReactNode {
       {active.length === 0 ? (
         <div className="read-empty">
           <p>{L('Nenhuma skill em uso ainda.', 'No skills in use yet.')}</p>
-          <p>{L('Escreva uma, traga uma das que você já usa no terminal, ou deixe os agentes proporem: quando resolverem algo em vários passos, eles sugerem guardar o caminho.', "Create a skill, import one from your CLI, or review reusable workflows proposed by agents.")}</p>
+          <p>{L('Escreva uma, traga uma das que você já usa no terminal, ou deixe os agentes proporem: quando resolverem algo em vários passos, eles sugerem guardar o caminho.', 'Write one, bring one you already use in the terminal, or let the agents propose: when they solve something in several steps, they suggest keeping the path.')}</p>
         </div>
       ) : (
         <section className="read-group">

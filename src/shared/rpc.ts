@@ -1,11 +1,10 @@
 // The contract between the renderer and the core, carried over a MessagePort.
 import type { Answer } from './questions'
-import type { NoticeFeed } from './notice'
 import type { HermesPreview } from './hermes-import'
+import type { Lang } from './lang'
 import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion, NodeInfo, NodeLogEntry } from './types'
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
-import type { Commitment, CommitmentInput, InitiativeConfig, InitiativeInput, InitiativeView } from './initiative'
-import type { Task, TaskInput, PersonAccess, Os, AskEntry, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, SendMode, ProviderQuota, QuotasSnapshot, LocalSkillFolder, Effort, AgentApp } from './types' 
+import type { Task, TaskInput, Os, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, PersonAccess, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, AgentApp } from './types'
 
 export interface Snapshot {
   webhookPort?: number
@@ -40,29 +39,21 @@ export interface Api {
   snapshot(): Snapshot
   olderMessages(p: { conversationId: string; before: number; through?: string }): { messages: Message[]; since: number } // a page from before `before` (or back to `through`, a message to show), with their threads; since: from when it's whole now, 0 once all of it is
   threadMessages(p: { rootId: string }): Message[] // a thread whole: the message that started it and its replies
-  revealArtifact(p: { id: string }): void // shows an artifact's file in the file manager; never opens it
   artifactText(p: { id: string }): string | null // a text file an agent showed (Markdown, CSV, code), for the side panel
-  sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: SendMode; steerTo?: string }): void // threadId: a reply in the thread that message started; mode: how it joins a reply already running there; steerTo: the running reply a steer is for, when more than one runs there
+  revealArtifact(p: { id: string }): void // shows an artifact's file in the file manager; never opens it
+  sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string }): void // threadId: a reply in the thread that message started
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
-  pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
-  resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
-  retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
-  followUpRun(p: { messageId: string; text: string }): void // a finished reply goes on from where it stopped, in the same row
-  continueRun(p: { messageId: string }): void // a reply that was cut goes on, with what it already did
-  deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the conversation, with the thread it started: the ids that went
-  setAgentModels(p: { agentIds: string[]; modelId?: string; effort?: Effort }): number // modelId, effort or both: the agents changed, 0 when they already were
+  retryRun(p: { messageId: string }): void
+  continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
+  setAgentModels(p: { agentIds: string[]; modelId: string }): number
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string
   renameChannel(p: { id: string; name: string }): void // throws a message when the name is taken
   archiveAgent(p: { id: string; archived: boolean }): void // out of the sidebar, its replies stopped and routines off; back with archived: false
   setTopic(p: { id: string; topic: string }): void
-  // A conversation's history, without deleting the conversation: the screen starts empty and the
-  // next turns stop reading what came before, while the rows and the costs stay.
-  clearConversation(p: { id: string }): void
-  setChannelMembers(p: { id: string; agentIds: string[]; mentionOnly?: string[]; listen?: string[] }): void // mentionOnly: those answering only when mentioned; listen: those Jev decides when to bring in
+  setChannelMembers(p: { id: string; agentIds: string[] }): void
   deleteConversation(p: { id: string }): void // a channel or a DM, with its messages and routines
-  wipeHistory(p: { agentId?: string }): number // a bot's history — what it wrote anywhere and every word of its own DMs — or the whole workspace's when there's no agentId; answers how many messages went
   openDm(p: { agentId: string }): string
   tasks(): Task[] // my to-dos on the board (Quadro), in order
   saveTask(p: { task: TaskInput }): Task // new (no id) at the top, or changed; throws why not (an agent I don't see, an empty title)
@@ -93,7 +84,7 @@ export interface Api {
   stopLogin(p: { id: string }): void
   addAccount(p: { engine: AccountEngine; name: string }): Account
   loginAccount(p: { id: string; screen?: boolean }): { opened: boolean; command: string; screen?: LoginScreen }
-  removeAccount(p: { id: string }): { folder: boolean } // folder: its login left with it now; false: at the next launch
+  removeAccount(p: { id: string }): void
   installEngine(p: { engine: EngineId }): { opened: boolean; command: string; needsNode?: boolean } // needsNode: an npm install with no npm here
   setupEngine(p: { engine: EngineId }): SetupState // Codex or Claude Code with no terminal: downloaded, then the CLI's own sign-in in the browser
   engineSetupState(): SetupState | null
@@ -107,7 +98,6 @@ export interface Api {
   removeConnector(p: { id: string }): void
   reconnectConnector(p: { id: string }): void
   setConnectorToken(p: { id: string; token: string }): Promise<void>
-  setConnectorIcon(p: { id: string; icon?: string }): Promise<void> // the picture it wears: a data: URI or an https address; without it, the store's mark is back
   connectorCatalog(): { categories: { id: CatalogCategory; name: string }[]; entries: CatalogView[]; added: string[] } // the store, as data (the phone); added: the entries already connected
   addCatalogConnector(p: { id: string; values?: Record<string, string> }): Promise<string> // a store entry, with what it asks, filled in by the core
   ownAppGuide(p: { provider: AppProvider }): Promise<{ guide: OwnAppGuide; clientId?: string }> // the steps to make one's own Google or Slack app (the phone)
@@ -138,7 +128,6 @@ export interface Api {
   openExternal(p: { url: string }): void
   saveRoutine(p: { routine: RoutineInput }): Routine // throws a message for the form
   setJevKey(p: { key: string | null }): Promise<void> // checks the key with TypeSafe; throws why it's refused
-  setClassifierKey(p: { id: string; key: string | null }): Promise<void> // checks the key with that classifier's provider before saving; null removes it
   probeEndpoint(p: { baseUrl: string; key?: string }): Promise<{ models: string[]; error?: string }> // an OpenAI-format address tried: what it lists, or why not
   setEndpoint(p: { baseUrl: string; models: string[]; key?: string | null }): Promise<void> // saved; key undefined keeps the saved one, null removes it
   nodeInfo(): Promise<NodeInfo> // this computer lent to servers (core/node-server.ts, core/node-link.ts)
@@ -149,8 +138,7 @@ export interface Api {
   engineModels(p: { engine: EngineId }): Promise<{ models: string[]; labels?: Record<string, { label: string; hint?: string }>; error?: string }> // a harness's own list (OpenCode, Pi, a gateway)
   testEngine(p: { model: string }): Promise<{ ok: boolean; message: string; seconds?: number }> // one real reply through that model
   saveSkill(p: { skill: SkillInput }): Skill // throws a message for the form
-  localSkills(): LocalSkill[] // the skills in every folder that's on, plus Claude Code's plugins
-  skillFolders(): LocalSkillFolder[] // the folders skills are read from: the harnesses' and the ones added
+  localSkills(): LocalSkill[] // the skills of the user's Claude Code, its plugins and Codex
   linkSkill(p: { source: string; agents: string[] }): Skill
   decideSkill(p: { id: string; approve: boolean }): void
   restoreSkill(p: { skillId: string; versionId: number }): void
@@ -168,11 +156,6 @@ export interface Api {
   hermesPreview(p: { path?: string }): HermesPreview
   importHermes(p: { path: string; profiles: string[] }): string // the chosen profiles (by key) as agents; what was added
   backupNow(): string // where the copy went
-  // The file itself: what it takes on disk, how much of that is free pages, and whether it reads back sound.
-  dbHealth(): { bytes: number; free: number; sound: boolean; said: string }
-  // Empties the log, rebuilds the file and refreshes the planner, refusing while a reply is at work:
-  // before and after in bytes, the free pages left, and the check's verdict.
-  optimizeDb(): { before: number; after: number; free: number; sound: boolean; said: string }
   // Everything in one .zip, to take this Tucano to a server (desktop): where it went, and what's in it.
   exportBackup(): { path: string } & BackupSummary
   // On a server, the owner: a backup sent up (/upload) checked and set apart; nothing changes yet.
@@ -183,9 +166,6 @@ export interface Api {
   openBackups(): void
   report(p: { week?: number }): Report // the calendar week starting at `week` (a Monday); this one by default
   usage(): UsageReport
-  // What each provider Tucano is signed in to reports left: the last read at once, then a fresh one.
-  quotas(): Promise<QuotasSnapshot>
-  quotasRefresh(): Promise<QuotasSnapshot> // a read now, for the page's own timer and its button
   removeRoutine(p: { id: string }): void
   runRoutine(p: { id: string }): void
   // The wiki: pages in a folder of Markdown, linked, searched and kept with their history.
@@ -221,8 +201,6 @@ export interface Api {
   wikiReview(): WikiReview // the last review and what it found that's still open
   wikiRunReview(): void // reviews now, in the background; a 'wiki' event when done
   wikiDismissFinding(p: { id: string }): void // and refuses its fix
-  wikiResolveFinding(p: { id: string }): Promise<{ resolved: boolean; note?: string; gone?: boolean }> // the resolver reads the whole pages: a fix waiting, or what it couldn't settle
-  wikiAsk(p: { id: string; agentId: string }): string // hands a finding to an agent: its DM's id, with the request sent
   wikiImport(p: { dir: string }): WikiImport // an Obsidian vault copied in, as it is
   wikiImportZip(p: { path: string }): WikiImport // the same, from a .zip sent to a server (src/server's /upload)
   setWikiCapture(p: { conversationId: string; on: boolean }): void
@@ -252,20 +230,26 @@ export interface Api {
   leave(): void // someone (not the owner) leaves on their own: access ends, and their DMs, memories and own routines go now
   activity(p: { personId?: string; kind?: string; before?: number }): ActivityEntry[] // admins: newest first, a page at a time (before: the last page's oldest `at`)
   inbox(): Inbox
-  // The window over every window (src/main/notice.ts) reads only this: how its cards are set, what
-  // waits on me with the buttons to decide it, and the names to say where each card happened.
-  noticeFeed(): NoticeFeed
   answerQuestion(p: { id: string; text: string }): void // a question an agent asked me (or someone I cover for)
-  questionsHistory(p: { limit?: number }): AskEntry[] // answered and closed, newest first, from the conversations I can see
   confirmQuestion(p: { id: string; ok: boolean }): void // in my DM: may the agent ask that person?
-  dismissQuestion(p: { id: string }): void // leave a question unanswered for good: it closes and the reply goes on
   answerDecision(p: { messageId: string; index: number; answer: Answer | null }): void // one of a question's decisions answered on the card (null clears it), kept until sent
   submitDecisions(p: { messageId: string }): void // sends the decisions answered on the card, as my message
   watchRoutine(p: { id: string; on: boolean }): void // "me avise": told of a channel routine's runs
-  initiative(): InitiativeView[] // my own proactive coordinators, one per bot, and no one else's
-  saveInitiative(p: { config: InitiativeInput; expectedRevision: number }): InitiativeConfig // expectedRevision: what the page read; 0 creates
-  saveCommitment(p: { commitment: CommitmentInput }): Commitment // one responsibility: its provenance, scope and links
-  checkInNow(p: { agentId: string }): { started: boolean; why?: string; running: boolean } // "Conferir agora": one of my bots looking on the spot
+  // To the people who make Tucano, through tucano.sh (core/feedback.ts). image: the window's picture, base64 PNG or JPEG.
+  // Throws, in the person's words, when it didn't go.
+  sendFeedback(p: { kind: 'bug' | 'idea' | 'other'; message: string; image?: string; lang?: Lang }): Promise<void>
+  // The owner's: the survey to show in the sidebar's foot now, or none (off, answered, nothing running).
+  survey(p: { lang?: Lang }): Promise<SurveyView | null>
+  // A choice (kept the moment it's clicked), the same choice with its comment, or dismiss: "Não quero responder".
+  answerSurvey(p: { survey: string; choice?: string; comment?: string; dismiss?: boolean; lang?: Lang }): Promise<void>
+}
+
+// A survey as the app shows it, already in the person's language (core/feedback.ts).
+export interface SurveyView {
+  id: string
+  question: string
+  options: { id: string; label: string }[]
+  followUp?: string
 }
 
 export type Method = keyof Api
@@ -277,9 +261,7 @@ export type CoreEvent =
   | { type: 'tasks'; for: string } // someone's to-dos changed: they read them again
   | { type: 'node'; info: NodeInfo } // this computer's lines to the servers it's lent to, as they change
   | { type: 'message'; message: Message }
-  | { type: 'message_removed'; id: string; conversationId: string } // a session's reply, deleted: nothing of it says anything any more
   | { type: 'delta'; id: string; text: string } // appended to message text while streaming
-  | { type: 'thinking'; id: string; text: string } // appended to what the model is thinking, shown apart from the reply
   | { type: 'agent'; agent: Agent }
   | { type: 'conversation'; conversation: Conversation }
   | { type: 'settings'; settings: Settings }
@@ -295,7 +277,6 @@ export type CoreEvent =
   | { type: 'routine'; routine: Routine }
   | { type: 'routine_removed'; id: string; for?: string } // for: a DM's person, the only one who saw it
   | { type: 'conversation_removed'; id: string; for?: string }
-  | { type: 'history_wiped'; conversationIds: string[] } // history went: read these conversations again (src/core/retention.ts)
   | { type: 'skill'; skill: Skill }
   | { type: 'skill_removed'; id: string }
   | { type: 'wiki' } // a page changed: here, by an agent or in another app
@@ -304,7 +285,7 @@ export type CoreEvent =
   | { type: 'delegations'; delegations?: Delegation[] } // work handed down the tree changed (each gets what they may see)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'message_removed', 'delta', 'thinking', 'agent', 'conversation', 'history_wiped', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
+export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'agent', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

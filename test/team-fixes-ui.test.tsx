@@ -41,7 +41,8 @@ describe("an agent's page a member only looks at", () => {
   })
 
   it('has no "takes effect right away" and no "authorize in the browser"', () => {
-    for (const tab of ['ferramentas', 'memoria']) expect(page(tab, 'ana')).toContain('Muda na hora, sem precisar salvar.')
+    // Everything saves by itself now, so no one is told "no need to save" any more.
+    for (const tab of ['ferramentas', 'memoria']) expect(page(tab, 'ana')).not.toContain('Muda na hora')
     expect(page('ferramentas', 'ana')).toContain('Autorizar no navegador')
     for (const tab of ['ferramentas', 'memoria']) expect(page(tab, 'bia')).not.toContain('Muda na hora')
     const tools = page('ferramentas', 'bia')
@@ -123,29 +124,12 @@ describe('the words and the layout a person reads (round 2, 13)', () => {
     const css = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'styles.css'), 'utf8')
     expect(css).toMatch(/\.history-row__what \{[^}]*min-width: 0;[^}]*overflow-wrap: anywhere;/)
     expect(css).toMatch(/\.history-row > :not\(\.history-row__what\):not\(\.history-row__outcome\) \{[^}]*flex-shrink: 0;/)
-    const { HistoryRow } = await import('../src/renderer/src/components/Pages')
+    const { HistoryRow, approvalWhat } = await import('../src/renderer/src/components/Pages')
+    const { groupHistory } = await import('../src/renderer/src/approval-history')
     fake = { ...fake, approvals: [{ id: 'ap', hash: 'h', agentId: 'a1', conversationId: 'ch', messageId: 'm', connectorName: 'GitLab', tool: 'mcp__gitlab__create_merge_request_with_a_really_long_name', args: {}, why: '', highRisk: false, state: 'approved', createdAt: 1, expiresAt: 2, decidedAt: 3 } as never] }
-    const html = renderToStaticMarkup(<HistoryRow id="ap" />)
-    expect(html).toContain('class="table__row history-row"')
+    const html = renderToStaticMarkup(<HistoryRow group={groupHistory(fake.approvals, approvalWhat)[0]!.rows[0]!} />)
+    expect(html).toContain('class="history-row history-row--approved')
     expect(html).toContain('class="history-row__what"')
-  })
-
-  it('both history tables reserve one width for the state pill and one for the date', async () => {
-    const { readFileSync } = await import('node:fs')
-    const { join } = await import('node:path')
-    const css = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'styles.css'), 'utf8')
-    // One pair of widths for both tables, centred inside the cell: without them each row's label
-    // width moved the column by a few pixels and the dates never lined up.
-    expect(css).toMatch(/\.history-row,\s*\.ask-row__head \{[^}]*--history-state: 96px;[^}]*--history-when: 104px;/)
-    expect(css).toMatch(/\.history-row__state,\s*\.ask-row__state \{[^}]*flex: 0 0 var\(--history-state\);[^}]*justify-content: center;/)
-    expect(css).toMatch(/\.history-row__when,\s*\.ask-row__when \{[^}]*flex: 0 0 var\(--history-when\);[^}]*text-align: center;/)
-    // The outcome cell keeps its place on a row that reported nothing, so the columns still line up.
-    fake = { ...fake, approvals: [{ id: 'ap', hash: 'h', agentId: 'a1', conversationId: 'ch', messageId: 'm', connectorName: 'GitLab', tool: 'write', args: {}, why: '', highRisk: false, state: 'approved', createdAt: 1, expiresAt: 2, decidedAt: 3 } as never] }
-    const { HistoryRow } = await import('../src/renderer/src/components/Pages')
-    const html = renderToStaticMarkup(<HistoryRow id="ap" />)
-    expect(html).toContain('history-row__outcome')
-    expect(html).toContain('history-row__state')
-    expect(html).toContain('history-row__when')
   })
 
   it("a removed person's browser reads that they no longer have access, and nothing about the Tucano", async () => {

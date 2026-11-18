@@ -139,7 +139,7 @@ export function PeoplePane(): ReactNode {
 
       <Card
         title={L(`Pessoas ${team ? `de ${team}` : 'do Tucano'}`, `People ${team ? `of ${team}` : 'in this Tucano'}`)}
-        lead={L('Quem tem acesso a este Tucano e o que cada um pode fazer. As DMs de cada pessoa são só dela.', "Manage workspace access and roles. Each person’s DMs remain private.")}
+        lead={L('Quem tem acesso a este Tucano e o que cada um pode fazer. As DMs de cada pessoa são só dela.', 'Who has access to this Tucano and what each one can do. Each person’s DMs are theirs alone.')}
         action={
           admin && !inviting ? (
             <button className="btn btn--primary btn--sm" onClick={() => setInviting(true)}>
@@ -478,7 +478,7 @@ function MeCard(): ReactNode {
             <p className="muted small">
               {covering
                 ? L(`${covering.name} responde e aprova por você até ${time(me.delegateUntil!)}.`, `${covering.name} answers and approves for you until ${time(me.delegateUntil!)}.`)
-                : L('Enquanto você estiver fora, alguém responde às perguntas e decide as aprovações que seriam suas.', "Choose who handles your questions and approvals while you are away.")}
+                : L('Enquanto você estiver fora, alguém responde às perguntas e decide as aprovações que seriam suas.', 'While you’re away, someone answers the questions and decides the approvals that would be yours.')}
             </p>
             {!covering && left && <p className="access-cover-hint small">{L('Quem não vê todo o time não aparece aqui: cobrir você é decidir aprovações de qualquer agente.', 'Who doesn’t see the whole team isn’t listed: covering for you means deciding approvals from any agent.')}</p>}
             {!covering && (
@@ -522,7 +522,6 @@ const KINDS = (): [string, string][] => [
   ['skill', 'Skills'],
   ['routine', L('Rotinas', 'Routines')],
   ['channel', L('Canais', 'Channels')],
-  ['history', L('Histórico', 'History')],
   ['proposal', L('Propostas', 'Proposals')]
 ]
 
@@ -580,19 +579,6 @@ export function activityText(e: ActivityEntry, s: Pick<State, 'people' | 'agents
       return L('apagou uma conversa privada', 'deleted a private conversation')
     case 'channel.summary_edited':
       return L('editou o resumo de um canal', "edited a channel's summary")
-    case 'db.optimized':
-      return typeof d['before'] === 'number' && typeof d['after'] === 'number'
-        ? L(
-            `reescreveu o arquivo do Tucano (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`,
-            `optimized the database (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
-          )
-        : L('reescreveu o arquivo do Tucano', "optimized the database")
-    case 'history.wiped':
-      return typeof d['agent'] === 'string'
-        ? L(`apagou o histórico de ${String(d['agent'])}`, `deleted ${String(d['agent'])}’s history`)
-        : L('apagou o histórico de todos os bots', "deleted all message history")
-    case 'history.swept':
-      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `deleted expired messages (${Number(d['messages'] ?? 0)} messages)`)
   }
   const [thing, verb] = e.kind.split('.')
   const noun = ({ agent: L('o agente', 'agent'), connector: L('o conector', 'connector'), skill: L('a skill', 'skill'), routine: L('a rotina', 'routine'), channel: L('o canal', 'channel') } as Record<string, string>)[thing ?? ''] ?? thing
@@ -620,7 +606,7 @@ export function ActivityPane(): ReactNode {
   useEffect(() => void removedPeople().then((r) => setRemoved(new Map(r.map((p) => [p.id, p.name]))), () => {}), [])
   const name = (id?: string): string => (id ? (personById(s, id)?.name ?? removed.get(id) ?? L('Alguém', 'Someone')) : 'Tucano')
   return (
-    <Card title={L('Atividade', 'Activity')} lead={L('Quem fez o quê no Tucano. O que se diz nas DMs nunca aparece aqui.', "Workspace activity. Private DM content is excluded.")}>
+    <Card title={L('Atividade', 'Activity')} lead={L('Quem fez o quê no Tucano. O que se diz nas DMs nunca aparece aqui.', 'Who did what in this Tucano. What’s said in DMs never shows here.')}>
       <div className="row activity-filters">
         <select value={personId} aria-label={L('Pessoa', 'Person')} onChange={(e) => setPersonId(e.target.value)}>
           <option value="">{L('Todas as pessoas', 'Everyone')}</option>

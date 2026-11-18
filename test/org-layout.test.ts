@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { orgTree } from '../src/shared/org'
-import { above, BOARD as B, boundsOf, curve, fitView, layoutOrg, MAX_K, ME, MIN_K, ORG_SIZES as S, pathBetween, SLOT_GAP, spotsOf, tidyBoard, topSlots, ZONE_PAD, toBoard, under, zoomAt } from '../src/shared/org-layout'
+import { above, BOARD as B, BOARD_RATIO, boundsOf, curve, fitView, layoutOrg, MAX_K, ME, MIN_K, ORG_SIZES as S, orthogonal, pathBetween, spotsOf, tidyBoard, tidyLayout, ZONE_BOTTOM, ZONE_PAD, ZONE_TOP, toBoard, under, zoomAt } from '../src/shared/org-layout'
 
 const a = (id: string, reportsTo?: string): { id: string; reportsTo?: string } => ({ id, ...(reportsTo ? { reportsTo } : {}) })
 const at = (l: ReturnType<typeof layoutOrg>, id: string): { x: number; y: number } => l.nodes.find((n) => n.id === id)!
@@ -106,6 +106,78 @@ describe('the board', () => {
     expect(t.top!.y - t[ME]!.y).toBe(B.h + B.gapY + B.rootDrop!) // as any top: a sector may sit beside it
   })
 
+  // 17 agents in 5 sectors (a head and 2 or 3 below each), like a real team: one row would be over 4 000 px wide.
+  const big = orgTree([
+    ...['s1', 's2', 's3', 's4', 's5'].map((h) => a(h)),
+    ...['s1', 's2', 's3', 's4'].flatMap((h) => [a(`${h}a`, h), a(`${h}b`, h)]),
+    a('s1c', 's1'),
+    a('s5a', 's5'),
+    a('s5b', 's5'),
+    a('s5c', 's5')
+  ])
+  const wide = tidyLayout(big.roots, big.loose)
+  const heads = ['s1', 's2', 's3', 's4', 's5']
+  const zoneOf = (h: string) => {
+    const b = boundsOf(Object.entries(wide.spots).filter(([id]) => id === h || id.startsWith(h)).map(([, p]) => p))
+    return { x: b.x - ZONE_PAD, y: b.y - ZONE_TOP, w: b.w + ZONE_PAD * 2, h: b.h + ZONE_TOP + ZONE_BOTTOM }
+  }
+
+  it('wraps many sectors into rows, in order, so the board is about a screen’s shape and not a long strip', () => {
+    const box = boundsOf(Object.values(wide.spots))
+    expect(box.w / box.h).toBeGreaterThan(BOARD_RATIO / 1.6)
+    expect(box.w / box.h).toBeLessThan(BOARD_RATIO * 1.6)
+    const rows = [...new Set(heads.map((h) => wide.spots[h]!.y))]
+    expect(rows.length).toBeGreaterThan(1)
+    // In order: left to right, then the next row.
+    const order = [...heads].sort((p, q) => wide.spots[p]!.y - wide.spots[q]!.y || wide.spots[p]!.x - wide.spots[q]!.x)
+    expect(order).toEqual(heads)
+    // The zones never touch, across a row or between rows.
+    for (const p of heads) for (const q of heads) {
+      if (p >= q) continue
+      const [z1, z2] = [zoneOf(p), zoneOf(q)]
+      const apart = z1.x + z1.w <= z2.x || z2.x + z2.w <= z1.x || z1.y + z1.h <= z2.y || z2.y + z2.h <= z1.y
+      expect(apart, `${p} and ${q}`).toBe(true)
+    }
+  })
+
+  it('takes a line to a lower row down a gap between sectors, never across one', () => {
+    const lower = heads.filter((h) => wide.spots[h]!.y > wide.spots.s1!.y)
+    expect(lower.length).toBeGreaterThan(0)
+    expect(Object.keys(wide.routes).sort()).toEqual(lower.map((h) => `${ME}>${h}`).sort())
+    for (const h of lower) {
+      const d = wide.routes[`${ME}>${h}`]!
+      // It leaves from under me and ends on top of the head.
+      expect(d.startsWith(`M${wide.spots[ME]!.x + B.w / 2} ${wide.spots[ME]!.y + B.h}`)).toBe(true)
+      expect(d.endsWith(`L${wide.spots[h]!.x + B.w / 2} ${wide.spots[h]!.y}`)).toBe(true)
+      // Every straight piece stays out of every other sector's zone.
+      const pts = [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }))
+      for (let i = 1; i < pts.length; i++) {
+        const [p, q] = [pts[i - 1]!, pts[i]!]
+        for (const other of heads.filter((o) => o !== h)) {
+          const z = zoneOf(other)
+          const crosses = Math.max(p.x, q.x) > z.x && Math.min(p.x, q.x) < z.x + z.w && Math.max(p.y, q.y) > z.y && Math.min(p.y, q.y) < z.y + z.h
+          expect(crosses, `${h}'s line crosses ${other}`).toBe(false)
+        }
+      }
+    }
+    // The first row's lines stay the plain curve: no route for them.
+    expect(wide.routes[`${ME}>s1`]).toBeUndefined()
+  })
+
+  it('wraps a long row of agents on their own too', () => {
+    const many = orgTree(Array.from({ length: 14 }, (_, i) => a(`x${i}`)))
+    const t = tidyBoard(many.roots, many.loose)
+    const box = boundsOf(Object.values(t))
+    expect(new Set(many.loose.map((x) => t[x.id]!.y)).size).toBeGreaterThan(1)
+    expect(box.w / box.h).toBeLessThan(BOARD_RATIO * 1.6)
+    expect(t.x0).toEqual({ x: 0, y: t.x0!.y }) // left to right from the corner
+  })
+
+  it('draws a path through points with rounded corners', () => {
+    expect(orthogonal([{ x: 0, y: 0 }, { x: 0, y: 10 }], 4)).toBe('M0 0L0 10')
+    expect(orthogonal([{ x: 0, y: 0 }, { x: 0, y: 20 }, { x: 30, y: 20 }], 4)).toBe('M0 0L0 16Q0 20 4 20L30 20')
+  })
+
   it('centers the tree over a row of loose ones that is wider than it', () => {
     const lone = orgTree([a('lia'), a('theo', 'lia'), a('x'), a('y'), a('z')])
     const t = tidyBoard(lone.roots, lone.loose)
@@ -156,28 +228,5 @@ describe('the board', () => {
     expect(d.endsWith(` ${to.x} ${to.y}`)).toBe(true)
     // The second handle is straight above the end, so the line arrives from above even when the card is higher.
     expect(curve({ x: 0, y: 300 }, { x: 200, y: 0 })).toBe('M0 300C0 450 200 -150 200 0')
-  })
-
-  // A specialist several teams share: every boss's line arrives on its own point of the card's top edge, so
-  // no two of them ever land on the same spot — the one it hangs from in the middle, the others stepping out.
-  it('gives each boss its own point along the top of a card', () => {
-    const p = { x: 100, y: 40 }
-    const mid = p.x + B.w / 2
-    expect(topSlots(p, 1)).toEqual([{ x: mid, y: 40 }])
-    const two = topSlots(p, 2)
-    expect(two[0]!.x).toBe(mid) // the tree's own line does not move when another boss arrives
-    expect(two[1]!.x).toBe(mid + SLOT_GAP)
-    expect(topSlots(p, 3).map((s) => s.x)).toEqual([mid, mid + SLOT_GAP, mid - SLOT_GAP])
-    expect(topSlots(p, 5).map((s) => s.x)).toEqual([mid, mid + SLOT_GAP, mid - SLOT_GAP, mid + 2 * SLOT_GAP, mid - 2 * SLOT_GAP])
-    // Always on the top edge, never past a corner, and never closer than the dot that sits there.
-    for (let n = 1; n <= 13; n++) {
-      const slots = topSlots(p, n)
-      expect(slots).toHaveLength(n)
-      expect(slots.every((s) => s.y === p.y)).toBe(true)
-      expect(slots.every((s) => s.x > p.x + 8 && s.x < p.x + B.w - 8)).toBe(true)
-      const xs = slots.map((s) => s.x).sort((l, r) => l - r)
-      // Dots are 12px wide: they stay apart, never touching, however many bosses a card answers to.
-      for (let i = 1; i < xs.length; i++) expect(xs[i]! - xs[i - 1]!).toBeGreaterThanOrEqual(14)
-    }
   })
 })

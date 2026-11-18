@@ -2,11 +2,10 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { Account, Agent, EngineId, Message, Settings } from '../src/shared/types'
+import { ACCOUNT_ENGINES, accountsOn, type Account, type Agent, type EngineId, type Message, type Settings } from '../src/shared/types'
 import { Db } from '../src/core/db'
 import { accountDir, accountLogin } from '../src/core/engines/detect'
 import { claudeEngine } from '../src/core/engines/claude'
-import { grokAccountEnv, grokEngine } from '../src/core/engines/grok'
 import { fakeEngine } from '../src/core/engines/fake'
 import type { Engine, Turn } from '../src/core/engines/types'
 import { Runner } from '../src/core/runs'
@@ -85,20 +84,17 @@ describe('accounts', () => {
     expect(accountLogin('claude', { code: 0, stdout: '{"loggedIn": true, "authMethod": "claude.ai", "subscriptionType": "max", "email": "a@b.co"}', stderr: '' })).toEqual({ loggedIn: true, detail: 'Plano Claude Max · a@b.co' })
     expect(accountLogin('codex', { code: 0, stdout: 'Logged in using ChatGPT', stderr: '' })).toEqual({ loggedIn: true, detail: 'Plano ChatGPT' })
     expect(accountLogin('codex', { code: 1, stdout: 'Not logged in', stderr: '' })).toEqual({ loggedIn: false })
-    // Grok lists its models signed out too: only the first line says whether there is a login.
-    const grokModels = '\n\nAvailable models:\n  * grok-4.6 (default)\n  - grok-4.5'
-    expect(accountLogin('grok', { code: 0, stdout: `You are logged in with grok.com.${grokModels}`, stderr: '' })).toEqual({ loggedIn: true, detail: 'Plano Grok' })
-    expect(accountLogin('grok', { code: 0, stdout: `You are using XAI_API_KEY.${grokModels}`, stderr: '' })).toEqual({ loggedIn: true, detail: 'Chave de API' })
-    expect(accountLogin('grok', { code: 1, stdout: `You are not authenticated.${grokModels}`, stderr: '' })).toEqual({ loggedIn: false })
+    // Antigravity: `agy models` in that home lists what its login can run, or asks to sign in.
+    expect(accountLogin('antigravity', { code: 0, stdout: 'Fetching available models...\ngemini-4-argon-medium\tGemini 4 Argon (Medium)\ngemini-3.8-flash-low\tGemini 3.8 Flash (Low)\n', stderr: '' })).toEqual({ loggedIn: true, detail: 'Google · 2 modelos' })
+    expect(accountLogin('antigravity', { code: 1, stdout: 'Fetching available models...\nError: Please sign in to view available models.', stderr: '' })).toEqual({ loggedIn: false })
   })
 
-  it('points an account of Grok at its own folder, with no API key to answer in its place', () => {
-    const env = grokAccountEnv('/contas/g1', { PATH: '/bin', XAI_API_KEY: 'xai-key', GROK_CODE_XAI_API_KEY: 'xai-code' })
-    expect(env['GROK_HOME']).toBe('/contas/g1')
-    expect(env['GROK_AUTH_PATH']).toBe(join('/contas/g1', 'auth.json'))
-    expect(env['XAI_API_KEY']).toBeUndefined()
-    expect(env['GROK_CODE_XAI_API_KEY']).toBeUndefined()
-    expect(env['PATH']).toBe('/bin')
+  it('has Antigravity accounts only on a Mac, where its login can live in a file of the account’s home', () => {
+    expect(ACCOUNT_ENGINES).toContain('antigravity')
+    expect(accountsOn('antigravity', 'mac')).toBe(true)
+    expect(accountsOn('antigravity', 'linux')).toBe(false)
+    expect(accountsOn('antigravity', 'windows')).toBe(false)
+    expect(accountsOn('codex', 'windows')).toBe(true)
   })
 
   // The stand-in CLI is a shell script, which Windows can't run.
@@ -113,21 +109,5 @@ describe('accounts', () => {
     const texts: string[] = []
     for await (const ev of claudeEngine(() => bin, async () => ({ env: {} })).run(turn)) if (ev.type === 'done') texts.push(ev.text)
     expect(texts).toEqual(['/contas/w1'])
-  })
-
-  // The same for Grok, whose login in an account's folder is its auth.json.
-  it.skipIf(process.platform === 'win32')('points Grok at the account’s auth.json', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'ad-grok-'))
-    const bin = join(dir, 'grok')
-    const { writeFileSync, chmodSync } = await import('node:fs')
-    writeFileSync(
-      bin,
-      '#!/bin/sh\ncat >/dev/null\necho "{\\"type\\":\\"text\\",\\"data\\":\\"$GROK_AUTH_PATH\\"}"\necho "{\\"type\\":\\"end\\",\\"stopReason\\":\\"end_turn\\",\\"usage\\":{\\"input_tokens\\":1,\\"output_tokens\\":1}}"\n'
-    )
-    chmodSync(bin, 0o755)
-    const turn = { model: 'grok-4.6', effort: 'low' as const, system: '', prompt: 'oi', cwd: dir, signal: new AbortController().signal, account: '/contas/g1' }
-    const texts: string[] = []
-    for await (const ev of grokEngine(() => bin, async () => ({})).run(turn)) if (ev.type === 'done') texts.push(ev.text)
-    expect(texts).toEqual([join('/contas/g1', 'auth.json')])
   })
 })

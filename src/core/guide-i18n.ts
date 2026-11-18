@@ -59,6 +59,10 @@ export const GUIDE_EN: Record<string, { title: string; summary: string }> = {
     title: 'Harnesses and accounts',
     summary: 'Where the agents run: the harnesses, how to sign in, extra accounts, the company gateway and the Jev router.'
   },
+  organograma: {
+    title: 'Team (who answers to whom)',
+    summary: 'An agent above the others hands work to those below, each in its own channel, and gets the answer back. How to set it up, what happens in a request, questions, cancelling, deadlines and limits.'
+  },
   problemas: {
     title: 'When something goes wrong',
     summary: "Diagnosing the common problems: an agent that doesn't answer, a harness without a sign-in, a connector asking for sign-in or failing, Docker off, limits, a routine that didn't run, an expired approval, a notification that doesn't arrive."
@@ -86,10 +90,6 @@ export const GUIDE_EN: Record<string, { title: string; summary: string }> = {
   slack: {
     title: 'Slack',
     summary: "Connecting Slack: the internal app the person creates from a link, the 2 steps, the admin's approval and what to check when it doesn't connect."
-  },
-  organograma: {
-    title: 'Team (who answers to whom)',
-    summary: 'An agent hands work to those below it and receives their answers: setting up the chart, requests, questions, cancellation, deadlines and limits.'
   },
   time: {
     title: 'Team (several people in one Tucano)',

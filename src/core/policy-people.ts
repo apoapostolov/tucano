@@ -14,27 +14,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 
 // What a person may change of the settings without being an admin: how the app looks to them.
 // Each person's own (kept on them, see People.settingsFor); the owner's are the settings themselves.
-export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = [
-  'theme',
-  'sounds',
-  'stepsOpen',
-  'notice',
-  'showThinking',
-  'thinkingSize',
-  'clock',
-  'steps',
-  'stepsLatest',
-  'channelLayout',
-  'dmOrder',
-  'navOrder',
-  'navHidden',
-  'agentOrder',
-  'folded',
-  'language',
-  'seenVersion',
-  'onboarding',
-  'lastImageFolder'
-]
+export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'stepsOpen', 'channelLayout', 'folded', 'sidebarHidden', 'language', 'seenVersion', 'onboarding']
 export const isPersonalSetting = (k: string): boolean => (PERSONAL_SETTINGS as readonly string[]).includes(k)
 
 export type Action =
@@ -110,19 +90,13 @@ export const NEEDS: Record<Method, Need> = {
   olderMessages: 'anyone',
   threadMessages: 'anyone',
   stopRun: 'anyone',
-  pauseRun: 'anyone',
-  resumeRun: 'anyone',
   retryRun: 'anyone',
-  followUpRun: 'anyone',
   continueRun: 'anyone',
-  deleteMessage: 'anyone', // a conversation one can reach; a channel's own rules decide more
   createChannel: 'anyone',
   renameChannel: 'anyone',
   setTopic: 'anyone',
   setChannelMembers: 'anyone',
-  clearConversation: 'target', // one's DM; a channel, admins
   deleteConversation: 'target', // one's DM; a channel, admins
-  wipeHistory: 'admin', // it reaches conversations the admin isn't in, and nothing comes back
   openDm: 'anyone',
   // one's own to-dos on the board: each handler checks it's theirs
   tasks: 'anyone',
@@ -158,12 +132,9 @@ export const NEEDS: Record<Method, Need> = {
   removeRoutine: 'target',
   runRoutine: 'target',
   watchRoutine: 'anyone',
-  // A person's own proactive coordinator: these handlers only ever touch the asking person's records,
-  // so another person's brief, scope and responsibilities are not reachable through them at all.
-  initiative: 'anyone',
-  checkInNow: 'anyone',
-  saveInitiative: 'anyone',
-  saveCommitment: 'anyone',
+  sendFeedback: 'anyone', // to the people who make Tucano: what anyone here saw go wrong
+  survey: 'owner', // one answer per install: the owner's
+  answerSurvey: 'owner',
   updateSettings: 'target', // personal preferences, anyone; the rest, admins
   browserAction: 'target', // a browser working for a conversation one sees; otherwise admins
   browserInput: 'target',
@@ -199,8 +170,6 @@ export const NEEDS: Record<Method, Need> = {
   wikiRedoChange: 'admin',
   wikiRunReview: 'admin',
   wikiDismissFinding: 'admin',
-  wikiResolveFinding: 'admin', // the resolver works on the whole wiki, as the review does
-  wikiAsk: 'anyone', // the agent that writes is the one with wiki write access; this only asks it
   wikiImport: 'admin',
   wikiImportZip: 'admin',
   setWikiDir: 'admin',
@@ -214,11 +183,8 @@ export const NEEDS: Record<Method, Need> = {
   setMyName: 'anyone',
   setDelegation: 'anyone',
   inbox: 'anyone',
-  noticeFeed: 'anyone',
   answerQuestion: 'target',
-  questionsHistory: 'anyone', // only what this person can see anyway
   confirmQuestion: 'target',
-  dismissQuestion: 'target', // who may answer it may also leave it unanswered
   answerDecision: 'target', // who may answer the question (Runner.decidable)
   submitDecisions: 'target',
   // agents, skills and the team
@@ -232,7 +198,6 @@ export const NEEDS: Record<Method, Need> = {
   folderAction: 'admin',
   saveSkill: 'admin',
   localSkills: 'admin',
-  skillFolders: 'admin',
   linkSkill: 'admin',
   decideSkill: 'admin',
   restoreSkill: 'admin',
@@ -255,7 +220,6 @@ export const NEEDS: Record<Method, Need> = {
   removeConnector: 'admin',
   reconnectConnector: 'admin',
   setConnectorToken: 'admin',
-  setConnectorIcon: 'admin',
   connectorCatalog: 'admin',
   addCatalogConnector: 'admin',
   ownAppGuide: 'admin',
@@ -282,7 +246,6 @@ export const NEEDS: Record<Method, Need> = {
   engineModels: 'anyone', // the models a harness lists: an agent's page names its model with them
   testEngine: 'admin',
   setJevKey: 'admin',
-  setClassifierKey: 'admin',
   probeEndpoint: 'admin',
   setEndpoint: 'admin',
   nodeInfo: 'owner',
@@ -300,15 +263,9 @@ export const NEEDS: Record<Method, Need> = {
   installDesktop: 'admin',
   desktopPermissions: 'admin',
   backupNow: 'admin',
-  // The file's size, its free pages and whether it reads back sound. Nothing changes.
-  dbHealth: 'admin',
-  // Rebuilds the file: it holds the core's only thread for seconds, so it is an admin's press.
-  optimizeDb: 'admin',
   openBackups: 'admin',
   report: 'admin',
   usage: 'admin',
-  quotas: 'admin',
-  quotasRefresh: 'admin', // the person's own provider logins: an admin's business, like the spending
   // people
   createInvite: 'admin',
   revokeInvite: 'admin',

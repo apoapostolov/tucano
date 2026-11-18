@@ -1,5 +1,4 @@
 import { L, lang, locale } from '../../../shared/lang'
-import { timeOpts } from '../../../shared/clock'
 import { hasMonthlyLimit } from '../../../shared/limits'
 import { examples, type AvatarDefinition } from 'open-bot-avatar'
 import { mountAvatar, type AvatarOptions, type MountedAvatar } from 'open-bot-avatar/dom'
@@ -96,10 +95,12 @@ const PATHS: Record<string, ReactNode> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
-  eyeOff: (
+  hide: <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A9.8 9.8 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6" />,
+  more: (
     <>
-      <path d="M2 12s3.5-7 10-7c2.2 0 4 .7 5.6 1.7M22 12s-3.5 7-10 7c-2.3 0-4.2-.7-5.7-1.8" />
-      <path d="M4 4l16 16" />
+      <circle cx="5.5" cy="12" r="1" />
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="18.5" cy="12" r="1" />
     </>
   ),
   keyboard: <path d="M3 7a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7ZM7 10h.01M11 10h.01M15 10h.01M8 14h8" />,
@@ -336,7 +337,7 @@ export function ago(at: number, now = Date.now()): string {
 export function time(at: number): string {
   const d = new Date(at)
   const today = new Date()
-  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
+  const hm = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
   if (d.toDateString() === today.toDateString()) return hm
   return `${d.toLocaleDateString(locale(), { day: '2-digit', month: 'short' })} · ${hm}`
 }

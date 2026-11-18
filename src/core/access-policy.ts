@@ -77,10 +77,10 @@ export function routineCut(db: Db, r: Pick<Routine, 'agentId' | 'owner' | 'conve
 export const restrictedIds = (db: Db): string[] => db.people().filter((p) => restricted(p)).map((p) => p.id)
 
 // A restricted viewer's channels, with the members they can't see left out (a DM is its one agent's, decided elsewhere).
-export function viewedConversations<T extends Pick<Conversation, 'kind' | 'members'> & Partial<Pick<Conversation, 'mentionOnly' | 'listen'>>>(db: Db, person: Who | undefined, cs: T[]): T[] {
+export function viewedConversations<T extends Pick<Conversation, 'kind' | 'members'>>(db: Db, person: Who | undefined, cs: T[]): T[] {
   if (!restricted(person)) return cs
   const seen = visibleAgentIds(person, db.agents())!
-  return cs.map((c) => (c.kind === 'dm' ? c : { ...c, members: c.members.filter((m) => seen.has(m)), ...(c.mentionOnly ? { mentionOnly: c.mentionOnly.filter((m) => seen.has(m)) } : {}), ...(c.listen ? { listen: c.listen.filter((m) => seen.has(m)) } : {}) }))
+  return cs.map((c) => (c.kind === 'dm' ? c : { ...c, members: c.members.filter((m) => seen.has(m)) }))
 }
 
 // Changing a channel (its name, topic, agents): only one this person still sees, even one they made.

@@ -92,17 +92,17 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
   return (
     <div className="access">
       <div className="access-modes" role="radiogroup" aria-label={L('O que a pessoa vê', 'What they see')}>
-        {mode('all', L('Vê tudo', 'Sees everything'), L('Todos os agentes e canais, como hoje.', 'All agents and channels.'))}
-        {mode('picked', L('Só o que eu escolher', 'Selected access'), L(`${who ? firstName(who) : 'A pessoa'} vê só o que você marcar.`, who ? `${firstName(who)} sees only selected agents and channels.` : 'Only selected agents and channels.'))}
+        {mode('all', L('Vê tudo', 'Sees everything'), L('Todos os agentes e canais, como hoje.', 'All agents and channels, as today.'))}
+        {mode('picked', L('Só o que eu escolher', 'Only what I pick'), L(`${who ? firstName(who) : 'A pessoa'} vê só o que você marcar.`, who ? `${firstName(who)} sees only what you mark.` : 'They see only what you mark.'))}
       </div>
 
       {picked && (
         <>
           <section>
             <div className="access-label">{L('Setores e agentes', 'Sectors and agents')}</div>
-            <div className="access-hint">{L('Marque o setor inteiro, ou só alguns agentes dele. Quem entrar depois num setor marcado aparece sozinho.', 'Select whole sectors or individual agents. New agents in selected sectors are included.')}</div>
+            <div className="access-hint">{L('Marque o setor inteiro, ou só alguns agentes dele. Quem entrar depois num setor marcado aparece sozinho.', 'Mark a whole sector, or just some of its agents. Whoever joins a marked sector later shows up on their own.')}</div>
             {agents.length === 0 ? (
-              <p className="access-empty">{L('Ainda não há agentes. Eles aparecem aqui quando você montar o time.', 'No agents yet. Add agents to the team to select them.')}</p>
+              <p className="access-empty">{L('Ainda não há agentes. Eles aparecem aqui quando você montar o time.', 'There are no agents yet. They show up here once you build the team.')}</p>
             ) : (
               <>
                 {sectors.map(({ head, members }) => {
@@ -144,7 +144,7 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
                     {open['_loose'] && agentGrid(undefined, loose)}
                   </div>
                 )}
-                {sectors.length === 0 && loose.length > 0 && <p className="access-hint">{L('Ainda não há setores: marque os agentes um a um.', 'No sectors yet. Select agents individually.')}</p>}
+                {sectors.length === 0 && loose.length > 0 && <p className="access-hint">{L('Ainda não há setores: marque os agentes um a um.', 'There are no sectors yet: mark the agents one by one.')}</p>}
               </>
             )}
           </section>
@@ -169,7 +169,7 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
 
       <div className="access-result" aria-live="polite">
         {!picked ? (
-          <span>{who ? L(`${firstName(who)} vê tudo, como hoje.`, `${firstName(who)} sees all agents and channels.`) : L('Quem entrar vê tudo, como hoje.', 'New members see all agents and channels.')}</span>
+          <span>{who ? L(`${firstName(who)} vê tudo, como hoje.`, `${firstName(who)} sees everything, as today.`) : L('Quem entrar vê tudo, como hoje.', 'Whoever joins sees everything, as today.')}</span>
         ) : (
           <>
             <span>
@@ -177,13 +177,13 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
             </span>
             {hiddenText.length > 0 && (
               <span className="access-no">
-                {L('Não vai ver:', "Won't see:")} {sentence(hiddenText)}. {L(`Os agentes que ficam de fora também não são chamados a pedido dessa pessoa.`, 'Excluded agents cannot receive requests for this member.')} {L('Na wiki, também não vê as páginas que vieram desses canais.', 'Wiki pages with sources outside this access are also hidden.')}
+                {L('Não vai ver:', "Won't see:")} {sentence(hiddenText)}. {L(`Os agentes que ficam de fora também não são chamados a pedido dessa pessoa.`, 'The agents left out are not called on this person’s behalf either.')} {L('Na wiki, também não vê as páginas que vieram desses canais.', 'In the wiki, they also won’t see the pages that came from these channels.')}
               </span>
             )}
           </>
         )}
       </div>
-      <p className="access-fine">{L('O dono e os admins sempre veem tudo. O Tuca aparece para todos.', 'Owners and admins always see everything. Tuca is visible to everyone.')}</p>
+      <p className="access-fine">{L('O dono e os admins sempre veem tudo. O Tuca aparece para todos.', 'The owner and admins always see everything. Tuca shows up for everyone.')}</p>
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import { L } from '../../../../shared/lang'
-import { useStore, agentById, isTeam, type Skill, type SkillReport } from '../../store'
-import { AgentAvatar, Icon, ago } from '../ui'
-import type { ReactNode } from 'react'
-import { skillHarnessName } from '../../../../shared/skill-groups'
+import { type ReactNode } from 'react'
+import { agentById, useStore, isTeam } from '../../store'
+import { AgentAvatar, Icon } from '../ui'
 
+
+// Who uses a skill, as faces and names.
 export function Who({ ids }: { ids: string[] }): ReactNode {
   const agents = useStore((s) => ids.map((id) => agentById(s, id)).filter((a) => !!a))
   if (ids.length === 0) return <span className="who">{L('todos os agentes', 'all agents')}</span>
@@ -18,6 +19,8 @@ export function Who({ ids }: { ids: string[] }): ReactNode {
   )
 }
 
+// Who uses a skill: every agent, or the ones picked (always at least one;
+// an empty list means everyone).
 export function AgentPicker({ value, onChange }: { value: string[]; onChange: (ids: string[]) => void }): ReactNode {
   const agents = useStore((s) => s.agents.filter(isTeam))
   const everyone = value.length === 0
@@ -32,7 +35,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {L('Todos os agentes', 'All agents')}
         </button>
         <button type="button" className={everyone ? '' : 'is-active'} onClick={() => everyone && onChange(agents.map((a) => a.id))}>
-          {L('Só alguns', "Selected agents")}
+          {L('Só alguns', 'Only some')}
         </button>
       </div>
       {!everyone && (
@@ -40,7 +43,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {agents.map((a) => {
             const on = value.includes(a.id)
             return (
-              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', "At least one agent must be assigned") : undefined} onClick={() => toggle(a.id)}>
+              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', 'At least one agent uses the skill') : undefined} onClick={() => toggle(a.id)}>
                 <AgentAvatar agent={a} size={18} />
                 {a.name}
                 {on && <Icon name="check" size={12} />}
@@ -51,20 +54,4 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
       )}
     </div>
   )
-}
-
-export function result(r?: SkillReport): string {
-  const n = r?.reads.replies ?? 0
-  if (!r || n === 0) return L('ainda não foi lida', "Not read yet")
-  const ok = r.reads.ok
-  return L(
-    `lida ${n} ${n === 1 ? 'vez' : 'vezes'} · ${ok === n ? (n === 1 ? 'terminou bem' : 'todas terminaram bem') : `${Math.round((ok / n) * 100)}% terminaram bem`}`,
-    `${n} ${n === 1 ? 'reply' : 'replies'} · ${ok === n ? (n === 1 ? 'completed' : 'all completed') : `${Math.round((ok / n) * 100)}% completed`}`
-  )
-}
-
-export const from = (k: Skill): string => {
-  const who = skillHarnessName(k.source)
-  if (!who) return L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`)
-  return L(`do seu ${who}`, `from your ${who}`)
 }

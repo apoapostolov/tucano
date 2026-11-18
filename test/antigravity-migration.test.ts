@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { expect, it } from 'vitest'
-import { Db, MIGRATIONS } from '../src/core/db'
+import { Db } from '../src/core/db'
 import type { Agent } from '../src/shared/types'
 
 const agent = (id: string, modelId: string, fallbackModelId?: string): Agent => ({ id, name: id, handle: id, role: '', color: 'sky', instructions: '', modelId, ...(fallbackModelId ? { fallbackModelId } : {}), effort: 'low', limit: 1000, used: 0, grants: {}, memory: 'auto', computer: false, archived: false })
@@ -18,9 +18,10 @@ it('moves what ran on Gemini over to Antigravity, and leaves the rest alone', ()
   db0.setSettings({ harnesses: { gemini: true, claude: true } } as never)
   db0.addReceipt({ messageId: 'm1', agentId: 'g1', engine: 'gemini', model: 'gemini:gemini/gemini-2.5-pro', inputTokens: 1, cacheReadTokens: 0, outputTokens: 1, ms: 1, at: 1 } as never)
   db0.close()
-  // As a database from before the rename: that migration, and every one after it, not run yet.
+  // As a database from before the rename: that migration not run yet (nor the one after it, which is safe to run again).
   const raw = new DatabaseSync(file)
-  raw.exec(`PRAGMA user_version = ${MIGRATIONS.findIndex((m) => m.includes("UPDATE agents SET model = 'antigravity:'"))}`)
+  const { user_version } = raw.prepare('PRAGMA user_version').get() as { user_version: number }
+  raw.exec(`PRAGMA user_version = ${user_version - 3}`)
   raw.close()
 
   const db = new Db(file)

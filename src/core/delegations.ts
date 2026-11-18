@@ -5,10 +5,9 @@
 // A question left there goes up to the asker instead of to a person: it answers what it knows from
 // its own conversation, and takes the rest to the person itself. Nothing else changes: approvals,
 // limits and what each agent may do stay each agent's own.
-import { timeOpts } from '../shared/clock'
 import { L, locale } from '../shared/lang'
-import { bossesOf, bossOf, channelsOf, directReports, entriesOf, headsOf, peersOf, reportsOf, sectorName, sectorOf, type AskKind } from '../shared/org'
-import type { Agent, Connector, Conversation, Delegation, Message } from '../shared/types'
+import { bossOf, channelsOf, directReports, entriesOf, headsOf, peersOf, reportsOf, sectorName, sectorOf, type AskKind } from '../shared/org'
+import type { Agent, Connector, Conversation, Delegation } from '../shared/types'
 import type { ToolDef } from './gateway'
 import { describeAgent } from './router'
 
@@ -18,14 +17,6 @@ const RESULT_MAX = 8_000 // what goes back to the asker's conversation; the thre
 const TEXT_MAX = 6_000
 const DONE_MAX = 600
 const DUE_MAX_HOURS = 24 * 14
-
-// Shared threads can hold several requests for the same agent. A marked reply belongs only
-// to its request; unmarked replies are accepted only in a request's own thread.
-export function replyForDelegation(d: Delegation, m: Message): boolean {
-  return m.author.kind === 'agent' && m.author.id === d.to && m.conversationId === d.conversationId &&
-    m.threadId === (d.threadId ?? d.rootId) && m.at >= d.createdAt &&
-    (m.run?.handed ? m.run.handed === d.id : !d.threadId)
-}
 
 export const PEDIR: ToolDef = {
   name: 'pedir',
@@ -110,7 +101,7 @@ export const byCode = (list: Delegation[], code: unknown): Delegation | undefine
   return c.length >= 4 ? list.find((d) => d.id === c) ?? (list.filter((d) => d.id.startsWith(c)).length === 1 ? list.find((d) => d.id.startsWith(c)) : undefined) : undefined
 }
 
-const clock = (at: number): string => new Date(at).toLocaleString(locale(), timeOpts({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))
+const clock = (at: number): string => new Date(at).toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
 // "Clara", "@clara", "clara" → the one of the team it names (a name two share names no one).
 export function teamMember(team: Agent[], who: unknown): Agent | undefined {
@@ -220,26 +211,23 @@ export function returnTask(returned: Returned[], open: { d: Delegation; to: stri
 // The asker's view of whom it may hand work to, for the live context: who answers to it and who answers
 // to the same agent as it does, what each does and reaches, the channels each works in (with their
 // topic: where a subject belongs) and what is still open.
-export function teamSection(opts: { agent: Agent; agents: Agent[]; conversations: Conversation[]; connectors: Connector[]; open: Delegation[]; ended?: Delegation[]; requesterId?: string; me: string }): string | undefined {
+export function teamSection(opts: { agent: Agent; agents: Agent[]; conversations: Conversation[]; connectors: Connector[]; open: Delegation[]; ended?: Delegation[]; me: string }): string | undefined {
   const { agent, agents, conversations, connectors, open, ended = [], me } = opts
   const team = reportsOf(agents, agent.id)
-  const bosses = bossesOf(agents, agent) // every one it answers to: a specialist may serve several teams
-  const boss = bosses[0]
+  const boss = bossOf(agents, agent)
   const heads = headsOf(agents)
   const isHead = heads.some((h) => h.id === agent.id)
   const isEntry = entriesOf(agents).some((e) => e.id === agent.id)
   // Another sector's head that answers to the same agent is told as a sector, below, not as a colleague.
   const peers = peersOf(agents, agent.id).filter((p) => !team.some((t) => t.id === p.id) && !(isHead && heads.some((h) => h.id === p.id)))
-  if (!team.length && !peers.length && !bosses.length && !isHead) return undefined
+  if (!team.length && !peers.length && !boss && !isHead) return undefined
   const direct = new Set(directReports(agents, agent.id).map((a) => a.id))
   const name = (id: string): string => agents.find((a) => a.id === id)?.name ?? L('agente removido', 'removed agent')
   const channel = (id: string): string => placeOf(conversations.find((c) => c.id === id))
   const row = (a: Agent, mine: boolean): string => {
     const channels = channelsOf(conversations, a.id)
     const where = channels.length ? channels.map((c) => `#${c.name}${c.topic ? ` (${c.topic.replace(/\s+/g, ' ').slice(0, 100)})` : ''}`).join(', ') : L('nenhum: o pedido chega na DM dele', 'none: a request arrives in their DM')
-    // Not who it answers to, but the name the asker knows it by: the one between the two.
-    const up = bossOf(agents, a)
-    const under = !mine || direct.has(a.id) || !up ? '' : ` · ${L('abaixo de', 'under')} ${up.name}`
+    const under = !mine || direct.has(a.id) ? '' : ` · ${L('abaixo de', 'under')} ${name(a.reportsTo!)}`
     return `- @${a.handle} · ${describeAgent(a, connectors)}${under} · ${L('canais', 'channels')}: ${where}`
   }
   const asked = open.filter((d) => d.from === agent.id)
@@ -268,25 +256,18 @@ export function teamSection(opts: { agent: Agent; agents: Agent[]; conversations
   const top = boss && !isHead ? sectorOf(agents, agent.id) : undefined
   const far = top && top.id !== boss?.id ? top : undefined
   const who = (a: Agent): string => `@${a.handle} · ${a.name}${a.role ? `, ${a.role.replace(/\s+/g, ' ').slice(0, 100)}` : ''}`
-  // One boss reads as it always did. More than one: a specialist that several teams share, each with the
-  // same standing — what any of them asks is answered, and what it can't do goes to its first one.
-  const many = bosses.length > 1
-  const list = bosses.map((b) => `- ${who(b)}`).join('\n')
-  const heading = many ? L('Seus chefes', 'Your bosses') : L('Seu chefe', 'Your boss')
-  const whom = many ? list : boss ? who(boss) : ''
-  const pass = many
-    ? L('Passe a qualquer um deles com pedir', 'Pass to any of them with pedir')
-    : L('Passe a ele com pedir', 'Pass to them with pedir')
-  const never = many
-    ? L('Nunca passe pra cima o que um deles pediu a você: responda a ele.', 'Never pass up what any of them asked you: answer it.')
-    : L('Nunca passe pra cima o que o próprio chefe pediu a você: responda a ele.', 'Never pass up what your boss itself asked you: answer it.')
-  const up = bosses.length
-    ? far
-      ? `## ${heading}\n${whom}. ${pass} ${L('só o que você não consegue fazer, dizendo por quê', "only what you can't do, saying why")}. ${never}\n\n${L('## Chefe do seu setor', "## Your sector's head")}\n${who(far)}. ${L(
-          'O que não é do trabalho do seu setor vai direto a ele com pedir, dizendo por quê, sem passar por quem está no meio: só ele pede a outro setor.',
-          "What isn't your sector's job goes straight to them with pedir, saying why, past whoever is in between: only they ask another sector."
-        )}`
-      : `## ${heading}\n${whom}. ${pass} ${L('só o que não é do trabalho do seu setor ou que você não consegue fazer, dizendo por quê', "only what isn't your sector's job or what you can't do, saying why")}. ${never}`
+  const up = boss
+    ? `${
+        far
+          ? L(
+              `## Seu chefe\n${who(boss)}. Passe a ele com pedir só o que você não consegue fazer, dizendo por quê. Nunca passe pra cima o que o próprio chefe pediu a você: responda a ele.\n\n## Chefe do seu setor\n${who(far)}. O que não é do trabalho do seu setor vai direto a ele com pedir, dizendo por quê, sem passar por quem está no meio: só ele pede a outro setor.`,
+              `## Your boss\n${who(boss)}. Pass to them with pedir only what you can't do, saying why. Never pass up what your boss itself asked you: answer it.\n\n## Your sector's head\n${who(far)}. What isn't your sector's job goes straight to them with pedir, saying why, past whoever is in between: only they ask another sector.`
+            )
+          : L(
+              `## Seu chefe\n${who(boss)}. Passe a ele com pedir só o que não é do trabalho do seu setor ou que você não consegue fazer, dizendo por quê. Nunca passe pra cima o que o próprio chefe pediu a você: responda a ele.`,
+              `## Your boss\n${who(boss)}. Pass to them with pedir only what isn't your sector's job or what you can't do, saying why. Never pass up what your boss itself asked you: answer it.`
+            )
+      }`
     : ''
   const does = (a: Agent): string => a.sectorDoes?.replace(/\s+/g, ' ').trim() || L('não descrito', 'not described')
   const sectors = isHead
@@ -310,7 +291,7 @@ export function teamSection(opts: { agent: Agent; agents: Agent[]; conversations
       )}\n${heads.map((h) => `- @${h.handle} · ${sectorName(h, L('Setor de', 'Sector of'))} · ${L('resolve', 'solves')}: ${does(h)}`).join('\n')}`
     : ''
   // What came back to this very place: a follow-up on one of these goes on in its thread, with what was done there in view.
-  const back = ended.filter((d) => d.from === agent.id && d.state !== 'open' && d.requestedBy === opts.requesterId).slice(-5)
+  const back = ended.filter((d) => d.from === agent.id && d.state !== 'open').slice(-5)
   const again = back.length
     ? `\n\n${L(
         `## Pedidos que já voltaram aqui\nSe o que ${me} pede agora continua um destes assuntos, com o mesmo agente, peça com pedir e "continuar" com o código: segue na mesma thread, e ele vê o que já fez. Assunto novo, pedido novo.`,

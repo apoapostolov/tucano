@@ -35,23 +35,13 @@ import { AgentAvatar, Icon, monthlyLimitText } from './ui'
 import { instructionLengthNote } from '../../../shared/instructions'
 import { describeRoutine } from './Routines'
 
-const EFFORT = (): Record<AgentDraft['effort'], string> => ({ low: L('esforço baixo', 'low effort'), medium: L('esforço médio', 'medium effort'), high: L('esforço alto', 'high effort'), xhigh: L('esforço máximo', 'max effort') })
+export const EFFORT = (): Record<AgentDraft['effort'], string> => ({ low: L('esforço baixo', 'low effort'), medium: L('esforço médio', 'medium effort'), high: L('esforço alto', 'high effort'), xhigh: L('esforço máximo', 'max effort') })
 
 // Set by the introduction: a card there fills the first agent instead of creating one.
 export const UseDraft = createContext<((draft: AgentDraft, messageId: string) => void) | null>(null)
 
 export function draftAgent(d: AgentDraft): Agent {
   return { ...newAgentDraft(), name: d.name, handle: slug(d.name), role: d.role, color: d.color, instructions: d.instructions, modelId: d.modelId, effort: d.effort, web: d.web, grants: d.grants }
-}
-
-// A whole list of skills, on one line of the card: "*" is every active skill, and a long list keeps
-// its first few names and says how many it left out.
-function skillList(names: string[] | undefined): string {
-  if (!names) return ''
-  if (names.length === 1 && names[0] === '*') return L('todas', 'all of them')
-  if (names.length === 0) return L('nenhuma', 'none')
-  const head = names.slice(0, 5).join(', ')
-  return names.length > 5 ? `${head} ${L(`e mais ${names.length - 5}`, `and ${names.length - 5} more`)}` : head
 }
 
 export function AgentProposal({ message }: { message: Message }): ReactNode {
@@ -169,6 +159,17 @@ export function ProposalCard({ message, index = 0, proposal }: { message: Messag
   // Agents and teams are the admins': a member's card goes to them instead (the core tells them).
   const forAdmin = useStore((s) => (p.kind === 'agent' || p.kind === 'team') && !amAdmin(s))
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
+  // Where each agent this card needs comes from: a card of this reply, the team as it is (made some
+  // other way), or nowhere yet, and then it can't be applied (the core says the same: neededAgents).
+  const source = (name: string): 'reply' | 'team' | 'missing' => {
+    const same = (n: string): boolean => n.toLowerCase() === name.toLowerCase()
+    const draft = message.run?.agentDraft
+    if (draft && same(draft.name) && draft.state !== 'dismissed') return 'reply'
+    if (proposalsOf(message.run).some((t) => t.kind === 'team' && t.state !== 'dismissed' && t.agents.some((a) => same(a.name)))) return 'reply'
+    return agents.some((a) => !a.archived && a.kind !== 'tuca' && same(a.name)) ? 'team' : 'missing'
+  }
+  const missing = (p.needs ?? []).filter((n) => source(n) === 'missing')
+  const fromReply = (p.needs ?? []).filter((n) => source(n) === 'reply')
   const by = (message.author.kind === 'agent' && agentOf(message.author.id)?.name) || 'Tuca'
   const grantList = (g: Record<string, string>): string =>
     Object.entries(g).map(([id, level]) => `${connectors.find((c) => c.id === id)?.name ?? L('conector', 'connector')} (${level === 'read_write' ? L('leitura e escrita', 'read and write') : L('leitura', 'read')})`).join(', ') || L('nenhum', 'none')
@@ -208,7 +209,6 @@ export function ProposalCard({ message, index = 0, proposal }: { message: Messag
       if (c.effort !== undefined) rows.push([L('Esforço', 'Effort'), level(was.effort ?? agent.effort), level(c.effort)])
       if (c.web !== undefined) rows.push(['Web', was.web !== false ? L('ligada', 'on') : L('desligada', 'off'), c.web ? L('ligada', 'on') : L('desligada', 'off')])
       if (c.grants !== undefined) rows.push([L('Conectores', 'Connectors'), grantList(was.grants ?? {}), grantList(c.grants)])
-      if (c.skills !== undefined) rows.push([L('Skills', 'Skills'), skillList(was.skills), skillList(c.skills)])
       // 0 is no limit, so the card says that instead of a figure that reads as "set it to zero".
       if (c.limit !== undefined) rows.push([L('Limite do mês', "Month's limit"), monthlyLimitText(was.limit ?? agent.limit), monthlyLimitText(c.limit)])
     }
@@ -356,7 +356,12 @@ export function ProposalCard({ message, index = 0, proposal }: { message: Messag
       {p.reason && <p className="hint">{p.reason}</p>}
       {p.needs?.length && !p.state ? (
         <p className="hint proposal__needs">
-          <Icon name="layers" size={12} /> {L(`Depende de ${p.needs.join(', ')}, proposto nesta mesma resposta: é criado antes.`, `Depends on ${p.needs.join(', ')}, proposed in this same reply: it's made first.`)}
+          <Icon name="layers" size={12} />{' '}
+          {missing.length
+            ? L(`Depende de ${missing.join(', ')}, que não está em nenhum card desta resposta: crie antes (peça ao Tuca) e aplique esta depois.`, `Depends on ${missing.join(', ')}, which isn't in any card of this reply: create it first (ask Tuca), then apply this one.`)
+            : fromReply.length
+              ? L(`Depende de ${fromReply.join(', ')}, proposto nesta mesma resposta: é criado antes.`, `Depends on ${fromReply.join(', ')}, proposed in this same reply: it's made first.`)
+              : L(`É de ${p.needs.join(', ')}, que já está no time.`, `It's for ${p.needs.join(', ')}, already on the team.`)}
         </p>
       ) : null}
       {(error || (!p.state && p.error)) && <p className="note note--error">{error || p.error}</p>}

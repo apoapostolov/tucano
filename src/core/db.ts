@@ -1,14 +1,9 @@
-import { teamUpAudiences } from '../shared/team-up-privacy'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { cleanRules, isAutonomy } from '../shared/actions'
-import { cleanObserve, cleanWork, COMMITMENT_STATES, NOTIFY_MODES, type Commitment, type CommitmentState, type InitiativeConfig, type InitiativeWake, type NotifyMode } from '../shared/initiative'
-import { isStepsMode } from '../shared/steps'
 import { cleanAccess } from '../shared/access'
 import { MAX_MONTHLY_LIMIT, safeLimit } from '../shared/limits'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
-import { cleanRetentionDays } from '../shared/retention'
-import { retentionSelection } from './retention-selection'
 import { ALL_PARTS, GENERAL_SETTINGS, WORKSPACE_PARTS, type WorkspaceParts } from '../shared/workspaces'
 import { dirname, join } from 'node:path'
 import {
@@ -24,7 +19,6 @@ import {
   type ArtifactKind,
   type Author,
   type Connector,
-  type ApprovalResult,
   type ConnectorAuth,
   type ConnectorTool,
   type Conversation,
@@ -46,7 +40,6 @@ import {
   type Routine,
   type RoutineRun,
   type Run,
-  type SendMode,
   type Settings,
   type Skill,
   type SkillVersion,
@@ -542,109 +535,6 @@ export const MIGRATIONS = [
   CREATE INDEX IF NOT EXISTS delegations_by_root ON delegations (root_id);
   CREATE INDEX IF NOT EXISTS delegations_open ON delegations (state) WHERE state = 'open';
   `,
-  // A person's proactive coordinator (docs/autonomous-bots-plan.md in the fork): the bot they picked,
-  // the conversation it resumes, what it may look at and do, its standing brief and its allowance.
-  // One row per person, and no row means off: every workspace starts that way, including one that
-  // upgrades into this build. A responsibility (a commitment) links the work already running
-  // elsewhere, a run, a delegation, a question or an approval, instead of holding a second copy of
-  // its lifecycle, and keeps what it rests on (a message, a file an agent showed) as ids.
-  `
-  CREATE TABLE IF NOT EXISTS initiative (
-    person_id TEXT PRIMARY KEY REFERENCES people(id) ON DELETE CASCADE,
-    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    enabled INTEGER NOT NULL DEFAULT 0,
-    brief TEXT NOT NULL DEFAULT '',
-    observe TEXT NOT NULL DEFAULT '{"conversations":[]}',
-    work TEXT NOT NULL DEFAULT '{"conversations":[],"kinds":[]}',
-    cadence_minutes INTEGER NOT NULL,
-    notify TEXT NOT NULL DEFAULT 'material',
-    daily_reviews INTEGER NOT NULL,
-    daily_tokens INTEGER NOT NULL,
-    timezone TEXT NOT NULL DEFAULT '',
-    revision INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS commitments (
-    id TEXT PRIMARY KEY,
-    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-    agent_id TEXT NOT NULL,
-    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    message_id TEXT,
-    source_by TEXT NOT NULL DEFAULT 'person',
-    description TEXT NOT NULL,
-    scope TEXT NOT NULL DEFAULT '{"conversations":[],"kinds":[]}',
-    state TEXT NOT NULL DEFAULT 'open' CHECK (state IN ('open', 'in_progress', 'waiting_external', 'waiting_user', 'done', 'dismissed')),
-    note TEXT,
-    next_check_at INTEGER,
-    evidence TEXT NOT NULL DEFAULT '[]',
-    links TEXT NOT NULL DEFAULT '[]',
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    closed_at INTEGER
-  );
-  CREATE INDEX IF NOT EXISTS commitments_by_person ON commitments (person_id, state);
-  CREATE INDEX IF NOT EXISTS commitments_by_check ON commitments (next_check_at) WHERE next_check_at IS NOT NULL;
-  `,
-  // Each check-in a coordinator ran (or was admitted for and then refused): when, under which
-  // revision, what came of it, what it said, and what it cost. This is the internal evidence: a quiet
-  // check-in leaves nothing in the conversation, and what a review did is still readable here.
-  `
-  CREATE TABLE IF NOT EXISTS initiative_wakes (
-    id TEXT PRIMARY KEY,
-    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-    agent_id TEXT NOT NULL,
-    revision INTEGER NOT NULL,
-    at INTEGER NOT NULL,
-    ended_at INTEGER,
-    outcome TEXT NOT NULL CHECK (outcome IN ('quiet', 'reported', 'failed', 'skipped', 'interrupted')),
-    why TEXT,
-    text TEXT,
-    tokens INTEGER NOT NULL DEFAULT 0,
-    message_id TEXT
-  );
-  CREATE INDEX IF NOT EXISTS wakes_by_person ON initiative_wakes (person_id, at);
-  `,
-  // What a coordinator has already seen of the work its responsibilities rest on: one row per link,
-  // with the version it last saw. A new version is what wakes it, once.
-  `
-  CREATE TABLE IF NOT EXISTS initiative_resumes (
-    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-    link_kind TEXT NOT NULL,
-    link_id TEXT NOT NULL,
-    version TEXT NOT NULL,
-    at INTEGER NOT NULL,
-    PRIMARY KEY (person_id, link_kind, link_id)
-  );
-  `,
-  // One coordinator per bot (a person can give several of theirs something to look after). The table was
-  // keyed by person alone, so it is rebuilt once and its rows carried over: a bot already on stays on.
-  `
-  DROP TABLE IF EXISTS initiative_by_bot;
-  CREATE TABLE IF NOT EXISTS initiative_by_bot (
-    person_id TEXT NOT NULL REFERENCES people(id) ON DELETE CASCADE,
-    agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    enabled INTEGER NOT NULL DEFAULT 0,
-    brief TEXT NOT NULL DEFAULT '',
-    observe TEXT NOT NULL DEFAULT '{"conversations":[]}',
-    work TEXT NOT NULL DEFAULT '{"conversations":[],"kinds":[]}',
-    cadence_minutes INTEGER NOT NULL,
-    notify TEXT NOT NULL DEFAULT 'material',
-    daily_reviews INTEGER NOT NULL,
-    daily_tokens INTEGER NOT NULL,
-    timezone TEXT NOT NULL DEFAULT '',
-    revision INTEGER NOT NULL DEFAULT 1,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    PRIMARY KEY (person_id, agent_id)
-  );
-  INSERT INTO initiative_by_bot (person_id, agent_id, conversation_id, enabled, brief, observe, work, cadence_minutes, notify, daily_reviews, daily_tokens, timezone, revision, created_at, updated_at)
-    SELECT person_id, agent_id, conversation_id, enabled, brief, observe, work, cadence_minutes, notify, daily_reviews, daily_tokens, timezone, revision, created_at, updated_at FROM initiative;
-  DROP TABLE initiative;
-  ALTER TABLE initiative_by_bot RENAME TO initiative;
-  `,
   // The board's to-dos (Quadro): each person's own list, until it's started (then it's that reply's card).
   `
   CREATE TABLE IF NOT EXISTS tasks (
@@ -670,56 +560,14 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'action_rules', "TEXT NOT NULL DEFAULT '{}'"],
   ['agents', 'autonomy', 'TEXT'],
   ['agents', 'outside_guard', 'INTEGER'],
-  // How an agent's replies show their steps (src/shared/steps.ts): 'all', 'latest', 'one-line'.
-  // Empty: the workspace's setting, which out of the box is every step.
-  ['agents', 'steps_mode', 'TEXT'],
-  // Smart routing (Settings › Routing): Jev picks the model from the person's pools instead of the agent's own.
-  // 1 on for this agent · 0 off for this agent · NULL follow the global switch (Settings › Models › Router).
-  ['agents', 'smart_routing', 'INTEGER'],
   // A phone's push handle (src/core/push.ts), on its device key: {"handle", "tag"} as JSON.
   ['person_keys', 'push', 'TEXT'],
   // A routine on a date ("2026-11-17", once) or on a day of every month (1–31).
   ['routines', 'date', 'TEXT'],
   ['routines', 'month_day', 'INTEGER'],
-  // Clearing a conversation's history without deleting it: what came before stays a row, out of sight.
-  ['conversations', 'cleared_at', 'INTEGER'],
-  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
-  ['messages', 'send_mode', 'TEXT'],
-  // A channel's mention mode, per member: in the room, answering only when mentioned.
-  ['members', 'mention_only', 'INTEGER NOT NULL DEFAULT 0'],
-  // A channel's listen mode, per member: in the room, and Jev says when a message is for them.
-  ['members', 'listen', 'INTEGER NOT NULL DEFAULT 0'],
-  // A channel an agent opened to work with agents called in from another conversation.
-  ['conversations', 'team_up', 'TEXT'],
-  // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
-  ['approvals', 'result', 'TEXT'],
-  // The image a connector wears in the grid: a data: URI (small, downscaled by the screen) or an https URL.
-  // Empty: the store's mark, or the icon of its kind.
-  ['connectors', 'icon', 'TEXT'],
   ['routines', 'times', 'TEXT'],
   // The agent an agent answers to (src/shared/org.ts); empty: no one.
   ['agents', 'reports_to', 'TEXT'],
-  // A check-in stays out of the conversation while it works, and stays out of it for good when it
-  // finds nothing to say: the column keeps it out of what a page reads (the reply's wake record keeps
-  // what it did).
-  ['messages', 'hidden', 'INTEGER'],
-  // Check-ins in a row that found a responsibility exactly where it was: a cycle with no progress is
-  // bounded, not repeated forever. Added here rather than by a migration because a database from an
-  // older build may already hold the table this column completes.
-  ['commitments', 'unchanged_for', 'INTEGER NOT NULL DEFAULT 0'],
-  // A check-in that said exactly what the last one said: kept as evidence, never delivered twice.
-  ['initiative_wakes', 'deduped', 'INTEGER'],
-  // A report that reached the person, so a restart between the run and the delivery shows it once.
-  ['initiative_wakes', 'delivered', 'INTEGER'],
-  // A request that answered as far as it goes before stopping on an approval of mine, and how often
-  // the one asked was knocked on after leaving no reply at all (src/core/delegations.ts).
-  ['delegations', 'parked_told', 'INTEGER NOT NULL DEFAULT 0'],
-  ['delegations', 'nudges', 'INTEGER NOT NULL DEFAULT 0'],
-  // How long an agent's history is kept (src/shared/retention.ts), in days: its replies and its own DMs.
-  // NULL: the Tucano's period. 0: everything, for good, whatever that period says.
-  ['agents', 'retention_days', 'INTEGER'],
-  // The other agents it also answers to, as a JSON list of ids (src/shared/org.ts bossesOf).
-  ['agents', 'also_to', 'TEXT'],
   // A sector head's name for its sector and what it solves, in a line (src/shared/org.ts).
   ['agents', 'sector_name', 'TEXT'],
   ['agents', 'sector_does', 'TEXT'],
@@ -727,9 +575,14 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'entry', 'INTEGER'],
   // What a person sees of the team (PersonAccess, as JSON; empty: everything), and what an invite grants.
   ['people', 'access', 'TEXT'],
-
   ['invites', 'access', 'TEXT'],
+  // A request that answered as far as it goes before stopping on an approval of mine, and how often
+  // the one asked was knocked on after leaving no reply at all (src/core/delegations.ts).
+  ['delegations', 'parked_told', 'INTEGER NOT NULL DEFAULT 0'],
+  ['delegations', 'nudges', 'INTEGER NOT NULL DEFAULT 0'],
+  // The approval a request's work stopped on, shown with the request where it was asked from.
   ['delegations', 'approval', 'TEXT'],
+  // The thread a request is worked in, when it was asked inside another's in the same channel.
   ['delegations', 'thread_id', 'TEXT'],
   // What a connector's server says can't be loosened here (META_FLOOR, META_HIGH_RISK in shared/classify.ts):
   // the class a tool can't go below, and that it's high risk. A node says both for the person's computer.
@@ -742,11 +595,6 @@ const COLUMNS: [string, string, string][] = [
 
 type Row = Record<string, unknown>
 
-// A row of `members`, the one place a channel's modes are read from.
-type MemberRow = { conversation_id?: string; agent_id: string; mention_only: number; listen: number }
-
-// The agents of these rows whose `column` is on.
-const idsWhere = (rows: MemberRow[], column: 'mention_only' | 'listen'): string[] => rows.filter((m) => m[column] === 1).map((m) => m.agent_id)
 // A stored access back to its shape; anything unreadable is "everything".
 function parseAccess(v: unknown): PersonAccess | undefined {
   if (typeof v !== 'string') return undefined
@@ -758,41 +606,7 @@ function parseAccess(v: unknown): PersonAccess | undefined {
 
 // countedTokens, in SQL: cache reads count CACHE_READ_WEIGHT.
 const COUNTED = `input_tokens - cache_read_tokens * ${1 - CACHE_READ_WEIGHT} + output_tokens`
-// A message still counts for a conversation that was never cleared, or for what came after the cut.
-const STILL_THERE = 'at > COALESCE((SELECT cleared_at FROM conversations WHERE conversations.id = messages.conversation_id), 0)'
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
-// A JSON column as it was stored; anything unreadable reads as the empty value it falls back to.
-const jsonOf = (v: unknown): unknown => {
-  try {
-    return JSON.parse(str(v) || 'null') ?? null
-  } catch {
-    return null
-  }
-}
-
-// A message a period no longer keeps, or a wipe takes: the row and where it was said.
-export type Said = { id: string; conversationId: string }
-const said = (r: Row): Said => ({ id: str(r['id']), conversationId: str(r['conversation_id']) })
-
-// Still a run writing into it, or one waiting on the person: never taken away from under either.
-const AT_WORK = `(run IS NULL OR json_extract(run, '$.status') NOT IN ('working', 'waiting_approval', 'waiting_input'))`
-// node:sqlite takes a bounded number of parameters, so a bulk delete goes a chunk at a time.
-const CHUNK = 400
-const marks = (chunk: readonly unknown[]): string => chunk.map(() => '?').join(', ')
-const inChunks = (all: readonly string[]): string[][] => {
-  const out: string[][] = []
-  for (let i = 0; i < all.length; i += CHUNK) out.push(all.slice(i, i + CHUNK))
-  return out
-}
-// A JSON list of ids in a column ('["a","b"]'): anything else, a broken value included, reads as none.
-const idList = (v: unknown): string[] => {
-  try {
-    const parsed: unknown = JSON.parse(str(v) || '[]')
-    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string' && !!x) : []
-  } catch {
-    return []
-  }
-}
 
 export const monthStart = (now = new Date()): number => new Date(now.getFullYear(), now.getMonth(), 1).getTime()
 
@@ -805,23 +619,9 @@ export class Db {
   constructor(private file: string) {
     this.db = new DatabaseSync(file)
     this.keepStatements()
-    // Wait for short-lived external locks while preserving legacy private team-up audiences.
-    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;')
-    try { this.migrate(file); this.protectTeamUpPrivacy() }
+    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
+    try { this.migrate(file) }
     catch (error) { this.db.close(); throw error }
-  }
-
-  private protectTeamUpPrivacy(): void {
-    const rooms = this.conversations()
-    if (!rooms.some((room) => room.teamUp)) return
-    const audiences = teamUpAudiences(rooms, this.ownerId())
-    this.tx(() => {
-      for (const room of rooms) {
-        const person = audiences.get(room.id)
-        if (!room.teamUp || !person || room.teamUp.privateTo === person) continue
-        this.db.prepare('UPDATE conversations SET team_up = ? WHERE id = ?').run(JSON.stringify({ ...room.teamUp, privateTo: person }), room.id)
-      }
-    })
   }
 
   close(): void {
@@ -848,7 +648,7 @@ export class Db {
 
   // Snapshot the live DB, then sanitize only the copy. Publish it only after
   // VACUUM removes deleted history from its pages; no engine/browser files copy.
-  // The extra Claude Code, Codex and Grok logins stay too (their folders, and the Mac's keychain,
+  // The extra Claude Code and Codex logins stay too (their folders, and the Mac's keychain,
   // are the source's): the copy's agents use the usual login.
   // `wikiDir`: the source's wiki folder, which the copy uses too when the wiki comes along.
   duplicateTo(file: string, name: string, parts: WorkspaceParts = ALL_PARTS, wikiDir?: string): void {
@@ -890,10 +690,6 @@ export class Db {
           DELETE FROM delegations;
           DELETE FROM tasks;
           DELETE FROM activity;
-          DELETE FROM commitments;
-          DELETE FROM initiative_wakes;
-          DELETE FROM initiative_resumes;
-          UPDATE initiative SET enabled = 0, revision = revision + 1;
         `)
         target.keepOnly(parts)
         if (!parts.wiki) target.db.prepare("DELETE FROM settings WHERE key = 'wikiDir'").run() // its own, empty
@@ -924,7 +720,7 @@ export class Db {
   // comes archived (with no agents it would apply to everyone), a routine needs its agent and place.
   private keepOnly(parts: WorkspaceParts): void {
     if (WORKSPACE_PARTS.every((p) => parts[p])) return
-    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'dmOrder', 'agentOrder', 'navOrder', 'navHidden', 'folded'] : [])])
+    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'folded'] : [])])
     for (const { key } of this.db.prepare('SELECT key FROM settings').all() as { key: string }[]) if (!kept.has(key)) this.db.prepare('DELETE FROM settings WHERE key = ?').run(key)
     if (!parts.general) this.db.prepare('DELETE FROM secrets WHERE key = ?').run(JEV_KEY)
     if (!parts.connectors) {
@@ -982,10 +778,10 @@ export class Db {
 
   // A backup from another computer just became this database (restore.ts). What only worked there
   // goes: its secrets (sealed with that computer's key), its devices and invites, its extra logins,
-  // the agents' use of that computer (its desktop, apps and folders), and what ran there, routines and
-  // initiative alike, until someone turns it on here. What this server had of its own stays, from
-  // `previous` (its database before the swap): the owner's devices (so whoever restored stays signed
-  // in), the secrets, the harnesses picked and Telegram. Returns how many routines were turned off.
+  // the agents' use of that computer (its desktop, apps and folders), and routines run there until
+  // someone turns them on here. What this server had of its own stays, from `previous` (its
+  // database before the swap): the owner's devices (so whoever restored stays signed in), the
+  // secrets, the harnesses picked and Telegram. Returns how many routines were turned off.
   adoptRestore(previous?: string): number {
     const routines = Number((this.db.prepare('SELECT count(*) AS n FROM routines WHERE enabled = 1').get() as Row)['n'] ?? 0)
     this.tx(() => {
@@ -997,7 +793,6 @@ export class Db {
         DELETE FROM settings WHERE key IN ('quota', 'codexQuota', 'telegram', 'accounts', 'wikiDir', 'harnesses');
         UPDATE agents SET account = NULL, fallback_account = NULL, apps = '[]', folders = '[]', computer = CASE WHEN computer_kind = 'mac' THEN 0 ELSE computer END;
         UPDATE routines SET enabled = 0;
-        UPDATE initiative SET enabled = 0, revision = revision + 1;
       `)
     })
     this.ownerCache = ''
@@ -1085,21 +880,17 @@ export class Db {
       ...(r['custom_color'] ? { customColor: str(r['custom_color']) } : {}),
       ...(r['picture'] ? { picture: str(r['picture']) } : {}),
       ...(r['avatar'] ? { avatar: JSON.parse(str(r['avatar'])) as Agent['avatar'] } : {}),
-      ...(r['wiki'] === 'none' || r['wiki'] === 'read' || r['wiki'] === 'read_write' ? { wiki: r['wiki'] } : {}),
+      ...(r['wiki'] === 'none' || r['wiki'] === 'read' ? { wiki: r['wiki'] } : {}),
       autoApprove: JSON.parse(str(r['auto_approve']) || '[]') as string[],
       ...(str(r['action_rules']) && str(r['action_rules']) !== '{}' ? { actionRules: cleanRules(JSON.parse(str(r['action_rules']))) } : {}),
       ...(isAutonomy(r['autonomy']) ? { autonomy: r['autonomy'] } : {}),
       ...(r['outside_guard'] === 0 || r['outside_guard'] === 1 ? { outsideGuard: r['outside_guard'] === 1 } : {}),
-      ...(isStepsMode(r['steps_mode']) ? { steps: r['steps_mode'] } : {}),
-      ...(r['smart_routing'] === 0 || r['smart_routing'] === 1 ? { smartRouting: r['smart_routing'] === 1 } : {}),
       folders: JSON.parse(str(r['folders']) || '[]') as LentFolder[],
-      ...(r['retention_days'] === 0 || r['retention_days'] ? { retentionDays: Number(r['retention_days']) } : {}),
       archived: r['archived'] === 1,
       ...(str(r['kind']) === 'tuca' ? { kind: 'tuca' as const } : {}),
       // One with no owner (put there by another tool, after the people came) is the Tucano owner's.
       owner: r['owner'] ? str(r['owner']) : this.ownerId(),
       ...(r['reports_to'] ? { reportsTo: str(r['reports_to']) } : {}),
-      ...(idList(r['also_to']).length ? { alsoTo: idList(r['also_to']) } : {}),
       ...(r['sector_name'] ? { sectorName: str(r['sector_name']) } : {}),
       ...(r['sector_does'] ? { sectorDoes: str(r['sector_does']) } : {}),
       ...(r['entry'] ? { entry: true as const } : {})
@@ -1118,26 +909,17 @@ export class Db {
   saveAgent(a: Agent): void {
     this.db
       .prepare(
-        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, retention_days, steps_mode, smart_routing, archived, kind, custom_color, picture, avatar, wiki, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, archived, kind, custom_color, picture, avatar, wiki, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET name = excluded.name, handle = excluded.handle, role = excluded.role,
-           color = excluded.color, instructions = excluded.instructions, model = excluded.model,
-           fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account,
-           account = excluded.account, effort = excluded.effort, limit_tokens = excluded.limit_tokens,
-           max_routines = excluded.max_routines, grants = excluded.grants, memory_mode = excluded.memory_mode,
-           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web,
-           browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve,
-           action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard, retention_days = excluded.retention_days,
-           steps_mode = excluded.steps_mode, smart_routing = excluded.smart_routing, archived = excluded.archived,
-           kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color,
-           picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
+           color = excluded.color, instructions = excluded.instructions, model = excluded.model, fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account, account = excluded.account, effort = excluded.effort,
+           limit_tokens = excluded.limit_tokens, max_routines = excluded.max_routines, grants = excluded.grants, memory_mode = excluded.memory_mode,
+           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web, browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve, action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard, archived = excluded.archived, kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color, picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
       )
-      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, cleanRetentionDays(a.retentionDays) ?? null, isStepsMode(a.steps) ? a.steps : null, a.smartRouting === true ? 1 : a.smartRouting === false ? 0 : null, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki === 'none' || a.wiki === 'read' || a.wiki === 'read_write' ? a.wiki : null, Date.now())
+      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki ?? null, Date.now())
     // An agent made without one belongs to the Tucano's owner; a save that doesn't say keeps it.
     this.db.prepare('UPDATE agents SET owner = COALESCE(?, owner, (SELECT id FROM people WHERE role = ?)) WHERE id = ?').run(a.owner ?? null, 'owner', a.id)
-    this.db
-      .prepare('UPDATE agents SET reports_to = ?, also_to = ?, sector_name = ?, sector_does = ?, entry = ? WHERE id = ?')
-      .run(a.reportsTo || null, a.alsoTo?.length ? JSON.stringify(a.alsoTo) : null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.id)
+    this.db.prepare('UPDATE agents SET reports_to = ?, sector_name = ?, sector_does = ?, entry = ? WHERE id = ?').run(a.reportsTo || null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.id)
   }
 
   // Kept apart from saveAgent: folders change only after the core checks them.
@@ -1164,57 +946,26 @@ export class Db {
          ORDER BY c.created_at`
       )
       .all(personId) as Row[]
-    const members = this.db.prepare('SELECT conversation_id, agent_id, mention_only, listen FROM members').all() as MemberRow[]
-    return rows.map((r) => {
-      const mine = members.filter((m) => m.conversation_id === r['id'])
-      return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
-    })
+    const members = this.db.prepare('SELECT conversation_id, agent_id FROM members').all() as { conversation_id: string; agent_id: string }[]
+    return rows.map((r) => this.toConversation(r, members.filter((m) => m.conversation_id === r['id']).map((m) => m.agent_id)))
   }
 
-  // `mentionOnly`: the agents of a channel that answer only when mentioned; `listen`: the ones Jev
-  // brings in when the message is theirs (each left out when empty).
-  private toConversation(r: Row, members: string[], mentionOnly: string[] = [], listen: string[] = []): Conversation {
+  private toConversation(r: Row, members: string[]): Conversation {
     return {
       id: str(r['id']),
       kind: str(r['kind']) as Conversation['kind'],
       name: str(r['name']),
       topic: r['topic'] ? str(r['topic']) : undefined,
       members,
-      ...(mentionOnly.length ? { mentionOnly } : {}),
-      ...(listen.length ? { listen } : {}),
       summary: r['summary'] ? str(r['summary']) : undefined,
       summaryUntil: r['summary_until'] ? Number(r['summary_until']) : undefined,
       summaryAt: r['summary_at'] ? Number(r['summary_at']) : undefined,
       ...(r['wiki_capture'] === 0 ? { wikiCapture: false } : {}),
       ...(r['threads'] === 1 ? { threads: true } : {}),
-      ...(r['cleared_at'] ? { clearedAt: Number(r['cleared_at']) } : {}),
-      ...(r['team_up'] ? { teamUp: JSON.parse(str(r['team_up'])) as Conversation['teamUp'] } : {}),
       ...(r['owner'] ? { owner: str(r['owner']) } : {}),
       ...(r['created_by'] ? { createdBy: str(r['created_by']) } : {}),
       unread: Number(r['unread'])
     }
-  }
-
-  // Clearing a conversation's history without deleting it. The rows stay (receipts, approvals and the
-  // costs they carry point at message ids), the summary goes with them because it was written about
-  // them, and `summary_until` is moved so the next turns stop looking behind the cut.
-  // The history goes off the screen and out of every read, but the conversation stays: the rows are
-  // still there for the receipts and the approvals that point at them.
-  // What nobody can reach any more goes with it: an unread row would leave a badge over an empty
-  // screen (markRead heals it, but only the next time the conversation is opened).
-  clearConversation(id: string, at = Date.now()): void {
-    this.tx(() => {
-      this.db.prepare('UPDATE conversations SET cleared_at = ?, summary = NULL, summary_until = ?, summary_at = ? WHERE id = ?').run(at, at, at, id)
-      this.db.prepare('DELETE FROM unread WHERE message_id IN (SELECT id FROM messages WHERE conversation_id = ?)').run(id)
-      // A thread's summary was written about messages that are now behind the cut, and the reply that
-      // would read it can't be reached any more.
-      this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ?').run(id)
-    })
-  }
-
-  // The questions still waiting in one conversation: their message is about to be off the screen.
-  openQuestionsIn(conversationId: string): Question[] {
-    return (this.db.prepare("SELECT * FROM questions WHERE state = 'open' AND conversation_id = ? ORDER BY created_at").all(conversationId) as Row[]).map((r) => this.toQuestion(r))
   }
 
   // `until` is the `at` of the last message the summary covers; leave it out to keep it (a hand edit).
@@ -1232,8 +983,8 @@ export class Db {
       )
       .get(personId, id) as Row | undefined
     if (!r) return undefined
-    const mine = this.db.prepare('SELECT agent_id, mention_only, listen FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as MemberRow[]
-    return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
+    const members = (this.db.prepare('SELECT agent_id FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as { agent_id: string }[]).map((m) => m.agent_id)
+    return this.toConversation(r, members)
   }
 
   // Only whose a conversation is, for checks on every event (no counts, no members).
@@ -1254,9 +1005,7 @@ export class Db {
       const owner = c.kind === 'dm' ? (c.owner ?? this.ownerId()) : null
       // A channel is whoever made it (the owner when the code doesn't say).
       const by = c.kind === 'channel' ? (c.createdBy ?? this.ownerId()) : null
-      this.db
-        .prepare('INSERT INTO conversations (id, kind, name, topic, threads, team_up, wiki_capture, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, c.teamUp ? JSON.stringify(c.teamUp) : null, c.wikiCapture === false ? 0 : null, owner, by, Date.now())
+      this.db.prepare('INSERT INTO conversations (id, kind, name, topic, threads, owner, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(c.id, c.kind, c.name, c.topic ?? null, c.threads ? 1 : null, owner, by, Date.now())
       for (const m of c.members) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(c.id, m)
     })
   }
@@ -1279,21 +1028,11 @@ export class Db {
     this.db.prepare('UPDATE conversations SET topic = ? WHERE id = ?').run(topic ?? null, id)
   }
 
-  // Exactly these agents in the conversation. `mentionOnly`: which of them answer only when
-  // mentioned (a channel's mention mode); `listen`: which of them Jev brings in when a message is
-  // about what they do (a channel's listen mode). Left out, each agent keeps the mode it had. An
-  // agent is in one mode or the other, never both: the one named in `listen` leaves mention mode.
-  setMembers(id: string, agentIds: string[], mentionOnly?: string[], listen?: string[]): void {
-    const agents = [...new Set(agentIds)]
-    const before = this.conversation(id)
-    const quiet = new Set(mentionOnly === undefined ? before?.mentionOnly ?? [] : mentionOnly)
-    const hears = new Set(listen === undefined ? before?.listen ?? [] : listen)
-    for (const a of hears) quiet.delete(a)
-    for (const a of quiet) hears.delete(a)
+  // Exactly these agents in the conversation.
+  setMembers(id: string, agentIds: string[]): void {
     this.tx(() => {
       this.db.prepare('DELETE FROM members WHERE conversation_id = ?').run(id)
-      for (const a of agents)
-        this.db.prepare('INSERT INTO members (conversation_id, agent_id, mention_only, listen) VALUES (?, ?, ?, ?)').run(id, a, quiet.has(a) ? 1 : 0, hears.has(a) ? 1 : 0)
+      for (const a of new Set(agentIds)) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(id, a)
     })
   }
 
@@ -1338,12 +1077,6 @@ export class Db {
     return Number(row.n)
   }
 
-  // A reply that ended telling nobody (a routine's [SILENT]): what its running had already made
-  // unread goes back to nothing, for everyone. The notification row stays: it was weighed once.
-  forgetActivity(messageId: string): void {
-    this.db.prepare('DELETE FROM unread WHERE message_id = ?').run(messageId)
-  }
-
   // Who reads a conversation: a DM's person; a channel's, everyone with access.
   private readers(conversationId: string): string[] {
     const c = this.conversationOwner(conversationId)
@@ -1360,13 +1093,7 @@ export class Db {
   // who reads the conversation and isn't looking at it. `viewing`: the owner's open conversation
   // (a desktop), or each person's.
   recordActivity(message: Message, viewing: string | null | Map<string, string | null>): boolean {
-    // A routine's request is the app asking its agent to work; what the person reads is the answer.
-    // And an answer with nothing to report (a routine's [SILENT]) is news to nobody: it's in the
-    // conversation, one quiet line, for whoever goes looking, and it never counts as unread.
-    if (message.author.kind !== 'agent') return false
-    if (message.run?.silent) return false
-    // A check-in the person did not ask for never counts as something to read.
-    if (message.hidden) return false
+    if (message.author.kind !== 'agent' && message.author.kind !== 'routine') return false
     const phase = message.run?.status ?? 'message'
     if (phase !== 'message' && !['working', 'done', 'failed', 'limit_reached', 'waiting_input', 'waiting_approval'].includes(phase)) return false
     return this.tx(() => {
@@ -1397,21 +1124,11 @@ export class Db {
       text: str(r['text']),
       at: Number(r['at']),
       run: r['run'] ? (JSON.parse(str(r['run'])) as Run) : undefined,
-      ...(r['hidden'] === 1 ? { hidden: true } : {}),
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
-      ...(r['send_mode'] ? { sendMode: str(r['send_mode']) as SendMode } : {}),
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
       ...(r['title'] ? { title: str(r['title']) } : {})
     }
-  }
-
-  // Who spoke last in a conversation, and when: a check-in stays out of an exchange the person is in
-  // the middle of, and knows it is over as soon as the bot has answered.
-  lastAuthor(conversationId: string): { kind: 'person' | 'agent' | 'routine' | 'system'; at: number } | undefined {
-    const r = this.db.prepare('SELECT author_kind, at FROM messages WHERE conversation_id = ? AND hidden IS NULL ORDER BY at DESC LIMIT 1').get(conversationId) as Row | undefined
-    if (!r) return undefined
-    return { kind: str(r['author_kind']) as 'person' | 'agent' | 'routine' | 'system', at: Number(r['at']) }
   }
 
   // A request's short title (src/core/titles.ts).
@@ -1433,12 +1150,10 @@ export class Db {
 
   // `threadId`: only that thread's replies; null: only what's outside threads; left out: everything.
   // `before`: only those from before that moment.
-  // Nothing from before the conversation was cleared: the rows stay (receipts and approvals point at
-  // them) but no read path sees them again, the model's included.
   recentMessages(conversationId: string, limit: number, threadId?: string | null, before?: number): Message[] {
     const where = (threadId === undefined ? '' : threadId === null ? ' AND thread_id IS NULL' : ' AND thread_id = ?') + (before === undefined ? '' : ' AND at < ?')
     const args = [conversationId, ...(typeof threadId === 'string' ? [threadId] : []), ...(before === undefined ? [] : [before]), limit]
-    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ? AND ${STILL_THERE}${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
+    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ?${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
     return rows.reverse().map((r) => this.toMessage(r))
   }
 
@@ -1487,7 +1202,7 @@ export class Db {
   // still going wherever they started, and every routine's request with its reply (Routines draws what
   // ran), each with all its replies. `since`: per conversation with older ones left, from when it's whole.
   openingMessages(n: number): { messages: Message[]; since: Record<string, number> } {
-    const ranked = `ranked AS (SELECT id, conversation_id, thread_id, at, ROW_NUMBER() OVER (PARTITION BY conversation_id, thread_id IS NULL ORDER BY at DESC) AS n FROM messages WHERE hidden IS NULL)`
+    const ranked = 'ranked AS (SELECT id, conversation_id, thread_id, at, ROW_NUMBER() OVER (PARTITION BY conversation_id, thread_id IS NULL ORDER BY at DESC) AS n FROM messages)'
     const rows = this.db
       .prepare(
         `WITH ${ranked},
@@ -1504,10 +1219,7 @@ export class Db {
     const cut = this.db
       .prepare(`WITH ${ranked} SELECT conversation_id, at FROM ranked WHERE thread_id IS NULL AND n = ? AND conversation_id IN (SELECT conversation_id FROM ranked WHERE thread_id IS NULL AND n = ?)`)
       .all(n, n + 1) as Row[]
-    // A cleared conversation opens after its cut, the same place every other read starts.
-    const cleared = new Map((this.db.prepare('SELECT id, cleared_at FROM conversations WHERE cleared_at IS NOT NULL').all() as Row[]).map((r) => [str(r['id']), Number(r['cleared_at'])]))
-    const seen = rows.filter((r) => Number(r['at']) > (cleared.get(str(r['conversation_id'])) ?? 0))
-    return { messages: seen.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
+    return { messages: rows.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
   }
 
   // Further back, a page at a time: the `n` messages outside threads before `before` (all of them back
@@ -1515,113 +1227,18 @@ export class Db {
   messagesBefore(conversationId: string, before: number, n: number, from?: number): { messages: Message[]; since: number } {
     const page = (
       from === undefined
-        ? this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? ORDER BY at DESC LIMIT ?`).all(conversationId, before, n)
-        : this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? AND at >= ? ORDER BY at DESC`).all(conversationId, before, from)
+        ? this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? ORDER BY at DESC LIMIT ?').all(conversationId, before, n)
+        : this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? AND at >= ? ORDER BY at DESC').all(conversationId, before, from)
     ) as Row[]
     const oldest = page.length ? Number(page.at(-1)!['at']) : Math.min(before, from ?? before)
-    const more = !!this.db.prepare(`SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND hidden IS NULL AND at < ? LIMIT 1`).get(conversationId, oldest)
+    const more = !!this.db.prepare('SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? LIMIT 1').get(conversationId, oldest)
     const since = more ? oldest : 0
     if (!page.length) return { messages: [], since }
     const ids = JSON.stringify(page.map((r) => str(r['id'])))
     const rows = this.db
-      .prepare('SELECT * FROM messages WHERE conversation_id = ? AND hidden IS NULL AND (id IN (SELECT value FROM json_each(?)) OR thread_id IN (SELECT value FROM json_each(?))) ORDER BY at')
+      .prepare('SELECT * FROM messages WHERE conversation_id = ? AND (id IN (SELECT value FROM json_each(?)) OR thread_id IN (SELECT value FROM json_each(?))) ORDER BY at')
       .all(conversationId, ids, ids) as Row[]
     return { messages: rows.map((r) => this.toMessage(r)), since }
-  }
-
-  // ---------- history: what a period no longer keeps, and what a wipe takes away ----------
-
-  historyRevision(conversationId: string): number {
-    return Number(this.meta(`history:revision:${conversationId}`) ?? 0)
-  }
-
-  // Everything said before `cutoff`, with its conversation: what the Tucano's period takes away. A reply
-  // still at work or waiting on an approval stays — its run would write into a row that's gone — and so
-  // does every word of a bot that has a period of its own (`own`), which decides for its DMs too.
-  oldMessages(cutoff: number, own: string[]): Said[] {
-    const others = own.map(() => '?').join(', ')
-    const skip = own.length ? ` AND NOT (author_kind = 'agent' AND author_id IN (${others})) AND conversation_id NOT IN (SELECT id FROM conversations WHERE kind = 'dm' AND name IN (${others}))` : ''
-    const rows = this.db
-      .prepare(`SELECT id, conversation_id FROM messages WHERE at < ? AND ${AT_WORK}${skip}`)
-      .all(cutoff, ...own, ...own) as Row[]
-    return rows.map(said)
-  }
-
-  // One bot's history before `cutoff`: what it wrote, wherever it was, and every word of its own DMs —
-  // the words there are its conversation, the person's prompts included. Its period, not the Tucano's.
-  botMessagesBefore(botId: string, cutoff: number): Said[] {
-    const rows = this.db
-      .prepare(
-        `SELECT id, conversation_id FROM messages WHERE at < ? AND ${AT_WORK}
-           AND ((author_kind = 'agent' AND author_id = ?) OR conversation_id IN (SELECT id FROM conversations WHERE kind = 'dm' AND name = ?))`
-      )
-      .all(cutoff, botId, botId) as Row[]
-    return rows.map(said)
-  }
-
-  // Every word of a bot's history — what it wrote anywhere, and all of its own DMs — or of the whole
-  // workspace's when there's no bot: what the two wipe buttons take, whatever the period says.
-  historyOf(botId?: string): Said[] {
-    const rows = (
-      botId
-        ? this.db
-            .prepare(
-              `SELECT id, conversation_id FROM messages
-                WHERE (author_kind = 'agent' AND author_id = ?) OR conversation_id IN (SELECT id FROM conversations WHERE kind = 'dm' AND name = ?)`
-            )
-            .all(botId, botId)
-        : this.db.prepare('SELECT id, conversation_id FROM messages').all()
-    ) as Row[]
-    return rows.map(said)
-  }
-
-  // They go, with the replies in the threads they started and the approvals that pointed at them; unread
-  // notifications follow by foreign key. What a reply spent stays in the receipts, which is what Usage
-  // and the monthly limit count, and the artifacts stay too (their files are on disk). A question waiting
-  // in a thread whose first message went is closed: there's nothing left to show it under.
-  forget(ids: string[], cascade = true): { conversations: string[]; gone: number; ids: string[] } {
-    if (!ids.length) return { conversations: [], gone: 0, ids: [] }
-    return this.tx(() => {
-      // id → the conversation it was said in, grown until no reply is left hanging under a thread.
-      const gone = new Map<string, string>()
-      const parents = new Map<string, string | undefined>()
-      for (const chunk of inChunks(ids)) {
-        for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
-          gone.set(str(r['id']), str(r['conversation_id']))
-          parents.set(str(r['id']), r['thread_id'] ? str(r['thread_id']) : undefined)
-        }
-      }
-      for (let roots = [...gone.keys()]; roots.length; ) {
-        const replies = new Map<string, string>()
-        for (const chunk of inChunks(roots)) {
-          for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE thread_id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
-            const id = str(r['id'])
-            parents.set(id, str(r['thread_id']))
-            if (!gone.has(id)) replies.set(id, str(r['conversation_id']))
-          }
-        }
-        for (const [id, conversationId] of replies) gone.set(id, conversationId)
-        roots = [...replies.keys()]
-      }
-      if (!cascade) {
-        const eligible = retentionSelection(new Set(ids), parents)
-        for (const id of gone.keys()) if (!eligible.has(id)) gone.delete(id)
-      }
-      for (const chunk of inChunks([...gone.keys()])) {
-        this.db.prepare(`DELETE FROM approvals WHERE message_id IN (${marks(chunk)})`).run(...chunk)
-        this.db.prepare(`DELETE FROM messages WHERE id IN (${marks(chunk)})`).run(...chunk)
-      }
-      const conversations = [...new Set(gone.values())]
-      for (const id of conversations) {
-        // Summaries can contain removed words too. Invalidate pending model output before it
-        // can save those words again; future summaries use only the surviving history.
-        this.setMeta(`history:revision:${id}`, String(this.historyRevision(id) + 1))
-        this.db.prepare('UPDATE conversations SET summary = NULL, summary_until = NULL, summary_at = NULL WHERE id = ?').run(id)
-        this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ? AND thread_summary IS NOT NULL').run(id)
-      }
-      this.db.prepare(`UPDATE questions SET state = 'closed' WHERE state = 'open' AND thread_id IS NOT NULL AND thread_id NOT IN (SELECT id FROM messages)`).run()
-      return { conversations, gone: gone.size, ids: [...gone.keys()] }
-    })
   }
 
   // The connector tools an agent called in its replies since `since`, most used first, as each step
@@ -1638,28 +1255,13 @@ export class Db {
 
   // Where the agent wrote last: while it works, the conversation of its reply.
   lastConversationOf(agentId: string): string | undefined {
-    const r = this.db.prepare("SELECT conversation_id FROM messages WHERE author_kind = 'agent' AND author_id = ? AND hidden IS NULL ORDER BY at DESC LIMIT 1").get(agentId) as Row | undefined
+    const r = this.db.prepare("SELECT conversation_id FROM messages WHERE author_kind = 'agent' AND author_id = ? ORDER BY at DESC LIMIT 1").get(agentId) as Row | undefined
     return r && str(r['conversation_id'])
   }
 
   message(id: string): Message | undefined {
     const r = this.db.prepare('SELECT * FROM messages WHERE id = ?').get(id) as Row | undefined
     return r && this.toMessage(r)
-  }
-
-  // A session's reply leaves the conversation: the message, the replies in the thread it started,
-  // and the approvals that were asked under it. What the session spent stays in the receipts — the
-  // tokens went out either way. The ids that went come back, so every screen can take them off.
-  deleteMessage(id: string): string[] {
-    return this.tx(() => {
-      const inThread = (this.db.prepare('SELECT id FROM messages WHERE thread_id = ?').all(id) as Row[]).map((r) => str(r['id']))
-      const gone = [id, ...inThread]
-      for (const one of gone) {
-        this.db.prepare('DELETE FROM approvals WHERE message_id = ?').run(one)
-        this.db.prepare('DELETE FROM messages WHERE id = ?').run(one)
-      }
-      return gone
-    })
   }
 
   // A reply moved into a thread after it started (one that handed work on goes under the person's message).
@@ -1670,8 +1272,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, hidden, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, hidden = excluded.hidden, send_mode = excluded.send_mode`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run`
       )
       .run(
         m.id,
@@ -1682,15 +1284,8 @@ export class Db {
         m.at,
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
-        m.threadId ?? null,
-        m.hidden ? 1 : null,
-        m.sendMode ?? null
+        m.threadId ?? null
       )
-  }
-
-  // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
-  queuedMessages(): Message[] {
-    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode IS NOT NULL ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
   }
 
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of
@@ -1709,20 +1304,15 @@ export class Db {
     return r ? this.toApproval(r) : undefined
   }
 
-  // Runs that were working when the app closed can't continue: their CLI process is gone. A reply held
-  // by the person is the same, and only that one: a reply paused at its spending ceiling had already
-  // ended, and still goes on from where it stopped.
+  // Runs that were working when the app closed can't continue: their CLI process is gone.
   interruptStaleRuns(): number {
     let n = 0
-    for (const m of this.messagesWithRun(['working', 'paused'])) {
-      const run = m.run
-      if (!run) continue
-      const stale = run.status === 'working' || (run.status === 'paused' && run.held === true)
-      if (!stale) continue
+    for (const m of this.messagesWithRun(['working'])) {
+      if (m.run?.status !== 'working') continue
       n++
       this.saveMessage({
         ...m,
-        run: { ...run, status: 'interrupted', restartPending: true, steps: run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
+        run: { ...m.run, status: 'interrupted', steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
       })
     }
     return n
@@ -1791,24 +1381,18 @@ export class Db {
       args: JSON.parse(str(r['args']) || '[]') as string[],
       envKeys: JSON.parse(str(r['env_keys']) || '[]') as string[],
       auth: str(r['auth']) as ConnectorAuth,
-      icon: r['icon'] ? str(r['icon']) : undefined,
       tools: this.tools(id).map(({ inputSchema: _, ...t }) => t)
     }
   }
 
-  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth; icon?: string }): void {
+  saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth }): void {
     this.db
       .prepare(
-        `INSERT INTO connectors (id, name, kind, url, command, args, env_keys, auth, icon, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO connectors (id, name, kind, url, command, args, env_keys, auth, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET name = excluded.name, url = excluded.url, command = excluded.command,
-           args = excluded.args, env_keys = excluded.env_keys, auth = excluded.auth, icon = excluded.icon`
+           args = excluded.args, env_keys = excluded.env_keys, auth = excluded.auth`
       )
-      .run(c.id, c.name, c.kind, c.url ?? null, c.command ?? null, JSON.stringify(c.args ?? []), JSON.stringify(c.envKeys ?? []), c.auth, c.icon ?? null, Date.now())
-  }
-
-  // The image a connector wears. Its own write, so changing it touches nothing else (no reconnect).
-  setConnectorIcon(id: string, icon: string | undefined): void {
-    this.db.prepare('UPDATE connectors SET icon = ? WHERE id = ?').run(icon ?? null, id)
+      .run(c.id, c.name, c.kind, c.url ?? null, c.command ?? null, JSON.stringify(c.args ?? []), JSON.stringify(c.envKeys ?? []), c.auth, Date.now())
   }
 
   removeConnector(id: string): void {
@@ -1909,7 +1493,6 @@ export class Db {
       state: str(r['state']) as ApprovalState,
       reason: r['reason'] ? str(r['reason']) : undefined,
       outcome: r['outcome'] ? str(r['outcome']) : undefined,
-      ...(r['result'] ? { result: str(r['result']) as ApprovalResult } : {}),
       createdAt: Number(r['created_at']),
       expiresAt: Number(r['expires_at']),
       decidedAt: r['decided_at'] ? Number(r['decided_at']) : undefined,
@@ -1960,12 +1543,6 @@ export class Db {
       .prepare("UPDATE approvals SET state = ?, reason = ?, decided_at = ?, decided_by = ? WHERE id = ? AND state = 'pending'")
       .run(state, reason ?? null, Date.now(), by ?? null, id)
     return Number(r.changes) === 1
-  }
-
-  // What became of the call, once it's over: it ran, it ran and failed, or nothing ran. Written
-  // apart from the state so a card can show "approved, waiting for the result" in between.
-  setApprovalResult(id: string, result: ApprovalResult): void {
-    this.db.prepare('UPDATE approvals SET result = ? WHERE id = ?').run(result, id)
   }
 
   setApprovalOutcome(id: string, outcome: string): void {
@@ -2039,11 +1616,6 @@ export class Db {
 
   artifacts(): Artifact[] {
     return (this.db.prepare('SELECT * FROM artifacts ORDER BY created_at').all() as Row[]).map((r) => this.toArtifact(r))
-  }
-
-  // What one reply showed: the card over the desktop shows its pictures.
-  artifactsOf(messageId: string): Artifact[] {
-    return (this.db.prepare('SELECT * FROM artifacts WHERE message_id = ? ORDER BY created_at').all(messageId) as Row[]).map((r) => this.toArtifact(r))
   }
 
   artifact(id: string): Artifact | undefined {
@@ -2176,214 +1748,6 @@ export class Db {
 
   removeRoutine(id: string): void {
     this.db.prepare('DELETE FROM routines WHERE id = ?').run(id)
-  }
-
-  // ---------- a person's coordinator ----------
-
-  // Their own, one per bot: nobody else reads another person's brief, scope or commitments.
-  initiative(personId: string, agentId: string): InitiativeConfig | undefined {
-    const r = this.db.prepare('SELECT * FROM initiative WHERE person_id = ? AND agent_id = ?').get(personId, agentId) as Row | undefined
-    return r && this.toInitiative(r)
-  }
-
-  // Every bot this person has given something to look after, oldest first so a page reads the same each time.
-  initiatives(personId: string): InitiativeConfig[] {
-    return (this.db.prepare('SELECT * FROM initiative WHERE person_id = ? ORDER BY created_at, agent_id').all(personId) as Row[]).map((r) => this.toInitiative(r))
-  }
-
-  private toInitiative(r: Row): InitiativeConfig {
-    const notify = str(r['notify'])
-    return {
-      personId: str(r['person_id']),
-      agentId: str(r['agent_id']),
-      conversationId: str(r['conversation_id']),
-      enabled: r['enabled'] === 1,
-      brief: str(r['brief']),
-      observe: cleanObserve(jsonOf(r['observe'])),
-      work: cleanWork(jsonOf(r['work'])),
-      cadenceMinutes: Number(r['cadence_minutes']),
-      notify: (NOTIFY_MODES as readonly string[]).includes(notify) ? (notify as NotifyMode) : 'material',
-      dailyReviews: Number(r['daily_reviews']),
-      dailyTokens: Number(r['daily_tokens']),
-      timezone: str(r['timezone']),
-      revision: Number(r['revision']),
-      createdAt: Number(r['created_at']),
-      updatedAt: Number(r['updated_at'])
-    }
-  }
-
-  saveInitiative(c: InitiativeConfig): void {
-    this.db
-      .prepare(
-        `INSERT INTO initiative (person_id, agent_id, conversation_id, enabled, brief, observe, work, cadence_minutes, notify, daily_reviews, daily_tokens, timezone, revision, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (person_id, agent_id) DO UPDATE SET conversation_id = excluded.conversation_id, enabled = excluded.enabled,
-           brief = excluded.brief, observe = excluded.observe, work = excluded.work, cadence_minutes = excluded.cadence_minutes, notify = excluded.notify,
-           daily_reviews = excluded.daily_reviews, daily_tokens = excluded.daily_tokens, timezone = excluded.timezone, revision = excluded.revision, updated_at = excluded.updated_at`
-      )
-      .run(
-        c.personId,
-        c.agentId,
-        c.conversationId,
-        c.enabled ? 1 : 0,
-        c.brief,
-        JSON.stringify(c.observe),
-        JSON.stringify(c.work),
-        c.cadenceMinutes,
-        c.notify,
-        c.dailyReviews,
-        c.dailyTokens,
-        c.timezone,
-        c.revision,
-        c.createdAt,
-        c.updatedAt
-      )
-  }
-
-  // One person's responsibilities, oldest first: theirs alone, so no one else's are in the query.
-  commitments(personId: string): Commitment[] {
-    return (this.db.prepare('SELECT * FROM commitments WHERE person_id = ? ORDER BY created_at').all(personId) as Row[]).map((r) => this.toCommitment(r))
-  }
-
-  commitment(id: string): Commitment | undefined {
-    const r = this.db.prepare('SELECT * FROM commitments WHERE id = ?').get(id) as Row | undefined
-    return r && this.toCommitment(r)
-  }
-
-  private toCommitment(r: Row): Commitment {
-    const state = str(r['state'])
-    return {
-      id: str(r['id']),
-      personId: str(r['person_id']),
-      agentId: str(r['agent_id']),
-      conversationId: str(r['conversation_id']),
-      ...(r['message_id'] ? { messageId: str(r['message_id']) } : {}),
-      by: str(r['source_by']) === 'agent' ? 'agent' : 'person',
-      description: str(r['description']),
-      scope: cleanWork(jsonOf(r['scope'])),
-      state: (COMMITMENT_STATES as readonly string[]).includes(state) ? (state as CommitmentState) : 'open',
-      ...(r['note'] ? { note: str(r['note']) } : {}),
-      ...(r['next_check_at'] == null ? {} : { nextCheckAt: Number(r['next_check_at']) }),
-      evidence: jsonOf(r['evidence']) as Commitment['evidence'],
-      links: jsonOf(r['links']) as Commitment['links'],
-      createdAt: Number(r['created_at']),
-      updatedAt: Number(r['updated_at']),
-      ...(r['closed_at'] == null ? {} : { closedAt: Number(r['closed_at']) }),
-      unchangedFor: Number(r['unchanged_for'] ?? 0)
-    }
-  }
-
-  saveCommitment(c: Commitment): void {
-    this.db
-      .prepare(
-        `INSERT INTO commitments (id, person_id, agent_id, conversation_id, message_id, source_by, description, scope, state, note, next_check_at, evidence, links, created_at, updated_at, closed_at, unchanged_for)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET agent_id = excluded.agent_id, conversation_id = excluded.conversation_id, message_id = excluded.message_id,
-           source_by = excluded.source_by, description = excluded.description, scope = excluded.scope, state = excluded.state, note = excluded.note,
-           next_check_at = excluded.next_check_at, evidence = excluded.evidence, links = excluded.links, updated_at = excluded.updated_at, closed_at = excluded.closed_at,
-           unchanged_for = excluded.unchanged_for`
-      )
-      .run(
-        c.id,
-        c.personId,
-        c.agentId,
-        c.conversationId,
-        c.messageId ?? null,
-        c.by,
-        c.description,
-        JSON.stringify(c.scope),
-        c.state,
-        c.note ?? null,
-        c.nextCheckAt ?? null,
-        JSON.stringify(c.evidence),
-        JSON.stringify(c.links),
-        c.createdAt,
-        c.updatedAt,
-        c.closedAt ?? null,
-        c.unchangedFor
-      )
-  }
-
-  // What the coordinator has already seen of the work its responsibilities rest on. A link's version
-  // is the whole of what changed in it: a new one is what a resume fires on, once.
-  resumeSeen(personId: string, kind: string, id: string): string | undefined {
-    const r = this.db.prepare('SELECT version FROM initiative_resumes WHERE person_id = ? AND link_kind = ? AND link_id = ?').get(personId, kind, id) as Row | undefined
-    return r ? str(r['version']) : undefined
-  }
-
-  markResume(personId: string, kind: string, id: string, version: string, at: number): void {
-    this.db
-      .prepare('INSERT INTO initiative_resumes (person_id, link_kind, link_id, version, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT (person_id, link_kind, link_id) DO UPDATE SET version = excluded.version, at = excluded.at')
-      .run(personId, kind, id, version, at)
-  }
-
-  forgetResumes(personId: string): void {
-    this.db.prepare('DELETE FROM initiative_resumes WHERE person_id = ?').run(personId)
-  }
-
-  // What a reply cost, in counted tokens: the receipts it wrote.
-  tokensForMessage(messageId: string): number {
-    const r = this.db.prepare(`SELECT COALESCE(SUM(${COUNTED}), 0) AS n FROM receipts WHERE message_id = ?`).get(messageId) as Row | undefined
-    return Number(r?.['n'] ?? 0)
-  }
-
-  // ---------- a person's check-ins ----------
-
-  saveWake(w: InitiativeWake): void {
-    this.db
-      .prepare(
-        `INSERT INTO initiative_wakes (id, person_id, agent_id, revision, at, ended_at, outcome, why, text, tokens, message_id, deduped, delivered)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET ended_at = excluded.ended_at, outcome = excluded.outcome, why = excluded.why,
-           text = excluded.text, tokens = excluded.tokens, message_id = excluded.message_id,
-           deduped = excluded.deduped, delivered = COALESCE(excluded.delivered, initiative_wakes.delivered)`
-      )
-      .run(w.id, w.personId, w.agentId, w.revision, w.at, w.endedAt ?? null, w.outcome, w.why ?? null, w.text ?? null, w.tokens, w.messageId ?? null, w.deduped ? 1 : null, w.delivered ? 1 : null)
-  }
-
-  // Newest first: what this person's coordinator did, and what it cost. `since`: only those after.
-  wakes(personId: string, opts: { since?: number; limit?: number; agentId?: string } = {}): InitiativeWake[] {
-    const since = opts.since ?? 0
-    const limit = opts.limit ?? 50
-    if (opts.agentId)
-      return (
-        this.db
-          .prepare('SELECT * FROM initiative_wakes WHERE person_id = ? AND agent_id = ? AND at >= ? ORDER BY at DESC LIMIT ?')
-          .all(personId, opts.agentId, since, limit) as Row[]
-      ).map(this.toWake)
-    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE person_id = ? AND at >= ? ORDER BY at DESC LIMIT ?').all(personId, since, limit) as Row[]).map(this.toWake)
-  }
-
-  initiativeWake(id: string): InitiativeWake | undefined {
-    const r = this.db.prepare('SELECT * FROM initiative_wakes WHERE id = ?').get(id) as Row | undefined
-    return r && this.toWake(r)
-  }
-
-  // Check-ins that started and never ended, older than `before`: a run the app did not survive. They are
-  // closed at the next start, so nothing stays "checking now" forever.
-  staleWakes(before: number): InitiativeWake[] {
-    return (this.db.prepare('SELECT * FROM initiative_wakes WHERE ended_at IS NULL AND at <= ? ORDER BY at').all(before) as Row[]).map(this.toWake)
-  }
-
-  private toWake = (r: Row): InitiativeWake => ({
-    id: str(r['id']),
-    personId: str(r['person_id']),
-    agentId: str(r['agent_id']),
-    revision: Number(r['revision']),
-    at: Number(r['at']),
-    ...(r['ended_at'] == null ? {} : { endedAt: Number(r['ended_at']) }),
-    outcome: str(r['outcome']) as InitiativeWake['outcome'],
-    ...(r['why'] ? { why: str(r['why']) as InitiativeWake['why'] } : {}),
-    ...(r['text'] ? { text: str(r['text']) } : {}),
-    tokens: Number(r['tokens']),
-    ...(r['message_id'] ? { messageId: str(r['message_id']) } : {}),
-    ...(r['deduped'] === 1 ? { deduped: true } : {}),
-    ...(r['delivered'] === 1 ? { delivered: true } : {})
-  })
-
-  // What is older than the record keeps: a month of check-ins is enough to see a rhythm.
-  pruneWakes(personId: string, before: number): void {
-    this.db.prepare('DELETE FROM initiative_wakes WHERE person_id = ? AND at < ?').run(personId, before)
   }
 
   // ---------- skills ----------
@@ -2534,16 +1898,12 @@ export class Db {
     this.db.prepare(`UPDATE people SET name = ?${named ? ', named = 1' : ''} WHERE id = ?`).run(name, id)
   }
 
-  // Their access ends: keys go now; what they own is handed over by the caller. Their coordinator
-  // stops: a review is not something a person who left keeps doing in their name.
+  // Their access ends: keys go now; what they own is handed over by the caller.
   removePerson(id: string): void {
     this.tx(() => {
-      const now = Date.now()
-      const removed = this.db.prepare("UPDATE people SET removed_at = ? WHERE id = ? AND role <> 'owner'").run(now, id)
-      // Their coordinator stops with their access: a review is not something someone who left keeps doing in their name.
-      if (Number(removed.changes) > 0) this.db.prepare('UPDATE initiative SET enabled = 0, revision = revision + 1, updated_at = ? WHERE person_id = ?').run(now, id)
+      this.db.prepare("UPDATE people SET removed_at = ? WHERE id = ? AND role <> 'owner'").run(Date.now(), id)
       // Only the hashes stay, to tell their browsers "you no longer have access" instead of counting a guess.
-      this.db.prepare('INSERT OR IGNORE INTO removed_keys (hash, person_id, removed_at) SELECT hash, person_id, ? FROM person_keys WHERE person_id = ?').run(now, id)
+      this.db.prepare('INSERT OR IGNORE INTO removed_keys (hash, person_id, removed_at) SELECT hash, person_id, ? FROM person_keys WHERE person_id = ?').run(Date.now(), id)
       this.db.prepare('DELETE FROM person_keys WHERE person_id = ?').run(id)
       this.db.prepare('DELETE FROM tasks WHERE owner = ?').run(id) // their to-dos: never started, only theirs
     })
@@ -2706,7 +2066,7 @@ export class Db {
   // team's log. Returns the DMs deleted, their routines, and the files (artifacts) to delete from disk.
   purgePerson(personId: string, now = Date.now()): { dms: string[]; routines: { id: string; conversationId: string }[]; artifacts: { id: string; name: string }[] } {
     return this.tx(() => {
-      const dms = (this.db.prepare("SELECT id FROM conversations WHERE (kind = 'dm' AND owner = ?) OR json_extract(team_up, '$.privateTo') = ?").all(personId, personId) as Row[]).map((r) => str(r['id']))
+      const dms = (this.db.prepare("SELECT id FROM conversations WHERE kind = 'dm' AND owner = ?").all(personId) as Row[]).map((r) => str(r['id']))
       const inDms = `(${dms.map(() => '?').join(', ') || "''"})`
       const artifacts = (this.db.prepare(`SELECT id, name FROM artifacts WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), name: str(r['name']) }))
       const routines = (this.db.prepare(`SELECT id, conversation_id FROM routines WHERE conversation_id IN ${inDms}`).all(...dms) as Row[]).map((r) => ({ id: str(r['id']), conversationId: str(r['conversation_id']) }))
@@ -2719,11 +2079,6 @@ export class Db {
       this.db.prepare('DELETE FROM read_state WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM unread WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM routine_watchers WHERE person_id = ?').run(personId)
-      // What they asked a bot to look after goes with the rest of their data.
-      this.db.prepare('DELETE FROM commitments WHERE person_id = ?').run(personId)
-      this.db.prepare('DELETE FROM initiative_wakes WHERE person_id = ?').run(personId)
-      this.db.prepare('DELETE FROM initiative_resumes WHERE person_id = ?').run(personId)
-      this.db.prepare('DELETE FROM initiative WHERE person_id = ?').run(personId)
       this.db.prepare('DELETE FROM invites WHERE restore = ? AND used_at IS NULL').run(personId)
       this.db.prepare("UPDATE people SET purged_at = ?, prefs = '{}', about = '', delegate_to = NULL, delegate_until = NULL WHERE id = ? AND removed_at IS NOT NULL").run(now, personId)
       return { dms, routines, artifacts }
@@ -2734,56 +2089,6 @@ export class Db {
   // log emptied (a purge's deletes would otherwise linger on disk until overwritten). Rare: a purge.
   scrub(): void {
     this.db.exec('PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);')
-  }
-
-  // ---------- the file itself ----------
-
-  // What the file takes on disk, and how much of that is pages nothing will reuse: the number a
-  // person sees beside the size, and the one that explains why deleting never made the file smaller.
-  size(): { bytes: number; free: number } {
-    const page = Number((this.db.prepare('PRAGMA page_size').get() as Row)['page_size'])
-    const pages = Number((this.db.prepare('PRAGMA page_count').get() as Row)['page_count'])
-    const free = Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
-    return { bytes: pages * page, free: free * page }
-  }
-
-  // Whether every page and index reads back consistent: 20 ms at 23 MB, so it can be asked at every
-  // start. Not `integrity_check`, which says the same about a bare file but takes the same road.
-  check(): { sound: boolean; said: string } {
-    const said = String(Object.values((this.db.prepare('PRAGMA quick_check').get() as Row | undefined) ?? {})[0] ?? '')
-    return { sound: said === 'ok', said }
-  }
-
-  // The query planner's statistics, refreshed: milliseconds, and the only thing that keeps the
-  // planner honest while the tables change size all day.
-  statistics(): void {
-    this.db.exec('PRAGMA optimize')
-  }
-
-  // Hands freed pages back to the disk in slices, so a daily tick never carries a whole rewrite:
-  // only when the file was switched to incremental auto-vacuum (see `rebuild`), and never more than
-  // `pages` of them at a time. Returns the pages that actually went.
-  trim(pages = 1000): number {
-    const mode = Number((this.db.prepare('PRAGMA auto_vacuum').get() as Row)['auto_vacuum'])
-    if (mode !== 2) return 0
-    const before = Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
-    if (!before) return 0
-    this.db.exec(`PRAGMA incremental_vacuum(${Math.max(1, Math.floor(pages))})`)
-    return before - Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
-  }
-
-  // Empties the write-ahead log and rebuilds the file: rows that are gone stop taking space, and
-  // every index is rebuilt tightly. `incremental` (not `full`) auto-vacuum keeps a page map that
-  // costs nothing to write and lets `trim` hand pages back later; switching it on takes effect with
-  // this VACUUM, which is the only place it can. Holds the connection for the whole rewrite: 3.5 s
-  // at 23 MB, so whoever calls this decides when, never a read.
-  rebuild(): void {
-    this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
-    const mode = Number((this.db.prepare('PRAGMA auto_vacuum').get() as Row)['auto_vacuum'])
-    if (mode === 0) this.db.exec('PRAGMA auto_vacuum = INCREMENTAL')
-    this.db.exec('VACUUM')
-    this.db.exec('PRAGMA optimize')
-    this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
   }
 
   // ---------- questions ----------
@@ -2825,13 +2130,6 @@ export class Db {
   // Answered since `since`, newest first.
   answeredQuestions(since: number): Question[] {
     return (this.db.prepare("SELECT * FROM questions WHERE state = 'answered' AND answered_at >= ? ORDER BY answered_at DESC").all(since) as Row[]).map((r) => this.toQuestion(r))
-  }
-
-  // Answered and closed questions, newest first: the Asks page's History, which is what the open
-  // list drops off. A closed one has no `answered_at` (nobody answered it), so it sorts by when it
-  // was asked.
-  pastQuestions(limit = 50): Question[] {
-    return (this.db.prepare("SELECT * FROM questions WHERE state != 'open' ORDER BY COALESCE(answered_at, created_at) DESC LIMIT ?").all(limit) as Row[]).map((r) => this.toQuestion(r))
   }
 
   openQuestions(): Question[] {

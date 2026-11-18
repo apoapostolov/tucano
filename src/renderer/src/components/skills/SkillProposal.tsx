@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import { L } from '../../../../shared/lang'
-import { RECOMMENDED_SKILL_BODY_LENGTH, skillLengthNote } from '../../../../shared/skills'
-import { useStore, agentById, decideSkill, type Skill } from '../../store'
+import { type ReactNode } from 'react'
+import Markdown from 'react-markdown'
 import { safeUrl } from '../../links'
-import { AgentAvatar, ago } from '../ui'
+import remarkGfm from 'remark-gfm'
+import { agentById, decideSkill, useStore, type Skill } from '../../store'
+import { RECOMMENDED_SKILL_BODY_LENGTH, skillLengthNote } from '../../../../shared/skills'
+import { ago, AgentAvatar } from '../ui'
 import { Who } from './SkillPeople'
 import { Diff } from './SkillDiff'
 
@@ -34,7 +34,7 @@ export function Proposal({ proposal: p }: { proposal: Skill }): ReactNode {
             <Markdown urlTransform={safeUrl} remarkPlugins={[remarkGfm]}>{p.body}</Markdown>
           </article>
           <p className="proposal__who">
-            {L('Vale pra', 'For')} <Who ids={p.agents} />. {L('Depois de aprovar, dá pra liberar pra outros agentes.', "After approval, you can assign it to more agents.")}
+            {L('Vale pra', 'For')} <Who ids={p.agents} />. {L('Depois de aprovar, dá pra liberar pra outros agentes.', 'After approving, you can open it to other agents.')}
           </p>
         </>
       )}

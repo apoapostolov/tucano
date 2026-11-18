@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
 import { L } from '../../../../shared/lang'
-import { useStore, skillVersions, restoreSkill, agentById, type Skill, type SkillVersion } from '../../store'
+import { useEffect, useState, type ReactNode } from 'react'
+import { agentById, restoreSkill, skillVersions, useStore, type Skill, type SkillVersion } from '../../store'
 import { time } from '../ui'
 import { Diff } from './SkillDiff'
 
@@ -11,8 +11,8 @@ export function History({ skill }: { skill: Skill }): ReactNode {
   useEffect(() => {
     void skillVersions(skill.id).then(setVersions)
   }, [skill.id, skill.updatedAt])
-  if (!versions) return <p className="muted small">{L('Buscando o histórico…', "Loading history…")}</p>
-  if (versions.length === 0) return <p className="muted small">{L('Nenhuma mudança ainda: esta é a primeira versão.', "No previous versions.")}</p>
+  if (!versions) return <p className="muted small">{L('Buscando o histórico…', 'Fetching the history…')}</p>
+  if (versions.length === 0) return <p className="muted small">{L('Nenhuma mudança ainda: esta é a primeira versão.', 'No changes yet: this is the first version.')}</p>
   return (
     <div className="skill__history">
       {versions.map((v) => (
@@ -22,10 +22,10 @@ export function History({ skill }: { skill: Skill }): ReactNode {
               {L('Antes de', 'Before')} {time(v.at)} <span className="muted">· {v.by === 'me' ? L(`mudada por ${who(v.by)}`, `changed by ${who(v.by)}`) : L(`mudada por uma proposta de ${who(v.by)}`, `changed by a proposal from ${who(v.by)}`)}</span>
             </span>
             <button className="link small" onClick={() => setShowing(showing === v.id ? null : v.id)}>
-              {showing === v.id ? L('esconder', "Hide changes") : L('o que mudou', "Show changes")}
+              {showing === v.id ? L('esconder', 'hide') : L('o que mudou', 'what changed')}
             </button>
             <button className="btn btn--xs" onClick={() => restoreSkill(skill.id, v.id)}>
-              {L('Voltar a esta', "Restore version")}
+              {L('Voltar a esta', 'Restore this one')}
             </button>
           </div>
           {showing === v.id && <Diff before={`${v.description}\n\n${v.body}`} after={`${skill.description}\n\n${skill.body}`} />}

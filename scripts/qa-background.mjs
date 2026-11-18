@@ -5,15 +5,6 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { _electron as electron } from 'playwright'
-import { checkPause } from './lib/pause-check.mjs'
-import { seedSectors, checkSectors } from './lib/sectors-check.mjs'
-import { supportsBackgroundCopyQA } from './lib/copy-runtime.mjs'
-import { seedSkillOrigins, checkSkillOrigins } from './lib/skill-origins-check.mjs'
-import { checkSettingsCopy } from './lib/settings-installed-check.mjs'
-import { checkSettingsOverhaul } from './lib/settings-overhaul-installed-check.mjs'
-import { seedSkillComparisons, checkSkillComparisons } from './lib/skill-comparison-check.mjs'
-import { checkArtifactIngest } from './lib/artifact-ingest-check.mjs'
-import { seedUpgrade034, checkUpgrade034 } from './lib/upgrade-034-check.mjs'
 
 // Reserve both ports together; let the app bind immediately after releasing them.
 const reserve = async () => {
@@ -21,21 +12,17 @@ const reserve = async () => {
   await new Promise((yes, no) => { server.once('error', no); server.listen(0, '127.0.0.1', yes) })
   return { server, port: server.address().port }
 }
-const output = resolve(process.argv.slice(2).find(arg => !arg.startsWith('--')) ?? '.tucano-local/audit/background-qa')
-assert.ok(!process.argv.includes('--upstream-artifact') || process.argv.includes('--skill-comparisons'), 'Artifact ingestion QA requires the isolated --skill-comparisons fixture port')
+const output = resolve(process.argv[2] ?? '.tucano-local/audit/background-qa')
 mkdirSync(output, { recursive: true })
 const data = mkdtempSync(join(tmpdir(), 'tucano-background-qa-'))
 const reservations = await Promise.all([reserve(), reserve()])
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US', TUCANO_WEBHOOK_PORT: String(reservations[0].port), TUCANO_GIT_PORT: String(reservations[1].port) }
-if (process.argv.includes('--skill-origins')) Object.assign(env, seedSkillOrigins())
-if (process.argv.includes('--upgrade-034')) Object.assign(env, seedUpgrade034(data))
 delete env.ELECTRON_RUN_AS_NODE
 delete env.ELECTRON_RENDERER_URL
 const report = { source: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), dirty: !!execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { encoding: 'utf8' }).trim(), data, ports: reservations.map((r) => r.port), checks: [], errors: [], passed: false }
 let app
 try {
   await Promise.all(reservations.map(({ server }) => new Promise((yes, no) => server.close((error) => error ? no(error) : yes()))))
-  assert.ok(supportsBackgroundCopyQA(env.TUCANO_ELECTRON), 'Refuse to launch a bundle without hidden QA support')
   app = await electron.launch({ args: [...(env.TUCANO_ELECTRON ? [] : ['.']), '--qa-background'], ...(env.TUCANO_ELECTRON ? { executablePath: env.TUCANO_ELECTRON } : {}), env })
   report.runtime = await app.evaluate(({ app, BrowserWindow }) => {
     globalThis.__qaExposure = []
@@ -50,12 +37,6 @@ try {
   window.setDefaultTimeout(15_000)
   await window.context().tracing.start({ screenshots: true, snapshots: true })
   window.on('pageerror', (error) => report.errors.push(String(error)))
-  const qaWindowId = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].id)
-  const resize = async size => app.evaluate(({ BrowserWindow }, { id, size }) => {
-    const window = BrowserWindow.fromId(id)
-    if (!window || window.isVisible() || window.isFocusable()) throw new Error('Only a hidden QA window may be resized')
-    window.setContentSize(size.width, size.height)
-  }, { id: qaWindowId, size })
   const guard = async () => {
     const state = await app.evaluate(({ BrowserWindow }) => ({ events: globalThis.__qaExposure, windows: BrowserWindow.getAllWindows().map((w) => ({ visible: w.isVisible(), focused: w.isFocused(), focusable: w.isFocusable() })) }))
     assert.deepEqual(state.events, [], 'QA exposed or focused a window')
@@ -68,7 +49,6 @@ try {
     report.checks.push(name)
   }
   await window.waitForSelector('.sidebar')
-  if (process.argv.includes('--sectors')) await seedSectors(window)
   await capture('01-workspace')
   const agents = window.locator('.nav-item', { has: window.locator('.nav-item__role') })
   assert.ok(await agents.count() >= 2, 'Seeded agents must load')
@@ -81,33 +61,8 @@ try {
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Settings' }).first().click()
   await window.getByRole('heading', { name: 'Settings', exact: true }).waitFor()
   await capture('03-settings')
-  if (process.argv.includes('--settings-overhaul')) report.settingsOverhaul = await checkSettingsOverhaul(window, output, guard, resize)
-  if (process.argv.includes('--settings-copy')) report.settingsCopy = await checkSettingsCopy(window, output, guard, resize)
-  if (process.argv.includes('--skill-origins')) report.skillOrigins = await checkSkillOrigins(window, output, guard, resize)
-  if (process.argv.includes('--pause')) report.pause = await checkPause(window, output, guard, resize)
-  if (process.argv.includes('--skill-comparisons')) {
-    await seedSkillComparisons(window)
-    report.skillComparisons = await checkSkillComparisons(window, output, guard, resize)
-  }
-  if (process.argv.includes('--upstream-artifact')) report.artifactIngest = await checkArtifactIngest(window, output, guard, resize)
-  if (process.argv.includes('--upgrade-034')) report.upgrade034 = await checkUpgrade034(window, output, guard, resize, data, report.source)
-  report.updater = await window.evaluate(() => window.tucano.updateState())
-  assert.equal(report.updater.status, 'off', 'TucanoNext must not self-update')
-  const hasNotices = await window.evaluate(async () => {
-    if (!window.tucano.notice) return false
-    window.tucano.notice.demo()
-    window.tucano.notice.pick()
-    await window.tucano.updateState()
-    return true
-  })
-  if (hasNotices) {
-    await guard()
-    assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), 1, 'QA must not create notification or screen-picker windows')
-    report.checks.push('notification-actions-stay-background')
-  }
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Team' }).first().click()
   await window.waitForSelector('.orgb')
-  if (process.argv.includes('--sectors')) report.sectors = await checkSectors(window, output, guard, resize)
   await capture('04-team')
   await window.locator('.sidebar .nav-item').filter({ hasText: 'Usage and limits' }).first().click()
   await window.getByRole('heading', { name: 'Usage and limits', exact: true }).waitFor()
@@ -134,5 +89,3 @@ try {
   writeFileSync(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n')
   console.log(JSON.stringify(report))
 }
-
-

@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react'
 import { L } from '../../../../shared/lang'
 import { compareSkill } from '../../../../shared/skill-diff'
 
+// Line by line: what was removed and what was added.
 export function Diff({ before, after }: { before: string; after: string }): ReactNode {
   const comparison = useMemo(() => compareSkill(before, after), [before, after])
   if (comparison.kind === 'full') return (

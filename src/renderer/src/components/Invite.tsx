@@ -38,7 +38,7 @@ export function InviteCard({ onClose, owner }: { onClose: () => void; owner: boo
       (e: unknown) => setError(message(e))
     )
   return (
-    <Card title={L('Convidar alguém', 'Invite someone')} lead={L('O link vale uma vez, por 7 dias. Quem usa entra com o próprio nome, no navegador ou no app.', 'A single-use link, valid for 7 days. Invitees join under their own name in the browser or app.')}>
+    <Card title={L('Convidar alguém', 'Invite someone')} lead={L('O link vale uma vez, por 7 dias. Quem usa entra com o próprio nome, no navegador ou no app.', 'The link works once, for 7 days. Whoever uses it comes in with their own name, in the browser or the app.')}>
       <div className="grid2">
         <Field label={L('Papel', 'Role')} hint={role === 'admin' ? L('Admins mexem em agentes, conectores, skills, configurações e pessoas.', 'Admins handle agents, connectors, skills, settings and people.') : L('Membros conversam, criam canais e rotinas pra si.', 'Members chat, create channels and their own routines.')}>
           <select value={role} disabled={!!link} onChange={(e) => setRoleChoice(e.target.value as 'member' | 'admin')}>

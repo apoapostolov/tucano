@@ -114,27 +114,21 @@ const worked = (run) => (run?.steps ?? []).filter((s) => s.status !== 'running' 
 // Kill the window's whole process tree, the way a crash or Task Manager does: the core dies with it,
 // no shutdown path runs, and the run is left marked as working in the database.
 const tree = (pid) => {
-  let children
+  let children = []
   try {
     children = execFileSync('pgrep', ['-P', String(pid)], { encoding: 'utf8' }).split('\n').filter(Boolean).map(Number)
-  } catch (error) {
-    if (error.status !== 1) throw error
-    children = [] // pgrep exits 1 when the process has no children.
+  } catch {
+    // no children
   }
-  return [...children.flatMap(tree), pid]
+  return [pid, ...children.flatMap(tree)]
 }
 const kill = (app) => {
   const pid = app.process().pid
-  if (process.platform === 'win32') {
-    execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'pipe' })
-  } else {
-    for (const child of tree(pid)) {
-      try {
-        process.kill(child, 'SIGKILL')
-      } catch (error) {
-        if (error.code !== 'ESRCH') throw error
-      }
-    }
+  try {
+    if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' })
+    else for (const p of tree(pid)) process.kill(p, 'SIGKILL')
+  } catch {
+    // already gone
   }
 }
 

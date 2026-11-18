@@ -6,7 +6,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { L } from '../shared/lang'
 import { MENTION } from '../shared/mention-text'
 import type { CoreEvent, Snapshot, Wire } from '../shared/rpc'
-import { CODE_SPANS, delegating, scopePerson, type Agent, type Approval, type AskEntry, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf } from '../shared/types'
+import { CODE_SPANS, scopePerson, type Agent, type Approval, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf } from '../shared/types'
 import type { Db } from './db'
 import { can, isAdmin, isPersonalSetting, must } from './policy-people'
 import { maskSecrets } from './step-text'
@@ -29,7 +29,7 @@ export const newInviteCode = (): string => randomBytes(24).toString('base64url')
 export const hashSecret = (secret: string): string => createHash('sha256').update(secret).digest('base64url')
 
 // A DM is its person's (one without an owner, from before people, is the Tucano owner's); a channel is everyone's.
-export const dmOwner = (c: Pick<Conversation, 'kind' | 'owner' | 'teamUp'>, ownerId: string): string | undefined => (c.kind === 'dm' ? (c.owner ?? ownerId) : c.teamUp?.privateTo)
+export const dmOwner = (c: Pick<Conversation, 'kind' | 'owner'>, ownerId: string): string | undefined => (c.kind === 'dm' ? (c.owner ?? ownerId) : undefined)
 
 // The person an agent belongs to (its approvals are theirs), while they have access.
 export const agentOwner = (db: Db, agentId: string): Person | undefined => {
@@ -251,7 +251,7 @@ export class People {
     if (person.role === 'owner') return s
     // The introduction sets the Tucano up (models, agents): theirs only if they ask to see it again.
     // The wiki's folder is a path on the owner's machine.
-    const { sounds: _s, stepsOpen: _so, showThinking: _t, steps: _st, stepsLatest: _sl, channelLayout: _c, folded: _f, onboarding: _o, wikiDir: _w, ...rest } = s
+    const { sounds: _s, stepsOpen: _so, channelLayout: _c, folded: _f, sidebarHidden: _h, onboarding: _o, wikiDir: _w, ...rest } = s
     return { ...rest, onboarding: { done: true }, ...this.db.prefs(person.id) }
   }
 
@@ -264,7 +264,7 @@ export class People {
     return Object.fromEntries(Object.entries(patch).filter(([k]) => !isPersonalSetting(k))) as Partial<T>
   }
 
-  canSeeConversation(person: Person, c: (Pick<Conversation, 'kind' | 'owner'> & Partial<Pick<Conversation, 'id' | 'name' | 'teamUp'>>) | undefined): boolean {
+  canSeeConversation(person: Person, c: (Pick<Conversation, 'kind' | 'owner'> & Partial<Pick<Conversation, 'id' | 'name'>>) | undefined): boolean {
     if (!c) return false
     const dm = dmOwner(c, this.db.ownerId())
     return (dm === undefined || dm === person.id) && withinAccess(this.db, person, c)
@@ -332,14 +332,10 @@ export class People {
     switch (event.type) {
       case 'message':
         return conversation(event.message.conversationId) && this.visibleAt(person, event.message) ? event : undefined
-      case 'delta':
-      case 'thinking': {
-        // What the model is thinking reaches exactly who the reply's text reaches.
+      case 'delta': {
         const c = this.db.messageConversation(event.id)
         return c && conversation(c) && this.visibleAt(person, this.db.message(event.id) ?? { conversationId: c, at: Infinity }) ? event : undefined
       }
-      case 'message_removed':
-        return conversation(event.conversationId) ? event : undefined
       case 'conversation': {
         if (!this.canSeeConversation(person, event.conversation)) return undefined
         const mine = this.db.conversation(event.conversation.id, person.id)
@@ -377,11 +373,6 @@ export class People {
         if (event.for !== undefined && event.for !== person.id) return undefined
         const { for: _f, ...rest } = event
         return rest
-      }
-      // History went: each person is told of the conversations they can see, and reads them again.
-      case 'history_wiped': {
-        const seen = event.conversationIds.filter(conversation)
-        return seen.length ? { type: 'history_wiped', conversationIds: seen } : undefined
       }
       // The team's own things, and signals that carry nothing: everyone (each reads the details over the API, checked there).
       case 'connector':
@@ -517,30 +508,12 @@ export class People {
       if (!waiting) return []
       // Its decisions, to answer them on the card from here too (the question only, as its text is).
       const run = this.db.message(q.id)?.run
-      return [
-        {
-          ...shown(q),
-          ...(run?.questions?.length
-            ? { decisions: run.questions, ...(run.answers ? { answers: run.answers } : {}), ...(run.recommended?.some((p) => p !== null) ? { recommended: run.recommended } : {}) }
-            : {})
-        }
-      ]
+      return [{ ...shown(q), ...(run?.questions?.length ? { decisions: run.questions, ...(run.answers ? { answers: run.answers } : {}) } : {}) }]
     })
     // Asked to them and answered a moment ago by someone else (an admin, whoever covers for them).
     const answered = this.db.answeredQuestions(now - ANSWERED_SHOWN_MS).filter((q) => q.askedTo === person.id && q.answeredBy !== person.id).map(shown)
     const proposals = isAdmin(person) ? this.forwardedProposals() : []
     return { approvals, questions, ...(answered.length ? { answered } : {}), ...(proposals.length ? { proposals } : {}) }
-  }
-
-  // The Asks page's history: answered and closed questions, newest first, from the conversations
-  // this person can see. A question from a DM that isn't theirs comes without where it was asked.
-  history(person: Person, limit = 50): AskEntry[] {
-    const shown = (q: Question): AskEntry => {
-      if (this.canSeeConversation(person, this.conversationOf(q.conversationId))) return q
-      const { conversationId: _c, threadId: _t, ...only } = q
-      return only
-    }
-    return this.db.pastQuestions(limit).filter((q) => this.canSeeConversation(person, this.conversationOf(q.conversationId))).map(shown)
   }
 
   // The cards members sent to the admins that no one has applied or dismissed yet (a reply's cards
