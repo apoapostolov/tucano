@@ -239,11 +239,13 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
-Upstream released **0.2.38** at `9c246bac` during wave 6. Locally all wave 6 branches merge cleanly
+Upstream released **0.2.38** at `9c246bac` during wave 6 with only two commits: the Canva-on-server
+fix and the release bump. Apo decided to ingest them into this wave rather than leave them for a
+later ingest, so checkpoint 6 now carries the 0.2.38 delta (9 files) on top of the wave 6 union,
+with TucanoNext identity preserved and the version bumped. Locally all wave 6 branches merge cleanly
 against the new head except #305, whose only conflict was the CHANGELOG; that branch was rebased
-onto 0.2.38 and is MERGEABLE at `63bf0ff9` with comment `6989194954`. The other branches and the
-checkpoint stay on the 0.2.37 base until the wave chain finishes. 0.2.38 is a separate ingest, not a
-silent part of this wave.
+onto 0.2.38 and is MERGEABLE at `63bf0ff9` with comment `6989194954`. The other PR branches merge
+cleanly and keep their 0.2.37 base until their own rebase is due.
 
 ### Wave 7 — Team, mentions and accounts
 
