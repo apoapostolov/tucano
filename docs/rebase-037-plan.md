@@ -186,9 +186,13 @@ rebased #258 head and carries only the orphan-page delta. Checkpoint 5 is instal
 `2953699f8dc6e07eecd2aaf742d2d1c53f3b833d957d4a81b2a818f700417d24`. A later polish at tree
 `7fb5a029` keeps the wiki sidebar in place when a finding is handed to an agent: the request shows a
 "Request sent" line instead of navigating to the conversation. Its asar is **37626697** bytes,
-SHA-256 `b70e8b9e34619628e58265a53fdacf4c6d751a706c058c0fc542ca4a4b2c4358`. Gate: 0 TypeScript
-errors and 8 files / 60 wiki tests passed; `self-build doctor` reports `sameAsBuild: true` and
-`verdict: running`. Confirm the wave on screen
+SHA-256 `b70e8b9e34619628e58265a53fdacf4c6d751a706c058c0fc542ca4a4b2c4358`. A second polish at tree
+`44a5e61d` names each provider above its header bar and makes all bars the width of the longest name
+in the conversation, preserving rings mode and hidden-provider filtering. Its asar is **37627846**
+bytes, SHA-256 `7045d486eba1089ce651273d16377b81a5fa5474f45813f916531416f8daf4e7`. Gate: 0
+TypeScript errors and 5 files / 44 quota tests passed. #305 carries the same polish at `9223ccd4`
+with comment `6988706973`. `self-build doctor` reports `sameAsBuild: true` and `verdict: running`.
+Confirm the wave on screen
 by opening the wiki: a missing page offers Write the page, an orphan can be handed off, an unsettled
 finding offers Resolve with a built-in resolver, an agent's Tools tab has the three-level wiki switch,
 and the skill library in Settings › Agents shows categories and versions. Tuca's ver_estado shows the
