@@ -293,7 +293,13 @@ whether it is dropped; #435 stays excluded. The shared contract, including gates
 
 Both older gaps are closed in the live checkpoint: the Jev-as-classifier fold at `6ccb8aee` and the
 0.2.36 quota hover cards at `589e1aec`, including the measured fix that clears 0.2.37's routines pill.
-Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`.
+Upstream then released **0.2.39** at `c705e912` (`ee52dc48` + release commit): one functional fix
+counting cache reads that came apart from the input, so usage never goes negative. Wave 8 rebases
+onto that head in an isolated `ingest-0239` worktree; the main checkout is left untouched because it
+carries uncommitted earlier-wave work. Version fields become `0.2.39`, with the fork identity and
+all wave 0–7 features preserved.
+
+Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`, then moves to the 0.2.39 base.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
