@@ -121,6 +121,9 @@ selector in Settings > Notifications: Native uses the 0.2.37 system notification
 Enhanced turns on this PR's cross-window notices. Our notification settings must render only when
 Enhanced is selected, so the two systems never stack their controls or duplicate a notice. Keep the
 selector beside the existing notifications card and use the new settings row and tab idioms.
+Apo also caught a colour defect in the old branch: successful response notices drew the bottom time
+bar in success green. It is fixed on `feat/notification-center` at `21845284` by giving `.nc--done`
+the signature `--toast-ink` orange; the wave 6 rebase must keep that fix.
 
 #303 and #336 touch the same image components. Their combined wiring already lives on `next`, so
 port that behavior into the new UI first, then split it back into the two PR branches. Screenshots
