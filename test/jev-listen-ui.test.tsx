@@ -74,6 +74,8 @@ describe("a channel's agent list", () => {
       expect(row.indexOf('member-row__modes')).toBeLessThan(row.indexOf('</div>'))
     }
     expect(html.match(/class="mode-help"/g)).toHaveLength(6)
+    expect(html).toContain('>?</span>')
+    expect(html).not.toContain('(?)</span>')
     expect(html).toContain('Lê todas as mensagens do canal')
     expect(html).toContain('Fica de fora das respostas normais')
   })
