@@ -130,15 +130,22 @@ in the sidebar row menu, emptied conversations say "Histórico limpo."). Each is
 Lite Desktop compatibility comment. The wave 3 polish was pushed afterwards to #379 `331d2740` and
 #333 `5c945503` with correction comments, so the PR heads now match the installed layout.
 
-Checkpoint 4 is installed at source tree `0fba90cc`, asar **37570571** bytes, SHA-256
-`8e0a27fea025a6fb605eac00c792877789124f0508a98a6dfd6f25890305e73f`. Gate: 0 conflict markers, 0
+Checkpoint 4 is installed at source tree `863ec899`, asar **37571282** bytes, SHA-256
+`87f1c66ce793c59c4ec6da9fe6cc71deee6d54cd20dd525930be78afc8fbe4ab`. Gate: 0 conflict markers, 0
 TypeScript errors and 34 files / 345 passed with 6 skipped across the wave 4 union and settings
 suites; `self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on
 screen by opening Settings › General: **Quotas** sits between Workspace context and Dictation, with
 the Table/Circle ratios selector and one checkbox per configured harness provider. In Operations ›
 Usage and limits the quota block shows the cached reading immediately, and switching the selector
 redraws every provider in the chosen shape. An emptied conversation says "Histórico limpo.", the
-history-retention field is in the workspace danger card, and the database card reports soundness.
+the history-retention field is in the workspace danger card, and the database card reports soundness.
+
+Apo's wave 4 polish is in this build: the Table/Rings selector sits to the right of its row, provider
+subtitles are tight to their titles, provider rows come from the reader's cached snapshot so Grok,
+Z.ai and DeepSeek get switches, rings are grouped in one card per provider, and the old "What each
+provider has left" heading is replaced by a Month-style header with the provider count as the large
+figure and the read time in the muted line. The polish gate was 7 files / 64 tests passed, with the
+known `thought-boundary` full-suite failure reproduced on clean HEAD.
 
 ### Wave 5 — Wiki and skills
 
