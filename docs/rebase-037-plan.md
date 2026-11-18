@@ -130,8 +130,8 @@ in the sidebar row menu, emptied conversations say "Histórico limpo."). Each is
 Lite Desktop compatibility comment. The wave 3 polish was pushed afterwards to #379 `331d2740` and
 #333 `5c945503` with correction comments, so the PR heads now match the installed layout.
 
-Checkpoint 4 is installed at source tree `863ec899`, asar **37571282** bytes, SHA-256
-`87f1c66ce793c59c4ec6da9fe6cc71deee6d54cd20dd525930be78afc8fbe4ab`. Gate: 0 conflict markers, 0
+Checkpoint 4 is installed at source tree `08f0497c`, asar **37571321** bytes, SHA-256
+`c154368e3b803620bc2a5ee098c93e1aa8b4b3374183d4a7b685d7deea10bd2a`. Gate: 0 conflict markers, 0
 TypeScript errors and 34 files / 345 passed with 6 skipped across the wave 4 union and settings
 suites; `self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on
 screen by opening Settings › General: **Quotas** sits between Workspace context and Dictation, with
@@ -146,6 +146,12 @@ Z.ai and DeepSeek get switches, rings are grouped in one card per provider, and 
 provider has left" heading is replaced by a Month-style header with the provider count as the large
 figure and the read time in the muted line. The polish gate was 7 files / 64 tests passed, with the
 known `thought-boundary` full-suite failure reproduced on clean HEAD.
+
+Two later polish fixes are in the same build. Provider columns in the quota table now show the title
+only; the error or login detail stays on the column's `title` for hover. The Classifiers section
+anchor starts at the Classifiers card, with Router given its own `models-router` section, and the
+rail follows the card order Classifiers, Router, Classifier Uses. Gate after both fixes: typecheck 0
+errors and 6 files / 57 settings and quota tests passed.
 
 ### Wave 5 — Wiki and skills
 
