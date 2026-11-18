@@ -9,7 +9,24 @@ own features that could not compile against that base was moved out of the tree,
 The paths are preserved there, so any feature can be restored and rebased. Verdicts below are for
 Apo's decision, not a final deletion.
 
-## Superseded by 0.2.37 (recommend drop)
+## Individual review of the four superseded candidates
+
+Requested by Apo 2026-11-18; each checked against the new base rather than the headline.
+
+| PR | Verdict | Evidence on 0.2.37 |
+| --- | --- | --- |
+| #366 | **Mostly superseded, drop the marker mechanism.** | Upstream never notifies for routine replies (`src/core/runs.ts`: `if (!opts.routine) this.deps.notify?.(...)`), prompts the no-news phrase, marks `Run.noNews`, and folds those runs into one line (`src/renderer/src/routine-runs.ts`). The fork's `[SILENT]` marker and `src/shared/silent.ts` are gone. Remaining gap: upstream has no `forgetActivity`, so a no-news run may still mark the conversation unread. If that shows up in use, add a small patch against the new base rather than reviving the PR. |
+| #395 | **Keep and re-port.** | `src/shared/clock.ts` has `Clock` and `setClock`, but `setClock` has no caller anywhere in `src/`, and no renderer control writes a clock setting. `clock()` falls back to the app language (12 for English, 24 otherwise). There is no persisted user choice yet, so the PR's UI is still the missing piece. |
+| #248 | **Keep the reorder half, drop the hide half.** | `src/renderer/src/components/sidebar-top.ts` stores `sidebarHidden` for top items and offers Undo, so "take out of the sidebar" is upstream now. Upstream's `Sidebar.tsx` has `moveChannel`/`nudgeChannel` for channels only; there is no `navOrder` or equivalent for the sidebar's own screens. The reorder part of #248 still has no replacement. |
+| #334 | **Drop.** | `src/renderer/src/approval-history.ts` groups approvals by day, folds repeated actions, and `HistoryRow` in `Pages.tsx` leads with `group.what` (action and target) followed by agent, connector, times and status. That is the PR's outcome. |
+
+## Apo's decisions on the rest (2026-11-18)
+
+- #435 initiative bot: hold pending a feature comparison against the new Board.
+- #416 Grok account: keep and re-port to the new account code.
+- All quarantined feature groups: keep all and rebase in waves.
+
+## Superseded by 0.2.37 (initial screen, refined above)
 
 | PR | Feature | Upstream replacement | Evidence |
 | --- | --- | --- | --- |
