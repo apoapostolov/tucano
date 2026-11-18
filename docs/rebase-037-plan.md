@@ -45,6 +45,9 @@ the visible checks.
 #385 is in wave 1 because next steps is a top priority; its classifier half only becomes meaningful
 once #379 lands, so it is rechecked here for the full job wiring. Rebase bottom up: #279, #284,
 #333, #379, then #383; push each branch before starting the next so the stack bases stay real.
+#383 is draft and held for Apo's decision: only the isolated artifact `rb/iso-383` exists locally
+(`2fe0d025`), so wave 3 pushes #279, #284, #333 and #379 and leaves the six-job stack untouched.
+#385 is already pushed in wave 1 and is only rechecked here for the full job wiring.
 Quarantined source: `src/core/jev-fake.ts`, `src/renderer/src/components/Routing.tsx`; tests:
 `classifiers`, `classifiers-router-row`, `jev-fake`, `jev-listen`, `jev-listen-ui`,
 `jev-recommend`, `jev-recommend-ui`, `model-routing-run`.
@@ -54,6 +57,20 @@ own rail. The Classifiers section goes where the new base already groups agent i
 the base's section and row primitives; the old settings screen is not restored. Checkpoint 3 checks:
 a routed reply carries a visible reason line, the Classifiers section is reachable, and a question
 card can show Jev's recommended option.
+
+Pushed 2026-11-18, verified at the pushed tip and **MERGEABLE**:
+
+| PR | Branch | New head | Tests | Comment |
+| --- | --- | --- | --- | --- |
+| #279 | feat/jev-listen | `d6da9578` | 31/31 | [6982046893](https://github.com/eduwxyz/tucano/pull/279#issuecomment-6982046893) |
+| #284 | feat/jev-recommended | `495976ed` | 13/13 | [6982047553](https://github.com/eduwxyz/tucano/pull/284#issuecomment-6982047553) |
+| #333 | feat/jev-routing-pools | `f6607651` | 92/92 | [6982048457](https://github.com/eduwxyz/tucano/pull/333#issuecomment-6982048457) |
+| #379 | feat/classifiers | `26c88ab1` | 12/12 | [6982049166](https://github.com/eduwxyz/tucano/pull/379#issuecomment-6982049166) |
+
+#379 dropped one commit, `e614d4e6`, because its single hunk was a strict subset of #284's
+`7d8e5561`: both move the browser card to Models and shorten its English lead. Every other commit
+survived. The single full-suite failure seen on #333 and #379 is the known `tuca-keep-and-batch-core`
+timeout under load; it reproduces on pristine upstream/main and passes solo on both branches.
 
 ### Wave 4 — Quotas, retention and storage hygiene
 
@@ -207,8 +224,73 @@ node scripts/self-build.mjs doctor --json
 - Waiting-on-you screen: a Questions block first, above approvals, on both solo and team screens,
   answerable in place. No new sidebar item.
 
-### Wave 2 (pending)
+### Wave 2 (done)
+
+Checkpoint 2 installed 2026-11-18 from the union tree `505126b5` in
+`C:/git-ext/tucano-wt/ckpt2-build`: installed asar **37352940** bytes, SHA-256
+`cf25ba0b83f125eedb15ddde8399542015f1094755040d4ca360067dc3d13759`. Verify with
+`cd C:/git-ext/tucano-wt/ckpt2-build && node scripts/self-build.mjs doctor --json`; it reports
+`verdict: running`, window "Tucano", `sameAsBuild: true`.
+
+Visible checks: Settings tab bars stay the same, and each tab gains a sticky section strip that
+scrolls to its card and highlights the current one; Settings > Models shows the thinking effort
+pick in the bulk row and on each agent; Settings > Agents has a Recovery toggle, off by default;
+a reply's steps show dim live thinking text that can be folded; a stopped reply offers Try again
+and Try with instructions; after a restart, an interrupted reply with tool results resumes when
+Recovery is enabled.
+
+Gate for the union tree: typecheck 0 errors and 40/40 across thinking lifecycle, thinking setting,
+restart runs, settings organization, steer and steps. Full suite had two known load flakes, both
+reproducing on unmodified branches. The Recovery card has no section anchor, so the Agents rail
+keeps its live-tested link list.
+
+The live main checkout now mounts #446's section navigation inside each existing `SETTINGS_TABS`
+pane: a sticky strip of section links that scrolls to the card, focuses it and tracks the reading
+on scroll. `SettingsLayout` gained an `embedded` prop so it renders no second tablist; sections
+without a card are omitted. Verified here with typecheck 0 errors and 54/54 across
+`settings-organization-live`, `settings-navigation`, `settings-conversations` and `team-stress`.
+`npm run check:settings` still fails on 0.2.37's removed content map, a pre-existing check.
+
 Add its hash and visible checks when checkpoint 2 installs.
+
+Pushed 2026-11-18, each verified at the pushed tip and **MERGEABLE**:
+
+| PR | Branch | New head | Tests | Comment |
+| --- | --- | --- | --- | --- |
+| #313 | feat/models-thinking | `b7ceafc3` | 15/15 | [6980808030](https://github.com/eduwxyz/tucano/pull/313#issuecomment-6980808030) |
+| #321 | feat/try-with-instructions | `37c803e4` | 59/59 | [6980808704](https://github.com/eduwxyz/tucano/pull/321#issuecomment-6980808704) |
+| #391 | codex/resume-interrupted | `0a3ab392` | 17/17 | [6980874388](https://github.com/eduwxyz/tucano/pull/391#issuecomment-6980874388) |
+| #446 | feat/settings-organization | `5895240a` | 15/15 | [6981524951](https://github.com/eduwxyz/tucano/pull/446#issuecomment-6981524951) |
+| #245 | feat/thinking-stream | `0dfb0e46` | 15/15 | [6981525673](https://github.com/eduwxyz/tucano/pull/245#issuecomment-6981525673) |
+
+#313 needed one conflict resolved in `src/shared/rpc.ts`: upstream's 0.2.37 type list was kept and
+`Effort` appended. Its bulk effort pick sits in `AgentModelsPanel` under Settings > Models. 0.2.37
+already has a per-agent effort row, so the branch adds a second per-agent entry point alongside the
+new bulk control. Kept deliberately, since drops are Apo's call.
+
+#321 combined both sides of two conflicts: upstream's `assertReplyVisible` guard in `retryRun` and
+the new `note` argument, and upstream's `AskedFromHere` line alongside the new `TryAgain` control.
+Upstream's status gate, continue path and raise-limit controls are untouched.
+
+#446 is one squashed commit because the old PR carried its work twice plus merges. It drops the
+old page tablist and keeps the section rail inside the active pane, with per-pane remembered
+section and keyboard and reduced-motion jumps. Its placement check passes with 23 sections and 27
+owned writes across 19 files. #245 folds thinking into the current `RunSteps` view, keeps upstream's
+`node` and `tasks` events beside `thinking`, and uses only its own show-thinking control.
+
+Checkpoint 2 is being built from a temporary tree that unions the live wave-1 settings changes with
+the #245 and #391 branches; `C:/git-ext/tucano-wt/ckpt2-build` is not a live feature branch.
+
+#391 is pushed at `0a3ab392` and MERGEABLE, with 17/17 restart tests and a full suite of 2106
+passed / 61 skipped. Its rebase was clean. Two changelog defects were fixed in the branch: the
+recovery note now sits under Unreleased instead of the released 0.2.35 section, and a duplicated
+"Bring your Hermes Agent over" bullet was removed. Comment:
+[6980874388](https://github.com/eduwxyz/tucano/pull/391#issuecomment-6980874388).
+
+#261 is **not** superseded by #338. Nine of its 16 commits map into #338, but four carry behavior
+#338 does not have: parallel by default (`const mode = opts.mode ?? 'parallel'`), waiting marks that
+survive the window closing, steer targeting, and their tests. #338 deliberately keeps a serial
+default and asserts `max() === 1` per agent and thread. Decision on #261 is pending Apo.
 
 ## Wave-0 PR update (in progress)
 
