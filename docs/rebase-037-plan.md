@@ -189,10 +189,12 @@ rebased #258 head and carries only the orphan-page delta. Checkpoint 5 is instal
 SHA-256 `b70e8b9e34619628e58265a53fdacf4c6d751a706c058c0fc542ca4a4b2c4358`. A second polish at tree
 `44a5e61d` names each provider above its header bar and makes all bars the width of the longest name
 in the conversation, preserving rings mode and hidden-provider filtering. Its asar is **37627846**
-bytes, SHA-256 `7045d486eba1089ce651273d16377b81a5fa5474f45813f916531416f8daf4e7`. Gate: 0
-TypeScript errors and 5 files / 44 quota tests passed. #305 carries the same polish at `9223ccd4`
-with comment `6988706973`. `self-build doctor` reports `sameAsBuild: true` and `verdict: running`.
-Confirm the wave on screen
+bytes, SHA-256 `7045d486eba1089ce651273d16377b81a5fa5474f45813f916531416f8daf4e7`. A third polish at
+tree `fa1c1f40` limits the header strip to the providers configured as a conversation member's primary
+or fallback model, so a logged-in provider nobody there uses has no bar. Its asar is **37630102**
+bytes, SHA-256 `84ffbf4de64705f4a2a1a4a923ff8e257809ecb25f15262870012bd65d0347e9`. Gate: 0
+TypeScript errors and 6 files / 53 quota tests passed. The #305 PR is receiving the same filter.
+`self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on screen
 by opening the wiki: a missing page offers Write the page, an orphan can be handed off, an unsettled
 finding offers Resolve with a built-in resolver, an agent's Tools tab has the three-level wiki switch,
 and the skill library in Settings › Agents shows categories and versions. Tuca's ver_estado shows the
@@ -218,7 +220,11 @@ Apo also caught a colour defect in the old branch: successful response notices d
 bar in success green. It is fixed on `feat/notification-center` at `21845284` by giving `.nc--done`
 the signature `--toast-ink` orange; the wave 6 rebase keeps that fix. That earlier push was found to
 be on the 0.2.29 base despite the fix, so it is being replaced: the corrected branch must have
-`4522704e` as an ancestor before it is pushed or commented on again.
+`4522704e` as an ancestor before it is pushed or commented on again. The corrected branch is now
+`73a33d6c` (MERGEABLE, comment `6988846348`): all 12 PR commits replayed onto 0.2.37 with the orange
+bar intact, plus a Native / Enhanced selector in Settings › Notifications. Native keeps 0.2.37's
+system notifications; Enhanced shows the cross-window settings, with legacy `on: false` mapped to
+Native and existing users defaulting to Enhanced. Gate: 0 TypeScript errors and 24 notice tests.
 
 Wave 6 prep heads on the real 0.2.37 base: #303 `eeaed571`, #336 `987efddf`, #353 `451f29d0` and
 #451 `ba2f238f`, all clean, 0 TypeScript errors and pushed/MERGEABLE with compatibility comments.
