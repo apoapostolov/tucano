@@ -136,8 +136,10 @@ feature adds a setting or moves one; do not wait for a second cleanup project to
 
 Integrate and repair TucanoNext directly on `apoapostolov/tucano:next`; do not open PRs against
 the fork for this work. Product PRs target the original project, `eduwxyz/tucano:main`, using the
-feature's existing upstream PR when one is open. Git remote `origin` names the fork in this
-checkout; a request for the original Tucano developer repository means `eduwxyz/tucano` (`upstream`).
+feature's existing upstream PR when one is open. No fork fix is done until that upstream PR carries
+it, unless Apo says otherwise; the rule and the PR lookup live in *Commit on the feature's own issue
+or PR*. Git remote `origin` names the fork in this checkout; a request for the original Tucano
+developer repository means `eduwxyz/tucano` (`upstream`).
 
 Check `git remote -v` before fetching, merging, or pushing. In this checkout:
 
@@ -782,6 +784,14 @@ remote in this checkout, where the issues and pull requests live), as part of th
 request. A commit that exists only on `next`, or only on a local branch, is not delivery: `origin/next` on
 the fork is integration and QA, so work that stops there cannot be reviewed, merged or found again by
 anyone but this machine.
+
+**No fix is accepted in TucanoNext until it is also added to a PR against the original project,
+`eduwxyz/tucano` (`upstream` here), unless Apo explicitly says otherwise.** A commit on `next`, a
+checkpoint, or an installed build is integration and QA, not delivery; the upstream PR is the part a
+reviewer can find and merge. For a fix that belongs to an existing feature, follow the pair below and
+commit on that PR's branch. For a fix with no pair, open a focused PR against `upstream/main` once the
+change is green. Record in the same session which PR carries it; an upstream PR left as a promise is
+not carried.
 
 Look the feature up in the table below before opening anything:
 
