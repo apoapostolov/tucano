@@ -230,7 +230,7 @@ function Tucked({ items }: { items: TopItem[] }): ReactNode {
   const [open, setOpen] = useState(false)
   const team = useStore(teamMode)
   const glyph = (i: TopItem): ReactNode =>
-    i === 'tuca' ? <TucaMark size={18} /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
+    i === 'tuca' ? <TucaMark size={18} /> : i === 'asks' ? <Icon name="ask" /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
   return (
     <div className={`tucked ${open ? 'is-open' : ''}`}>
       <button type="button" className="tucked__toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
