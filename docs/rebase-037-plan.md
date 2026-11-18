@@ -337,8 +337,11 @@ settings, and the PR's next-steps/classifier area found no applicable hunks on 0
 behavior already lives in checkpoint 6. It is held for the 0.2.39 rollup.
 Apo also found
 that commit `26c88ab1` removed the Agents’ browser Jev-vs-page-text selector and left only a hint;
-wave 8 restores a real selector in that card, backed by `classifierJobs.browser`. #334 (approval
-card) is a drop candidate per triage; #411 reply shortcut stacked on #32, #288 work drawer, #290
+wave 8 restores a real selector in that card, backed by `classifierJobs.browser`. Apo also reported
+that the notification surface under **Where they appear** shows Portuguese text while the app
+language is English; a worker is tracing the notice window/area-picker process and will commit the
+fix both on #417's `rb/pr-417` branch and in the 0.2.39 checkpoint. #334 (approval card) is a drop
+candidate per triage; #411 reply shortcut stacked on #32, #288 work drawer, #290
 prompt-before-session and #512 Windows skill hash land here if still open. The deferred
 tooling debt is fixed in this wave: `scripts/check-settings-placement.mjs` and `npm run check:settings`
 still expect the old `SettingsPage` content map, so adapt the guard to `pane()` blocks. Never rebuild
