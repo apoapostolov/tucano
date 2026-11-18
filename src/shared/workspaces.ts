@@ -26,6 +26,7 @@ export const GENERAL_SETTINGS = [
   'harnesses',
   'sounds',
   'stepsOpen',
+  'replyShortcut',
   'notice',
   'voice',
   'thinkingSize',

@@ -1724,17 +1724,19 @@ const api: Handlers = {
     reach(ctx, root.conversationId)
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
-
-  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
     reach(ctx, conversationId)
-    bg(
-      runner.send(conversationId, text, images, threadId, ctx.person.id, {
-        ...(files?.length ? { files } : {}),
-        ...(mode ? { mode } : {}),
-        ...(steerTo ? { steerTo } : {})
-      }),
-      'sendMessage'
-    )
+    const sent = runner.send(conversationId, text, images, threadId, ctx.person.id, {
+      ...(files?.length ? { files } : {}),
+      ...(mode ? { mode } : {}),
+      ...(steerTo ? { steerTo } : {}),
+      ...(reply ? { reply } : {})
+    })
+    // A failure here is logged, never a crash (0.2.39: on a server, an unhandled rejection ends
+    // everyone's Tucano) and a reply it can't take still comes back to whoever wrote it, so the
+    // draft isn't lost as if it had been sent.
+    bg(sent, 'sendMessage')
+    return sent
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {

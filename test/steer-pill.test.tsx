@@ -33,7 +33,7 @@ vi.mock('../src/renderer/src/store', async (original) => {
     useStore: <T,>(select: (s: unknown) => T): T => select({ settings: viewSettings }),
     useLiveThoughtState: () => ({ text: 'lendo o arquivo antes de responder', start: 0 }),
     updateSettings: (patch: { folded?: string[] }): void => { viewSettings = { ...viewSettings, ...patch } },
-    sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, mode?: string): void => {
+    sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, _reply?: unknown, mode?: string): void => {
       sent.push({ conversationId, text, mode })
     },
     stopRun: (): void => {}

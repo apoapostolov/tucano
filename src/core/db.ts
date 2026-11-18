@@ -607,7 +607,9 @@ const COLUMNS: [string, string, string][] = [
   ['conversations', 'cleared_at', 'INTEGER'],
   // The picture a connector wears: a small image as a data URL (src/renderer/src/connector-icon.ts).
   // Empty: the store's mark, or the icon of its kind.
-  ['connectors', 'icon', 'TEXT']
+  ['connectors', 'icon', 'TEXT'],
+  // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
+  ['messages', 'reply', 'TEXT']
 ]
 
 type Row = Record<string, unknown>
@@ -1207,7 +1209,8 @@ export class Db {
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
-      ...(r['title'] ? { title: str(r['title']) } : {})
+      ...(r['title'] ? { title: str(r['title']) } : {}),
+      reply: r['reply'] ? (JSON.parse(str(r['reply'])) as Message['reply']) : undefined
     }
   }
 
@@ -1452,7 +1455,7 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, reply) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run`
       )
       .run(
@@ -1464,7 +1467,8 @@ export class Db {
         m.at,
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
-        m.threadId ?? null
+        m.threadId ?? null,
+        m.reply ? JSON.stringify(m.reply) : null
       )
   }
 
