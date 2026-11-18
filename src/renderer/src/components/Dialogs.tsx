@@ -249,19 +249,18 @@ export function MembersDialog({
                 <span className="member__check">{on && <Icon name="check" size={13} />}</span>
               </button>
               {on && (
-                <>
-                  <label className="member-row__mention muted small" title={L('Lê a conversa, mas só responde quando é mencionado', 'Reads the conversation, but answers only when mentioned')}>
+                <div className="member-row__modes">
+                  <label className="member-row__mention muted small">
                     <input type="checkbox" checked={quiet.includes(a.id)} onChange={() => mention(a.id)} aria-label={L(`Modo menção para ${a.name}`, `Mention mode for ${a.name}`)} />
-                    {L('Modo menção', 'Mention mode')}
+                    <span>{L('Modo menção', 'Mention mode')}</span>
+                    <span className="mode-help" role="img" tabIndex={0} title={L('Lê todas as mensagens do canal, mas só responde quando você ou outro agente chama o nome dele com @.', 'Reads every message in the channel, but answers only when you or another agent calls its name with @.')} aria-label={L('O que é o modo menção', 'What mention mode does')}>(?)</span>
                   </label>
-                  <label
-                    className="member-row__mention muted small"
-                    title={L('Lê a conversa e entra quando o Jev vê que a mensagem precisa do que só ele faz', 'Reads the conversation and joins when Jev sees the message needs what only it does')}
-                  >
+                  <label className="member-row__mention muted small">
                     <input type="checkbox" checked={hears.includes(a.id)} onChange={() => listening(a.id)} aria-label={L(`Modo escuta para ${a.name}`, `Listen mode for ${a.name}`)} />
-                    {L('Modo escuta', 'Listen mode')}
+                    <span>{L('Modo escuta', 'Listen mode')}</span>
+                    <span className="mode-help" role="img" tabIndex={0} title={L('Fica de fora das respostas normais. O Jev pode chamá-lo quando vê que a mensagem precisa do que só ele faz e os agentes do canal não conseguem cuidar dela.', 'Stays out of normal replies. Jev can call it when it sees the message needs what only it does and the channel agents cannot handle it.')} aria-label={L('O que é o modo escuta', 'What listen mode does')}>(?)</span>
                   </label>
-                </>
+                </div>
               )}
             </div>
           )
