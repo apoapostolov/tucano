@@ -12,6 +12,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ### Fixed
 
 - **An Antigravity agent's month no longer goes negative.** Tokens count as input − 90% of cache reads + output, which assumes the input counts the cache reads in. Some Antigravity runs report more cache reads than input, so the month showed as "−2003590 of 2M" and the agent's monthly limit never fired. More cache reads than input now means they came apart: the input counts whole and the cache a tenth, in every total, so receipts already saved read right too; new ones from Antigravity add the cache reads to the input. Agents that were past their limit without it showing now stop at it, and say it can be raised on their page. (#547)
+- **TucanoNext takes upstream 0.2.39.** The quota strip, the hover cards and an agent's page follow the counted-token fix in it (#547), so an Antigravity receipt whose cache reads exceed its input no longer shows a negative month in the strip either.
 
 ## [0.2.38] - 2026-11-18
 
@@ -246,6 +247,9 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **An English workspace no longer teaches a model Portuguese words for the app.** The screen links the Tuca is taught (`#abrir/conectores`), the areas of `ver_estado` and the guide's index it carries on every message were in Portuguese whatever the workspace's language, and the model wrote those words back into replies, skills and wiki pages. The ids are now language-free (`#abrir/connectors`, `#abrir/settings/models`), the guide's index has an English version, and the old ids in messages and memories keep working. The body of a guide page is still Portuguese.
 
 - **A Hermes skill says it came from Hermes.** In the skills list and in an agent's tab, a skill linked from Hermes was tagged "from your Claude Code".
+
+
+- **A routed reply finds its model again.** A pool entry is stored the way an agent's page stores a model, with the harness in front (`pi:opencode-go/deepseek-v4.1-flash`), and that name went to the engine exactly as stored: pi answered `Model "pi:opencode-go/deepseek-v4.1-flash" not found` and the reply died as soon as smart routing was on. The prefix now comes off where the engine is handed the name, so a chain built from the picker runs, and pools already written that way keep working.
 
 ## [0.2.28] - 2026-11-12
 

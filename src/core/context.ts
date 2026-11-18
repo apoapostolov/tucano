@@ -4,6 +4,7 @@
 // the conversation transcript. Everything the agent knows comes from here; a
 // kept session (sessions.ts) gets it once, then only the blocks of what's new,
 // and the live context again only when it changed.
+import { timeOpts } from '../shared/clock'
 import { L, lang, locale } from '../shared/lang'
 import { MENTION } from '../shared/mention-text'
 import { ACCESS_REQUEST, CODE_SPANS, describeSchedule, PROJECTS_DIR, type Agent, type AgentApp, type Conversation, type Memory, type Message, type Person, type Routine, type Settings, type Skill } from '../shared/types'
@@ -33,7 +34,7 @@ export type PromptOpts = {
   builder?: string // the Tuca's view of the workspace: models, connectors, the team (live)
   team?: string // the agents that answer to this one and what it has asked of them (src/core/delegations.ts, live)
   builderGuide?: string // how to propose agents, teams, routines and channels, and the Tuca's guide (stable)
-  wiki?: { pages: number; kinds: string[] } // the wiki it may read
+  wiki?: { pages: number; kinds: string[]; write?: boolean } // the wiki it may read, and whether it may write it
   connectors?: boolean // it has connector tools (Slack, Databricks…)
   people?: Person[] // the Tucano's people; with more than one, the agent is told who they are
   github?: GitHubAccess // a GitHub connector it has access to: how it publishes, and what waits for the person
@@ -175,8 +176,16 @@ export function liveContext(opts: Pick<PromptOpts, 'settings' | 'memories' | 'of
     memories && (memories.aboutMe.length > 0 || memories.own.length > 0 || !!memories.searchable) && memorySection(me, memories, people),
     wiki &&
       L(
-        `## A wiki\n${me} tem uma wiki com ${wiki.pages === 1 ? '1 página' : `${wiki.pages} páginas`} (${wiki.kinds.join(', ')}): o que ${me} e o time sabem, escrito. Quando a pergunta puder estar lá (uma pessoa, um cliente, um projeto, uma decisão, um assunto), consulte antes de responder ou de perguntar: wiki_indice pra ver o que existe, wiki_buscar pra achar, wiki_ler pra abrir. Ao usar uma página, cite com [[Título]]. Se a wiki não disser, diga que não está lá; não invente. Você só lê a wiki: o curador a atualiza sozinho depois da conversa, com o que ficar decidido; não diga que ela vai ficar desatualizada nem peça pra alguém editar.`,
-        `## The wiki\n${me} has a wiki with ${wiki.pages === 1 ? '1 page' : `${wiki.pages} pages`} (${wiki.kinds.join(', ')}): what ${me} and the team know, written down. When the answer could be there (a person, a client, a project, a decision, a topic), look before replying or asking: wiki_indice to see what exists, wiki_buscar to find, wiki_ler to open. When you use a page, cite it as [[Title]]. If the wiki doesn't say, say it isn't there; don't make it up. You only read the wiki: the curator updates it on its own after the conversation, with what was settled; don't say it will be out of date or ask anyone to edit it.`
+        `## A wiki\n${me} tem uma wiki ${pagesPhrase(wiki.pages)}${wiki.pages ? ` (${wiki.kinds.join(', ')})` : ''}: o que ${me} e o time sabem, escrito. Quando a pergunta puder estar lá (uma pessoa, um cliente, um projeto, uma decisão, um assunto), consulte antes de responder ou de perguntar: wiki_indice pra ver o que existe, wiki_buscar pra achar, wiki_ler pra abrir. Ao usar uma página, cite com [[Título]]. Se a wiki não disser, diga que não está lá; não invente.${
+          wiki.write
+            ? ' Você também escreve nela: wiki_escrever cria a página, ou acrescenta no fim dela ou numa seção, e wiki_editar troca um trecho que ficou errado ou velho. Escreva o que é fato, com a data, e ligue as páginas com [[Título]]; não repita o que já está lá.'
+            : ' Você só lê a wiki: o curador a atualiza sozinho depois da conversa, com o que ficar decidido; não diga que ela vai ficar desatualizada nem peça pra alguém editar.'
+        }`,
+        `## The wiki\n${me} has a wiki ${pagesPhrase(wiki.pages)}${wiki.pages ? ` (${wiki.kinds.join(', ')})` : ''}: what ${me} and the team know, written down. When the answer could be there (a person, a client, a project, a decision, a topic), look before replying or asking: wiki_indice to see what exists, wiki_buscar to find, wiki_ler to open. When you use a page, cite it as [[Title]]. If the wiki doesn't say, say it isn't there; don't make it up.${
+          wiki.write
+            ? ' You also write in it: wiki_escrever creates the page, or adds to its end or under a section, and wiki_editar swaps a passage that is wrong or stale. Write what is settled, with the date, and link pages with [[Title]]; do not repeat what is already there.'
+            : ' You only read the wiki: the curator updates it on its own after the conversation, with what was settled; do not say it will be out of date or ask anyone to edit it.'
+        }`
       ),
     skills &&
       skills.length > 0 &&
@@ -199,6 +208,9 @@ export function liveContext(opts: Pick<PromptOpts, 'settings' | 'memories' | 'of
   if (!parts.length) return ''
   return [LIVE_HEAD(), ...parts].join('\n\n')
 }
+
+const pagesPhrase = (n: number): string =>
+  n === 0 ? L('ainda sem páginas', 'with no pages yet') : n === 1 ? L('com 1 página', 'with 1 page') : L(`com ${n} páginas`, `with ${n} pages`)
 
 const LIVE_HEAD = (): string =>
   L(
@@ -401,13 +413,13 @@ const utcOffset = (d: Date): string => {
 }
 const zone = (at: number): string => `${utcOffset(new Date(at))}, unix ${Math.floor(at / 1000)}`
 
-const now = (): string => `${new Date().toLocaleString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })} (${zone(Date.now())})`
+const now = (): string => `${new Date().toLocaleString(locale(), timeOpts({ weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }))} (${zone(Date.now())})`
 
 // "sáb 18/10 14:02": with the weekday, so "toda segunda" and "amanhã" can be worked out.
 export const clock = (at: number): string => {
   const d = new Date(at)
   const day = d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')
-  return `${day} ${d.toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '')}`
+  return `${day} ${d.toLocaleString(locale(), timeOpts({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })).replace(',', '')}`
 }
 
 // A message's time in the transcript: the clock with the year, the offset and the Unix seconds, so

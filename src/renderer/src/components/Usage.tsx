@@ -1,8 +1,10 @@
 // Uso e limites: this month at a glance (by day, by agent, by model), the
 // Claude and Codex subscriptions' windows, and where each agent will end the month.
+import { timeOpts } from '../../../shared/clock'
 import { L, locale } from '../../../shared/lang'
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { agentById, amAdmin, countedTokens, ENGINES, isTeam, loadUsage, messageById, modelInfo, navigate, receipts, useStore, type Agent, type EngineId, type EngineStatus, type UsageReport } from '../store'
+import { quotaView, visibleQuotas } from '../../../shared/quota-view'
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { agentById, amAdmin, countedTokens, ENGINES, isTeam, loadQuotas, refreshQuotas, loadUsage, messageById, modelInfo, navigate, receipts, useStore, type Agent, type EngineId, type EngineStatus, type ProviderQuota, type CodexQuota, type Quota, type QuotasSnapshot, type QuotaWindow, type UsageReport } from '../store'
 import { Sheet } from './Pages'
 import { AdminOnly } from './People'
 import { AgentAvatar, duration, Icon, tokens, usd } from './ui'
@@ -11,7 +13,7 @@ const DAY = 86_400_000
 const APP = 'app' // the chart's one color for the app's own turns: router, memory, the Tuca
 const MODEL_COLORS = ['var(--accent)', 'var(--c-violet)', 'var(--c-teal)', 'var(--c-sky)', 'var(--text-3)']
 
-const until = (at: number): string => {
+export const until = (at: number): string => {
   const left = at - Date.now()
   if (left <= 0) return L('agora', 'now')
   const total = Math.round(left / 60_000) // in whole minutes, so it never says "1 h 60 min"
@@ -19,12 +21,12 @@ const until = (at: number): string => {
   const m = total % 60
   if (h < 24) return L(`em ${h ? `${h} h ` : ''}${m} min`, `in ${h ? `${h} h ` : ''}${m} min`)
   const d = new Date(at)
-  return `${d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')}, ${d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}`
+  return `${d.toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')}, ${d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))}`
 }
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
 const shortTime = (at: number): string => {
   const d = new Date(at)
-  const hm = d.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   return d.toDateString() === new Date().toDateString() ? hm : `${d.toLocaleDateString(locale(), { day: '2-digit', month: '2-digit' })} ${hm}`
 }
 
@@ -89,9 +91,10 @@ export function UsagePage(): ReactNode {
         <p className="read-empty">{L('Fazendo as contas…', 'Doing the math…')}</p>
       ) : (
         <>
+          {/* What is left right now, every provider in one shape, above the month's chart: that one is
+              the month's total. */}
+          <Quotas />
           <Month u={u} claude={billing.find((b) => b.id === 'claude')?.status} />
-          {billing.find((b) => b.id === 'claude')?.status.route === 'plan' && <Quota />}
-          {billing.find((b) => b.id === 'codex')?.status.route === 'plan' && <CodexQuota />}
           <Agents u={u} />
           <div className="usage-grid">
             <Models u={u} />
@@ -234,60 +237,18 @@ function ApiCost({ usd: v, claude }: { usd: number; claude: EngineStatus }): Rea
   )
 }
 
-// ---------- the Claude subscription ----------
+// ---------- the subscriptions, and what each provider has left ----------
 
-// Its own windows, as the last reply reported them.
-function Quota(): ReactNode {
-  const q = useStore((s) => s.settings.quota)
-  if (!q || (!q.fiveHour && !q.sevenDay)) return null
-  const at = new Date(q.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
-  return (
-    <section className="read-group">
-      <h2>
-        {L('Sua assinatura do Claude', 'Your Claude subscription')}<span>{L(`segundo o Claude Code às ${at}`, `per Claude Code at ${at}`)}</span>
-      </h2>
-      <div className="usage-quota">
-        {q.fiveHour && <Ring label={L('Janela de 5 horas', '5-hour window')} w={q.fiveHour} />}
-        {q.sevenDay && <Ring label={L('Semana', 'Week')} w={q.sevenDay} />}
-      </div>
-    </section>
-  )
+// A window's used part, as a ring paints it: what the provider says is used, or what its cap and what
+// is left add up to. A wallet reports no cap, so it has no ratio to draw.
+const usedShare = (w: QuotaWindow): number => {
+  if (w.used !== undefined) return Math.min(1, Math.max(0, w.used))
+  const left = share(w)
+  return left === undefined ? 0 : 1 - left
 }
 
-// ---------- the Codex subscription ----------
-
-// Its windows, as Codex told when this page asked: how many and how long depends on the plan.
-function CodexQuota(): ReactNode {
-  const q = useStore((s) => s.settings.codexQuota)
-  if (!q?.windows.length) return null
-  const at = new Date(q.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
-  const plan = q.plan ? ` ${cap(q.plan)}` : ''
-  return (
-    <section className="read-group">
-      <h2>
-        {L(`Sua assinatura do Codex${plan}`, `Your Codex${plan} subscription`)}<span>{L(`segundo o Codex às ${at}`, `per Codex at ${at}`)}</span>
-      </h2>
-      <div className="usage-quota">
-        {q.windows.map((w) => (
-          <Ring key={w.minutes} label={windowLabel(w.minutes)} w={w} />
-        ))}
-      </div>
-    </section>
-  )
-}
-
-const windowLabel = (minutes: number): string =>
-  minutes === 10_080
-    ? L('Semana', 'Week')
-    : minutes === 1440
-      ? L('Dia', 'Day')
-      : minutes % 1440 === 0
-      ? L(`Janela de ${minutes / 1440} dias`, `${minutes / 1440}-day window`)
-      : minutes % 60 === 0
-        ? L(`Janela de ${minutes / 60} horas`, `${minutes / 60}-hour window`)
-        : L(`Janela de ${minutes} min`, `${minutes}-minute window`)
-
-function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt: number } }): ReactNode {
+// One window as a ring: the used part painted along the circle, the rest left as its track.
+function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt?: number } }): ReactNode {
   const pct = Math.min(1, Math.max(0, w.utilization))
   const r = 22
   const c = 2 * Math.PI * r
@@ -301,12 +262,260 @@ function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt:
       <div>
         <span className="muted small">{label}</span>
         <strong>{L(`${Math.round(pct * 100)}% usado`, `${Math.round(pct * 100)}% used`)}</strong>
-        <span className="muted small">{L('zera', 'resets')} {until(w.resetsAt)}</span>
+        {w.resetsAt ? <span className="muted small">{L('zera', 'resets')} {until(w.resetsAt)}</span> : null}
       </div>
     </div>
   )
 }
 
+// Which row a Codex window belongs in, by how long it lasts: the month, the week, or the short one.
+const minutesRow = (minutes: number): 'session' | 'week' | 'month' => (minutes >= 43_200 ? 'month' : minutes >= 10_080 ? 'week' : 'session')
+
+// The windows Codex itself reported when the page asked, for a computer whose Codex credentials aren't
+// on disk: the login read has nothing there, and the subscription the person is still paying for would
+// draw no column at all. The longest window takes its row first, as everywhere else.
+function withCodexReported(list: ProviderQuota[], q: CodexQuota | undefined): ProviderQuota[] {
+  if (!q || q.windows.length === 0) return list
+  const from: Pick<ProviderQuota, 'session' | 'week' | 'month'> = {}
+  for (const w of [...q.windows].sort((a, b) => b.minutes - a.minutes)) {
+    const row = minutesRow(w.minutes)
+    if (from[row]) continue
+    const used = Math.min(1, Math.max(0, w.utilization))
+    from[row] = { used, remaining: 1 - used, limit: 1, unit: '%', resetsAt: w.resetsAt }
+  }
+  const i = list.findIndex((p) => p.id === 'openai-codex')
+  if (i < 0) return [...list, { id: 'openai-codex', label: 'Codex', via: L('a própria leitura do Codex', 'Codex’s own reading'), at: q.at, ...(q.plan ? { plan: q.plan } : {}), ...from }]
+  return list.map((p, n) => (n === i ? { ...p, ...(p.session ? {} : { session: from.session }), ...(p.week ? {} : { week: from.week }), ...(p.month ? {} : { month: from.month }) } : p))
+}
+
+// ---------- what each provider has left ----------
+
+// The three rows of a provider's column, the short window first. Every column has all three, so
+// they line up and a missing one reads as a dash instead of moving its neighbours.
+const ROWS = [
+  { key: 'session', label: () => L('Agora', 'Now'), hint: () => L('a janela curta: 5 horas, ou a hora', 'the short window: 5 hours, or the hour') },
+  { key: 'week', label: () => L('Semana', 'Week'), hint: () => L('a janela semanal', 'the weekly window') },
+  { key: 'month', label: () => L('Mês', 'Month'), hint: () => L('o mês de cobrança, ou o saldo', 'the billing month, or the balance') }
+] as const
+type Row = (typeof ROWS)[number]['key']
+
+// The number a window is left at, in its own unit: a fraction for a percentage, the count otherwise.
+export function leftValue(w: QuotaWindow): number {
+  if (w.unit !== '%') return w.remaining ?? 0
+  return w.used !== undefined ? (w.limit ? 1 - w.used : (w.remaining ?? 0)) : (w.remaining ?? 0)
+}
+
+// …and that number as the panel writes it. Split out so a value on its way to the next read is drawn
+// in the same words the settled one will be.
+export function leftText(w: QuotaWindow, value: number): string {
+  if (w.unit === '%') return value > 0 && value < 0.01 ? '<1%' : `${Math.round(value * 100)}%`
+  if (w.unit === 'usd') return usd(value)
+  return tokens(value)
+}
+
+// What the provider says is left, in its own unit.
+export function left(w: QuotaWindow): string {
+  return leftText(w, leftValue(w))
+}
+
+// A number on its way from the last read to the new one: the panel counts between them instead of
+// swapping the figure, so a refresh is something the eye can follow rather than a jump it has to spot.
+function useTween(value: number, ms = 520): number {
+  const [shown, setShown] = useState(value)
+  const from = useRef(value)
+  useEffect(() => {
+    if (value === from.current) return
+    const a = from.current
+    from.current = value
+    if (typeof requestAnimationFrame !== 'function') return setShown(value)
+    const started = performance.now()
+    let raf = requestAnimationFrame(function tick(now) {
+      const t = Math.min(1, (now - started) / ms)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setShown(t < 1 ? a + (value - a) * eased : value)
+      if (t < 1) raf = requestAnimationFrame(tick)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [value, ms])
+  return shown
+}
+export const share = (w: QuotaWindow): number | undefined => (w.limit && w.limit > 0 && w.remaining !== undefined ? Math.min(1, Math.max(0, w.remaining / w.limit)) : undefined)
+
+// The CLI's own reading of the subscription, when its credentials aren't on disk (or are expired):
+// the last reply already told Tucano where those windows stand.
+function withReported(list: ProviderQuota[], reported: Quota | undefined): ProviderQuota[] {
+  if (!reported || (!reported.fiveHour && !reported.sevenDay)) return list
+  const win = (w: { utilization: number; resetsAt: number }): QuotaWindow => {
+    const used = Math.min(1, Math.max(0, w.utilization))
+    return { used, remaining: 1 - used, limit: 1, unit: '%', resetsAt: w.resetsAt }
+  }
+  const from: Pick<ProviderQuota, 'session' | 'week'> = { ...(reported.fiveHour ? { session: win(reported.fiveHour) } : {}), ...(reported.sevenDay ? { week: win(reported.sevenDay) } : {}) }
+  const i = list.findIndex((p) => p.id === 'anthropic-claude-code')
+  if (i < 0) return [...list, { id: 'anthropic-claude-code', label: 'Claude Code', via: L('a última resposta', 'the last reply'), at: reported.at, ...from }]
+  return list.map((p, n) => {
+    if (n !== i) return p
+    const merged = { ...p, session: p.session ?? from.session, week: p.week ?? from.week }
+    return merged.session || merged.week ? { ...merged, error: undefined } : p
+  })
+}
+
+// How often the open page asks for a new read: the core polls on its own every twenty minutes, so this
+// only keeps what is on screen in step with it.
+const QUOTA_POLL_MS = 20 * 60_000
+
+export function Quotas(): ReactNode {
+  const reported = useStore((s) => s.settings.quota)
+  const codexReported = useStore((s) => s.settings.codexQuota)
+  // How they are drawn, and which of them: one choice for every provider, the same one in the header
+  // strip (src/shared/quota-view.ts).
+  const view = useStore((s) => quotaView(s.settings))
+  const hidden = useStore((s) => s.settings.quotaHidden)
+  // Whose logins these are: an admin's, like the rest of the page. A member's app never asks.
+  const admin = useStore(amAdmin)
+  const [snap, setSnap] = useState<QuotasSnapshot | null>(null)
+  const [busy, setBusy] = useState(false)
+  // The panel draws from the last read the core holds, so it is there on the first paint; the read
+  // behind it is what moves the numbers, and the tween makes that movement visible.
+  const load = (force: boolean): void => {
+    setBusy(true)
+    const answer = force ? refreshQuotas() : loadQuotas()
+    answer
+      .then((s) => setSnap(s))
+      .catch(() => setSnap((was) => was ?? { list: [], at: Date.now() }))
+      .finally(() => setBusy(false))
+  }
+  useEffect(() => {
+    if (!admin) return
+    let alive = true
+    loadQuotas()
+      .then((s) => {
+        if (!alive) return
+        setSnap(s)
+        // A snapshot from this second came from a read that just happened; an older one is followed
+        // by a new read, which lands on the tween.
+        if (Date.now() - s.at > 5_000) refreshQuotas().then((fresh) => alive && setSnap(fresh)).catch(() => {})
+      })
+      .catch(() => alive && setSnap({ list: [], at: Date.now() }))
+    const timer = setInterval(() => {
+      refreshQuotas()
+        .then((fresh) => alive && setSnap(fresh))
+        .catch(() => {})
+    }, QUOTA_POLL_MS)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [admin])
+  const list = snap ? withCodexReported(withReported(snap.list, reported), codexReported) : []
+  const cols = visibleQuotas(list, { quotaHidden: hidden })
+  return (
+    <section className="read-group usage-card">
+      {/* The count is this panel's headline, in the month's own header shape: an eyebrow, the figure
+          with its unit, and where and when it was read. The read-again button stays on that row. */}
+      <div className="usage-month__head usage-quotas__head">
+        <div>
+          <span className="usage-eyebrow">{L('O que cada provedor ainda tem', 'What each provider has left')}</span>
+          <div className="usage-month__total">
+            <strong>{cols.length}</strong>
+            <span>{cols.length === 1 ? L('provedor', 'provider') : L('provedores', 'providers')}</span>
+          </div>
+          <span className="muted small">
+            {snap
+              ? L(`Lido às ${shortTime(snap.at)} dos seus próprios logins neste computador: os CLIs, o Pi e o Hermes.`, `Read at ${shortTime(snap.at)} from your own logins on this computer: the CLIs, Pi and Hermes.`)
+              : L('Lendo os seus próprios logins neste computador: os CLIs, o Pi e o Hermes.', 'Reading your own logins on this computer: the CLIs, Pi and Hermes.')}
+          </span>
+        </div>
+        <button className="btn btn--ghost btn--sm" onClick={() => load(true)} disabled={busy}>
+          {busy ? L('Lendo…', 'Reading…') : L('Ler de novo', 'Read again')}
+        </button>
+      </div>
+      {cols.length === 0 ? (
+        <p className="muted small">
+          {list.length > 0
+            ? L('Todas as cotas estão ocultas. Marque em Configurações › Cotas os provedores que você quer ver.', 'Every quota is hidden. Tick the providers you want to see in Settings › Cotas.')
+            : L(
+                'Nenhum login encontrado para pedir cota. Entre no Claude Code, no Codex ou no OpenCode, ou configure um provedor no Pi ou no Hermes, e ele aparece aqui.',
+                'No login found to ask for a quota. Sign in to Claude Code, Codex or OpenCode, or set up a provider in Pi or Hermes, and it shows up here.'
+              )}
+        </p>
+      ) : view === 'rings' ? (
+        <div className="usage-quotas__rings">
+          {cols.map((p) => (
+            <ProviderRings key={p.id} p={p} />
+          ))}
+        </div>
+      ) : (
+        <div className="usage-quotas">
+          <div className="usage-quotas__grid" style={{ gridTemplateColumns: `84px repeat(${cols.length}, minmax(148px, 1fr))` }}>
+            <span />
+            {cols.map((p) => (
+              <div key={p.id} className={`usage-quota__head ${p.error ? 'is-off' : ''}`} title={p.error ?? `${p.label} · ${p.via}`}>
+                <strong className="truncate">{p.label}</strong>
+              <span className="muted small truncate">{p.error ?? p.plan ?? p.via}</span>
+              </div>
+            ))}
+            {ROWS.map((row) => (
+              <Fragment key={row.key}>
+                <div className="usage-quotas__row" title={row.hint()}>
+                  {row.label()}
+                </div>
+                {cols.map((p) => (
+                  <Cell key={`${p.id}:${row.key}`} id={p.id} row={row.key} w={p[row.key as Row]} error={p.error} />
+                ))}
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// One provider in the rings' way: its name, then a ring for each window it reported a cap for. A
+// wallet has none, and says so instead of drawing an empty circle that would read as "nearly full".
+function ProviderRings({ p }: { p: ProviderQuota }): ReactNode {
+  const windows = ROWS.filter((r) => p[r.key] && share(p[r.key]!) !== undefined)
+  return (
+    <div className="usage-quota-card" data-provider={p.id}>
+      <div className="usage-quota-card__head" title={p.error ?? `${p.label} · ${p.via}`}>
+        <strong className="truncate">{p.label}</strong>
+        <span className="muted small truncate">{p.error ?? p.plan ?? p.via}</span>
+      </div>
+      {windows.length === 0 ? (
+        <p className="muted small">{p.error ?? L('sem limite para desenhar, só um saldo', 'no cap to draw, only a balance')}</p>
+      ) : (
+        <div className="usage-quota">
+          {windows.map((r) => (
+            <Ring key={r.key} label={r.label()} w={{ utilization: usedShare(p[r.key]!), resetsAt: p[r.key]!.resetsAt }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Cell({ id, row, w, error }: { id: string; row: Row; w?: QuotaWindow; error?: string }): ReactNode {
+  if (!w) return <div className="usage-quota__cell is-empty" data-provider={id} data-row={row}>—</div>
+  return <CellBody id={id} row={row} w={w} error={error} />
+}
+
+function CellBody({ id, row, w, error }: { id: string; row: Row; w: QuotaWindow; error?: string }): ReactNode {
+  const s = share(w)
+  // The figure counted from the last read to this one; the bar follows it through its own transition.
+  const shown = useTween(leftValue(w))
+  const tone = s === undefined ? '' : s <= 0.1 ? 'is-danger' : s <= 0.3 ? 'is-warn' : ''
+  return (
+    <div className={`usage-quota__cell ${tone}`} data-provider={id} data-row={row} title={w.resetsAt ? L(`zera ${until(w.resetsAt)}`, `resets ${until(w.resetsAt)}`) : undefined}>
+      <strong>{leftText(w, shown)}</strong>
+      {s !== undefined && (
+        <span className="usage-quota__track">
+          <i style={{ width: `${Math.round(s * 100)}%` }} />
+        </span>
+      )}
+      <span className="muted small truncate">{w.resetsAt ? L(`zera ${until(w.resetsAt)}`, `resets ${until(w.resetsAt)}`) : w.unit === 'usd' ? L('saldo', 'balance') : ''}</span>
+    </div>
+  )
+}
 // ---------- agents and their limits ----------
 
 function Agents({ u }: { u: UsageReport }): ReactNode {
