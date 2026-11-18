@@ -316,6 +316,10 @@ fork rejected the push with 403, so Apo-owned #411 now carries the full rebased 
 `a8792ce8`, pushed, MERGEABLE and commented at `6994544391`. #32 itself remains on the contributor's
 old head and should be treated as superseded by #411.
 
+The full asks port was rebased onto 0.2.39 at `3cac92b1`, pushed to #247 with a pinned lease,
+reported MERGEABLE and commented at `6994635469`. Two workers are now finishing the final tail union
+and carrying the dropdown/browser fixes onto #379.
+
 The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
 The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
 both notice windows now receive the selected language on first paint and follow later settings
