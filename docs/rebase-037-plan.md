@@ -170,6 +170,19 @@ Skills layout and Tuca skills share the skill-library files, so they are one bui
 checks: a missing page offers Write the page, an orphan list can be handed off, a finding can be
 resolved, and the skill library reads with its categories and versions.
 
+Wave 5 PRs were pushed and commented on 2026-11-18: #258 `f130d5d6`, #259 `8d696ed2`, #268
+`cd11c7fd`, #355 `12a785a0`, #311 `30395df6` and #319 `b528d365`, all MERGEABLE. #259 sits on the
+rebased #258 head and carries only the orphan-page delta. Checkpoint 5 is installed at source tree
+`90bb8a48`, asar **37626447** bytes, SHA-256
+`2953699f8dc6e07eecd2aaf742d2d1c53f3b833d957d4a81b2a818f700417d24`. Gate: 0 conflict markers, 0
+TypeScript errors and 29 test files / 280 tests passed across the wave 5 and checkpoint 4 suites;
+`self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on screen
+by opening the wiki: a missing page offers Write the page, an orphan can be handed off, an unsettled
+finding offers Resolve with a built-in resolver, an agent's Tools tab has the three-level wiki switch,
+and the skill library in Settings › Agents shows categories and versions. Tuca's ver_estado shows the
+skills a bot follows. The full suite has two known load flakes, `thought-boundary` and
+`tuca-keep-and-batch-core`, both reproduced outside this change.
+
 ### Wave 6 — Images, connector icons, notices and guide
 
 | PR | Role |
