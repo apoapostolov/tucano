@@ -278,7 +278,8 @@ cleanly and keep their 0.2.37 base until their own rebase is due.
 Wave 7 is complete on upstream 0.2.38 at `9c246bac`: #274 `0aa2d2bc`, #467 `14bf8edc`, #272
 `5be98db0`, #416 `04f709b7` and the narrowed #250 `012ae5d6`, all clean, 0 TypeScript errors,
 pushed, MERGEABLE and commented (`6990937835`, `6990938503`, `6990939205`, `6990939867`,
-`6990940594`). #274's interoperability assessment found one real 0.2.38 gap: team-up rooms now go
+`6990940594`). #305 later gained the 0.2.36 custom quota hover cards at `8a3336e4` with comment
+`6990982155`, still MERGEABLE. #274's interoperability assessment found one real 0.2.38 gap: team-up rooms now go
 through `agentsFor(requester, …)` and grant the room to restricted people who could see the source
 conversation. #467's multi-boss exclusion is a noted coordination item, not a defect on this base.
 Draft #424 was
@@ -288,7 +289,9 @@ whether it is dropped; #435 stays excluded. The shared contract, including gates
 
 Two older gaps are being closed before wave 8: a worker is folding the standalone Jev-as-classifier
 brick into Classifier Uses in checkpoint 6, and another is porting 0.2.36's custom quota hover cards
-into #305. Wave 8 starts only after both land and are verified.
+into #305. Wave 8 starts only after both land in the live checkpoint and are verified: the Jev-as-classifier
+fold still has a worker in `ckpt6-build`; the custom quota hover cards landed on #305 at `8a3336e4`
+and still need the same port into checkpoint 6.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
 job (`sidebarHidden` with Undo in `sidebar-top.ts`), so that half is dropped. Reordering applies to
