@@ -130,3 +130,22 @@ converted to draft so the defective branch cannot be merged by accident. An isol
 router row and tab button, English labels, changelog line), the stale next-steps wording fixed,
 and no duplicated #298/#272/#279/#333/#379/#385 code. It will not be pushed; it is the artifact
 for a later merge-or-clean decision.
+
+Artifact: local branch `rb/iso-383` in `C:/git-ext/tucano-wt/iso-383`, head `2fe0d025`, based on
+`upstream/main` `4522704e`. Four commits: `14baa7b8` six-job Classifiers section, `297760f7`
+router row and tab button adapted, `ac7d42ef` English labels, `2fe0d025` changelog. Diff against
+base: 17 files, `+1091 -127`, including `core/classifiers.ts`, `shared/classifiers.ts`, the
+Classifiers card and two test files. Typecheck 0 errors; `classifiers` and
+`classifiers-router-row` 17/17, wider pass over touched code 76 passed / 3 skipped, router and
+browser 38/38. No conflict markers, no `model-routing.ts` or `Routing.tsx` diff, no `next_steps`
+tool, no "all ticked" wording. The changelog was corrected to describe what the branch actually
+carries: the Router card is gone and four jobs stay inert until their PRs land.
+
+Dropped duplicates: the whole routing files and their tests (#333), listen/recommend/next-steps
+sections of `jev.ts` and `runs.ts` (#279/#272/#298), their settings keys, and the old questions
+card in `Pages.tsx`. Dependencies left noted in code, not imported: `SmartRoutingRow`/
+`RoutingPane` and `Settings.routing` (#333), `listenJev` (#279), `recommend()` (#272), `NEXT_STEPS`
+(#298). Only `routing` and `browser` jobs run on this branch; the other four are assignable but
+inert. Overlap with pushed #385: `core/classifiers.ts` 4 lines apart, `shared/classifiers.ts` 39
+lines apart (the four extra jobs), `test/classifiers.test.ts` 20 lines apart. Merging #385 first
+is the cheap path.
