@@ -203,10 +203,17 @@ Enhanced is selected, so the two systems never stack their controls or duplicate
 selector beside the existing notifications card and use the new settings row and tab idioms.
 Apo also caught a colour defect in the old branch: successful response notices drew the bottom time
 bar in success green. It is fixed on `feat/notification-center` at `21845284` by giving `.nc--done`
-the signature `--toast-ink` orange; the wave 6 rebase must keep that fix.
+the signature `--toast-ink` orange; the wave 6 rebase keeps that fix. That earlier push was found to
+be on the 0.2.29 base despite the fix, so it is being replaced: the corrected branch must have
+`4522704e` as an ancestor before it is pushed or commented on again.
 
-#303 and #336 touch the same image components. Their combined wiring already lives on `next`, so
-port that behavior into the new UI first, then split it back into the two PR branches. Screenshots
+Wave 6 prep heads on the real 0.2.37 base: #303 `eeaed571`, #336 `987efddf`, #353 `451f29d0` and
+#451 `ba2f238f`, all clean, 0 TypeScript errors and pushed/MERGEABLE with compatibility comments.
+Their own gates passed: 11, 23, 18 and 13 tests respectively; #353's full suite also passed with
+2103 tests and 61 skipped. #303 and #336 were verified as a pair: without a union the album cells
+lose the image-menu right-click, so checkpoint 6 must attach the same `openImageMenu` handler to
+`artifact-image gallery__cell` that `ArtifactCard` uses. The verified union is saved at
+`C:/Users/theap/AppData/Local/hermes/cache/scratch/wave6-303-336-combined.patch`. Screenshots
 belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6 checks: a reply with
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
