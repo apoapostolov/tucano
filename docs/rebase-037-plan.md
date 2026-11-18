@@ -57,7 +57,9 @@ own rail. The Classifiers section goes where the new base already groups agent i
 the base's section and row primitives; the old settings screen is not restored. With multiple
 classifiers, the separate **Jev as a classifier** card is removed: `Mark the recommended option`
 becomes one role inside **Classifier Uses**, while the models and keys stay under **Classifiers**.
-Checkpoint 3 checks:
+The branch had also lost the option-marking behavior when the Classifiers section landed, so #379
+restored it and the switch now writes `jevRecommend` from Classifier Uses. Final #379 head
+`99fb3b7a` with comment `6989254592`. Checkpoint 3 checks:
 a routed reply carries a visible reason line, the Classifiers section is reachable, and a question
 card can show Jev's recommended option.
 
@@ -351,7 +353,9 @@ The 0.2.36 **Agent replies** settings card (send mode and consecutive replies) w
 number. Upstream 0.2.37 removed the UI, and no later wave restored it. Wave 1 only carried the
 server-side steer half of #338, so the setting is being restored on #338 under the existing
 `agents-replies` section of the new settings rail. There is no maximum-parallel number to restore;
-0.2.36 never exposed one.
+0.2.36 never exposed one. PR #338 now carries the restored card at `5eb0226c` (MERGEABLE, comment
+`6989254000`): four modes, the 1–10 consecutive-replies field, and one chain-depth control instead of
+a duplicate in Limits.
 
 ### Wave 2 (done)
 
