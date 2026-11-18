@@ -239,6 +239,17 @@ belong on the frames branch pinned by commit, not in the code diff. Checkpoint 6
 several pictures shows one album, the image menu works on album cells, connectors show their icons,
 and a notice can be raised from any window.
 
+Checkpoint 6 installed from `c8da6cf3` (union `f6753ef2`, 0.2.38 delta `c8da6cf3`): asar
+**37822529** bytes, SHA-256 `7ed64664a3eb4440329f0f482d100d99905f44cf8005317d57b034ba977c54f5`.
+Doctor: `cd C:/git-ext/tucano-wt/ckpt6-build && node scripts/self-build.mjs doctor --json` reports
+`sameAsBuild: true`, `version: "0.2.38"`, `verdict: running`. To confirm on screen: the app reports
+0.2.38; a reply with several pictures shows one album and the image menu opens on album cells;
+connectors show their icons; Settings › Notifications offers Native / Enhanced with enhanced rows
+only in Enhanced and an orange time bar on done notices; the English guide carries the new
+folder/Docker hint; quota header bars show only the conversation agents' primary/fallback
+providers, with names above equally wide bars; a wiki request stays in the wiki sidebar. Version
+strings stay fixed across fork builds, so the hash is the real marker.
+
 Upstream released **0.2.38** at `9c246bac` during wave 6 with only two commits: the Canva-on-server
 fix and the release bump. Apo decided to ingest them into this wave rather than leave them for a
 later ingest, so checkpoint 6 now carries the 0.2.38 delta (9 files) on top of the wave 6 union,
