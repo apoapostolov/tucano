@@ -257,11 +257,22 @@ Pushed 2026-11-18. Third batch, all verified at the pushed tip and **MERGEABLE**
 | PR | Branch | New head | Tests | Comment |
 | --- | --- | --- | --- | --- |
 | #332 | feat/steer-pill | `b37827ab` | 13/13 | [6979380958](https://github.com/eduwxyz/tucano/pull/332#issuecomment-6979380958) |
-| #457 | feat/pause-reply | `2e347537` | 18/18 | [6979381435](https://github.com/eduwxyz/tucano/pull/457#issuecomment-6979381435) |
+| #457 | feat/pause-reply | `2c2605c9` | 35/35 | [6979381435](https://github.com/eduwxyz/tucano/pull/457#issuecomment-6979381435), [6979440800](https://github.com/eduwxyz/tucano/pull/457#issuecomment-6979440800) |
 
 The steer and hold tests that live only in the main checkout (`steer-run`, `steer-followup`) are not
 gate material for these single-feature branches: the hold test needs #457 and the follow-up test
 needs #338. Each branch was gated with its own tests.
+
+#457 was re-pushed after review: the original rebase kept the PR's addition of `paused` to
+`RETRYABLE`, which would let `retryRun` start a second run on a held reply. That word is removed in
+`2c2605c9`, so a held reply resumes through `resumeRun` only.
+
+#332's PR head was a 17-commit stack carrying wave-2 send-mode work and #446's settings grouping.
+Only the steer half was rebased; the queue and settings commits stay on their own PR branches. Its
+frames were shot on the pre-0.2.37 chain and may need re-shooting. When #332 and #457 are merged,
+each draws its own row under the chain while the reference draws one shared `.steps__hold` row, so
+the CSS should be reconciled then. `Step.kind` is `'steer'` on #332 and gains `kind?: 'thinking'` on
+#322, a one-line union conflict when both land.
 
 Old heads are kept as `pr-backup/<branch>-20261118` tags on origin. All four branches were clean,
 based on `upstream/main` `4522704e`, and typechecked at 0 errors from the main checkout.
