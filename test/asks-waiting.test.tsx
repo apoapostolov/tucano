@@ -67,12 +67,15 @@ describe('the questions section of the waiting-on-you screen', () => {
     expect(html).toContain('Ver na conversa')
   })
 
-  it('shows the conversation card, which keeps saying where the answer goes', () => {
+  it('answers the question on the card itself, with no team to fall back on', () => {
     const html = page([q('q1', 'a1', 'dm1', 'Publico o post hoje?')])
     expect(html).toContain('class="question')
-    expect(html).toContain('Pergunta pra você')
-    // Alone, the answer is the next message in the conversation: the section links back to it.
-    expect(html).toContain('Sua próxima mensagem aqui é a resposta.')
+    expect(html).toContain('Lia pergunta a você')
+    // Alone there is no one else the answer would reach the conversation through, so the card
+    // answers it where it shows (the Asks page, this section) instead of pointing back.
+    expect(html).toContain('Sua resposta')
+    expect(html).toContain('Responder')
+    expect(html).not.toContain('Sua próxima mensagem aqui é a resposta.')
     expect(html).not.toContain('Respondida')
   })
 

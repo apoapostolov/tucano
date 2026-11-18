@@ -231,7 +231,7 @@ function Tucked({ items }: { items: TopItem[] }): ReactNode {
   const [open, setOpen] = useState(false)
   const team = useStore(teamMode)
   const glyph = (i: TopItem): ReactNode =>
-    i === 'tuca' ? <TucaMark size={18} /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
+    i === 'tuca' ? <TucaMark size={18} /> : i === 'asks' ? <Icon name="ask" /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
   return (
     <div className={`tucked ${open ? 'is-open' : ''}`}>
       <button type="button" className="tucked__toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -284,6 +284,13 @@ export function Sidebar(): ReactNode {
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
   const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const asks = useStore((s) => s.inbox.questions.length)
+  // Out of the sidebar while nothing waits in them, when that's asked for; the one I'm looking at stays,
+  // so ticking the setting never takes away the page under my feet.
+  const onAsks = useStore((s) => s.view?.kind === 'asks')
+  const onApprovals = useStore((s) => s.view?.kind === 'approvals')
+  const showAsks = !settings.hideEmptyAsks || asks > 0 || onAsks
+  const showApprovals = !settings.hideEmptyApprovals || pending > 0 || onApprovals
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
   const channels = conversations.filter((c) => c.kind === 'channel')
   const dms = conversations.filter((c) => c.kind === 'dm' && agentOf(c.name)?.kind !== 'tuca')
@@ -493,11 +500,17 @@ export function Sidebar(): ReactNode {
             <TucaItem />
           </TopRow>
         )}
-        {(shows('approvals') || back('approvals')) && (
+        {showAsks && (shows('asks') || back('asks')) && (
+          <TopRow item="asks" back={back('asks')} onMenu={menuAt}>
+            <NavItem view={{ kind: 'asks' }} icon="ask" label={topLabel('asks', team)} badge={asks} />
+          </TopRow>
+        )}
+        {showApprovals && (shows('approvals') || back('approvals')) && (
           <TopRow item="approvals" back={back('approvals')} onMenu={menuAt}>
             <NavItem view={{ kind: 'approvals' }} icon="shield" label={topLabel('approvals', team)} badge={pending} />
           </TopRow>
         )}
+
         {shows('board') && (
           <TopRow item="board" onMenu={menuAt}>
             <NavItem view={{ kind: 'board' }} icon="board" label={topLabel('board', team)} fresh={fresh('board')} />

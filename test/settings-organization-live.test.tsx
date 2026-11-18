@@ -223,7 +223,7 @@ describe('settings sections inside the 0.2.37 tabs', () => {
 
   it('keeps every control the tabs had', async () => {
     await render('geral')
-    expect(cards()).toEqual(['Workspace', 'Quotas', 'Dictation', 'Notifications', 'Conversations', 'Talk to the people who make Tucano', 'Updates', 'Team', 'Full backup', 'Danger area'])
+    expect(cards()).toEqual(['Workspace', 'Quotas', 'Dictation', 'Notifications', 'Conversations', 'Talk to the people who make Tucano', 'Sidebar', 'Updates', 'Team', 'Full backup', 'Danger area'])
     expect(card('Conversations')!.querySelectorAll('.key-row')).toHaveLength(5)
     // The ones written in this page carry the anchor on the card itself.
     for (const id of ['workspace-context', 'app-quotas', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-danger']) {
