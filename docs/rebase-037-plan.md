@@ -307,6 +307,11 @@ onto it at `4450e1a4` with 4 files / 46 tests green. The browser click-finder re
 known `thought-boundary` timing flake. The tail PRs #32/#411, #288, #290, #512 and the check:settings
 guard are now rebasing in isolated worktrees. All wave 0–7 features are preserved.
 
+Tail rebases verified: #288 `6059e403`, #290 `75e97c08`, #512 `c2f8f08f` and the check:settings
+guard `6aa59744` are clean with 0 TypeScript errors; their touched tests pass (16, 3, 34 and 17),
+and `npm run check:settings` now reports `passed: true` with 36 sections. #32/#411 hit an iteration
+cap mid-fix; a replacement worker is finishing them at `rb-32`/`rb-411`.
+
 Wave 8 can start from checkpoint 6 at `589e1aec` / asar `9485c313...`, then moves to the 0.2.39 base.
 
 Apo's 2026-11-18 narrowing, from the Lite Desktop model: hiding core sidebar features is upstream's
