@@ -115,12 +115,12 @@ do not let an explicit refresh join a second request. Checkpoint 4 checks: quota
 no loading gap, an explicit refresh animates the same block, retention settings are reachable, and
 the database action reports whether the file is sound.
 
-Quota presentation is a follow-up to the same settings container, to be implemented once #305 is
-delivered: add a selector between **Circle ratios**, the native Tucano treatment, and **Table**, the
-view #305 brings. This replaces the current mixed rule that draws Codex as circles and every other
-provider as a table; one setting decides the shape for all providers. In the same container add a
-checkbox row for each recognized provider configured in a harness, so the person decides which of
-those providers has quota shown at all. Unknown or unconfigured harness entries do not get a row.
+Quota presentation shipped with checkpoint 4: the selector between **Circle ratios**, the native
+Tucano treatment, and **Table**, the view #305 brings, lives in Settings › General, in the same card
+as the provider checkboxes. One setting decides the shape for all providers, replacing the old mixed
+rule that drew Codex as circles and every other provider as a table. The checkbox row for each
+recognized provider configured in a harness controls whether its quota is shown in the conversation
+and in Usage and limits; unknown or unconfigured harness entries get no row.
 
 Wave 4 PRs were pushed and verified on 2026-11-18: #305 `72541a7f` (53 quota tests, clean build and
 three screen probes; usage lives in the Operations hub), #432 `c2445ee9` (60 retention + 18
@@ -128,9 +128,17 @@ team-round3 + 67 people tests), #437 `b48f73fa` (27 database tests and 3 skips; 
 commit was an exact duplicate and was dropped), and #249 `ba627116` (12 clear-history tests; action
 in the sidebar row menu, emptied conversations say "Histórico limpo."). Each is MERGEABLE and has a
 Lite Desktop compatibility comment. The wave 3 polish was pushed afterwards to #379 `331d2740` and
-#333 `5c945503` with correction comments, so the PR heads now match the installed layout. Checkpoint
-4 is the next build; its presentation follow-up is the quota selector and provider checkbox rows
-described above.
+#333 `5c945503` with correction comments, so the PR heads now match the installed layout.
+
+Checkpoint 4 is installed at source tree `0fba90cc`, asar **37570571** bytes, SHA-256
+`8e0a27fea025a6fb605eac00c792877789124f0508a98a6dfd6f25890305e73f`. Gate: 0 conflict markers, 0
+TypeScript errors and 34 files / 345 passed with 6 skipped across the wave 4 union and settings
+suites; `self-build doctor` reports `sameAsBuild: true` and `verdict: running`. Confirm the wave on
+screen by opening Settings › General: **Quotas** sits between Workspace context and Dictation, with
+the Table/Circle ratios selector and one checkbox per configured harness provider. In Operations ›
+Usage and limits the quota block shows the cached reading immediately, and switching the selector
+redraws every provider in the chosen shape. An emptied conversation says "Histórico limpo.", the
+history-retention field is in the workspace danger card, and the database card reports soundness.
 
 ### Wave 5 — Wiki and skills
 
