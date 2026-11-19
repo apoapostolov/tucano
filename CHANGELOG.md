@@ -9,9 +9,21 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > **Em português:**
 > - **Corrigido:** o uso do mês de um agente no **Antigravity** não fica mais negativo (como "−2003590 de 2 mi"), e o limite mensal dele volta a valer. Algumas respostas do Antigravity contam o cache à parte da entrada, e a conta subtraía o cache como se estivesse dentro. Os recibos antigos também passam a contar certo.
 
+### Added
+
+- **Contextual replies in every conversation.** Reply to one message instead of only the latest one, select a passage and press Ctrl+L to quote it, and keep quotes on their own line. The reply shortcut is a setting in Conversations. (#411)
+- **An Asks section above Approvals.** Every agent question sits in one place, with a history of past asks, inline answers in a one-person workspace, and settings that hide an empty Asks or Approvals section. (#247)
+- **A work drawer and prompt jump.** Open a task's panel beside the conversation and jump back to the prompt that started a reply. (#288, #290)
+
+### Changed
+
+- **Classifier Uses reads as one list.** Marking the recommended option is a dropdown like the other classifier jobs, with a shorter hint. The browser click finder is chosen in Settings › Agents › Browser, with Off, Jev and configured providers as options. (#379)
+- **Quota bars carry more of the story.** Hover cards sit clear of the routines pill, the header shows only providers that are primary or fallback, Settings rows stay title-only, and Usage keeps the provider subtitle. (#305)
+
 ### Fixed
 
 - **An Antigravity agent's month no longer goes negative.** Tokens count as input − 90% of cache reads + output, which assumes the input counts the cache reads in. Some Antigravity runs report more cache reads than input, so the month showed as "−2003590 of 2M" and the agent's monthly limit never fired. More cache reads than input now means they came apart: the input counts whole and the cache a tenth, in every total, so receipts already saved read right too; new ones from Antigravity add the cache reads to the input. Agents that were past their limit without it showing now stop at it, and say it can be raised on their page. (#547)
+- **Notifications follow the selected language.** The area picker was a second notice window that never received the language setting, so it stayed in Portuguese when the app was in English. Both notice windows now start in the selected language and follow a switch while open. (#417)
 - **TucanoNext takes upstream 0.2.39.** The quota strip, the hover cards and an agent's page follow the counted-token fix in it (#547), so an Antigravity receipt whose cache reads exceed its input no longer shows a negative month in the strip either.
 
 ## [0.2.38] - 2026-11-18
