@@ -93,6 +93,20 @@ describe('the work drawer', () => {
     expect(text()).toContain('isto pode esperar')
   })
 
+  it('says on the queued pill why it has not started', async () => {
+    await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
+    const sub = document.querySelector('.work-row--queued .work-row__sub')
+    expect(sub).not.toBeNull()
+    expect(sub?.textContent?.length).toBeGreaterThan(3)
+  })
+
+  it('gives each working session a steer sub-button beside its stop action', async () => {
+    await render(nextConv(), [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await act(async () => button('1 respondendo').click())
+    expect(document.querySelector('.work-row__steer .steps__ask-pill')).not.toBeNull()
+    expect(document.querySelector('.work-row__stop')).not.toBeNull()
+  })
+
   it('stops one reply and jumps to another, without touching the rest', async () => {
     await render(nextConv(), [said('m1', 'primeiro pedido', 1), said('m2', 'segundo pedido', 3), reply('r1', 'm1'), reply('r2', 'm2')])
     await act(async () => button('Parar esta resposta').click())

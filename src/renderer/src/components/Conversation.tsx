@@ -2978,6 +2978,16 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
               >
                 <Icon name="x" size={12} />
               </button>
+              <div className="work-row__steer">
+                <PillPrompt
+                  icon="pointer"
+                  label={L('Orientar', 'Steer')}
+                  title={L('Dizer como seguir, sem parar esta resposta', 'Say how to go on without stopping this reply')}
+                  aria={L('Orientação para esta resposta', 'A steer for this reply')}
+                  placeholder={L('Como ele deve seguir?', 'How should it go on?')}
+                  onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], undefined, 'steer', m.id)}
+                />
+              </div>
             </div>
           ))}
           {queued.length > 0 && (
@@ -2987,7 +2997,10 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                 <div className="work-row work-row--queued" key={m.id}>
                   <button className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para este pedido', 'Go to this prompt')}>
                     <Icon name="clock" size={11} />
-                    <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
+                    <span className="work-row__prompt">
+                      <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
+                      <span className="work-row__sub">{L('Na fila, esperando a vez', 'Queued, waiting for its turn')}</span>
+                    </span>
                     {where(m, 24)}
                   </button>
                 </div>
