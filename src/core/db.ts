@@ -1137,6 +1137,8 @@ export class Db {
         this.db.prepare('DELETE FROM messages WHERE id = ?').run(one)
       }
       return gone
+    })
+  }
 
   // Whether anything was said there yet, by anyone.
   hasMessages(conversationId: string): boolean {
