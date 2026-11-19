@@ -15,7 +15,7 @@ import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
 import { saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
-import { canResume } from '../../../shared/run-progress'
+import { canFollowUp, canResume } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -1047,9 +1047,16 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
                     <Icon name="play" size={11} />{L('Continuar', 'Continue')}
                   </button>
                 )}
-                {/* The way on from this reply, first in its own footer line, before the numbers: it is
-                    about the reply above it, not about the conversation below. */}
-                <FollowUpPill message={message} />
+              </>
+            )}
+            {/* The way on from this reply, first in its own footer line, before the numbers: it is
+                about the reply above it, not about the conversation below. It is the steer's twin, so it
+                is on every reply that isn't at work — a reply cut by an install has no receipt line of
+                its own and still takes one, which is how a cut session gets told what to do next
+                instead of only being woken by Continue (run-progress.ts, `canFollowUp`). */}
+            <FollowUpPill message={message} />
+            {hasFooter && (
+              <>
                 {message.run?.receipt && <ReceiptLine receipt={message.run.receipt} />}
                 {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
               </>
@@ -2348,18 +2355,21 @@ function SteerPill({ message }: { message: Message }): ReactNode {
   )
 }
 
-// A follow up, in the reply's own footer: the same pill, the same field, and the instruction stays in
-// that reply — it goes on in the same row, its text and steps kept, instead of turning into another
-// message in the conversation (src/core/runs.ts, `followUp`). It rides the line that fades in under a
-// finished answer, before the numbers: the chain ended at the text, and what goes on comes after it.
+// A follow up, in the reply's own footer: the same pill as a steer, the same field, and the instruction
+// stays in that reply — it goes on in the same row, its text and steps kept, instead of turning into
+// another message in the conversation (src/core/runs.ts, `followUp`). A steer is for the reply at work;
+// this is the same thing for one that isn't (cut by an install, stopped, failed, paused, or simply
+// finished), so a cut session can be woken with what to do next, not only with Continue. It rides the
+// line that fades in under the reply, before the numbers: the chain ended at the text, and what goes on
+// comes after it.
 export function FollowUpPill({ message }: { message: Message }): ReactNode {
-  if (message.run?.status !== 'done') return null
+  if (!message.run || !canFollowUp(message.run)) return null
   return (
     <PillPrompt
       icon="down"
       place="reply"
       label={L('Seguir', 'Follow Up')}
-      title={L('Pedir mais desta resposta, na mesma sessão', 'Ask more of this reply, in the same session')}
+      title={L('Dizer como esta resposta segue agora', 'Say how this reply goes on now')}
       aria={L('O que mais esta resposta deve fazer', 'What more this reply should do')}
       placeholder={L('O que mais?', 'What next?')}
       onSend={(text) => followUpRun(message.id, text)}

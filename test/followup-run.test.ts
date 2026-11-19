@@ -155,7 +155,67 @@ describe('a reply that goes on from where it stopped', () => {
     expect(turns[1]!.prompt).toContain('Primeira parte pronta.')
   })
 
-  it('is offered only for a reply that ended: a running one is steered, not followed up', async () => {
+  // A steer steers the reply at work; a follow up wakes one that isn't. A reply the app cut keeps its
+  // row, its words and its steps, and the instruction is what it does next — the same door as Continue,
+  // with words (19 Nov: a cut session could only be woken, never told what to do).
+  it('wakes a reply the app cut, in its own row, so a cut session can be told what to do next', async () => {
+    const turns: Turn[] = []
+    const r = runnerWith(recorded(turns))
+    await r.send('d1', 'faça a primeira parte')
+    await r.idle()
+    const first = replies()[0]!
+    const stepsBefore = first.run!.steps.length
+    // What a boot leaves behind: cut while it worked, and still owed its continuation. The new runner
+    // is the app opened again — no session in memory, which is why a cut reply can't resume.
+    db.saveMessage({ ...first, run: { ...first.run!, status: 'interrupted', restartPending: true, cutAt: Date.now() } })
+    const booted = runnerWith(recorded(turns))
+
+    booted.followUp(first.id, 'agora a segunda parte')
+    await booted.idle()
+
+    // The same reply, awake again: one row, not a second reply beside it.
+    expect(replies()).toHaveLength(1)
+    const after = db.message(first.id)!
+    expect(after.id).toBe(first.id)
+    expect(after.text).toBe('Primeira parte pronta.\n\nSegunda parte pronta.')
+    expect(after.run?.status).toBe('done')
+    // Its cut marks are gone with the wake: nothing needs to resume it a second time at the next boot.
+    expect(after.run?.restartPending).toBeUndefined()
+    expect(after.run?.cutAt).toBeUndefined()
+    // What it did stays, and the instruction is a row of the person's own before the new work.
+    expect(after.run!.steps.length).toBeGreaterThan(stepsBefore)
+    expect(after.run!.steps[stepsBefore]).toMatchObject({ kind: 'followup', detail: 'agora a segunda parte' })
+    // A cut turn never ended well, so its session is gone: the new one starts on the whole transcript,
+    // and the reply it carries on from rides with the task so it can see it.
+    expect(turns).toHaveLength(2)
+    expect(turns[1]!.session?.resume).toBe(false)
+    expect(turns[1]!.prompt).toContain('agora a segunda parte')
+    expect(turns[1]!.prompt).toContain('Primeira parte pronta.')
+  })
+
+  it('wakes a stopped reply too, and takes one wake per row', async () => {
+    const turns: Turn[] = []
+    const r = runnerWith(recorded(turns))
+    await r.send('d1', 'faça a primeira parte')
+    await r.idle()
+    const first = replies()[0]!
+    db.saveMessage({ ...first, run: { ...first.run!, status: 'stopped' } })
+
+    // Two presses while the first is on its way: the second starts nothing, or two turns would fight
+    // over one row (the same guard a Continue on this row uses).
+    r.followUp(first.id, 'agora a segunda parte')
+    r.followUp(first.id, 'outra coisa')
+    await r.idle()
+
+    expect(turns).toHaveLength(2)
+    const after = db.message(first.id)!
+    expect(after.text).toBe('Primeira parte pronta.\n\nSegunda parte pronta.')
+    const rows = after.run!.steps.filter((s) => s.kind === 'followup')
+    expect(rows).toHaveLength(1)
+    expect(rows[0]!.detail).toBe('agora a segunda parte')
+  })
+
+  it('is not offered for a reply that is still at work: a running one is steered, not followed up', async () => {
     const turns: Turn[] = []
     const r = runnerWith(recorded(turns))
     await r.send('d1', 'demore 2 s')
