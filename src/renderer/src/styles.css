@@ -1348,8 +1348,12 @@ h3 {
   min-width: 0;
   max-width: 100%;
 }
+/* A reply's own actions, at the right end of its footer line: the copy glyph and the way to answer it
+   are two presses, so they keep a little air between them instead of reading as one wide control. */
 .msg__actions {
   display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 4px;
 }
 /* The reply button under a message (and "Reply to selection" once text in it is selected). */

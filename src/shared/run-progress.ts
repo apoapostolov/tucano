@@ -24,7 +24,11 @@ export const canContinue = (run: Run): boolean =>
 // continuation was started from the row, `cutAt` left behind) or the turn ended with nothing said. The
 // person is owed a nudge there — a bubble with a chain and no answer is a dead end otherwise — and the
 // reply's own text is the only thing that says whether it answered, which is why it comes in here.
-export const finishedSilently = (run: Run, text: string): boolean => run.status === 'done' && !text.trim()
+// Not for a routine that stayed silent on purpose (`noNews`: the conversation folds it into one line),
+// and not once a continuation from it is on its way (`continuedAt`): the pill is spent then, and a
+// second press would start a second reply beside the first.
+export const finishedSilently = (run: Run, text: string): boolean =>
+  run.status === 'done' && !text.trim() && !run.noNews && !run.continuedAt
 
 // What the person's Continue accepts: any reply the app cut, even one with nothing but thoughts behind
 // it (the app closing mid-sentence, a stop from the rail), and a session left showing no answer at all

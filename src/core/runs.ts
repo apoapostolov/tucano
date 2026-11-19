@@ -131,6 +131,9 @@ export const MAX_QUOTE_CHARS = 32_000
 const REASON_PARAM = '_motivo'
 const OVER_CALLS_GRACE = 3 // calls refused past the budget before the turn is cut
 const RESUME_WINDOW_MS = 12 * 3_600_000 // a reply the app cut longer ago than this, when it reopens, is left for the person
+const RECOVERY_TRIES = 3 // picked up by itself and cut again this many times: the person's Continue is the way on
+const ORPHAN_EVERY_MS = 60_000 // how often a reply left working with no runner is looked for
+const ORPHAN_GRACE_MS = 60_000 // seen dead for this long before it is taken as dead, not between two writes
 const BUDGET_OVERRUN = 1.3 // past the budget by this much without wrapping up, the turn is cut
 const USAGE_ALERT = 0.8
 // An agent with no monthly ceiling (limit 0) still keeps a per-reply cap, or a
@@ -445,6 +448,8 @@ export class Runner {
   private active = 0
   private routing = 0
   private controllers = new Map<string, Control>()
+  // Rows with a continuation in flight: the pill on them stays until the new reply is on its way.
+  private continuing = new Set<string>()
   private held = new Map<string, Promise<void>>() // by agent: its replies on an engine that keeps the MCP connection
   private paused = false // "Pausar tudo": nobody starts working until it's off
   private idleWaiters: (() => void)[] = []
@@ -486,6 +491,12 @@ export class Runner {
     // Left by an earlier run of the app, under the usual login and each account's.
     this.cleanTranscripts()
     setInterval(() => this.sessions.sweep(), 10 * 60_000).unref()
+    // A reply whose runner died while the app stayed open: nothing will ever finish it, and the
+    // channel shows a session at work for ever with no Continue (see sweepOrphans).
+    setInterval(() => {
+      const cut = this.sweepOrphans()
+      if (cut.length) void this.resumeInterrupted(cut)
+    }, ORPHAN_EVERY_MS).unref()
   }
 
   // What the engines keep outside the app's folder (Claude Code's transcripts, in ~/.claude) for
@@ -1156,6 +1167,9 @@ export class Runner {
     const { db } = this.deps
     const msg = db.message(messageId)
     if (!msg?.run || msg.author.kind !== 'agent') return
+    // One continuation per row at a time: until the new reply is on its way the row still carries its
+    // pill, and a second press would start a second reply beside the first.
+    if (this.continuing.has(messageId)) return
     // Going on by itself asks for something to go on with; a person's Continue takes any reply the
     // app cut, even one cut while it was still thinking and has no tool call behind it, and a session
     // left showing no answer at all (`done` with no words: the app cut it and the continuation that was
@@ -1179,7 +1193,10 @@ export class Runner {
     const went: Step[] = auto ? [{ id: randomUUID(), label: L('Continuou sozinho', 'Went on by itself'), status: 'done' }] : []
     const onStart = (): void => {
       const { restartPending: _, ...rest } = run
-      this.update(msg, { run: { ...rest, status: 'done', steps: [...(rest.steps ?? []), ...went] } })
+      // `continuedAt`: the row that carried the Continue no longer does. It has no words of its own and
+      // never will, so a silent `done` row reads as "still owes an answer" for ever otherwise, and a
+      // second press would start a second reply beside the one already going.
+      this.update(msg, { run: { ...rest, status: 'done', continuedAt: Date.now(), steps: [...(rest.steps ?? []), ...went] } })
     }
     // At its cap, each time it goes on by itself counts; a person's Continue starts the count over.
     const autoContinued = auto === 'cap' ? (msg.run.autoContinued ?? 0) + 1 : auto === 'restart' ? msg.run.autoContinued : undefined
@@ -1218,7 +1235,11 @@ export class Runner {
     ]
       .filter(Boolean)
       .join('\n\n')
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}), onStart }, { urgent: !automatic })
+    // Counted on the row it goes on from, before the reply starts: a continuation that dies before it
+    // says a word never reaches `onStart`, and without this the next boot would pick it up for ever.
+    if (automatic) this.update(msg, { run: { ...msg.run, resumes: (msg.run.resumes ?? 0) + 1 } })
+    this.continuing.add(messageId)
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}), onStart }, { urgent: !automatic }).finally(() => this.continuing.delete(messageId))
   }
 
   // Whether a reply that paused at its cap goes on by itself: the person didn't turn that off, it hasn't
@@ -1230,6 +1251,47 @@ export class Runner {
     if ((run.autoContinued ?? 0) >= AUTO_CONTINUES) return false
     if (!(run.steps ?? []).some((s) => s.status === 'done' && !WORKLESS_LABELS.includes(s.label))) return false
     return this.deps.db.usedThisMonth(agent.id) + budget <= monthlyCeiling(agent.limit)
+  }
+
+  // A reply left `working` that no runner owns, while the app keeps running: the turn died inside it
+  // (an engine crash, a child killed, a session that went quiet mid-think) so nothing will ever write
+  // its end, and the channel shows it at work for ever — no reply, no Continue, no way on. Shutdown
+  // marks these in db.interruptStaleRuns; this is the same reading for the app that stays open, which
+  // is how 19 Nov left one dead in a DM until the next restart.
+  // Read twice, a minute apart: the gap between a reply being saved `working` and its runner taking it
+  // is milliseconds, and a row seen once is a race, not a corpse. A row with no steps is the router's
+  // "Picking who answers…" note, which no runner owns while the router thinks.
+  private orphanSeen = new Map<string, number>()
+  sweepOrphans(now = Date.now()): string[] {
+    const cut: string[] = []
+    const pending = new Set<string>()
+    for (const m of this.deps.db.messagesWithRun(['working'])) {
+      if (this.controllers.has(m.id)) continue
+      const run = m.run
+      if (run?.status !== 'working' || !run.steps?.length) continue
+      const first = this.orphanSeen.get(m.id)
+      if (first === undefined) {
+        this.orphanSeen.set(m.id, now)
+        pending.add(m.id)
+        continue
+      }
+      if (now - first < ORPHAN_GRACE_MS) {
+        pending.add(m.id)
+        continue
+      }
+      cut.push(m.id)
+      this.update(m, {
+        run: {
+          ...run,
+          status: 'interrupted',
+          restartPending: true,
+          cutAt: now,
+          steps: run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' as const } : s))
+        }
+      })
+    }
+    for (const id of this.orphanSeen.keys()) if (!pending.has(id)) this.orphanSeen.delete(id)
+    return cut
   }
 
   // Replies that were working when the app closed (interruptStaleRuns): they go on by themselves once
@@ -1284,8 +1346,11 @@ export class Runner {
       // From when the app cut it, not from when it was asked: a long reply asked hours ago was still
       // going when the app closed. Rows from before the app recorded that fall back to their own time.
       const stale = Date.now() - (cutAt ?? msg.at) > RESUME_WINDOW_MS
+      // Picked up by itself this many times already and cut every time: the person's Continue is the
+      // only way on. Without this, an engine that dies at once turns one session into a loop.
+      const tried = (run.resumes ?? 0) >= RECOVERY_TRIES
       // Auto-continue takes every cut reply; Recovery only the ones with something to go on with.
-      const goes = !stale && (automatic || canContinue(run))
+      const goes = !stale && !tried && (automatic || canContinue(run))
       const agent = msg.author.kind === 'agent' ? db.agent(msg.author.id) : undefined
       const conv = msg.conversationId ? db.conversation(msg.conversationId) : undefined
       const reachable = !!agent && !agent.archived && !!conv && conv.members.includes(agent.id)

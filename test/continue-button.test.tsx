@@ -127,6 +127,19 @@ describe('a reply the app cut', () => {
     expect(continueRun).toHaveBeenCalledWith('m3')
   })
 
+  // A routine that stayed silent on purpose is not owed a nudge, and a row whose continuation is
+  // already on its way has spent its pill: a second press would start a second reply beside the first.
+  it('keeps it off a routine that stayed silent, and off a row already continued', async () => {
+    const quiet: Message = { id: 'm4', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: '', at: 5, run: { status: 'done', noNews: true, steps: [step('Thought', 'done')] } }
+    fake = { ...fake, messages: { d1: [quiet] } }
+    await render(<ConversationView id="d1" />)
+    expect(buttons()).not.toContain('Continue')
+    const spent: Message = { id: 'm5', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: '', at: 6, run: { status: 'done', cutAt: 3, continuedAt: 7, steps: [step('Thought', 'done'), step('Went on by itself', 'done')] } }
+    fake = { ...fake, messages: { d1: [spent] } }
+    await render(<ConversationView id="d1" />)
+    expect(buttons()).not.toContain('Continue')
+  })
+
   it('keeps a finished reply without one', async () => {
     const done: Message = { id: 'm2', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: 'Pronto.', at: 3, run: { status: 'done', task: 'x', steps: [step('Ran', 'done')] } }
     fake = { ...fake, messages: { d1: [done] } }
