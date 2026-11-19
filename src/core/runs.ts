@@ -478,8 +478,10 @@ export class Runner {
   // (`send` with mode 'queue'): each waits for what is ahead of it there, and only there.
   private convRuns = new Map<string, number>()
   // What waits in each conversation, in the order it was written. `slot`: the parallel cap it ran into
-  // (0: it waits for the conversation to go quiet, like a prompt sent as `queue`).
-  private convWaiting = new Map<string, { job: () => Promise<unknown>; queued?: Message; direct?: boolean; slot?: number; launch?: (beside: boolean) => Promise<unknown> }[]>()
+  // (0: it waits for the conversation to go quiet, like a prompt sent as `queue`). `id`: the message
+  // it is waiting to answer, whether or not it carries the queue mark, so a prompt deleted while it
+  // waits takes its line with it (`forget`).
+  private convWaiting = new Map<string, { id?: string; job: () => Promise<unknown>; queued?: Message; direct?: boolean; slot?: number; launch?: (beside: boolean) => Promise<unknown> }[]>()
 
   // Goals under way, by the message that set them (src/core/goals.ts).
   private goals = new Map<string, Goal>()
@@ -841,7 +843,7 @@ export class Runner {
           // A queued prompt answers the message it was written for, never taking over an earlier one.
           { urgent: true, merge: !wait, parallel: goesBeside }
         )
-      if (wait) this.runIn(conv.id, () => start(beside || slot > 0), true, queued ? mine : undefined, false, slot, start)
+      if (wait) this.runIn(conv.id, () => start(beside || slot > 0), true, queued ? mine : undefined, false, slot, start, mine.id)
       else if (beside) void start(true)
       else before = before ? before.then(() => start(false), () => start(false)) : start(false)
     }
@@ -972,9 +974,9 @@ export class Runner {
   // `direct`: the job starts a reply, which takes its own place in the queue (startReply, launch):
   // running it here too would hold a second one for as long as the reply lasts, and MAX_CONCURRENT_URGENT
   // counts replies, not the calls that begin them.
-  private runIn(conversationId: string, job: () => Promise<unknown>, after: boolean, queued?: Message, direct = false, slot = 0, launch?: (beside: boolean) => Promise<unknown>): void {
+  private runIn(conversationId: string, job: () => Promise<unknown>, after: boolean, queued?: Message, direct = false, slot = 0, launch?: (beside: boolean) => Promise<unknown>, id = queued?.id): void {
     if (!after || !this.busyIn(conversationId)) return this.startIn(conversationId, job, queued, direct)
-    this.convWaiting.set(conversationId, [...(this.convWaiting.get(conversationId) ?? []), { job, queued, direct, slot, launch }])
+    this.convWaiting.set(conversationId, [...(this.convWaiting.get(conversationId) ?? []), { id, job, queued, direct, slot, launch }])
   }
 
   // A prompt goes out (now, or once the one before it let go): the mark a queued one kept for a restart
@@ -989,11 +991,15 @@ export class Runner {
   // starts it twice and its row leaves the drawer. The place a person gave it is spent with the mark:
   // what waits after it starts from the order it was written in.
   private unmark(queued: Message): void {
-    if (queued.sendMode) this.update(queued, { sendMode: undefined })
-    if (queued.queuePos !== undefined) {
-      this.deps.db.setQueuePos(queued.id, null)
-      queued.queuePos = undefined
-    }
+    if (queued.sendMode === undefined && queued.queuePos === undefined) return
+    // Written on the two columns alone, never as a whole message: a save is an upsert, and the prompt
+    // this mark belongs to may have been deleted while it waited — that write would put it back in the
+    // room, and then the reply the deletion was supposed to stop would start after all.
+    this.deps.db.clearQueueMark(queued.id)
+    const there = !!this.deps.db.message(queued.id)
+    if (queued.sendMode) queued.sendMode = undefined
+    if (queued.queuePos !== undefined) queued.queuePos = undefined
+    if (there) this.deps.emit({ type: 'message', message: { ...queued } })
   }
 
   // A reply ended there: a slot is free, and what was waiting for one goes (drainIn).
@@ -1024,6 +1030,35 @@ export class Runner {
       if (slot === 0) break
     }
     if (!waiting.length) this.convWaiting.delete(conversationId)
+  }
+
+  // A message is gone for good: a prompt deleted from the conversation, a session deleted with the
+  // thread it started (db.ts `deleteMessage`), the history trimmed to its period (Retention). Nothing
+  // may answer it afterwards, so every place still holding it lets go: the line it waited in, whether
+  // it carried the queue mark or was only holding a parallel slot (convWaiting), and the place a
+  // routed reply kept for it (waiting). A job already on the queue is caught by `executeReply`, which
+  // sees the prompt it answers is no longer there.
+  forget(messageId: string): void {
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const left = waiting.filter((w) => w.id !== messageId && w.queued?.id !== messageId)
+      if (left.length === waiting.length) continue
+      if (left.length) this.convWaiting.set(conversationId, left)
+      else this.convWaiting.delete(conversationId)
+    }
+    // A routing that picked agents for that message kept their places under its id: they go together.
+    for (const [key, slot] of [...this.waiting]) if (slot.trigger === messageId) this.waiting.delete(key)
+  }
+
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes first, so nothing starts it afterwards, and then the message itself — the row in
+  // the drawer and the pill it already put in the conversation are one message, so both leave in the
+  // same step. A started prompt carries no queue mark, and is left alone here.
+  dropQueued(messageId: string): void {
+    this.forget(messageId)
+    const m = this.deps.db.message(messageId)
+    if (!m || m.sendMode !== 'queue') return
+    this.deps.db.deleteMessage(messageId)
+    this.deps.emit({ type: 'message_removed', id: messageId, conversationId: m.conversationId })
   }
 
   // The order a person gave the queue in the drawer (Conversation.tsx, `reorderQueued` in rpc.ts): the
@@ -1892,7 +1927,13 @@ export class Runner {
     const key = replyKey(agent.id, conv.id, threadId)
     const { reserved, ...rest } = opts
     this.followups.start(key, reserved)
-    if ((threadId && !this.deps.db.message(threadId)) || (opts.existing && !this.deps.db.message(opts.existing.id))) {
+    if (
+      (threadId && !this.deps.db.message(threadId)) ||
+      (opts.existing && !this.deps.db.message(opts.existing.id)) ||
+      // The prompt it answers went while it waited (deleted from the drawer or the conversation, or
+      // with the thread it belonged to): a reply to nothing would show up for a question nobody asked.
+      (opts.replyTo && !opts.existing && !this.deps.db.message(opts.replyTo))
+    ) {
       this.followups.end(key)
       this.followups.take(key)
       this.startWaiting(key)

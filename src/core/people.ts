@@ -6,7 +6,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { L } from '../shared/lang'
 import { MENTION } from '../shared/mention-text'
 import type { CoreEvent, Snapshot, Wire } from '../shared/rpc'
-import { CODE_SPANS, scopePerson, type Agent, type Approval, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf, type AskEntry } from '../shared/types'
+import { CODE_SPANS, scopePerson, type Agent, type Approval, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf, type AskEntry, type InboxQuestion } from '../shared/types'
 import type { Db } from './db'
 import { can, isAdmin, isPersonalSetting, must } from './policy-people'
 import { maskSecrets } from './step-text'
@@ -560,11 +560,18 @@ export class People {
 
   // The Asks page's history: answered and closed questions, newest first, from the conversations
   // this person can see. A question from a DM that isn't theirs comes without where it was asked.
-  history(person: Person, limit = 50): AskEntry[] {
-    const shown = (q: Question): AskEntry => {
-      if (this.canSeeConversation(person, this.conversationOf(q.conversationId))) return q
+  // A question the agent wrote with decisions carries them here too, with what was answered on each
+  // and the option a classifier pointed at, exactly as the open list does: the page draws the ask as
+  // the card it was, and its text is only the fallback for a plain one.
+  history(person: Person, limit = 50): InboxQuestion[] {
+    const shown = (q: Question): InboxQuestion => {
+      const run = this.db.message(q.id)?.run
+      const ask = run?.questions?.length
+        ? { decisions: run.questions, ...(run.answers ? { answers: run.answers } : {}), ...(run.recommended?.some((p) => p !== null) ? { recommended: run.recommended } : {}) }
+        : {}
+      if (this.canSeeConversation(person, this.conversationOf(q.conversationId))) return { ...q, ...ask }
       const { conversationId: _c, threadId: _t, ...only } = q
-      return only
+      return { ...only, ...ask }
     }
     return this.db.pastQuestions(limit).filter((q) => this.canSeeConversation(person, this.conversationOf(q.conversationId))).map(shown)
   }

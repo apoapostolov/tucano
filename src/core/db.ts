@@ -1547,6 +1547,13 @@ export class Db {
     this.db.prepare('UPDATE messages SET queue_pos = ? WHERE id = ?').run(pos, id)
   }
 
+  // The mark a queued prompt kept goes the moment its reply starts (`runs.ts`, `unmark`), written on its
+  // own columns and never through a whole save: a save is an upsert, and a prompt deleted while it waited
+  // would come back into the room by it. A row that is gone stays gone.
+  clearQueueMark(id: string): void {
+    this.db.prepare('UPDATE messages SET send_mode = NULL, queue_pos = NULL WHERE id = ?').run(id)
+  }
+
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of
   // the messages are never parsed.
   messagesWithRun(statuses: Run['status'][]): Message[] {

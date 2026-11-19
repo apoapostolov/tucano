@@ -1171,7 +1171,11 @@ runner.setPaused(!!settings().paused)
 // Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
 // for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
 const retention = new Retention(db, settings, {
-  deleted: (ids) => ids.forEach((id) => runner.drop(id)),
+  deleted: (ids) =>
+    ids.forEach((id) => {
+      runner.forget(id) // nothing answers what the period took away
+      runner.drop(id)
+    }),
   forgetSessions: (of) => runner.forgetSessions(of),
   cleared: (conversationIds) => {
     emit({ type: 'history_wiped', conversationIds })
@@ -2023,6 +2027,17 @@ const api: Handlers = {
     if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
     runner.reorderQueued(conversationId, ids)
   },
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes, and the message goes with it — the row and the pill it already put in the
+  // conversation are one message, so both leave in the same step (runs.ts, `dropQueued`).
+  dropQueued: ({ messageId }, ctx) => {
+    const m = db.message(messageId)
+    if (!m) return
+    reach(ctx, m.conversationId)
+    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
+    if (!own) manage(ctx, m.conversationId) // someone else's prompt in a channel: only whoever runs it
+    runner.dropQueued(messageId)
+  },
 
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
@@ -2031,8 +2046,12 @@ const api: Handlers = {
     const m = db.message(messageId)
     if (!m || (m.author.kind !== 'agent' && m.author.kind !== 'routine' && m.author.kind !== 'person')) return []
     manage(ctx, m.conversationId)
+    // What still held those messages lets go first: a queued prompt waiting to answer one of them must
+    // not start once a slot frees (runs.ts, `forget`), whatever deleted it.
+    for (const id of [messageId]) runner.forget(id)
     const gone = db.deleteMessage(messageId)
     // A finished parent can still have replies running in the thread that went with it.
+    for (const id of gone) runner.forget(id)
     for (const id of gone) runner.drop(id)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     record(ctx, 'session.deleted', m.conversationId, { message: messageId, went: gone.length })
