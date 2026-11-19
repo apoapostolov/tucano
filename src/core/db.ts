@@ -1478,6 +1478,14 @@ export class Db {
   }
 
   saveMessage(m: Message): void {
+    // A session's name is written on its own, under a reply that is still running (setRunSessionName),
+    // while the copy of that reply the runner holds keeps moving and knows nothing of it: a whole save
+    // from that copy would drop the name from the row. So the stored name is carried over here, in the
+    // one place every save goes through, and back into the copy, which is what the app is showing.
+    if (m.run && !m.run.sessionName) {
+      const kept = this.db.prepare("SELECT json_extract(run, '$.sessionName') AS name FROM messages WHERE id = ?").get(m.id) as { name?: string | null } | undefined
+      if (kept?.name) m.run.sessionName = kept.name
+    }
     this.db
       .prepare(
         `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, reply, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

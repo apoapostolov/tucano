@@ -1498,6 +1498,14 @@ function ThreadLink({ message, replies, noReply }: { message: Message; replies: 
   )
 }
 
+// What a thread is called: the name of the session that answers in it (src/core/titles.ts). A thread
+// hangs from the message that opened it, and in a channel that answers in threads that message is the
+// person's own — it has no run, so no name — and the name is looked for in the replies too: the first
+// one that has been named speaks for the thread.
+export function sessionNameOf(root: Message | undefined, replies: Message[]): string | undefined {
+  return root?.run?.sessionName ?? replies.find((m) => m.run?.sessionName)?.run?.sessionName
+}
+
 // A thread on the side: the message that started it, set apart, then its replies and a
 // field that answers there.
 function ThreadPanel({ rootId, conv, title, members, focusId, focusKey }: { rootId: string; conv: Conversation; title: string; members: Agent[]; focusId?: string; focusKey?: number }): ReactNode {
@@ -1507,6 +1515,7 @@ function ThreadPanel({ rootId, conv, title, members, focusId, focusKey }: { root
   const panelFocus = useStore((s) => s.panel?.kind === 'thread' && s.panel.id === rootId ? s.panel.message : undefined)
   const focus = focusId ?? panelFocus
   const replies = useStore((s) => repliesOf(s, conv.id, rootId))
+  const named = sessionNameOf(root, replies)
   // A thread from before what's here comes from the core; only then is it gone if it isn't there.
   const [looked, setLooked] = useState<string | null>(null)
   useEffect(() => {
@@ -1548,7 +1557,7 @@ function ThreadPanel({ rootId, conv, title, members, focusId, focusKey }: { root
       <PanelResize />
       <header className="side-panel__head">
         <Icon name="thread" size={14} />
-        <strong className="side-panel__title">{root?.run?.sessionName ?? L('Thread', 'Thread')}</strong>
+        <strong className="side-panel__title">{named ?? L('Thread', 'Thread')}</strong>
         <span className="side-panel__where">{L(`em ${title}`, `in ${title}`)}</span>
         <span className="grow" />
         {root && (
@@ -3093,6 +3102,16 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
     const mine = m.run?.replyTo ? messages.find((x) => x.id === m.run?.replyTo) : undefined
     return oneLine(mine?.text ?? m.run?.work ?? '', 90) || L('sem o que dizer', 'nothing to say')
   }
+  // What a row says it is: the name the session was given (src/core/titles.ts) in the row's own colour,
+  // then the request under it, flattened to one line and dimmed — the name is what a person looks for,
+  // the prompt tells it apart from another session of the same agent. A session not named yet (the call
+  // takes a second or two, and may never come) shows the prompt alone, as it always did.
+  const what = (m: Message): ReactNode => (
+    <>
+      {m.run?.sessionName && <span className="work-row__name">{m.run.sessionName}</span>}
+      <span className="work-row__text">{m.run?.sessionName ? `· ${asked(m)}` : asked(m)}</span>
+    </>
+  )
   const paint = (next: boolean): void => {
     remember.open = next
     setOpen(next)
@@ -3140,7 +3159,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
             <div className="work-row" key={m.id}>
               <button className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para esta resposta', 'Go to this reply')}>
                 <span className="work-row__dot" aria-hidden />
-                <span className="work-row__text">{asked(m)}</span>
+                {what(m)}
                 {where(m, 24)}
               </button>
               {/* Steering first, stopping after it: what a person does to a running reply is say how
@@ -3194,7 +3213,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                       <span className={`work-row__state work-row__state--${how.tone}`} title={how.said}>
                         <Icon name={how.icon} size={11} />
                       </span>
-                      <span className="work-row__text">{asked(m)}</span>
+                      {what(m)}
                       {where(m, 24)}
                     </button>
                     <button

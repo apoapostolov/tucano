@@ -78,6 +78,29 @@ describe('session names', () => {
     expect(runs[0]!.model).toBe('haiku')
   })
 
+  // The name is written under a reply that is still running, and the runner's copy of that reply keeps
+  // saving itself whole as it steps: without the carry-over in saveMessage, the first save after the
+  // name was written took it off the row — the name showed up and then vanished.
+  it('a later save from the running reply keeps the name', () => {
+    const db = new Db(join(mkdtempSync(join(tmpdir(), 'tucano-keep-')), 'test.db'))
+    try {
+      db.saveAgent({ id: 'lia', name: 'Lia', handle: 'lia', role: '', color: 'sky', instructions: '', modelId: 'sonnet', effort: 'low', limit: 1_000_000, used: 0, grants: {}, memory: 'auto', computer: false, archived: false })
+      db.createConversation({ id: 'dm', kind: 'dm', name: 'lia', members: ['lia'], owner: db.ownerId() })
+      const run = reply().run!
+      db.saveMessage({ id: 'r1', conversationId: 'dm', author: { kind: 'agent', id: 'lia' }, text: '', at: 2, run: { ...run } })
+      db.setRunSessionName('r1', 'Nomes das sessões')
+      // The copy the runner holds never heard of the name; it saves itself with its next step.
+      const copy = { id: 'r1', conversationId: 'dm', author: { kind: 'agent', id: 'lia' } as const, text: 'feito', at: 2, run: { ...run, steps: [{ id: 's1', label: 'Lendo', status: 'running' as const }] } }
+      db.saveMessage(copy as Message)
+      expect(db.message('r1')?.run?.sessionName).toBe('Nomes das sessões')
+      expect(db.message('r1')?.run?.status).toBe('working')
+      expect(db.message('r1')?.text).toBe('feito')
+      expect(copy.run.sessionName).toBe('Nomes das sessões') // and the copy learns it, so the next save carries it
+    } finally {
+      db.close()
+    }
+  })
+
   it('the name is written into the run without touching what the run is doing', () => {
     const db = new Db(join(mkdtempSync(join(tmpdir(), 'tucano-runs-')), 'test.db'))
     try {

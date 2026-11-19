@@ -17489,3 +17489,19 @@ button.agent-card__now:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* A work row's session name, before the prompt it answers (src/core/titles.ts): the name in the row's
+   own colour, the prompt under it dimmed. The name gives way first on a narrow field, so a row stays
+   one line however long the model's name is. */
+.work-row__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.work-row__text {
+  color: var(--text-2);
+}

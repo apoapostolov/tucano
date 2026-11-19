@@ -243,4 +243,28 @@ describe('the work drawer', () => {
     await render(conv, [said('m1', 'primeiro pedido', 1), said('m2', 'segundo pedido', 3), said('m3', 'terceiro', 4), reply('r1', 'm1'), reply('r2', 'm2'), reply('r3', 'm3')])
     expect(text()).toContain('3 respondendo')
   })
+
+  // A row says which session it is by the name it was given (src/core/titles.ts), in the row's own
+  // colour, and then the request under it, dimmed: two sessions of the same agent are told apart by
+  // the name, not by a prompt cut to ninety characters.
+  it('puts the session’s name on its row, with the prompt dimmed after it', async () => {
+    const conv = nextConv()
+    const r = reply('r1', 'm1')
+    await render(conv, [said('m1', 'corrige o login', 1), { ...r, run: { ...r.run!, sessionName: 'Corrigir o login' } }])
+    await act(async () => button('1 respondendo').click())
+    const name = document.querySelector('.work-row__name')
+    expect(name?.textContent).toBe('Corrigir o login')
+    expect(document.querySelector('.work-row__text')?.textContent).toContain('corrige o login')
+    // the name first, then the prompt after a dot — the row's own gap spaces them on screen
+    const row = name!.closest('.work-row')?.textContent ?? ''
+    expect(row.indexOf('Corrigir o login')).toBe(0)
+    expect(row.indexOf('· corrige o login')).toBeGreaterThan(0)
+  })
+
+  it('a session that has not been named yet shows its prompt alone', async () => {
+    await render(nextConv(), [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await act(async () => button('1 respondendo').click())
+    expect(document.querySelector('.work-row__name')).toBeNull()
+    expect(document.querySelector('.work-row__text')?.textContent).toContain('corrige o login')
+  })
 })
