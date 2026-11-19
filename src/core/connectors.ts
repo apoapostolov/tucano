@@ -31,6 +31,13 @@ const RECONNECT_DELAYS_MS = [2_000, 5_000, 15_000, 60_000, 300_000]
 // How long a renewal's answer is kept for another request that renews with the same refresh token.
 const RENEWAL_KEEP_MS = 60_000
 
+// A connector's own picture: an image inline, as a data URL, and no bigger than this (the renderer
+// shrinks what the person picks to 96 px, which lands far below the cap; the cap is the guard for the
+// pictures that go straight to the core, from a phone or a script). Small because the connector list
+// goes out on every change and travels to the phone: a picture here is a mark, not a photograph.
+const ICON_DATA_URL = /^data:image\/(?:png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
+const ICON_MAX_CHARS = 32_000
+
 // The authorization page sent the browser back without a code: why, and what to do.
 export function notAuthorized(url: URL): string {
   const error = url.searchParams.get('error')
@@ -193,6 +200,9 @@ export interface ConnectorDeps {
   emit: (e: CoreEvent) => void
   openUrl: (url: string) => void
   oauthCallbackUrl: () => string
+  // Where the browser goes back to for a provider that takes only a loopback address (Canva's) when
+  // oauthCallbackUrl isn't one (a server on its https address): there, the person pastes where the page ended.
+  localCallbackUrl?: () => string
   readOp?: (ref: string) => Promise<string> // a 1Password reference's value (the op CLI; tests fake it)
   callTimeoutMs?: number // how long a tool call may take; tests shorten it
   // Where a sign-in with the person's own app comes back: Slack takes only the address registered in the
@@ -285,6 +295,18 @@ const CLIENT_ID: Record<AppProvider, { re: RegExp; pt: string; en: string }> = {
 // redirect without the port keeps the registration — and the refresh token, which
 // belongs to the client that got it — across restarts, instead of signing in again.
 // Only an http loopback address loses its port; anything else must match whole.
+// Whether an authorization page turns its redirect address away: an error page that names it ("Invalid redirect
+// URI.", redirect_uri_mismatch) instead of the sign-in. No answer, or any other, isn't a no.
+export async function refusesRedirect(page: string): Promise<boolean> {
+  try {
+    const r = await fetch(page, { redirect: 'manual', signal: AbortSignal.timeout(8_000) })
+    if (r.status < 400 || r.status >= 500) return false
+    return /redirect/i.test((await r.text()).slice(0, 4_000))
+  } catch {
+    return false
+  }
+}
+
 export const sameLoopbackRedirect = (a: string, b: string): boolean => {
   const shape = (u: string): string => {
     try {
@@ -302,6 +324,7 @@ export class ConnectorManager {
   private live = new Map<string, Live>()
   private oauthStates = new Map<string, { connectorId: string; transport: StreamableHTTPClientTransport }>()
   private authUrls = new Map<string, string>() // a connector's last authorization page
+  private loopbackOnly = new Set<string>() // connectors whose authorization page turned the server's own address away
   private doneStates = new Set<string>() // finished already (the callback got there first): not an expired one
   private closing = false // the app is quitting: nothing reconnects
   // Renewals under way or just done, by token endpoint and refresh token. A server that rotates refresh tokens
@@ -395,6 +418,21 @@ export class ConnectorManager {
 
   private redirectFor(provider: AppProvider): string {
     return provider === 'slack' && this.deps.fixedCallbackUrl ? this.deps.fixedCallbackUrl() : this.deps.oauthCallbackUrl()
+  }
+
+  // The picture a connector wears instead of the store's mark (or the icon of its kind). Empty: back
+  // to those. It is a data URL because it lives in the database: a backup, an export and a restore of
+  // the computer carry it, and there is no folder of loose pictures to keep in step.
+  async setIcon(id: string, icon: string): Promise<void> {
+    const c = this.deps.db.connector(id)
+    if (!c) throw new Error(L('Esse conector não existe mais.', 'That connector no longer exists.'))
+    const value = icon.trim()
+    if (value && !ICON_DATA_URL.test(value))
+      throw new Error(L('Isso não é uma imagem (PNG, JPEG, WebP, GIF ou SVG).', 'That is not an image (PNG, JPEG, WebP, GIF or SVG).'))
+    if (value.length > ICON_MAX_CHARS)
+      throw new Error(L('A imagem é grande demais para um ícone. Escolha uma menor.', 'That image is too big for an icon. Pick a smaller one.'))
+    this.deps.db.setConnectorIcon(id, value || null)
+    this.emitConnector(id)
   }
 
   // Sets or replaces the token of a connector that signs in with one, and connects with it.
@@ -776,6 +814,16 @@ export class ConnectorManager {
       if (this.live.get(id)?.client) return undefined
     }
     await this.connect(id, true).catch(() => {})
+    // A provider that takes only a loopback address back (Canva's) answers the server's own with an error page:
+    // the sign-in starts again with the loopback one, and the person pastes where the page ended.
+    const page = this.authUrls.get(id)
+    const local = this.deps.localCallbackUrl?.()
+    if (page && local && !this.loopbackOnly.has(id) && new URL(page).searchParams.get('redirect_uri') !== local && (await refusesRedirect(page))) {
+      this.oauthStates.delete(new URL(page).searchParams.get('state') ?? '')
+      this.authUrls.delete(id)
+      this.loopbackOnly.add(id)
+      await this.connect(id, true).catch(() => {})
+    }
     return this.authUrls.get(id)
   }
 
@@ -870,7 +918,8 @@ export class ConnectorManager {
   // `own`: a server that signs in with the person's own app (Google's, Slack's) instead of registering one.
   private oauthProvider(id: string, transport: () => StreamableHTTPClientTransport, interactive: boolean, own?: CatalogEntry['app'], renewal?: Renewal): OAuthClientProvider {
     const { secrets } = this.deps
-    const redirectUrl = own ? this.redirectFor(own.provider) : this.deps.oauthCallbackUrl()
+    const local = this.deps.localCallbackUrl?.()
+    const redirectUrl = own ? this.redirectFor(own.provider) : local && this.loopbackOnly.has(id) ? local : this.deps.oauthCallbackUrl()
     // Signing in again (someone clicked Authorize) goes on past a saved value the system's key won't open:
     // the new sign-in takes its place. In the background it stops the attempt, and the value stays.
     const read = async <T>(k: string): Promise<T | undefined> => {
@@ -909,7 +958,8 @@ export class ConnectorManager {
           return app && { client_id: app.clientId, client_secret: app.clientSecret }
         }
         const info = await read<OAuthClientInformationMixed & { redirect_uris?: string[] }>(key(id, 'oauth_client'))
-        const fits = (u: string): boolean => (interactive ? u === redirectUrl : sameLoopbackRedirect(u, redirectUrl))
+        // A renewal sends no address: the app registered with the loopback one (above) renews after a restart too.
+        const fits = (u: string): boolean => (interactive ? u === redirectUrl : sameLoopbackRedirect(u, redirectUrl) || (!!local && sameLoopbackRedirect(u, local)))
         return info && (!info.redirect_uris || info.redirect_uris.some(fits)) ? info : undefined
       },
       saveClientInformation: (info) => (own ? undefined : secrets.setJson(key(id, 'oauth_client'), { ...info, redirect_uris: [redirectUrl] })),

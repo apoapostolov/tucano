@@ -110,12 +110,13 @@ const rows = () =>
     const box = card.getBoundingClientRect()
     const fields = [...card.querySelectorAll('.route-row__fields > .select')]
     const model = card.querySelector('.route-row__model')
-    const label = model?.querySelector('.select__value, .select__label, button')
+    const label = model?.querySelector('.select__trigger__value, .select__value, .select__label, button')
     return {
       card: Math.round(box.width),
       cardHeight: Math.round(box.height),
       fields: fields.length,
       widths: fields.map((f) => Math.round(f.getBoundingClientRect().width)),
+      heights: fields.map((f) => Math.round(f.getBoundingClientRect().height)),
       stacked: fields.every((f, i) => i === 0 || f.getBoundingClientRect().top >= fields[i - 1].getBoundingClientRect().bottom - 1),
       modelText: label?.textContent?.replace(/\s+/g, ' ').trim(),
       modelClipped: label ? label.scrollWidth > label.clientWidth + 1 : null,

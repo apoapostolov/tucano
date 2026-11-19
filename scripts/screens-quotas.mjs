@@ -86,7 +86,9 @@ async function open({ withClaude = false } = {}) {
   const errors = []
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-  await win.click('.nav-item:has-text("Usage and limits")')
+  await win.click('.nav-item[data-hub="operations"]')
+  await win.waitForSelector('.hub__tab[data-tab="usage"]', { timeout: 20_000 })
+  await win.click('.hub__tab[data-tab="usage"]')
   await win.waitForSelector('.usage-quotas__grid, .usage-card', { timeout: 20_000 })
   await win.waitForTimeout(600)
   return { app, win, errors }
@@ -128,9 +130,9 @@ const cells = (win) => win.locator('.usage-quota__cell').allInnerTexts()
   // The whole page, to show where the panel sits above the month.
   const sheet = win.locator('.sheet')
   console.log(`panel top at ${Math.round((await win.locator('.usage-quotas').boundingBox()).y)} px, month below at ${Math.round((await win.locator('.usage-month').boundingBox()).y)} px`)
-  // The page's own order, read as drawing order and as pixels: the providers panel, then the Codex
-  // subscription's windows, then the month with its chart. The chart is the month's, so the
-  // subscription sits above it.
+  // The page's own order, read as drawing order and as pixels: the providers panel, then the
+  // subscriptions' own windows, then the month with its chart. The chart is the month's, so the
+  // subscriptions sit above it.
   const seq = await win.evaluate(() => {
     const subs = [...document.querySelectorAll('.read-group')].find((el) => /Codex/.test(el.querySelector('h2')?.textContent ?? ''))
     const items = [
@@ -142,7 +144,7 @@ const cells = (win) => win.locator('.usage-quota__cell').allInnerTexts()
     return items.map(([what, el]) => ({ what, drawn: el ? [...el.parentElement.children].indexOf(el) : null, top: el ? Math.round(el.getBoundingClientRect().top) : null }))
   })
   console.log(`page order: ${JSON.stringify(seq)}`)
-  console.log(`the subscription is above the chart: ${seq[1].top !== null && seq[1].top < seq[3].top}`)
+  console.log(`the subscription is above the chart: ${seq[1].top !== null && seq[3].top !== null && seq[1].top < seq[3].top}`)
   await win.evaluate(() => window.scrollTo(0, 0))
   await win.screenshot({ path: `${out}/03-page-order.png`, fullPage: true })
   console.log(`sideways scroll at 1280: ${await win.locator('.usage-quotas').evaluate((el) => el.scrollWidth - el.clientWidth)} px`)
@@ -185,7 +187,9 @@ const cells = (win) => win.locator('.usage-quota__cell').allInnerTexts()
   const errors = []
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-  await win.click('.nav-item:has-text("Usage and limits")')
+  await win.click('.nav-item[data-hub="operations"]')
+  await win.waitForSelector('.hub__tab[data-tab="usage"]', { timeout: 20_000 })
+  await win.click('.hub__tab[data-tab="usage"]')
   await win.waitForSelector('.usage-card', { timeout: 20_000 })
   await win.waitForTimeout(500)
   console.log(`empty: providers ${await win.locator('.usage-quota__head').count()}, says ${JSON.stringify((await win.locator('.usage-card').first().innerText()).split('\n').slice(0, 3))}`)

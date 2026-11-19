@@ -87,13 +87,14 @@ export const providerSpec = (p: ClassifierProvider): ProviderSpec => PROVIDERS.f
 // The classifier an install from before this section had: one TypeSafe Jev.
 export const JEV_CLASSIFIER: ClassifierConfig = { id: 'jev', name: 'Jev', provider: 'typesafe', model: 'jev-latest' }
 
-export const CLASSIFIER_JOBS: readonly ClassifierJob[] = ['routing', 'listen', 'recommend', 'nextSteps', 'smart', 'browser']
+// The jobs the Classifier Uses card offers, one selector each.
+export const CLASSIFIER_JOBS: readonly ClassifierJob[] = ['routing', 'listen', 'nextSteps', 'smart', 'browser', 'recommend']
 
 export const jobLabel = (job: ClassifierJob): { pt: string; en: string } =>
   ({
     routing: { pt: 'Quem responde no canal', en: "Channel replies" },
     listen: { pt: 'Quem escuta entra', en: "Listening agents" },
-    recommend: { pt: 'A opção sugerida na pergunta', en: "Suggested answers" },
+    recommend: { pt: 'Marcar a opção recomendada', en: 'Mark the recommended option' },
     nextSteps: { pt: 'Quais próximos passos já vêm marcados', en: "Suggested next steps" },
     smart: { pt: 'Qual modelo responde', en: "Model routing" },
     browser: { pt: 'O que o agente clica na página', en: "Browser controls" }
@@ -110,8 +111,8 @@ export const jobAbout = (job: ClassifierJob): { pt: string; en: string } =>
       en: "Invite listening agents when a message needs their expertise."
     },
     recommend: {
-      pt: 'Marca a melhor opção no card de uma pergunta do agente. “Nenhuma” é resposta de verdade: o gosto da pessoa não é decisão de modelo.',
-      en: "Suggest an answer on question cards. May select none when the choice is personal."
+      pt: 'Sugere uma opção na pergunta do agente; você escolhe.',
+      en: 'Suggests an option on an agent question; you still choose.'
     },
     nextSteps: {
       pt: 'Os próximos passos de uma resposta abrem com toda caixa desmarcada; esta pergunta decide quais já vêm marcadas.',
@@ -147,11 +148,12 @@ export function classifierJobsOf(s: ClassifierSettings): Partial<Record<Classifi
   if (!known) return jobs
   if (s.routerModel === 'jev') jobs.routing = JEV_CLASSIFIER.id
   if (s.browserJev) jobs.browser = JEV_CLASSIFIER.id
+  // A legacy install that switched the recommended option on keeps marking options on the same Jev.
+  if (s.jevRecommend) jobs.recommend = JEV_CLASSIFIER.id
   // The rest answered on that one key whenever it was saved, so they keep it: an install that had
-  // a key and a switch on keeps hearing, suggesting and picking models exactly as before.
+  // a key and a switch on keeps hearing and picking models exactly as before.
   if (s.jevKey) {
     jobs.listen = JEV_CLASSIFIER.id
-    if (s.jevRecommend) jobs.recommend = JEV_CLASSIFIER.id
     if (s.jevNextSteps) jobs.nextSteps = JEV_CLASSIFIER.id
     jobs.smart = JEV_CLASSIFIER.id
   }

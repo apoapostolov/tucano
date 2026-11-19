@@ -5,24 +5,42 @@ import { settingsDestination, settingsPages, type SettingsSection, type Settings
 export const SETTINGS_SCROLL_MS = 280
 export const settingsEase = (t: number): number => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 
-export function SettingsLayout({ requested, sections, content, onNavigate }: {
+// The strip inside a page that already has tabs of its own: a sticky line of section names under
+// them, in the app's own colours, that scrolls sideways when the window is narrow.
+// Embedded, the strip reuses the page's tab styling: full page width, directly under the tabs.
+const EMBEDDED_TABS = 'tabs tabs--sections'
+
+// A page's sections and the strip that walks them. On its own it owns the page tabs and the panels
+// too; `embedded`, it stays inside a page that already has a tab bar — only the section strip
+// renders, and the cards stay where that page put them (they carry the `data-settings-section`
+// anchors the strip scrolls to).
+export function SettingsLayout({ requested, sections, content, onNavigate, embedded = false }: {
   requested?: string
   sections: readonly SettingsSection[]
-  content: Record<SettingsSectionId, ReactNode>
-  onNavigate: (destination: string) => void
+  content?: Record<SettingsSectionId, ReactNode>
+  onNavigate?: (destination: string) => void
+  embedded?: boolean
 }): ReactNode {
-  const destination = settingsDestination(requested, sections)
-  const available = sections.filter(s => s.visible && s.page === destination.page)
-  const pages = settingsPages().filter(([id]) => sections.some(s => s.visible && s.page === id))
+  const visible = sections.filter(s => s.visible)
+  const destination = settingsDestination(requested, embedded ? visible : sections)
+  const listed = embedded ? visible : visible.filter(s => s.page === destination.page)
   const root = useRef<HTMLDivElement>(null)
   const navigation = useRef<HTMLDivElement>(null)
   const frame = useRef<number | null>(null)
   const movingTo = useRef<string | null>(null)
   const handled = useRef<string | undefined>(undefined)
   const previousPage = useRef<string | null>(null)
+  // Embedded, the page's own tabs stick above the strip: both are taken out of the scroll maths.
+  const above = useRef(0)
+  // Embedded, the cards belong to the page: the strip lists the sections that were really
+  // rendered, in the order they read, so a section still waiting for its card gets no link.
+  const [present, setPresent] = useState<readonly string[] | null>(null)
+  const available = present
+    ? present.map(id => listed.find(s => s.id === id)).filter((section): section is SettingsSection => section !== undefined)
+    : listed
   const [current, setCurrent] = useState<string>(destination.section)
-  const currentId = available.some(s => s.id === current) ? current : destination.section
-  const ids = available.map(s => s.id).join('|')
+  const currentId = available.some(s => s.id === current) ? current : available[0]?.id ?? destination.section
+  const ids = listed.map(s => s.id).join('|')
 
   const cancel = (): void => {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
@@ -34,10 +52,10 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
   const showSection = (id: string, animated: boolean, focus: boolean): void => {
     cancel()
     const scroller = root.current?.closest<HTMLElement>('.page__scroll')
-    const target = root.current?.querySelector<HTMLElement>(`[data-settings-section="${id}"]`)
+    const target = (embedded ? scroller : root.current)?.querySelector<HTMLElement>(`[data-settings-section="${id}"]`)
     if (!scroller || !target) return
     setCurrent(id)
-    const inset = (navigation.current?.getBoundingClientRect().height ?? 0) + 16
+    const inset = (navigation.current?.getBoundingClientRect().height ?? 0) + (embedded ? above.current : 0) + 16
     const destinationTop = (): number => Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
       scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset))
     const top = destinationTop()
@@ -66,13 +84,35 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
     const scroller = element?.closest<HTMLElement>('.page__scroll')
     if (!element || !scroller) return
     // Enough trailing room lets the final section reach the same top edge as every other one.
-    const size = (): void => element.style.setProperty('--settings-last-height', `${Math.max(0, scroller.clientHeight - (navigation.current?.getBoundingClientRect().height ?? 0) - 16)}px`)
+    const size = (): void => {
+      element.style.setProperty('--settings-last-height', `${Math.max(0, scroller.clientHeight - (navigation.current?.getBoundingClientRect().height ?? 0) - 16)}px`)
+      // Embedded under the page's own tabs, the strip parks right below them.
+      if (embedded) {
+        above.current = scroller.querySelector<HTMLElement>('.tabs')?.getBoundingClientRect().height ?? 0
+        element.style.setProperty('--settings-nav-top', `${above.current}px`)
+      }
+    }
     size()
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(size)
     observer?.observe(scroller)
     if (navigation.current) observer?.observe(navigation.current)
     return () => observer?.disconnect()
-  }, [destination.page, ids])
+  }, [embedded, destination.page, ids])
+
+  // Which sections the page really rendered, in the order their cards appear. A section without a
+  // card, or one this person's role doesn't get, never reaches the strip.
+  useLayoutEffect(() => {
+    if (!embedded) return
+    const scroller = root.current?.closest<HTMLElement>('.page__scroll')
+    if (!scroller) return
+    const wanted = new Set<string>(listed.map(s => s.id))
+    const seen: string[] = []
+    for (const element of Array.from(scroller.querySelectorAll<HTMLElement>('[data-settings-section]'))) {
+      const id = element.dataset.settingsSection
+      if (id && wanted.has(id) && !seen.includes(id)) seen.push(id)
+    }
+    setPresent(previous => previous && previous.join('|') === seen.join('|') ? previous : seen)
+  }, [embedded, ids])
 
   useLayoutEffect(() => {
     if (handled.current === requested && previousPage.current === destination.page) return
@@ -97,8 +137,9 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
       tracking = requestAnimationFrame(() => {
         tracking = null
         if (movingTo.current) return
-        const targets = [...(root.current?.querySelectorAll<HTMLElement>('[data-settings-section]') ?? [])]
-        const line = scroller.getBoundingClientRect().top + (navigation.current?.getBoundingClientRect().height ?? 0) + 24
+        const scope = embedded ? scroller : root.current
+        const targets = [...(scope?.querySelectorAll<HTMLElement>('[data-settings-section]') ?? [])]
+        const line = scroller.getBoundingClientRect().top + (navigation.current?.getBoundingClientRect().height ?? 0) + (embedded ? above.current : 0) + 24
         const atEnd = scroller.scrollHeight > scroller.clientHeight && scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight - 2
         const selected = atEnd ? targets.at(-1) : targets.filter(el => el.getBoundingClientRect().top <= line).at(-1) ?? targets[0]
         if (selected?.dataset.settingsSection) setCurrent(selected.dataset.settingsSection)
@@ -142,40 +183,46 @@ export function SettingsLayout({ requested, sections, content, onNavigate }: {
     event.preventDefault()
     handled.current = id
     previousPage.current = destination.page
-    onNavigate(id)
+    onNavigate?.(id)
     showSection(id, event.detail > 0, true)
   }
 
+  const pages = settingsPages().filter(([id]) => sections.some(s => s.visible && s.page === id))
+
   return (
-    <div className="settings-layout" ref={root}>
+    <div className="settings-layout" ref={root} style={embedded ? { position: 'sticky', top: 'var(--settings-nav-top, 0px)', zIndex: 2, background: 'var(--panel)' } : undefined}>
       <div className="settings-navigation" ref={navigation}>
-        <div className="settings-pages" role="tablist" aria-label={L('Páginas de configurações', 'Settings pages')}>
-          {pages.map(([id, label], index) => (
-            <button key={id} type="button" id={`settings-tab-${id}`} role="tab" aria-controls={`settings-panel-${id}`} aria-selected={destination.page === id} tabIndex={destination.page === id ? 0 : -1}
-              onClick={() => onNavigate(id)} onKeyDown={event => {
-                let next: number | undefined
-                if (event.key === 'ArrowRight') next = (index + 1) % pages.length
-                if (event.key === 'ArrowLeft') next = (index - 1 + pages.length) % pages.length
-                if (event.key === 'Home') next = 0
-                if (event.key === 'End') next = pages.length - 1
-                if (next === undefined) return
-                event.preventDefault()
-                const id = pages[next]![0]
-                onNavigate(id)
-                navigation.current?.querySelector<HTMLElement>(`#settings-tab-${id}`)?.focus({ preventScroll: true })
-              }}>{label}</button>
-          ))}
-        </div>
-        <nav className="settings-sections" aria-label={L('Seções de configurações', 'Settings sections')}>
+        {/* Embedded, the page's own tabs are already above this one: no second tablist. */}
+        {!embedded && (
+          <div className="settings-pages" role="tablist" aria-label={L('Páginas de configurações', 'Settings pages')}>
+            {pages.map(([id, label], index) => (
+              <button key={id} type="button" id={`settings-tab-${id}`} role="tab" aria-controls={`settings-panel-${id}`} aria-selected={destination.page === id} tabIndex={destination.page === id ? 0 : -1}
+                onClick={() => onNavigate?.(id)} onKeyDown={event => {
+                  let next: number | undefined
+                  if (event.key === 'ArrowRight') next = (index + 1) % pages.length
+                  if (event.key === 'ArrowLeft') next = (index - 1 + pages.length) % pages.length
+                  if (event.key === 'Home') next = 0
+                  if (event.key === 'End') next = pages.length - 1
+                  if (next === undefined) return
+                  event.preventDefault()
+                  const id = pages[next]![0]
+                  onNavigate?.(id)
+                  navigation.current?.querySelector<HTMLElement>(`#settings-tab-${id}`)?.focus({ preventScroll: true })
+                }}>{label}</button>
+            ))}
+          </div>
+        )}
+        <nav className={embedded ? `${EMBEDDED_TABS} settings-sections` : 'settings-sections'} aria-label={L('Seções de configurações', 'Settings sections')}>
           {available.map(section => (
-            <a key={section.id} href={`#settings-${section.id}`} aria-current={currentId === section.id ? 'location' : undefined} onClick={event => chooseSection(event, section.id)}>{section.label}</a>
+            <a key={section.id} href={`#settings-${section.id}`} aria-current={currentId === section.id ? 'location' : undefined}
+              onClick={event => chooseSection(event, section.id)}>{section.label}</a>
           ))}
         </nav>
       </div>
-      {pages.map(([id]) => (
+      {!embedded && pages.map(([id]) => (
         <div key={id} role="tabpanel" id={`settings-panel-${id}`} aria-labelledby={`settings-tab-${id}`} hidden={destination.page !== id} className="settings-panel">
           {destination.page === id && <div className="agent-form settings-content">
-            {available.map(section => <section key={section.id} id={`settings-${section.id}`} data-settings-section={section.id} aria-label={section.label} tabIndex={-1}>{content[section.id]}</section>)}
+            {available.map(section => <section key={section.id} id={`settings-${section.id}`} data-settings-section={section.id} aria-label={section.label} tabIndex={-1}>{content?.[section.id]}</section>)}
           </div>}
         </div>
       ))}

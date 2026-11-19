@@ -71,8 +71,8 @@ describe('settings section navigation', () => {
   it('keeps sections together with links, and uses tabs only for different page panels', async () => {
     await render()
     expect(document.querySelectorAll('[role="tablist"]')).toHaveLength(1)
-    expect(document.querySelectorAll('nav a')).toHaveLength(7)
-    expect(document.querySelectorAll('[data-settings-section]')).toHaveLength(7)
+    expect(document.querySelectorAll('nav a')).toHaveLength(8)
+    expect(document.querySelectorAll('[data-settings-section]')).toHaveLength(8)
     expect(document.querySelector('[role="tabpanel"]:not([hidden])')?.id).toBe('settings-panel-app')
     expect(document.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1)
   })

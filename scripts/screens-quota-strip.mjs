@@ -1,8 +1,8 @@
 // Frames for the little quota bars in a session's header: one bar per provider, and only the window
 // that lasts longest — the month where there is a month, the week where there isn't, the short window
-// for a provider that reports nothing longer — and a wallet (no cap) with no bar at all. Every bar is
-// the width of the longest name among the bars this conversation draws. Measured rather than asserted,
-// and shot from the built app with the providers' answers as fixtures, so nothing is spent.
+// for a provider that reports nothing longer — and a wallet (no cap) with no bar at all. Measured
+// rather than asserted, and shot from the built app with the providers' answers as fixtures, so
+// nothing is spent.
 import { _electron as electron } from 'playwright'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -114,22 +114,16 @@ const look = () =>
       pills: pills.map((p) => {
         const box = r(p)
         const fill = p.querySelector('i')
-        const name = p.querySelector('.quota-strip__name')
-        // The letters' own width, which is the width a pill sized by its own label would have had.
-        const text = document.createRange()
-        if (name) text.selectNodeContents(name)
         return {
           provider: p.dataset.provider,
           span: p.dataset.span,
           tone: p.className.replace('quota-strip__pill', '').trim() || '-',
-          column: Math.round(box.width),
-          name: name ? Math.round(text.getBoundingClientRect().width) : null,
+          width: Math.round(box.width),
           height: Math.round(box.height),
-          fill: fill ? Math.round(r(fill).width) : null
+          fill: fill ? Math.round(r(fill).width) : null,
+          title: p.getAttribute('title')
         }
       }),
-      // Every bar the same width, and that width the longest name among them.
-      columnsEven: new Set(pills.map((p) => Math.round(r(p).width))).size <= 1,
       topbar: topbar ? { height: Math.round(r(topbar).height), sideways: topbar.scrollWidth - topbar.clientWidth } : null,
       actionsSideways: actions ? actions.scrollWidth - actions.clientWidth : null,
       pageSideways: document.scrollingElement.scrollWidth - document.scrollingElement.clientWidth

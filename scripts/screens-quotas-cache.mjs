@@ -84,8 +84,13 @@ const textOf = () =>
   })
 
 // ---------- opening the page ----------
+// Usage and limits is a tab of the Operations hub in this app's sidebar: the row first, and the
+// measured click is the tab's, because that is the one that mounts the page.
+await win.click('.nav-item[data-hub="operations"]')
+await win.waitForSelector('.hub__tab[data-tab="usage"]', { timeout: 20_000 })
+await win.waitForTimeout(300)
 const opened = await win.evaluate(async () => {
-  const nav = [...document.querySelectorAll('.nav-item')].find((n) => /Usage|Uso/.test(n.textContent ?? ''))
+  const nav = document.querySelector('.hub__tab[data-tab="usage"]')
   nav?.click()
   const at = performance.now()
   for (let i = 0; i < 600; i++) {
@@ -123,13 +128,15 @@ await win.screenshot({ path: `${out}/03-after-the-read.png` })
 console.log('the read behind the panel:', JSON.stringify({ before, ...moved, settled: settled.cell }))
 
 // ---------- the numbers arrived, and the next open draws them at once ----------
+// Away from the page and back: another hub tab unmounts it, so the second open is the panel being
+// drawn again from what the core holds.
 await win.evaluate(() => {
-  const nav = [...document.querySelectorAll('.nav-item')].find((n) => /Asks|Perguntas/.test(n.textContent ?? ''))
+  const nav = document.querySelector('.hub__tab[data-tab="report"]')
   nav?.click()
 })
 await win.waitForTimeout(700)
 const again = await win.evaluate(async () => {
-  const nav = [...document.querySelectorAll('.nav-item')].find((n) => /Usage|Uso/.test(n.textContent ?? ''))
+  const nav = document.querySelector('.hub__tab[data-tab="usage"]')
   nav?.click()
   const at = performance.now()
   for (let i = 0; i < 600; i++) {

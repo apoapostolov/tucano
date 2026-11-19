@@ -380,10 +380,10 @@ describe('the sidebar and the missions', () => {
   const menuItems = (): string[] => [...document.querySelectorAll('[role="menu"] .menu__item')].map((x) => x.textContent ?? '')
   const tabs = (): string[] => [...document.querySelectorAll('.hub__tab')].map((x) => x.textContent ?? '')
 
-  it('starts short on a new install: the Tuca, what waits on you, the channel, the agent, the missions; Conectores and the settings at the foot', async () => {
+  it('starts short on a new install: the Tuca, the questions, what waits on you, the channel, the agent, the missions; Conectores and the settings at the foot', async () => {
     fake = state({ agents: [lia], conversations: [geral], settings: { onboarding: { done: true, fresh: true } } })
     await render(<Sidebar />)
-    expect(labels()).toEqual(['Tuca', 'Aprovações', 'geral', 'Lia'])
+    expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'geral', 'Lia'])
     expect(text()).toContain('Missões')
     expect(text()).toContain('Próxima: fale com Lia')
     expect(document.querySelector('.sidebar__tools .sidebar__tool')?.textContent).toBe('Conectores')
@@ -412,7 +412,7 @@ describe('the sidebar and the missions', () => {
     const routine = { id: 'r1' } as State['routines'][number]
     fake = state({ agents: [lia], conversations: [geral], routines: [routine], settings: { onboarding: { done: true, fresh: true } } })
     await render(<Sidebar />)
-    expect(labels()).toEqual(['Tuca', 'Aprovações', 'Operação', 'geral', 'Lia'])
+    expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'Operação', 'geral', 'Lia'])
     expect(document.querySelector('[data-hub="operations"]')?.textContent).toContain('NOVO')
     await render(<Hub tab="routines">{null}</Hub>)
     expect(tabs()).toEqual(['RotinasNOVO', 'Boletim', 'Uso e limites'])
@@ -466,7 +466,7 @@ describe('taking items out of the top of the sidebar', () => {
   it('takes an item out from itself: a right click, or its "•••", then "Tirar da barra"', async () => {
     fake = state({ agents: [lia], conversations: [geral], settings: { onboarding: settled } })
     await render(<Sidebar />)
-    expect(labels()).toEqual(['Tuca', 'Aprovações', 'Quadro', 'Conhecimento', 'Operação'])
+    expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'Quadro', 'Conhecimento', 'Operação'])
     await act(async () => {
       const e = new window.Event('contextmenu', { bubbles: true, cancelable: true })
       Object.assign(e, { clientX: 40, clientY: 120 })
@@ -488,12 +488,12 @@ describe('taking items out of the top of the sidebar', () => {
   it('leaves out what was taken out, and lists everything in the workspace menu to bring it back', async () => {
     fake = state({ agents: [lia], conversations: [geral], settings: { onboarding: settled, sidebarHidden: ['board', 'operations'] } })
     await render(<Sidebar />)
-    expect(labels()).toEqual(['Tuca', 'Aprovações', 'Conhecimento'])
+    expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'Conhecimento'])
     await openMenu()
-    expect(parts()).toEqual([['Tuca', true], ['Aprovações', true], ['Quadro', false], ['Conhecimento', true], ['Operação', false]])
+    expect(parts()).toEqual([['Tuca', true], ['Perguntas', true], ['Aprovações', true], ['Quadro', false], ['Conhecimento', true], ['Operação', false]])
     expect(text()).toContain('Volta quando algo espera por você')
     // Ticking brings it back; unticking takes it out, without the toast: it's done where it comes back from.
-    await click([...document.querySelectorAll('[role="menuitemcheckbox"]')][2]!)
+    await click([...document.querySelectorAll('[role="menuitemcheckbox"]')][3]!)
     expect(store.updateSettings).toHaveBeenCalledWith({ sidebarHidden: ['operations'] })
     await click([...document.querySelectorAll('[role="menuitemcheckbox"]')][0]!)
     expect(store.updateSettings).toHaveBeenCalledWith({ sidebarHidden: ['board', 'operations', 'tuca'] })
