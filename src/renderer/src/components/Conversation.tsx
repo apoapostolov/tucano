@@ -3138,14 +3138,9 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                 <span className="work-row__text">{asked(m)}</span>
                 {where(m, 24)}
               </button>
-              <button
-                className="icon-btn icon-btn--sm work-row__stop"
-                title={L('Parar esta resposta', 'Stop this reply')}
-                aria-label={L('Parar esta resposta', 'Stop this reply')}
-                onClick={() => stopRun(m.id)}
-              >
-                <Icon name="x" size={12} />
-              </button>
+              {/* Steering first, stopping after it: what a person does to a running reply is say how
+                  to go on far more often than kill it, and the x at the row's end is the last thing
+                  under the pointer rather than the first. */}
               <div className="work-row__steer">
                 <PillPrompt
                   icon="pointer"
@@ -3156,6 +3151,14 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], undefined, 'steer', m.id)}
                 />
               </div>
+              <button
+                className="icon-btn icon-btn--sm work-row__stop"
+                title={L('Parar esta resposta', 'Stop this reply')}
+                aria-label={L('Parar esta resposta', 'Stop this reply')}
+                onClick={() => stopRun(m.id)}
+              >
+                <Icon name="x" size={12} />
+              </button>
             </div>
           ))}
           {queued.length > 0 && (

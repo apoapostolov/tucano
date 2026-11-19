@@ -28,8 +28,10 @@ it.skipIf(!existsSync(chromium.executablePath()))('preserves a retained passage 
     const box = page.locator('.thought__text')
     await expect.poll(() => box.textContent()).toContain('0999 retained line.')
     await page.evaluate(() => {
-      const box = document.querySelector('.thought__text')!
-      const text = box.firstChild!
+      // The block is the scroller (styles.css: `.thought` carries the height, the text scrolls inside
+      // it), and it is the element Thought.tsx holds, reads and restores the reading place on.
+      const box = document.querySelector('.thought')!
+      const text = box.querySelector('.thought__text')!.firstChild!
       const offset = text.textContent!.indexOf('0500 retained line.')
       const range = document.createRange()
       range.setStart(text, offset)
@@ -54,13 +56,13 @@ it.skipIf(!existsSync(chromium.executablePath()))('preserves a retained passage 
     await expect.poll(async () => Math.abs(await top() - before)).toBeLessThan(1)
     expect(await box.evaluate(el => el.scrollWidth - el.clientWidth)).toBe(0)
     await page.evaluate(() => {
-      const el = document.querySelector('.thought__text')!
+      const el = document.querySelector('.thought')!
       el.scrollTop = el.scrollHeight
       el.dispatchEvent(new Event('scroll', { bubbles: true }))
       ;(window as any).emitThought('\nThe stream continues.')
     })
     await expect.poll(() => box.textContent()).toContain('The stream continues.')
-    await expect.poll(() => box.evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight)).toBeLessThan(2)
+    await expect.poll(() => page.locator('.thought').evaluate(el => el.scrollHeight - el.scrollTop - el.clientHeight)).toBeLessThan(2)
     await page.locator('.thought__head').click()
     await expect.poll(() => box.count()).toBe(0)
     await page.evaluate(() => (window as any).emitThought(' Still folded.'))

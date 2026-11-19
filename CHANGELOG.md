@@ -4,6 +4,15 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Changed
+
+- **Steer comes before the x on a running reply's row in the work drawer.** Steering a reply that is working is what a person does far more often than stopping it, and the x was the first thing under the pointer at the row's end. The row now reads: the prompt, **Steer**, then the x that stops it.
+
+### Fixed
+
+- **The reasoning block's size setting takes effect: 6, 12 or 18 lines.** All three sizes drew six, because a fixed `max-height` on the text inside the block — the six lines it was before the setting existed — outranked the block's own height. The block is the one that scrolls now, as the reading-position code has always driven it, with the label staying in view while the reasoning runs under it, and a finished reply still opens in full.
+- **The reasoning block is as wide as the steps above it.** The block's text sat 4 px in from a step's row and ended 10 px short of it, so the reasoning read as a narrower column than the chain it belongs to. The block takes the chain's own column now, and the scrollbar no longer takes 10 px out of it while it streams: the last line fades instead.
+
 ## [0.2.40] - 2026-11-18
 
 > **Em português:**

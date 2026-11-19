@@ -14216,25 +14216,22 @@ button.agent-card__now:hover {
   opacity: 0.8;
 }
 .thought__text {
-  max-height: 9.5em;
-  overflow-y: auto;
-  /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar
-     on the box whenever a line of reasoning had nowhere to wrap. */
-  overflow-x: hidden;
   padding: 1px 0 2px;
   white-space: pre-wrap;
+  /* The newest line never sits against the edge of the box: it fades in from the bottom, which is
+     what says the reasoning goes on under it now that no scrollbar does. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent 100%);
   /* A path or an address in the model's thinking has no space to break at: it wraps onto the next
      line instead of pushing the column wider and leaving a horizontal scrollbar in a thread. */
   overflow-wrap: anywhere;
   opacity: 0.85;
-  scrollbar-width: thin;
-  /* The newest line never sits against the edge of the box: it fades in from the bottom. */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent 100%);
 }
-.thought:not(.is-working) .thought__text {
+/* The block is the one that scrolls, the way Thought.tsx drives it: it holds the reading place and
+   follows the stream on this element, not on the text inside. Left to scroll itself, the text kept a
+   fixed six lines and the block's own height never applied — every size looked the same. */
+.thought:not(.is-working) {
   max-height: none;
   overflow: visible;
-  mask-image: none;
 }
 /* A cursor on the line it is writing: it is arriving now, not read back later. */
 .thought__caret {
@@ -17361,14 +17358,21 @@ button.agent-card__now:hover {
   /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar on
      the block whenever a line of reasoning had nowhere to wrap. */
   overflow-x: hidden;
-  padding: 8px 10px;
+  /* The text column is the chain's own: `.steps__list` sits 3px in, carries the same 2px border and
+     pads its rows 14px, so a step's row box and this block's text run from 423 to 1004 in a 1280
+     window — the same width. At 10px a side the reasoning read a hair narrower than the steps above
+     it, which is what it looked like. */
+  padding: 8px 0 8px 14px;
   border-left: 2px solid var(--border);
   border-radius: 0 8px 8px 0;
   color: var(--text-3);
   font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
-  scrollbar-width: thin;
+  /* No bar of its own: a visible one took 10px out of the text while it streamed, so the reasoning
+     ended short of where a step's row ends — the same narrow column in another shape. The fade on
+     the last line says there is more under it. */
+  scrollbar-width: none;
 }
 
 /* The size is a setting, so it rides on the block as data-size rather than as a class: the class
@@ -17386,13 +17390,19 @@ button.agent-card__now:hover {
 }
 
 .thought__head {
+  /* The label and the fold stay in view while the reasoning scrolls under them. It takes the message
+     surface, which is what the block sits on, so nothing shows through it. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
+  min-width: 0;
   padding: 0;
   border: 0;
-  background: transparent;
+  background: var(--bg);
   color: inherit;
   text-align: left;
   cursor: pointer;
