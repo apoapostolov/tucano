@@ -387,7 +387,7 @@ export const promptAway = (m: Message, prev?: Message): boolean => !!m.run?.repl
 // `replies`: a timeline with threads, where each message can start one (its replies by its id).
 // `older`: there's more before the first message, loaded as the scroll gets near the top.
 // `focus` / `focusKey`: bring one message to the top and flash it, again when the key changes.
-export function MessageList({ messages: all, replies, older, conversationId, threadId, empty, focus, focusKey, lead, divider }: { messages: Message[]; replies?: Map<string, Message[]>; older?: boolean; conversationId: string; threadId?: string; empty?: boolean; focus?: string; focusKey?: number; lead?: Message; divider?: ReactNode }): ReactNode {
+export function MessageList({ messages: all, replies, older, conversationId, threadId, empty, focus, focusKey, lead, rail = true, divider }: { messages: Message[]; replies?: Map<string, Message[]>; older?: boolean; conversationId: string; threadId?: string; empty?: boolean; focus?: string; focusKey?: number; lead?: Message; rail?: boolean; divider?: ReactNode }): ReactNode {
   // An answer sent from a decisions card shows on the card, not again as a message (Decisions.asShown).
   const everything = useStore((s) => messagesIn(s, conversationId)) // a list: the store compares a Map as always equal
   // A cleared conversation starts at the cut, wherever it is drawn from (the conversation, a thread,
@@ -602,7 +602,7 @@ export function MessageList({ messages: all, replies, older, conversationId, thr
       )}
       {lead && (
         <div className="thread__lead">
-          <MessageRow message={lead} grouped={false} replyKey={replyKey} quote={selection?.messageId === lead.id ? selection.quote : undefined} />
+          <MessageRow message={lead} grouped={false} rail={rail} replyKey={replyKey} quote={selection?.messageId === lead.id ? selection.quote : undefined} />
           {divider}
         </div>
       )}
@@ -628,6 +628,7 @@ export function MessageList({ messages: all, replies, older, conversationId, thr
               grouped={grouped}
               away={promptAway(m, prev)}
               replies={replies && (replies.get(m.id) ?? NO_REPLIES)}
+              rail={rail}
               ask={item.ask}
               askReplies={item.ask && replies?.get(item.ask.id)}
               replyKey={replyKey}
@@ -695,7 +696,7 @@ export function CopyMarkdown({ text }: { text: string }): ReactNode {
 // `quote`: the excerpt of this message selected in the page, for the reply button under it.
 // `replyKey`: the composer it answers in (the thread it is in, or the conversation).
 // `away`: this reply's prompt is further up the list, so the glyph under the thread button goes back to it.
-const MessageRow = memo(function MessageRow({ message, grouped, away, replies, ask, askReplies, quote, replyKey = message.conversationId }: { message: Message; grouped: boolean; away?: boolean; replies?: Message[]; ask?: Message; askReplies?: Message[]; quote?: string; replyKey?: string }): ReactNode {
+const MessageRow = memo(function MessageRow({ message, grouped, away, replies, ask, askReplies, quote, rail = true, replyKey = message.conversationId }: { message: Message; grouped: boolean; away?: boolean; replies?: Message[]; ask?: Message; askReplies?: Message[]; quote?: string; rail?: boolean; replyKey?: string }): ReactNode {
   const [menu, setMenu] = useState<MenuState>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
   const me = useStore((s) => s.me)
@@ -895,8 +896,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
           <div className="msg__anchor">
             <div className={`msg__anchor-pin ${replies ? '' : 'msg__anchor-pin--alone'}`}>
               {replies ? <ThreadButton message={message} /> : null}
-              {agent && <DeleteSession message={message} />}
-              {message.run && (pastStart || returnTop !== null) && <PromptJump back={returnTop !== null} onClick={returnTop !== null ? back : toStart} />}
+              {agent && rail && <DeleteSession message={message} />}
+              {rail && message.run && (pastStart || returnTop !== null) && <PromptJump back={returnTop !== null} onClick={returnTop !== null ? back : toStart} />}
             </div>
             <RunSteps message={message} />
           </div>
@@ -1624,7 +1625,9 @@ function ThreadPanel({ rootId, conv, title, members, focusId, focusKey }: { root
       {root?.conversationId === conv.id ? (
         <>
           {showSummary && <ThreadSummaryPanel root={root} replies={replies} onClose={() => setShowSummary(false)} />}
-          <MessageList key={rootId} messages={replies} conversationId={conv.id} threadId={rootId} focus={focus} focusKey={focusKey} lead={root} divider={divider} />
+          // The panel's own header carries the session's trash, and its right edge is the window's: a rail
+          // drawn one glyph wide past the row would overflow it, so rows here have none (rail={false}).
+          <MessageList key={rootId} messages={replies} conversationId={conv.id} threadId={rootId} focus={focus} focusKey={focusKey} lead={root} rail={false} divider={divider} />
           <Composer
             conversationId={conv.id}
             threadId={rootId}

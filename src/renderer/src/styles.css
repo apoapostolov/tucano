@@ -4070,6 +4070,9 @@ body.is-resizing webview {
   color: var(--danger);
   background: var(--danger-soft);
 }
+/* Inside the thread panel there is no rail: the panel's header carries the session's trash, and a
+   glyph hung past the row's right edge (the -24px below) overflowed the panel. Those rows are drawn
+   with rail={false} (Conversation.tsx), so this column only ever exists in a channel. */
 /* The trash rides the same sticky rail, one row under the thread button. The way back to the
    prompt takes the row after it, so the three glyphs share one column and never cover each other. */
 .msg__anchor-pin .msg__delete {

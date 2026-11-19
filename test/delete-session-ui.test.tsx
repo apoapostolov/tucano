@@ -12,6 +12,11 @@ const { window, document } = parseHTML('<!doctype html><html><body><div id="root
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Element: window.Element, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
 Object.assign(window, { innerWidth: 1280, innerHeight: 800 })
 Object.assign(globalThis, { ResizeObserver: class { observe(): void {} unobserve(): void {} disconnect(): void {} } })
+// A list with a lead (the thread panel's) parks the scroll on the next frame; linkedom has no frames.
+Object.assign(globalThis, {
+  requestAnimationFrame: (fn: (t: number) => void): number => setTimeout(() => fn(0), 0) as unknown as number,
+  cancelAnimationFrame: (): void => {}
+})
 
 const deleted: string[] = []
 let closed = 0
@@ -67,6 +72,10 @@ const renderFlat = (messages: Message[]): Promise<void> => paint(messages, undef
 // The row's own trash, whichever row the case painted. A prompt carries its own now, and it comes
 // first in the room, so the cases that paint both say which one they mean.
 const rowTrash = (): HTMLElement | null => document.querySelector('.msg__delete')
+// The thread panel's list: the same rows, drawn without the side rail (rail={false}).
+const paintPanel = async (messages: Message[]): Promise<void> => {
+  await act(async () => root.render(<MessageList messages={messages} conversationId="dm" threadId="r1" lead={reply('r1')} rail={false} />))
+}
 const trash = (): HTMLElement | null => document.querySelector('.msg--agent .msg__delete')
 const replyTrash = trash
 const promptTrash = (): HTMLElement | null => document.querySelector('.msg--me .msg__delete--prompt')
@@ -143,6 +152,20 @@ describe('the trash that deletes a session', () => {
     expect(trash()!.closest('.msg')).toBeTruthy()
     // The way back to the prompt rides the same pin: on a long run it stays reachable however far
     // down the steps the reply has been scrolled.
+  })
+
+  it('draws no trash beside a row inside the thread panel: that column would hang past its edge', async () => {
+    // The panel's right edge is the window's, and the rail's trash sits one glyph wider than the row
+    // (right: -24px), so in the panel it showed up overflowing on the right. The session's trash is
+    // in the panel's header there, and the rows keep their steps and their head, without the column.
+    await paintPanel([said('m2', 'e agora?')])
+    expect(document.querySelector('.msg__anchor-pin .msg__delete')).toBeNull()
+    expect(document.querySelector('.msg__reply')).toBeNull() // nor the way back to the prompt's start
+    // My own prompt keeps the pencil and its trash: those sit beside the bubble, not past the row.
+    expect(document.querySelectorAll('.msg__anchor').length).toBe(1) // the lead's run keeps its block
+    // The channel's own rows keep theirs: the column only goes away inside the panel.
+    await render([said('m1', 'corrige o login'), reply('r2')])
+    expect(trash()).toBeTruthy()
   })
 
   it("sits in the thread's own header, beside close, and takes the panel away with the session", async () => {
