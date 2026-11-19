@@ -1521,7 +1521,32 @@ export class Runner {
     const own = t.accountId ? settings.accounts?.find((a) => a.id === t.accountId && a.engine === t.engine) : undefined
     if (t.accountId && !own) return L(`a conta ${t.accountId} não existe mais`, `the account ${t.accountId} is gone`)
     if (!status.loggedIn && !own?.loggedIn) return L(`${label} não está logado`, `${label} isn't signed in`)
-    return undefined
+    return this.spent(label, t.engine, settings, !!own)
+  }
+
+  // An entry whose subscription has used up a window can't start the reply: the CLI answers "you hit
+  // your limit" and the reply dies, where the next entry in the chain — or the tier below — runs it
+  // now. What the app already read is enough: Codex's windows come from its app-server and Claude's
+  // from the last reply, and both say when they free up. An account of its own keeps its own windows.
+  private spent(label: string, engine: EngineId, settings: Settings, ownAccount: boolean): string | undefined {
+    if (ownAccount) return undefined
+    const windows: { used: number; resetsAt?: number; name: { pt: string; en: string } }[] = []
+    if (engine === 'codex')
+      for (const w of settings.codexQuota?.windows ?? [])
+        windows.push({ used: w.utilization, resetsAt: w.resetsAt, name: w.minutes >= 1440 ? { pt: 'semanal', en: 'weekly' } : { pt: 'de 5 horas', en: 'five-hour' } })
+    if (engine === 'claude') {
+      const q = settings.quota
+      if (q?.fiveHour) windows.push({ used: q.fiveHour.utilization, resetsAt: q.fiveHour.resetsAt, name: { pt: 'de 5 horas', en: 'five-hour' } })
+      if (q?.sevenDay) windows.push({ used: q.sevenDay.utilization, resetsAt: q.sevenDay.resetsAt, name: { pt: 'semanal', en: 'weekly' } })
+    }
+    const now = Date.now()
+    // `resetsAt` in the past is a window that has already turned over, whatever the last read said.
+    const out = windows.find((w) => w.used >= 1 && (!w.resetsAt || w.resetsAt > now))
+    if (!out) return undefined
+    const when = out.resetsAt
+      ? new Date(out.resetsAt).toLocaleString(locale(), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+      : L('mais tarde', 'later')
+    return L(`o limite ${out.name.pt} do ${label} acabou (volta ${when})`, `the ${label} ${out.name.en} limit is used up (back ${when})`)
   }
 
   // Every reply counts while it runs, wherever it came from. A hand-off that reached this agent meanwhile
