@@ -2,7 +2,10 @@
 import type { UplinkStatus } from './node-link'
 import type { AvatarDefinition } from 'open-bot-avatar'
 import type { ActionRules, Autonomy } from './actions'
+import type { ClassifierConfig, ClassifierJob } from './classifiers'
+import type { NoticeSettings } from './notice'
 import type { ChannelLayout } from './channel-layout'
+import type { RouteTrace, RoutingConfig } from './routing'
 import type { Answer, Decision } from './questions'
 import { L, lang, locale, type Lang } from './lang'
 
@@ -10,6 +13,10 @@ export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green
 export type GrantLevel = 'none' | 'read' | 'read_write'
 export type ToolClass = 'read' | 'write' | 'sensitive'
 export type EngineId = 'claude' | 'codex' | 'opencode' | 'pi' | 'antigravity' | 'cursor' | 'grok' | 'cline' | 'hermes' | 'endpoint'
+export type StepsMode = 'all' | 'latest' | 'one-line'
+export type SendMode = 'parallel' | 'queue' | 'steer' | 'interrupt'
+// How the quota panels draw: every provider's windows in a table, or a ring per window (src/shared/quota-view.ts).
+export type QuotaView = 'rings' | 'table'
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh'
 export type MemoryMode = 'auto' | 'approve' | 'read' // how an agent's `lembrar` calls land
 
@@ -76,6 +83,9 @@ export interface Agent {
   fallbackAccountId?: string
   accountId?: string // one of settings.accounts, for its harness; unset: the harness's own login
   effort: Effort
+  // Jev reads each prompt and picks from the person's pools instead of modelId, which stays
+  // here as the baseline (what the agent runs on when routing is off, or decides nothing).
+  smartRouting?: boolean
   limit: number // tokens per month
   maxRoutines?: number // routines on at once; unset: MAX_AGENT_ROUTINES
   used: number // tokens used this month, computed from receipts
@@ -91,8 +101,11 @@ export interface Agent {
   autonomy?: Autonomy // how far it goes on its own (src/shared/actions.ts); unset: Settings' level
   outsideGuard?: boolean // false: what goes out (a send, a post, a payment) runs on its rules even after reading something from outside; unset: Settings'
   folders?: LentFolder[] // Mac folders lent to that computer (spec §13, M5.1); changed only through lendFolder/folderAction
+  retentionDays?: number // how long its history is kept: its replies and its own DMs; unset: the Tucano's period, and 0 keeps everything
   archived: boolean
   kind?: 'tuca' // the agent that builds the others: it proposes, the person creates
+  // How this agent's replies show their steps: over the workspace's setting; unset: follow it.
+  steps?: StepsMode
   owner?: string // the person who gets its approvals: whoever created it (the Tucano's owner for older agents)
   reportsTo?: string // the agent it answers to (src/shared/org.ts): that one, and whoever is above it, may hand it work in its own channel; unset: no one
   sectorName?: string // on a sector's head (src/shared/org.ts headsOf): the sector's name; unset: "Setor de <name>"
@@ -125,12 +138,15 @@ export interface Conversation {
   name: string // channel name, or agent id for a DM
   topic?: string
   members: string[] // agent ids
+  mentionOnly?: string[] // agents of a channel in mention mode: they read it, and answer only when mentioned
+  listen?: string[] // agents of a channel in listen mode: they read it, and Jev says when the message is for them
   summary?: string // what the conversation covered before its recent messages
   summaryUntil?: number // `at` of the last message the summary covers
   summaryAt?: number
   unread?: number
   wikiCapture?: boolean // false: the wiki's curator leaves this conversation out
   threads?: boolean // true: each message's answers go in its thread; unset: in the conversation, like a chat
+  clearedAt?: number // the person cleared the history: earlier messages stay in the rows (costs, approvals) and out of the screen and the next turns
   owner?: string // a DM's person: one DM per agent and person, and only they read it
   createdBy?: string // a channel's maker: they (and admins) rename it, change its topic and its agents
 }
@@ -157,6 +173,9 @@ export interface Step {
   output?: string // what came back, in a few words ("120 rows")
   status: StepStatus
   ms?: number
+  // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran,
+  // between two calls; `followup` is the instruction a finished reply goes on with (runs.ts).
+  kind?: 'steer' | 'followup'
 }
 
 export interface Receipt {
@@ -174,6 +193,7 @@ export interface Run {
   status: RunStatus
   steps: Step[]
   endedAt?: number // when this reply ended, however it ended: where the conversation shows it (saidAt)
+  restartPending?: boolean // interrupted at shutdown, still eligible for startup recovery
   receipt?: Receipt
   approvalId?: string
   outside?: boolean // it read something from outside (a connector's answer, a page, an app, the web, a trigger's event): what goes out after asks first, with the guard on
@@ -186,6 +206,7 @@ export interface Run {
   question?: string // asked with ask_user, as plain text (every decision, numbered); answered by the next human message here
   questions?: Decision[] // the same decisions, structured (one to four, with options): read them with questionsOf
   answers?: (Answer | null)[] // what was answered on the card so far, by decision, before sending
+  recommended?: (number | null)[] // Jev's pick per decision, by index into its options (null: none is clearly better); unset when it's off or still thinking
   answeredInText?: true // the reply had text of its own, beyond the decisions answered
   answerMessage?: string // the message that sent the decisions answered on the card (the agent reads it; the card shows it)
   answerTyped?: string // what that message had beyond them, written in the message box
@@ -197,6 +218,8 @@ export interface Run {
   routineIds?: string[] // routines scheduled or changed with `agendar_rotina` in this reply
   browser?: boolean // used its browser in this reply (the message links to the live view)
   budget?: number // 'paused': the per-reply budget it reached, in counted tokens
+  held?: true // 'paused' by the person: it waits before its next tool call or turn, keeping its session and what it did; not a ceiling
+  route?: RouteTrace // what smart routing decided for this reply, drawn as the thin line over it
   task?: string // what this reply was asked beyond the conversation; kept only while it can be tried again or go on
   work?: string // the piece of work it counts toward, e.g. the issue "OAB-65" (spec §20)
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
@@ -282,8 +305,10 @@ export interface AgentDraft {
   agentId?: string // once created
 }
 
-// What the Tuca may propose to change in an agent that exists.
-export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit'>>
+// What the Tuca may propose to change in an agent that exists. `skills`: the whole list of active
+// skills it follows, by name; a single "*" means every one of them (and reads back as "*").
+export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit'>> &
+  { skills?: string[] }
 
 // A change an agent proposes to what exists, or a new routine, channel or team: a card under its message
 // with Aplicar and Descartar. Nothing changes until the person applies it. `appliedId`: the agent,
@@ -390,14 +415,21 @@ export interface Question {
 }
 
 // What's waiting on a person: approvals they can decide and questions to them.
+// A question as one person's page shows it: without where it was asked when they can't see that
+// conversation (someone else's DM: they get the question only).
+export type AskEntry = Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string }
+
 // A question from someone else's DM comes without where it was asked (they see the question only).
 export interface Inbox {
   approvals: Approval[]
-  // With the decisions asked (ask_user's options) and what was answered on the card so far.
-  questions: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[]
-  answered?: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
+  questions: InboxQuestion[]
+  answered?: InboxQuestion[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
   proposals?: InboxProposal[] // admins: what a member asked to apply (agents and teams are theirs)
 }
+
+// A question in the inbox: with the decisions asked (ask_user's options), what was answered on the
+// card so far, and, when a classifier is on, the option it suggests for each decision.
+export type InboxQuestion = AskEntry & { decisions?: Decision[]; answers?: (Answer | null)[]; recommended?: (number | null)[] }
 
 // A Tuca card a member couldn't apply, sent to the admins: the card alone, not the DM it came from.
 export interface InboxProposal {
@@ -435,6 +467,9 @@ export interface Invite {
 
 // A person's own memories ("about me") live in this scope.
 export const personScope = (personId: string): string => `person:${personId}`
+
+// What the composer answers: a message, or the excerpt of it the person selected.
+export type ReplyTarget = { messageId: string; quote?: string }
 export const scopePerson = (scope: string): string | undefined => (scope.startsWith('person:') ? scope.slice('person:'.length) : undefined)
 
 export interface Message {
@@ -448,6 +483,12 @@ export interface Message {
   threadId?: string // a reply in a thread: the id of the message that started it (threads are one level deep)
   threadSummary?: ThreadSummary // on the message that started a thread: what the thread has covered
   title?: string // on a request: what it's about in a few words, made when work on it starts (src/core/titles.ts)
+  // The message this one answers, kept with the quote it showed: the agent still reads it when the
+  // original has left the history it sees.
+  reply?: { messageId: string; author: string; agentId?: string; text: string; at: number; excerpt?: boolean }
+  // A prompt of mine waiting its turn in a conversation that was already answering: 'queue' while it
+  // waits, unset once its reply goes. Kept in the database, so it outlives a restart (runs.ts, resumeQueued).
+  sendMode?: SendMode
 }
 
 // When a message was said: a reply when it ended, anything else when it was written. `at` stays when it
@@ -455,9 +496,36 @@ export interface Message {
 export const saidAt = (m: Message): number => m.run?.endedAt ?? m.at
 
 // A conversation as people read it: in the order things were said, and whoever is still working at the end.
+// A reply at work is the one exception: it stays with the prompt it answers, so that a second prompt
+// written while the first is still running reads below that reply instead of on top of it.
 export function asSaid(messages: Message[]): Message[] {
   const working = (m: Message): boolean => m.run?.status === 'working'
-  return [...messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b)), ...messages.filter(working).sort((a, b) => a.at - b.at)]
+  const said = messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b))
+  const atWork = messages.filter(working).sort((a, b) => a.at - b.at)
+  if (atWork.length === 0) return said
+  // Who answers what: a reply whose prompt is here goes right under it; one whose prompt is on a
+  // page not loaded yet (or was a note) has nowhere to stand, so it waits at the end as before.
+  const answering = new Map<string, Message[]>()
+  const standing: Message[] = []
+  const here = new Set(said.map((m) => m.id))
+  for (const m of atWork) {
+    const to = m.run?.replyTo
+    if (!to || !here.has(to)) {
+      standing.push(m)
+      continue
+    }
+    const had = answering.get(to)
+    if (had) had.push(m)
+    else answering.set(to, [m])
+  }
+  if (answering.size === 0) return [...said, ...standing]
+  const out: Message[] = []
+  for (const m of said) {
+    out.push(m)
+    const replies = answering.get(m.id)
+    if (replies) out.push(...replies)
+  }
+  return [...out, ...standing]
 }
 
 // A thread's own summary, kept on its first message. `until`: the `at` of the last message it covers.
@@ -505,8 +573,12 @@ export interface Settings {
   workspaceLabel?: string // the workspace's own name, in the switcher; unset: workspaceName
   context: string
   engines: Record<EngineId, EngineStatus>
-  routerModel: string // a model id, or 'jev' for TypeSafe's Jev (falls back to Haiku)
-  jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core)
+  routerModel: string // a model id, or 'jev' for the classifier chosen in Settings › Classifiers (falls back to Haiku)
+  routing?: RoutingConfig // Settings › Routing: pools, role chains and the switch that turns routing on (src/shared/routing.ts)
+  jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core); kept for installs from before Settings › Classifiers
+  classifiers?: ClassifierConfig[] // Settings › Classifiers: the model pairs that answer typed questions, one key each
+  classifierJobs?: Partial<Record<ClassifierJob, string>> // which classifier serves each job; a job left out is off
+  classifierKeys?: Record<string, boolean> // computed: which classifiers have a key saved (never the key itself)
   // An address in OpenAI's format the agents run on with no harness: its base URL and the models picked
   // from what it lists. The key is a secret (ENDPOINT_SECRET); `hasKey` only says one is saved.
   endpoint?: EndpointSettings
@@ -514,14 +586,19 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
+
   memoryModel: string // summarizes conversations and extracts memories
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
+  sendMode?: SendMode // what Enter does while a reply is running: beside it, two replies at once (the default), after it, into it, or stopping it
   wikiCapture?: boolean // the curator reads the conversations and keeps what lasts; on when unset
   wikiEdits?: 'approve' | 'auto' // changing a page that exists: waits for me (the default) or goes in
   wikiReview?: 'weekly' | 'off' // reviews the wiki on its own once a week; by hand only otherwise (the default)
+  wikiResolve?: boolean // the resolver settles a finding the review couldn't fix, when asked (off by default)
+  wikiResolveModel?: string // a model id; unset: the memory model, then Haiku
   wikiDir?: string // where the wiki's folder is (an Obsidian vault, say); inside the app's data when unset
   defaultLimit: number
   approvalTtlHours: number
+  retentionDays?: number // how long every conversation keeps what was said, in days; 0 or unset: everything, for good (an agent's own page may say otherwise)
   questionDeadlineHours?: number // a question to someone else, unanswered this long: the requester is told (default 4)
   actionRules?: ActionRules // for every agent: which actions ask me first, which it does alone, which never (src/shared/actions.ts)
   autonomy?: Autonomy // every agent's level, unless its page sets its own (default normal)
@@ -554,11 +631,40 @@ export interface Settings {
   }
   folded?: string[] // the ids of what I folded in the sidebar
   sidebarHidden?: string[] // what I took out of the top of the sidebar (sidebar-top.ts TOP_ITEMS); unset: none
+  skillFolders?: string[] // folders to read skills from, on top of the ones the harnesses keep
+  skillFoldersOff?: string[] // folders found on this computer that aren't read
+  lastImageFolder?: string // the folder the last picture was saved to, so the next one goes there in one click
   sounds?: boolean // the toucan's chirp on a notification; unset: on
   stepsOpen?: boolean // a reply's steps open while the agent works; unset: on
+  // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
+  // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
+  showThinking?: boolean
+  notice?: NoticeSettings // native or enhanced (src/shared/notice.ts); unset: enhanced, so a notification already on keeps coming
+  replyShortcut?: boolean // ⌘L (Ctrl+L off a Mac) replies to the text I selected in a message; unset: on
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
   accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
   surveys?: boolean // the owner sees the small surveys in the sidebar's foot (core/feedback.ts); unset: on
+  dmOrder?: string[] // the person's order for the direct messages, by conversation id
+  agentOrder?: string[] // the person's order for the agents, by agent id
+  navOrder?: string[] // the person's order for the sidebar's own screens (Approvals, Wiki…), by row id
+  navHidden?: string[] // the screens this person put under the sidebar's line, by row id: out of the way, not forgotten
+  jevRecommend?: boolean // legacy: the recommended option used to be one switch, now the `recommend` classifier job; read only when migrating (classifierJobsOf)
+  jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset
+  quotaView?: QuotaView // how the quota panels draw: the table of windows (the default) or a ring per window
+  quotaHidden?: string[] // providers whose quota isn't shown, by the quota reader's id (src/shared/quota-view.ts)
+  // The bot that reads the finding, by its id: its own instructions and model, with the resolver's
+  wikiResolveBot?: string
+  launchMinimized?: boolean // TucanoNext: start in the tray at login
+  resumeInterrupted?: boolean // resume replies cut off by shutdown or a crash; unset: off
+  teamUpDays?: number // a team-up channel closes itself after this many days quiet; default TEAM_UP_DAYS, 0 never
+  // Asks and Approvals out of the sidebar while nothing is waiting in them; unset: both always there
+  hideEmptyAsks?: boolean
+  hideEmptyApprovals?: boolean
+  thinkingSize?: 'sm' | 'md' | 'lg' // Settings › The conversation: how tall the reasoning preview is before it scrolls
+  clock?: '24' | '12' // Settings › The conversation: times as 15:05 or 3:05 PM; unset keeps the app's own reading
+  // How a reply's steps read: every one, the latest few, or a single line with the count
+  steps?: StepsMode
+  stepsLatest?: number // how many the 'latest' mode keeps; unset: STEPS_LATEST (20)
 }
 
 // Which chirp a notification plays: a knock when an agent needs me, two notes when the work
@@ -646,6 +752,37 @@ export interface CodexQuota {
   windows: { minutes: number; utilization: number; resetsAt: number }[] // 0..1, ms
   plan?: string // "plus", "pro"…
   at: number
+}
+
+// One window of a provider's own quota, as the provider reports it (src/core/quotas.ts):
+// a percentage left, a wallet's money, or a count of requests against a cap.
+export interface QuotaWindow {
+  used?: number // 0..1, when the provider says how much is used
+  remaining?: number // in `unit`
+  limit?: number // what the window allows, in `unit`; a wallet has none
+  unit: '%' | 'usd' | 'req' | 'tokens'
+  resetsAt?: number
+}
+
+// The last read of every provider's quota, and when it was taken: what the panel draws the moment it
+// opens, before the read behind it answers.
+export interface QuotasSnapshot {
+  list: ProviderQuota[]
+  at: number
+}
+
+// A provider whose quota Tucano read from the person's own logins: the CLI's, or the ones
+// Pi and Hermes are signed in to. One column in Usage and limits.
+export interface ProviderQuota {
+  id: string // 'codex', 'opencode-go', 'zai', 'grok'…
+  label: string
+  via: string // where the login was found: 'Codex', 'Pi', 'Hermes', 'OpenCode'
+  plan?: string // what the provider calls the account, when it says
+  session?: QuotaWindow // the short window: 5 hours, or hourly
+  week?: QuotaWindow
+  month?: QuotaWindow
+  error?: string // why nothing could be read; the other providers still show
+  at: number // when this reading was taken
 }
 
 // Whether `now` falls in the quiet hours (which may cross midnight).
@@ -820,6 +957,9 @@ export interface Connector {
   args?: string[]
   envKeys?: string[] // names only; values are secrets
   auth: ConnectorAuth
+  // The picture this connector wears in the app, as a data URL (an image picked by the person): a
+  // server added by hand is otherwise a terminal or a globe. Empty: the store's mark, or its kind's icon.
+  icon?: string
   status: ConnectorStatus
   error?: string
   errorDetail?: string // the raw error and its causes (a certificate's code, the DNS's), under "Ver detalhes"
@@ -1186,9 +1326,23 @@ export interface LocalSkill {
   name: string
   description: string
   bodyLength: number // recipe characters, excluding frontmatter
-  origin: string // "Claude Code", "Plugin <name>", "Codex"
+  origin: string // "Claude Code", "Plugin <name>", "Codex", "Pi", "Hermes", "Added"
   files: string[] // its other text files, relative to its folder
   scripts: boolean // it has scripts: an agent needs a computer to run them
+  category?: string // the folder it sits in, when the library is organised in categories (a Hermes one)
+  version?: string // from the frontmatter: a Hermes library keeps one; a plain skill may under metadata
+  tags?: string[] // metadata.hermes.tags, facets included (family:*, tool:*, risk:*…)
+}
+
+// A folder skills are read from: one a harness keeps for itself on this computer (Claude Code,
+// Codex, Pi, Hermes, OpenCode…), or one the person added. All the ones that are on mix into the
+// same list (src/core/local-skills.ts).
+export interface LocalSkillFolder {
+  path: string // where it is on this computer
+  source: string // who keeps it: "Claude Code", "Pi", "Hermes"…, or "Added"
+  detected: boolean // found on this computer, not added by hand
+  on: boolean // read; off: kept in the list, not read
+  count: number // skills in it right now
 }
 
 export interface SkillVersion {
@@ -1270,8 +1424,15 @@ export interface Report {
 }
 
 // ---------- the wiki ----------
-export type WikiAccess = 'none' | 'read'
+// 'read' opens the pages and the search; 'read_write' adds wiki_escrever and wiki_editar, so the
+// agent keeps the wiki itself instead of waiting for the curator.
+export type WikiAccess = 'none' | 'read' | 'read_write'
+// The three, so reading one back from the database can't quietly lose the last one added.
+export const WIKI_ACCESS: readonly WikiAccess[] = ['none', 'read', 'read_write']
+export const isWikiAccess = (v: unknown): v is WikiAccess => WIKI_ACCESS.includes(v as WikiAccess)
 export const wikiAccess = (a: Pick<Agent, 'wiki' | 'kind'>): WikiAccess => (a.kind === 'tuca' ? 'none' : (a.wiki ?? 'read'))
+// Whether it may change pages, not only read them.
+export const wikiWrites = (a: Pick<Agent, 'wiki' | 'kind'>): boolean => wikiAccess(a) === 'read_write'
 export interface WikiPageInfo {
   title: string
   kind: string // the page's tipo, from its frontmatter
@@ -1344,6 +1505,7 @@ export interface WikiFinding {
   pages: string[] // the pages it is about
   text: string // what's wrong, in a sentence (Markdown, with [[links]])
   name?: string // broken, missing: the page it would take
+  note?: string // what the resolver found and couldn't settle, or the question only the person can answer
   change?: WikiChange // the fix it suggests, waiting for approval
 }
 // What came in from an Obsidian vault.

@@ -1,0 +1,151 @@
+# Drop study against the 0.2.37 base
+
+Apo asked (2026-11-18) for every wave after wave 1 to be studied for drop potential while wave 1
+PRs are being prepared. Each PR is compared with its own merge base and with the current upstream
+tree (`upstream/main` = `4522704e`) and the 0.2.37 changelog. Verdicts are evidence, not decisions:
+nothing leaves the plan until Apo decides. Drop candidates are marked **D?**, narrow scope **N**,
+clear keeps **K**.
+
+## Waves 7 and 8 (studied, 2026-11-18)
+
+Merge bases for #274, #272, #416, #424, #250, #411, #288 and #290 are `68cf5da1`; #334 starts at
+`04539404`, #467 at `e326c70e`, #512 at `e61f6e46`. All predate the 0.2.37 sidebar and account
+changes, so every keep needs a rebase, not just a retarget.
+
+| PR | Verdict | Evidence and surviving scope |
+| --- | --- | --- |
+| #274 team-ups | K | `team-up.ts` (`TEAM_UP_GUESTS`, `TEAM_UP_REUSE_MS`, `staleTeamUps`, `fitTeamUpName`), `roster.ts` `EQUIPE`, `team-up-privacy.ts`, `TEAM_UP_DAYS`. Search for `teamup\|team-up\|team_up` on upstream `src/` returned nothing; upstream `pedir` in `delegations.ts:22` is a one-way request into the recipient's room, not a shared room. |
+| #467 multi-boss | K | `Agent.alsoTo`, `agents.also_to`, `bossesOf()`/`kidsOf()`, team file `alsoAnswersTo`. Upstream `shared/org.ts:1-23` has one `reportsTo` tree; `db.ts:570` COLUMNS has only `reports_to`. |
+| #272 mention mode | K | `mentionOnly`, `members.mention_only`, `setMembers(..., mentionOnly?)` and the routing hook. Upstream has no such symbol; `runs.ts:632` is still the block the PR patches. |
+| #416 Grok accounts | K, reconcile with #538 | PR adds `'grok'` to `ACCOUNT_ENGINES`, `grokAccountEnv`, `GROK_HOME`/`GROK_AUTH_PATH`, plus `dropAccountDir`/`sweepAccountDirs` in `account-folders.ts`. Upstream `types.ts:577` has only claude/codex/antigravity and CHANGELOG:25 is the Antigravity account (#538). Both engines must survive as a union; the folder sweep is also absent upstream and fixes a Windows remove-account throw. |
+| #424 room sharing | D? | No upstream equivalent, but the PR is a design doc plus optional type fields and a helper that nothing reads. It ships no user-visible capability; recommend keeping it only as the spec for #423, not as a wave feature. |
+| #250 channel reorder | N | Upstream already has hide (`sidebar-top.ts` `setHidden`/`useHidden`/`Tucked`, CHANGELOG:22) and channel DnD with groups (`channel-layout.ts:52/62`, `Sidebar.tsx:331-376`, CHANGELOG:675). Surviving piece: `moveChannelTo()` in `shared/channel-layout.ts`, `useHoldReorder` from `reorder.ts` (350 ms hold, pointer capture after pickup, `elementFromPoint` hit testing), and the channel row wiring that drops `draggable`. Drop `list-order.ts`, `dmOrder`/`agentOrder`/`navOrder`/`navHidden`, the `NAV_HIDE` line, `moves()` glyphs and their tests; keep `channel-layout.test.ts` "moveChannelTo" and the generic gesture tests. |
+| #334 approval card | D? | Earlier triage said drop, but this study found live behavior: `ApprovalResult`, `approvals.result`, `setApprovalResult`, `attempted` tracking, `approvalFace`/`approvalStatus`, `approvalsIn` and awaited `decideApproval`. Upstream still has a prose `approval__title` and void `decideApproval`, so the earlier drop call was too broad. Needs a decision. |
+| #411 reply shortcut | K | `ReplyTarget`, `Message.reply` with excerpt, `messages.reply`, `replyShortcut`, `isReplyShortcut`, transcript quoting. No upstream symbol; migration must stay last in `MIGRATIONS` after rebase. Test names not captured, marked for manual check. |
+| #288 work drawer | K | `SendMode`, `sendMode`, `send_mode`, `queuedMessages()`, `resumeQueued()`, `allWorkingIds`. Upstream `followups.ts` still enforces one reply per agent and thread with no override. Pairs with the send-mode commits dropped from #332's PR head; #261 carries the setting half. |
+| #290 prompt-before-session | K | `asSaid()` keeps a working reply under its prompt; `JumpTo`, `promptAway`, `PromptJump`. Upstream `asSaid` still sorts naive lists and has only a `focus` effect. |
+| #512 Windows skill hash | K, verify vectors | `cmpParts` lowercases `pathPart` in `hermes-import.ts`; upstream compares raw parts and skips the hash vector on win32 (`hermes-import.test.ts:317`). The two asserted hashes were not recomputed; run the PR's test before shipping. |
+
+### Evidence gaps from this batch
+
+- #411: source diff read, test names not verified.
+- #512: hash vectors asserted, not recomputed.
+- #424: spec-only behavior is a decision, not an evidence question.
+
+## Waves 3 and 4 (studied, 2026-11-18)
+
+No verbatim upstream implementation of any of the ten, so no full DROP. Merge bases: #279/#383
+`90d144a4`, #333/#284 `2c4f0552`, #379/#385/#432 `04539404`, #305 `32468eb7`, #249/#437
+`68cf5da1`.
+
+| PR | Verdict | Evidence and surviving scope |
+| --- | --- | --- |
+| #279 listen mode | K | `members.mention_only`/`listen`, `Conversation.mentionOnly[]`/`listen[]`, `setMembers(..., mentionOnly?, listen?)`, `Runner.answering()/listening()/heard()`, `listenJev()`. Upstream `members` is only `(conversation_id, agent_id)` (`db.ts:79-84`); `Dialogs.tsx:217` calls `setChannelMembers(id, picked)` with no modes. |
+| #284 jev-recommended | K | `jevRecommend`, `recommendOptions()`, `run.recommended`, `InboxQuestion.recommended`, `Runner.recommend()`. Upstream `Decisions.tsx` has no recommend; its "Recommended" tags are autonomy and voice only. |
+| #333 routing pools | K | `shared/routing.ts`, `core/model-routing.ts`, `Settings.routing`, `Agent.smartRouting`, `RouteTrace` line, `RoutingPane`. Upstream has none of these files or panes; `tier` appears once for the OpenCode free tier. |
+| #379 classifiers | K | `shared/classifiers.ts`, `core/classifiers.ts`, four providers, `CLASSIFIER_JOBS`, `setClassifierKey`. Upstream has zero `classifier` hits in `src`; `jev.ts` hardcodes the TypeSafe endpoint. |
+| #383 classifiers-six | N, D? as a branch | Duplicate of #279/#284/#333/#379/#385; unique commits are `8112e1b8` (six jobs on one card), `842e286a` (router row and tab button), `bfc09ad9`, `a1aa088d`. It also carries a stale next-steps copy where `startsTicked` returns every index. Recommendation: drop the branch, cherry-pick the four unique commits onto the merged set. |
+| #385 next-steps ticks | K, fix copy | `NEXT_STEPS` ToolDef, `Decision.nextSteps`/`ticked`, `parseNextSteps`, `startsTicked`, "Do these" button. Upstream tool list has no `next_steps`. The branch carries copies of #379 and #284, so merge #379 first or resolve those files. |
+| #305 provider quotas | K, scope note | `quotas`/`quotasRefresh`, `ProviderQuota`, parsers, cache, logins discovery, `QuotaStrip` in the header. Upstream already has `Quota`/`CodexQuota` rings in `Usage.tsx` (lines 93-94, 240, 260); the new part is one strip for all providers and the header strip. |
+| #432 history retention | K | `shared/retention.ts`, `core/retention.ts` daily sweep, `retentionDays`, `wipeHistory`, `history_wiped`, settings danger area. Upstream has zero `retention` hits and only `deletePerson`/`scrub()`. |
+| #437 db optimize | K | `Db.size()/check()/statistics()/trim()/rebuild()`, `busy_timeout`, `dbHealth`/`optimizeDb`, file section in backup card. Upstream VACUUM lives only in `scrub()` and `wiki.ts`; `quick_check` only in `restore.ts:175`. |
+| #249 clear history | K | `cleared_at`, `STILL_THERE` filter on every read, `clearConversation` RPC, sidebar action, `forgetSessions` and approval/question cleanup. Upstream has only `deleteConversation`, which removes the row. |
+
+### Stacking risk in waves 3 and 4
+
+- #383 cannot merge without #279, #284, #333 and #385; merging it instead of them ships the stale
+  next-steps copy and a six-job set built on an older `questions.ts`.
+- #385 carries #379 and #284 inside it. If #379 lands first there are conflicts in
+  `classifiers.ts`, `jev.ts`, `index.ts` and `Pages.tsx`; if #379 is dropped, the module still
+  travels with #385.
+- #333 does not depend on #279 or #284, but under #383 its `smart` job moves behind the Classifiers
+  card, so merge #333 before #383.
+- All eight branches share one "Group settings by their user decision" commit, so merging several
+  conflicts in the settings nav array. No behavior lost, UI grouping only.
+- #249 and #432 both expire pending approvals, close questions and call `forgetSessions` through
+  different paths. Merge both or unify the invariants, otherwise two history-clearing paths.
+
+### Defects and thin evidence from this batch
+
+- #385's `NEXT_STEPS.description` told the agent the card opens with everything ticked after
+  commit `88ef4247` made it open clear. Fixed on the pushed branch in `0ef761f6` and re-gated at
+  97/97. #383's `jobAbout.nextSteps` still carries the stale wording; fix it before merge.
+- #279, #249 and #432 re-add COLUMNS entries upstream already has; check for duplicates after merge.
+- #305 provider contracts and #379's vendor model ids were asserted in comments, not verified
+  offline. #333's default six pools and ten roles are a product call, not a narrowing decision.
+
+## Waves 5 and 6 (studied, 2026-11-18)
+
+Absence proof: `git grep -c` on `upstream/main` returns zero files for `wiki_escrever`,
+`wiki_editar`, `WIKI_WRITE_TOOLS`, `wikiAsk`, `ArtifactGallery`, `galleryLayout`, `setConnectorIcon`,
+`lastImageFolder`, `noticeFeed`, `guide/en`, `skillFolders` and `assignSkills`. Merge bases are
+`04539404` for #258/#259/#355/#311/#451 and `68cf5da1` for the rest, 93 to 96 commits behind.
+
+| PR | Verdict | Evidence and surviving scope |
+| --- | --- | --- |
+| #258 wiki write handoff | K, needs #355 | `wiki-handoff.ts` (`canHandOff`, `handOffText`, `HAND_OFF_KINDS`), `wikiAsk` RPC, agent picker. Upstream `Wiki.tsx:1675` "Write the page" only navigates to the editor; `WikiAccess` is `'none' \| 'read'`. |
+| #259 orphan handoff | K, stacked on #258 | Adds only `'orphan'` to `HAND_OFF_KINDS` and the links request in `handOffText`. |
+| #268 wiki resolver | K | `wiki-resolver.ts` (`resolverSystem`, `parseResolution`, `WikiResolver`), `wikiResolve` settings, `wikiResolveFinding` RPC, `WikiFinding.note`. Upstream review produces only `change` packages, never an on-demand finding pass. |
+| #355 wiki tool card | K | `WikiAccess 'read_write'`, `WIKI_ESCREVER`/`WIKI_EDITAR`, Tools-tab card, write privacy. Landing order: #355, then #258, then #259. |
+| #311 Hermes skill library | N | The component split is already upstream and credited to the fork author (#472): `components/skills/*` and `SkillPage`. Do not re-apply it. Surviving piece: multi-harness folder reading (`HARNESSES`, `detectedFolders`, nested categories, `skillFolders` settings/RPC, `skillHarnessName`). |
+| #319 Tuca skills | K | `AgentChanges.skills`, `skillsOf`/`assignSkills`, `ver_estado` skills. Upstream Tuca areas have no skills. |
+| #303 artifact gallery | K | `gallery.ts` (`GALLERY_HERO`, `GALLERY_MAX`, `galleryLayout`), `ArtifactGallery`, `+N` cell. Upstream still maps one `ArtifactCard` per id into a flex-wrap. |
+| #336 image menu | K, needs #303 | `ImageMenu.tsx`, `image-menu.ts`, `image:save`/`clipboard`/`read`/`folder`, `lastImageFolder`. Upstream has no `window.tucano.image`. Its album test needs #303's gallery surface. |
+| #353 connector icons | K | `Connector.icon`, `connectors.icon`, `setConnectorIcon`, `ConnectorTile`. Upstream `Connector` has no icon and shows a terminal catalog glyph. |
+| #417 notification center | K | `notice.ts`, `notice/*` renderer, `Settings.notice`, decision buttons on the card. Upstream has only Electron `Notification` and a Sounds section. Rebase replaces `NotifyTest` with `notice.demo()`. |
+| #451 English guide | K, fix count | Upstream deliberately ships only the English index and 25 Portuguese pages. PR adds 24 English pages; add `setores.md` and its slug to the model-facing-language test so both sides have 25. |
+
+Product call: whether upstream intends a notification centre is not visible in 0.2.37; #417 does
+not conflict semantically, only in `Pages.tsx` and `main/index.ts` text.
+
+## Consolidated decision sheet
+
+Evidence is complete for waves 3 to 8. These are the items that need a call; everything else came
+back keep and stays in its wave. Recommendations are the agent's, not decisions.
+
+1. **#334 approval card** (wave 8 earlier marked drop) - keep. Upstream has no approval result
+   tracking or awaited decision, so the earlier drop was too broad.
+2. **#424 room sharing** (wave 7) - keep only as the spec for #423, not as a wave feature. Its
+   fields are read by nothing.
+3. **#250 channel reorder** (wave 7) - narrow to the hold gesture plus `moveChannelTo` on channel
+   rows. Drop `list-order.ts`, the order keys, `NAV_HIDE` line and their tests.
+4. **#383 classifiers-six** (wave 3) - drop the branch as a duplicate of five others; cherry-pick
+   its four unique commits onto the merged set.
+5. **#311 skill library** (wave 5) - narrow to multi-harness folder reading; the component split is
+   already upstream (#472) and re-applying it would overwrite newer files.
+6. **#385, #457, #332** (wave 1) - already corrected and pushed; no decision needed.
+7. **#303 with #336** (wave 6) - port as one behavior before splitting back into PR branches, as
+   already planned.
+8. **#416 Grok accounts** (wave 7) - port as a union with upstream's Antigravity account (#538),
+   keeping both engines and the Windows account-folder sweep.
+9. **#451 English guide** (wave 6) - add the missing `setores` page so both languages have 25.
+10. **#435 initiative** - already held, obsolete and pending redesign; no port.
+
+## Cleaning #383 (started, 2026-11-18)
+
+Apo clarified that cleaning means isolating what #383 uniquely brings, not repairing the whole PR
+for merge: it was improperly made because it carried a mess of other PRs' commits. PR #383 was
+converted to draft so the defective branch cannot be merged by accident. An isolated branch
+`rb/iso-383` is being built from `upstream/main` with only the four unique commits (six Jev jobs,
+router row and tab button, English labels, changelog line), the stale next-steps wording fixed,
+and no duplicated #298/#272/#279/#333/#379/#385 code. It will not be pushed; it is the artifact
+for a later merge-or-clean decision.
+
+Artifact: local branch `rb/iso-383` in `C:/git-ext/tucano-wt/iso-383`, head `2fe0d025`, based on
+`upstream/main` `4522704e`. Four commits: `14baa7b8` six-job Classifiers section, `297760f7`
+router row and tab button adapted, `ac7d42ef` English labels, `2fe0d025` changelog. Diff against
+base: 17 files, `+1091 -127`, including `core/classifiers.ts`, `shared/classifiers.ts`, the
+Classifiers card and two test files. Typecheck 0 errors; `classifiers` and
+`classifiers-router-row` 17/17, wider pass over touched code 76 passed / 3 skipped, router and
+browser 38/38. No conflict markers, no `model-routing.ts` or `Routing.tsx` diff, no `next_steps`
+tool, no "all ticked" wording. The changelog was corrected to describe what the branch actually
+carries: the Router card is gone and four jobs stay inert until their PRs land.
+
+Dropped duplicates: the whole routing files and their tests (#333), listen/recommend/next-steps
+sections of `jev.ts` and `runs.ts` (#279/#272/#298), their settings keys, and the old questions
+card in `Pages.tsx`. Dependencies left noted in code, not imported: `SmartRoutingRow`/
+`RoutingPane` and `Settings.routing` (#333), `listenJev` (#279), `recommend()` (#272), `NEXT_STEPS`
+(#298). Only `routing` and `browser` jobs run on this branch; the other four are assignable but
+inert. Overlap with pushed #385: `core/classifiers.ts` 4 lines apart, `shared/classifiers.ts` 39
+lines apart (the four extra jobs), `test/classifiers.test.ts` 20 lines apart. Merging #385 first
+is the cheap path.

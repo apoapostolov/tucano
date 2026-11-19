@@ -4,11 +4,12 @@
 // feed: latest-mac.yml next to the .zip (scripts/release.sh), latest-linux*.yml and
 // latest.yml, for Windows, from the workflows that build those installers.
 import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import { app } from 'electron'
-import electronUpdater from 'electron-updater'
 import { offline } from '../shared/errors'
 import { L } from '../shared/lang'
 import type { UpdateState } from '../shared/types'
+import { updaterModule } from './updater-module'
 
 const FIRST_CHECK_MS = 20_000 // after opening, once the app has settled
 const EVERY_MS = 4 * 3_600_000
@@ -20,14 +21,25 @@ export class Updates {
   // Made when first used: making it reads the app's version, and an unpacked build's may not be one
   // it accepts, which would stop the app from opening. With updates off it's never used.
   private get updater() {
-    return electronUpdater.autoUpdater
+    return updaterModule!.autoUpdater
   }
+
+  // A build with a feed of its own looks for a newer version; one installed beside the released app
+  // carries no app-update.yml of its own, and must not go looking in that one's feed (it would
+  // replace this build with the released app). Without the resources folder to look in (tests), the
+  // feed is assumed, as it always was.
+  private readonly checking: boolean
 
   constructor(private readonly onChange: (s: UpdateState) => void) {
     // A test points the app at a local server instead of GitHub.
     const feed = process.env['TUCANO_UPDATE_URL']
-    this.state = { version: app.getVersion(), status: app.isPackaged || feed ? 'idle' : 'off' }
-    if (this.state.status === 'off') return
+    // This build never updates itself: it is installed beside the released app and rebuilt from its
+    // own branch. The released app keeps the feed it has always had.
+    this.checking = !!updaterModule && (!!feed || (app.getName() !== 'TucanoNext' && (!app.isPackaged || process.resourcesPath === undefined || existsSync(join(process.resourcesPath, 'app-update.yml')))))
+    this.state = { version: app.getVersion(), status: this.checking ? 'idle' : 'off' }
+    // An updater that didn't load leaves the app opened and updates off, instead of a window that never comes.
+    if (!updaterModule) return
+
     if (feed) this.updater.setFeedURL({ provider: 'generic', url: feed })
     this.updater.logger = null
     this.updater.autoDownload = true
@@ -59,7 +71,7 @@ export class Updates {
   }
 
   start(): void {
-    if (this.state.status === 'off') return
+    if (!this.checking || this.state.status === 'off') return
     setTimeout(() => this.check(), FIRST_CHECK_MS).unref()
     this.timer = setInterval(() => this.check(), EVERY_MS)
     this.timer.unref()

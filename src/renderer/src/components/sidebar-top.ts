@@ -10,12 +10,13 @@ import { getState, inboxCount, isTeam, pendingApprovals, teamMode, toast, update
 import { useHubTabs } from './Hubs'
 import { useSidebarParts } from './Missions'
 
-export type TopItem = 'tuca' | 'approvals' | 'board' | 'knowledge' | 'operations'
-export const TOP_ITEMS: readonly TopItem[] = ['tuca', 'approvals', 'board', 'knowledge', 'operations']
+export type TopItem = 'tuca' | 'asks' | 'approvals' | 'board' | 'knowledge' | 'operations'
+export const TOP_ITEMS: readonly TopItem[] = ['tuca', 'asks', 'approvals', 'board', 'knowledge', 'operations']
 
 export const topLabel = (item: TopItem, team: boolean): string =>
   ({
     tuca: 'Tuca',
+    asks: L('Perguntas', 'Asks'),
     approvals: team ? L('Pra você', 'For you') : L('Aprovações', 'Approvals'),
     board: L('Quadro', 'Board'),
     knowledge: L('Conhecimento', 'Knowledge'),
@@ -50,10 +51,12 @@ export function setHidden(item: TopItem, hide: boolean, quiet = false): void {
   if (hide && !quiet) toast(L(`${topLabel(item, teamMode(s))} saiu da barra.`, `${topLabel(item, teamMode(s))} left the sidebar.`), { label: L('Desfazer', 'Undo'), run: () => setHidden(item, false) })
 }
 
-// What waits on the person in an item that may come back by itself: Aprovações' approvals (Pra você's
-// whole inbox, with people), Conhecimento's suggested memories and proposed skills.
+// What waits on the person in an item that may come back by itself: Perguntas' open questions,
+// Aprovações' approvals (Pra você's whole inbox, with people), Conhecimento's suggested memories and
+// proposed skills.
 export function useWaitingIn(): Partial<Record<TopItem, number>> {
+  const asks = useStore((s) => s.inbox.questions.length)
   const approvals = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
   const knowledge = useHubTabs('knowledge').reduce((n, t) => n + t.badge, 0)
-  return { approvals, knowledge }
+  return { asks, approvals, knowledge }
 }

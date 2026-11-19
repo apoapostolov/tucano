@@ -1,5 +1,5 @@
 {
-  "name": "tucano",
+  "name": "tucanonext",
   "version": "0.2.40",
   "private": true,
   "description": "Tucano: your team of AI agents on your computer, with scopes, approvals and budgets.",
@@ -14,12 +14,17 @@
     "server": "node out/main/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
+    "self-build": "node scripts/self-build.mjs build",
+    "self-install": "node scripts/self-build.mjs install",
+    "doctor": "node scripts/self-build.mjs doctor",
     "dist": "sh scripts/dist.sh",
     "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
     "install-app": "npm run dist && sh scripts/install-app.sh",
-    "release": "sh scripts/release.sh"
+    "release": "sh scripts/release.sh",
+    "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-placement.test.ts test/settings-navigation.test.tsx"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.9",
     "@mozilla/readability": "^0.6.0",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
@@ -54,18 +59,11 @@
     "yaml": "^2.9.1"
   },
   "build": {
-    "appId": "dev.tucano.app",
-    "productName": "Tucano",
+    "appId": "dev.tucano.next",
+    "productName": "TucanoNext",
     "toolsets": {
       "appimage": "1.0.3"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "eduwxyz",
-        "repo": "tucano"
-      }
-    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -94,12 +92,13 @@
         "nsis"
       ],
       "icon": "build/icon.png",
-      "artifactName": "tucano-win-${arch}.${ext}"
+      "artifactName": "tucanonext-win-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "shortcutName": "Tucano"
+      "shortcutName": "TucanoNext",
+      "artifactName": "tucanonext-setup-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -155,11 +154,12 @@
     ],
     "protocols": [
       {
-        "name": "Tucano",
+        "name": "TucanoNext",
         "schemes": [
           "tucano"
         ]
       }
-    ]
+    ],
+    "publish": []
   }
 }

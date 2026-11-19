@@ -4,10 +4,18 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { app, updater } = vi.hoisted(() => {
+const { app, updater, NAMED } = vi.hoisted(() => {
   const { EventEmitter: Emitter } = require('node:events') as { EventEmitter: typeof EventEmitter }
+  // The released app is called Tucano; a build installed beside it is called something else and
+  // never updates itself. Each test says which one it is.
+  const NAMED = { current: 'Tucano' }
   return {
-    app: Object.assign(new Emitter(), { isPackaged: true, getVersion: () => '1.0.0' }),
+    NAMED,
+    app: Object.assign(new Emitter(), {
+      isPackaged: true,
+      getVersion: () => '1.0.0',
+      getName: () => NAMED.current
+    }),
     updater: Object.assign(new Emitter(), {
       logger: undefined as unknown,
       autoDownload: false,
@@ -19,7 +27,7 @@ const { app, updater } = vi.hoisted(() => {
 })
 
 vi.mock('electron', () => ({ app }))
-vi.mock('electron-updater', () => ({ default: { autoUpdater: updater } }))
+vi.mock('../src/main/updater-module', () => ({ updaterModule: { autoUpdater: updater } }))
 
 import { Updates } from '../src/main/updates'
 
@@ -79,5 +87,20 @@ describe('installing an update from an AppImage', () => {
     updates.install()
     expect(updater.autoInstallOnAppQuit).toBe(true)
     expect(updater.quitAndInstall).toHaveBeenCalledOnce()
+  })
+})
+
+describe('a build of its own, installed beside the released app', () => {
+  afterEach(() => {
+    NAMED.current = 'Tucano'
+  })
+
+  it('does not go looking for an update, even with the released feed beside it', () => {
+    NAMED.current = 'TucanoNext'
+    const updates = new Updates(() => {})
+    expect(updates.get().status).toBe('off')
+    expect(updates.get().version).toBe('1.0.0')
+    updates.start()
+    expect(updater.checkForUpdates).not.toHaveBeenCalled()
   })
 })

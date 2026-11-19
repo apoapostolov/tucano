@@ -1,6 +1,7 @@
 // Renderer state. Everything except the current view comes from the core and
 // is kept in sync by its events; actions go to the core over RPC.
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { ThoughtCache, type RetainedThought } from './thoughts'
 import { L, setLang } from '../../shared/lang'
 import type { Answer } from '../../shared/questions'
 import type { HermesPreview } from '../../shared/hermes-import'
@@ -9,6 +10,7 @@ import type { AppProvider } from '../../shared/connector-catalog'
 import {
   asSaid,
   type Account,
+  type AskEntry,
   type AccountEngine,
   MAX_AGENT_ROUTINES,
   MODELS,
@@ -27,9 +29,11 @@ import {
   type Conversation,
   type GrantLevel,
   type LocalSkill,
+  type LocalSkillFolder,
   type Memory,
   type MemoryScope,
   type Message,
+  type ReplyTarget,
   type Model,
   type Person,
   type PersonAccess,
@@ -41,6 +45,7 @@ import {
   type ActivityEntry,
   type Routine,
   type RoutineInput,
+  type SendMode,
   type Settings,
   type SetupEngine,
   type SetupState,
@@ -51,6 +56,8 @@ import {
   type SkillVersion,
   type Report,
   type UsageReport,
+  type ProviderQuota,
+  type QuotasSnapshot,
   type Trigger,
   type ImageUpload,
   type FileUpload,
@@ -73,6 +80,7 @@ export type View =
   | { kind: 'agent'; id: string }
   | { kind: 'new-agent'; draft?: Agent; fromMessage?: string } // a draft from a Tuca card, to edit before creating
   | { kind: 'tuca'; from?: View } // the builder screen: a new agent with the Tuca; closing goes back to `from`
+  | { kind: 'asks' }
   | { kind: 'approvals' }
   | { kind: 'usage' }
   | { kind: 'connectors' }
@@ -125,6 +133,7 @@ export interface State {
   panel: Panel | null // the side panel next to a conversation
   dialog: Dialog | null // a small window: a channel's members, name or topic; archived agents; new channel; search
   tabs: Record<string, string> // the open tab of each page with tabs, kept while the app is open
+  replyTo: Record<string, ReplyTarget | undefined> // selected message per conversation or thread, kept with its draft
   demoServer?: { command: string; args: string[] }
   toasts: Toast[] // short notes at the bottom: an action that didn't go through
   coreDown: boolean // the core's process ended; a banner offers to reopen
@@ -140,7 +149,7 @@ export interface Toast {
 export type Dialog = { kind: 'members' | 'settings'; id: string } | { kind: 'archived' | 'new-channel' | 'search' } | { kind: 'workspaces'; create?: boolean } | { kind: 'oauth'; id: string; url: string } | { kind: 'feedback'; image?: { type: 'image/png' | 'image/jpeg'; data: string } } // image: the window, taken before it opened
 
 // `thread`: the replies to a message (its id), next to the conversation.
-export type Panel = { kind: 'artifact'; id: string } | { kind: 'service'; agentId: string; name: string } | { kind: 'browser'; agentId: string } | { kind: 'thread'; id: string }
+export type Panel = { kind: 'artifact'; id: string } | { kind: 'service'; agentId: string; name: string } | { kind: 'browser'; agentId: string } | { kind: 'thread'; id: string; message?: string }
 
 export const initials = (name: string): string =>
   name
@@ -211,7 +220,9 @@ let state: State = {
   dialog: null,
   tabs: {},
   toasts: [],
-  coreDown: false
+  coreDown: false,
+  // What the composer answers, per conversation (src/shared/types.ts: ReplyTarget).
+  replyTo: {} as Record<string, ReplyTarget | undefined>
 }
 
 // ---------- store plumbing ----------
@@ -264,7 +275,15 @@ const upsert = <T extends { id: string }>(list: T[], item: T): T[] =>
 // in an index each list gets the first time something reads it.
 
 const NO_MESSAGES: Message[] = []
-export const messagesIn = (s: State, conversationId: string): Message[] => s.messages[conversationId] ?? NO_MESSAGES
+// When the person last cleared this conversation's history, or 0. What came before is still a row
+// (receipts and approvals point at message ids) and stays out of the screen, the way it stays out of
+// what the next reply reads.
+export const clearedAt = (s: Pick<State, 'conversations'>, conversationId: string): number => s.conversations.find((c) => c.id === conversationId)?.clearedAt ?? 0
+export const messagesIn = (s: State, conversationId: string): Message[] => {
+  const all = s.messages[conversationId] ?? NO_MESSAGES
+  const cut = clearedAt(s, conversationId)
+  return cut ? all.filter((m) => m.at > cut) : all
+}
 
 const byConversation = (list: Message[]): Record<string, Message[]> => {
   const out: Record<string, Message[]> = {}
@@ -371,6 +390,12 @@ export const workingIds = (s: State, conversationId: string, threadId?: string):
   conversationIndex(s, conversationId)
     .working.filter((m) => m.threadId === threadId && m.author.kind === 'agent')
     .map((m) => m.id)
+// Every reply at work in a place, threads included: a reply inside a thread is still work the
+// conversation is carrying, and the drawer shows it rather than only what's outside threads.
+export const allWorkingIds = (s: State, conversationId: string): string[] =>
+  conversationIndex(s, conversationId)
+    .working.filter((m) => m.author.kind === 'agent')
+    .map((m) => m.id)
 export const askerIn = (s: State, conversationId: string, threadId?: string): Message | undefined => conversationIndex(s, conversationId).waiting.findLast((m) => m.threadId === threadId)
 export const lastBrowserIn = (s: State, conversationId: string, agentId: string): string | undefined => conversationIndex(s, conversationId).browser.get(agentId)
 
@@ -422,6 +447,20 @@ export function attachedTo(s: State, messageId: string): Artifact[] {
   return byMessage.get(messageId) ?? NO_ARTIFACTS
 }
 
+// A conversation's latest page again, after history went (a wipe, or a sweep): what's left is exactly
+// what the core has, and the scroll asks for older ones from where that page starts.
+async function refreshHistory(conversationId: string): Promise<void> {
+  try {
+    const { messages, since } = await call('olderMessages', { conversationId, before: Date.now() })
+    set((s) => {
+      const { [conversationId]: _was, ...history } = s.history
+      return { ...s, messages: { ...s.messages, [conversationId]: messages }, history: since ? { ...history, [conversationId]: since } : history }
+    })
+  } catch {
+    // Gone already, or not this person's to read: the screen keeps what it has and the core is the truth.
+  }
+}
+
 // Older messages, a page at a time as the scroll gets there, or back to `through` (a message to show).
 const loadingOlder = new Map<string, Promise<void>>()
 export function loadOlder(conversationId: string, through?: string): Promise<void> {
@@ -460,6 +499,7 @@ export async function loadThread(rootId: string): Promise<void> {
 
 const live = new Map<string, string>()
 const liveListeners = new Map<string, Set<() => void>>()
+const thoughtListeners = new Map<string, Set<() => void>>()
 
 function listen(map: Map<string, Set<() => void>>, key: string, l: () => void): () => void {
   let ls = map.get(key)
@@ -478,6 +518,48 @@ function stream(id: string, text: string): void {
 }
 
 export const liveText = (id: string): string | undefined => live.get(id)
+
+// What the model is thinking, streamed apart from the reply: kept here, in memory, because it is
+// something to watch as it goes and not part of what the agent said. `streamThought` is what a
+// `thinking` core event feeds (only when `showThinking` is on).
+const thoughts = new ThoughtCache((id) => wake(thoughtListeners, id))
+
+export function streamThought(id: string, text: string): void {
+  thoughts.append(id, text)
+}
+
+export const liveThought = (id: string): string | undefined => thoughts.get(id)
+
+// The thinking as it is now, woken as it arrives. `every`: wake at most that often (ms).
+export function useLiveThought(id: string, every = 0): string | undefined {
+  return useLiveThoughtState(id, every)?.text
+}
+
+// The reasoning as it stands, with where in the stream it starts (the cache drops what came before
+// when a reply reasons for longer than it keeps).
+export function useLiveThoughtState(id: string, every = 0): RetainedThought | undefined {
+  const subscribe = useCallback(
+    (l: () => void) => {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const off = listen(thoughtListeners, id, () => {
+        if (!every) return l()
+        if (timer) return
+        timer = setTimeout(() => {
+          timer = undefined
+          l()
+        }, every)
+      })
+      return () => {
+        if (timer) clearTimeout(timer)
+        off()
+      }
+    },
+    [id, every]
+  )
+  // No thoughts before the window exists: a reply drawn to markup (a test, a server-side first
+  // frame) has none, and asking for them there would throw instead of drawing the steps.
+  return useSyncExternalStore(subscribe, () => thoughts.snapshot(id), () => undefined)
+}
 
 // The message's text as it is now. `every`: wake at most that often (ms), for what is costly to draw.
 export function useLiveText(m: Message, every = 0): string {
@@ -535,6 +617,7 @@ function withMe(s: State): State {
 }
 
 function withSettings(s: State, settings: Settings): State {
+  if (settings.showThinking !== true) thoughts.clear()
   setLang(settings.language)
   return withMe({ ...s, settings })
 }
@@ -542,13 +625,19 @@ function withSettings(s: State, settings: Settings): State {
 function apply(e: CoreEvent): void {
   // Streamed words and the browser's screen come many times a second: they wake only what shows them.
   if (e.type === 'delta') return stream(e.id, e.text)
+  // The model's reasoning is kept only when this person asked for it (Settings › General): off, the
+  // text never lands in memory, so nothing of it can be drawn or read back later.
+  if (e.type === 'thinking') return state.settings.showThinking === true ? streamThought(e.id, e.text) : undefined
   if (e.type === 'browser_frame') return showFrame(e.agentId, e.frame)
   if (e.type === 'tasks') return void (state.tasks && loadTasks())
+  // History went in these conversations: each is read again, so what's on screen is what's left.
+  if (e.type === 'history_wiped') return void e.conversationIds.forEach((id) => void refreshHistory(id))
   set((s) => {
     switch (e.type) {
       case 'node':
         return { ...s, node: e.info }
       case 'message': {
+        if (e.attemptStart) thoughts.clear([e.message.id])
         const id = e.message.conversationId
         const messages = { ...s.messages, [id]: upsertMessage(messagesIn(s, id), e.message) }
         // What I just wrote in a conversation that answers in threads opens its thread, where the
@@ -595,6 +684,7 @@ function apply(e: CoreEvent): void {
       case 'routine':
         return { ...s, routines: upsert(s.routines, e.routine) }
       case 'conversation_removed': {
+        thoughts.clear(messagesIn(s, e.id).map((message) => message.id))
         const left = s.conversations.filter((c) => c.id !== e.id)
         const here = s.view?.kind === 'conversation' && s.view.id === e.id
         const first = left.find((c) => c.kind === 'channel') ?? left[0]
@@ -677,6 +767,7 @@ export async function start(): Promise<void> {
   }
   await connect(apply)
   const snap = await call('snapshot')
+  thoughts.clear() // A replacement snapshot may no longer grant access to previously shown replies.
   for (const b of snap.browsers) showFrame(b.agentId, b.frame)
   set((s) => {
     const first = snap.conversations.find((c) => c.kind === 'channel') ?? snap.conversations[0]
@@ -953,6 +1044,7 @@ export const shareComputer = (connectorId: string, agentIds: string[]): void =>
 export const removeConnector = (id: string): void => void fire(L('Não consegui remover o conector.', "I couldn't remove the connector."), 'removeConnector', { id })
 export const reconnectConnector = (id: string): void => void fire(L('Não consegui reconectar.', "I couldn't reconnect."), 'reconnectConnector', { id })
 export const setConnectorToken = (id: string, token: string): Promise<void> => call('setConnectorToken', { id, token })
+export const setConnectorIcon = (id: string, icon: string): Promise<void> => call('setConnectorIcon', { id, icon })
 export const ownApp = (provider: AppProvider): Promise<{ clientId?: string; redirectUrl: string }> => call('ownApp', { provider })
 export const setOwnApp = (provider: AppProvider, clientId: string, clientSecret: string): Promise<void> => call('setOwnApp', { provider, clientId, clientSecret })
 // On a server the authorization page comes back to be opened here, then pasted back.
@@ -970,20 +1062,40 @@ export const archiveAgent = (id: string, archived: boolean): Promise<void> => ca
 export const setTopic = (id: string, topic: string): Promise<void> => call('setTopic', { id, topic })
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
-export const setChannelMembers = (id: string, agentIds: string[]): Promise<void> => call('setChannelMembers', { id, agentIds })
+// `mentionOnly`: the agents in the channel that answer only when mentioned. `listen`: those Jev
+// brings in when the message is about what they do.
+export const setChannelMembers = (id: string, agentIds: string[], mentionOnly?: string[], listen?: string[]): Promise<void> =>
+  call('setChannelMembers', { id, agentIds, ...(mentionOnly ? { mentionOnly } : {}), ...(listen ? { listen } : {}) })
 export const deleteConversation = (id: string): Promise<void> => call('deleteConversation', { id })
+// Settings › History: every bot's history goes, or one bot's. Answers how many messages went.
+export const wipeHistory = (agentId?: string): Promise<number> => call('wipeHistory', agentId ? { agentId } : {})
+// The history out of sight, the conversation kept where it is: same DM, same channel, empty screen.
+export const clearHistory = (id: string): Promise<void> => call('clearConversation', { id })
 export const markRead = (id: string): void => { void call('markRead', { conversationId: id }) }
 
 // A message sent outside threads, in a conversation that answers in them: its thread opens when it
 // comes back from the core (a while at most, so one that never does doesn't open a later one).
 let openNext: { conversationId: string; until: number } | null = null
-// `threadId`: a reply in the thread that message started.
-export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = []): void => {
-  if (!(text.trim() || images.length || files.length)) return
+// `threadId`: a reply in the thread that message started. `reply`: the message this one answers
+// (or the excerpt of it I selected); `mode: 'steer'` hands it to the reply `steerTo` (what is
+// running there) at its next tool call instead of starting a message of its own.
+// True once the core took it: a reply the core refuses leaves the field, and the quote, as they were.
+export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = [], reply?: ReplyTarget, mode?: SendMode, steerTo?: string): Promise<boolean> => {
+  if (!(text.trim() || images.length || files.length)) return Promise.resolve(false)
   const threads = !threadId && state.conversations.find((c) => c.id === conversationId)?.threads
   openNext = threads ? { conversationId, until: Date.now() + 15_000 } : null
-  void fire(L('Não consegui enviar a mensagem.', "I couldn't send the message."), 'sendMessage', { conversationId, text, ...(images.length ? { images } : {}), ...(files.length ? { files } : {}), ...(threadId ? { threadId } : {}) })
+  return call('sendMessage', { conversationId, text, ...(images.length ? { images } : {}), ...(files.length ? { files } : {}), ...(threadId ? { threadId } : {}), ...(mode ? { mode } : {}), ...(steerTo ? { steerTo } : {}), ...(reply ? { reply } : {}) }).then(
+    () => true,
+    (e: unknown) => {
+      if (openNext?.conversationId === conversationId) openNext = null
+      if (!state.coreDown) toast(`${L('Não consegui enviar a mensagem.', "I couldn't send the message.")} ${e instanceof Error ? e.message : L('Tente de novo.', 'Try again.')}`)
+      return false
+    }
+  )
 }
+
+// What the composer answers where it is written, or nothing: the quote above the field.
+export const setReplyTo = (key: string, reply?: ReplyTarget): void => set((s) => ({ ...s, replyTo: { ...s.replyTo, [key]: reply } }))
 
 export const answerDecision = (messageId: string, index: number, answer: Answer | null): void =>
   void fire(L('Não consegui guardar a resposta.', "I couldn't save the answer."), 'answerDecision', { messageId, index, answer })
@@ -1001,6 +1113,24 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 }
 
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
+// Pausing, resuming and going on from a reply are named here and answered by the core's table
+// (src/core/index.ts registers the method, src/core/policy-people.ts who may call it). They are sent
+// by name because that table is not part of this change: a core that doesn't know one refuses it, and
+// the person hears it, instead of the button quietly doing nothing.
+const askCore = (failed: string, method: 'pauseRun' | 'resumeRun' | 'followUpRun', params: { messageId: string; text?: string }): void => {
+  const send = call as unknown as (m: string, p: unknown) => Promise<void>
+  void send(method, params).catch((e: unknown) => {
+    if (!state.coreDown) toast(`${failed} ${e instanceof Error && e.message ? e.message : L('Tente de novo.', 'Try again.')}`)
+  })
+}
+// A reply put on hold stops before its next tool call or turn, keeping its session and text, and
+// goes on when released, without another model taking over.
+export const pauseRun = (messageId: string): void => askCore(L('Não consegui pausar a resposta.', "I couldn't pause the reply."), 'pauseRun', { messageId })
+export const resumeRun = (messageId: string): void => askCore(L('Não consegui retomar a resposta.', "I couldn't resume the reply."), 'resumeRun', { messageId })
+// The reply goes on from where it ended, in the same row and the same session, with what the person
+// asked for as its next step instead of as another message in the conversation.
+export const followUpRun = (messageId: string, text: string): void =>
+  askCore(L('Não consegui seguir com essa resposta.', "I couldn't go on from that reply."), 'followUpRun', { messageId, text })
 export const retryRun = (messageId: string): void => void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })
 
@@ -1031,7 +1161,7 @@ export const localPath = (messageId: string, path: string): Promise<LocalInfo | 
 export const revealArtifact = (id: string): void => void fire(L('Não consegui mostrar o arquivo.', "I couldn't show the file."), 'revealArtifact', { id })
 export const openLocal = (messageId: string, path: string, how: 'open' | 'reveal'): void => void call('openLocal', { messageId, path, how })
 export const openPanel = (panel: Panel | null): void => set((s) => ({ ...s, panel }))
-export const openThread = (messageId: string): void => openPanel({ kind: 'thread', id: messageId })
+export const openThread = (messageId: string, message?: string): void => openPanel({ kind: 'thread', id: messageId, ...(message ? { message } : {}) })
 // I've seen this thread up to now (it's open, or was just closed).
 export const seeThread = (rootId: string): void =>
   set((s) => {
@@ -1074,10 +1204,12 @@ export const setJevKey = (key: string | null): Promise<void> => call('setJevKey'
 // An address in OpenAI's format the agents run on with no harness: tried (what it lists), then saved.
 export const probeEndpoint = (baseUrl: string, key?: string): Promise<{ models: string[]; error?: string }> => call('probeEndpoint', { baseUrl, ...(key ? { key } : {}) })
 export const setEndpoint = (baseUrl: string, models: string[], key?: string | null): Promise<void> => call('setEndpoint', { baseUrl, models, ...(key !== undefined ? { key } : {}) })
+export const setClassifierKey = (id: string, key: string | null): Promise<void> => call('setClassifierKey', { id, key })
 export const engineModels = (engine: EngineId): Promise<{ models: string[]; labels?: Record<string, { label: string; hint?: string }>; error?: string }> => call('engineModels', { engine })
 export const testEngine = (model: string): Promise<{ ok: boolean; message: string; seconds?: number }> => call('testEngine', { model })
 export const saveSkill = (skill: SkillInput): Promise<Skill> => call('saveSkill', { skill })
 export const localSkills = (): Promise<LocalSkill[]> => call('localSkills')
+export const skillFolders = (): Promise<LocalSkillFolder[]> => call('skillFolders')
 export const linkSkill = (source: string, agents: string[] = []): Promise<Skill> => call('linkSkill', { source, agents })
 export const decideSkill = (id: string, approve: boolean): void =>
   void fire(approve ? L('Não consegui aprovar a skill.', "I couldn't approve the skill.") : L('Não consegui recusar a skill.', "I couldn't refuse the skill."), 'decideSkill', { id, approve })
@@ -1100,9 +1232,15 @@ export const importAgents = (p: { path?: string; data?: string }): Promise<strin
 export const hermesPreview = (path?: string): Promise<HermesPreview> => call('hermesPreview', { path })
 export const importHermes = (path: string, profiles: string[]): Promise<string> => call('importHermes', { path, profiles })
 export const backupNow = (): Promise<string> => call('backupNow')
+// The workspace's file: what it takes, how much of that nothing will reuse, and whether it reads sound.
+export const dbHealth = (): Promise<{ bytes: number; free: number; sound: boolean; said: string }> => call('dbHealth')
+export const optimizeDb = (): Promise<{ before: number; after: number; free: number; sound: boolean; said: string }> => call('optimizeDb')
 export const openBackups = (): void => void fire(L('Não consegui abrir a pasta de backups.', "I couldn't open the backups folder."), 'openBackups')
 export const loadReport = (week?: number): Promise<Report> => call('report', { week })
 export const loadUsage = (): Promise<UsageReport> => call('usage')
+// The last quota read, which arrives before any network does, then a read of its own.
+export const loadQuotas = (): Promise<QuotasSnapshot> => call('quotas')
+export const refreshQuotas = (): Promise<QuotasSnapshot> => call('quotasRefresh')
 export const removeRoutine = (id: string): void => void fire(L('Não consegui remover a rotina.', "I couldn't remove the routine."), 'removeRoutine', { id })
 // People: who I am, who comes in (admins), who covers for me.
 export const setMyName = (name: string, about?: string): Promise<void> => call('setMyName', { name, ...(about !== undefined ? { about } : {}) })
@@ -1120,7 +1258,11 @@ export const setRole = (id: string, role: 'admin' | 'member'): Promise<void> => 
 export const purgePerson = (id: string): Promise<void> => call('purgePerson', { id })
 export const loadActivity = (f: { personId?: string; kind?: string; before?: number }): Promise<ActivityEntry[]> => call('activity', f)
 export const answerQuestion = (id: string, text: string): Promise<void> => call('answerQuestion', { id, text })
+// The Asks page's History: answered and closed questions, newest first.
+export const questionsHistory = (limit?: number): Promise<AskEntry[]> => call('questionsHistory', limit ? { limit } : {})
 export const confirmQuestion = (id: string, ok: boolean): void => void fire(L('Não consegui responder.', "I couldn't answer."), 'confirmQuestion', { id, ok })
+// Leaving an ask unanswered on purpose: it closes, and the reply goes on instead of waiting for good.
+export const dismissQuestion = (id: string): void => void fire(L('Não consegui dispensar a pergunta.', "I couldn't dismiss the question."), 'dismissQuestion', { id })
 export const watchRoutine = (id: string, on: boolean): void => void fire(L('Não consegui mudar o aviso.', "I couldn't change the notice."), 'watchRoutine', { id, on })
 // The link an invite's code makes: this page's address (a server's) with ?invite=.
 export const inviteLink = (code: string): string => `${window.location.origin}/?invite=${encodeURIComponent(code)}`
