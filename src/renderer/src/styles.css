@@ -3298,7 +3298,8 @@ h3 {
 }
 /* One option, as the card draws it: the number's square held at the top left, and the answer as
    running text in the column beside it, so a long label wraps onto as many lines as it needs and the
-   agent's tag lands at the end of the last one. */
+   agent's tag lands at the end of the last one. An option nobody took is a raised surface on the card,
+   a shade above it: the record's own background read as a black hole punched in it. */
 .history-question__option {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3309,7 +3310,7 @@ h3 {
   padding: 3px 9px 3px 3px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: var(--bg);
+  background: color-mix(in srgb, var(--text) 7%, var(--panel));
   color: var(--text-2);
   overflow-wrap: anywhere;
 }
@@ -3381,11 +3382,6 @@ h3 {
 /* A typed answer ("Something else", or a text question) is the answer too: its own row, marked so. */
 .history-question__option--said {
   font-style: italic;
-}
-.history-question__option--none {
-  display: block;
-  border-style: dashed;
-  color: var(--text-3);
 }
 .ask-option__pill {
   flex: none;

@@ -2137,9 +2137,6 @@ export function AskedRow({
                               <span className="history-question__label">{answer.text}</span>
                             </span>
                           )}
-                          {!answer?.other && !answer?.text && (answer?.skipped || !(question.options?.length ?? 0)) && (
-                            <span className="history-question__option history-question__option--none">{L('sem resposta', 'no answer')}</span>
-                          )}
                         </div>
                       </div>
                     )

@@ -180,11 +180,12 @@ describe('a row of the asks history', () => {
     expect(taken).not.toContain('Sim, publico')
   })
 
-  it('says a decision was left unanswered rather than drawing an empty widget', () => {
+  it('leaves the "no answer" row out of the record: the options with none taken already say it', () => {
     const q = asked({ decisions: [{ question: 'Quando reviso?', kind: 'text' }], answers: [{ skipped: true }] } as never)
     const html = row(true, q)
-    expect(html).toContain('history-question__option--none')
-    expect(html).toContain('sem resposta')
+    const widget = html.slice(html.indexOf('history-questions'))
+    expect(widget).not.toContain('history-question__option--none')
+    expect(widget).not.toContain('sem resposta')
   })
 
   it('says how it ended: by you, by someone else, or with no answer at all', () => {

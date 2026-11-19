@@ -12,7 +12,7 @@ const css = readFileSync(new URL('../src/renderer/src/styles.css', import.meta.u
 // The probes: what --bg, --text-2, --accent and --border-strong resolve to in this theme, so the
 // negative and the pill can be compared with the tokens themselves instead of with a colour twice.
 const probes =
-  '<div id="pbg" style="background:var(--bg)"></div><div id="ptext" style="background:var(--text-2)"></div><div id="pacc" style="background:var(--accent)"></div><div id="pborder" style="background:var(--border-strong)"></div>'
+  '<div id="pbg" style="background:var(--bg)"></div><div id="ptext" style="background:var(--text-2)"></div><div id="pacc" style="background:var(--accent)"></div><div id="pborder" style="background:var(--border-strong)"></div><div id="ppanel" style="background:var(--panel)"></div><div id="pmix" style="background:color-mix(in srgb, var(--text) 7%, var(--panel))"></div>'
 
 // A label long enough to need three lines in a 420 px window: the wrap this file measures.
 const LONG = 'Sim, publico o post hoje com a foto que a Lia revisou ontem à noite, e o texto corrido que cresce até quebrar de linha'
@@ -97,16 +97,47 @@ it.skipIf(skip)('draws the option the person took as the negative of the others'
     const seen = await p.evaluate(() => {
       const bg = getComputedStyle(document.getElementById('pbg')!).backgroundColor
       const text = getComputedStyle(document.getElementById('ptext')!).backgroundColor
+      const panel = getComputedStyle(document.getElementById('ppanel')!).backgroundColor
+      const mix = getComputedStyle(document.getElementById('pmix')!).backgroundColor
       const plain = getComputedStyle(document.querySelector('.history-question__option')!).backgroundColor
       const taken = document.querySelector('.history-question__option.is-answered')!
       const takenStyle = getComputedStyle(taken)
-      return { bg, text, plain, takenBg: takenStyle.backgroundColor, takenText: takenStyle.color }
+      return { bg, text, panel, mix, plain, takenBg: takenStyle.backgroundColor, takenText: takenStyle.color }
     })
-    // The untouched option sits on the background; the taken one is filled with the text colour and
-    // carries the background's own text — black on grey in the dark theme, white on grey in the light.
-    expect(seen.plain).toBe(seen.bg)
+    // An untouched option is a shade above its card (one tint of the text colour over the panel), never
+    // the record's own background: that fill read as a black hole punched in the card on the dark theme.
+    // The taken one is filled with the text colour and carries the background's own text.
+    expect(seen.plain).toBe(seen.mix)
+    expect(seen.plain).not.toBe(seen.panel)
+    expect(seen.plain).not.toBe(seen.bg)
     expect(seen.takenBg).toBe(seen.text)
     expect(seen.takenText).toBe(seen.bg)
+  } finally {
+    await browser.close()
+  }
+})
+
+it.skipIf(skip)('draws an untouched option as very dark grey on the dark theme, never as the record black', async () => {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const p = await browser.newPage({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' })
+    await p.setContent(page(ASK({})))
+    const seen = await p.evaluate(() => {
+      const of = (sel: string) => getComputedStyle(document.querySelector(sel)!).backgroundColor
+      return { plain: of('.history-question__option'), card: of('.history-question'), bg: of('#pbg') }
+    })
+    // Computed colours come back as rgb() or color(srgb …), so the numbers are normalised to 0–255.
+    const rgb = (c: string): number[] => {
+      const n = (c.match(/[\d.]+/g) ?? []).map(Number)
+      return (Math.max(...n) <= 1 ? n.map((v) => v * 255) : n).slice(0, 3).map((v) => Math.round(v))
+    }
+    const plain = rgb(seen.plain)
+    const card = rgb(seen.card)
+    // A shade above the card, not a hole in it: every channel lighter than the card's own.
+    expect(plain.every((v, i) => v > card[i])).toBe(true)
+    // Very dark grey: no channel at black, and none of them light.
+    expect(Math.min(...plain)).toBeGreaterThan(20)
+    expect(Math.max(...plain)).toBeLessThan(70)
   } finally {
     await browser.close()
   }
