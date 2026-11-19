@@ -19,6 +19,7 @@ import { closeSync, existsSync, lstatSync, openSync, readFileSync, readSync, sta
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { dailyLaunch } from './self-build-launch.mjs'
+import { IDENTITY, identityProblems, installProblems } from './lib/identity.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const NAME = 'TucanoNext'
@@ -168,7 +169,11 @@ function missingRuntimeDeps(names) {
 
 function preflight() {
   log(`${NAME} ${version()} in ${ROOT}`)
-  if (manifest().name !== 'tucanonext') throw stop('this is not the TucanoNext checkout', 'preflight')
+  // Every string that decides where this build installs, what it is called and which shortcut it rewrites.
+  const wrong = identityProblems(ROOT)
+  if (wrong.length) {
+    throw stop(`this is not the TucanoNext checkout, and packaging it would install over the released Tucano:\n  - ${wrong.join('\n  - ')}\nscripts/lib/identity.mjs holds the values it needs`, 'preflight')
+  }
   if (!existsSync(join(ROOT, 'node_modules'))) throw stop('node_modules is missing: run npm ci, with nothing else running', 'preflight')
   if ((command === 'build' || command === 'install') && lstatSync(join(ROOT, 'node_modules')).isSymbolicLink()) {
     throw stop('Packaging requires a local node_modules directory. Unlink the shared junction without deleting its target, then run npm ci in this checkout.', 'preflight')
@@ -224,9 +229,16 @@ async function close() {
 
 function install() {
   log(`  ${setupFile()}`)
+  // The released Tucano lives in its own folder beside this one. Record whether it is there before the
+  // installer runs, so a build that landed over it is caught now rather than when the person opens the
+  // shortcut they always used and finds TucanoNext, or nothing.
+  const programs = join(process.env['LOCALAPPDATA'] ?? '', 'Programs')
+  const releasedWasInstalled = existsSync(join(programs, IDENTITY.releasedDir, IDENTITY.releasedExe))
   const result = spawnSync(setupFile(), ['/S'], { windowsHide: true, stdio: 'ignore', timeout: 600_000 })
   if (result.status !== 0) throw stop(`the installer exited ${result.status}`, 'install')
   if (!existsSync(installedExe())) throw stop(`${installedExe()} was not installed`, 'install')
+  const misplaced = installProblems(programs, { releasedWasInstalled })
+  if (misplaced.length) throw stop(`the install went to the wrong place:\n  - ${misplaced.join('\n  - ')}`, 'install')
   // The installer copies; the bytes on disk are what prove it copied this build and not an older one.
   if (sha256(builtAsar()) !== sha256(installedAsar())) throw stop('the installed app.asar is not the one just built', 'install')
 }
