@@ -52,7 +52,7 @@ import { commandStep, execSummary, keyArg, maskSecrets, resultSummary } from './
 import { askMessage, askTask, byCode, wantsDm, inPlace, placeOf, CANCELAR_PEDIDO, channelNamed, codeOf, DELEGATION_TOOL_NAMES, DELEGATION_TOOLS, MAX_DELEGATIONS_PER_REPLY, MAX_OPEN_DELEGATIONS, parseAsk, PEDIR, RESPONDER_PEDIDO, returnTask, teamMember, teamSection, type Returned } from './delegations'
 import { askKind, channelsOf, entriesOf, headsOf, MAX_CHAIN, reachOf, sectorName, sectorOf } from '../shared/org'
 import type { Delegation, DelegationRef } from '../shared/types'
-import { canContinue, WORKLESS_LABELS } from '../shared/run-progress'
+import { canContinue, canResume, WORKLESS_LABELS } from '../shared/run-progress'
 import { CONCLUIR_OBJETIVO, GOAL_MAX_TURNS, goalEnd, goalTask, goalText, sameReply, type Goal } from './goals'
 
 const refOf = (d: Delegation): DelegationRef => ({ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) })
@@ -1155,7 +1155,10 @@ export class Runner {
     const automatic = auto !== undefined
     const { db } = this.deps
     const msg = db.message(messageId)
-    if (!msg?.run || msg.author.kind !== 'agent' || !canContinue(msg.run)) return
+    if (!msg?.run || msg.author.kind !== 'agent') return
+    // Going on by itself asks for something to go on with; a person's Continue takes any reply the
+    // app cut, even one cut while it was still thinking and has no tool call behind it.
+    if (!(automatic ? canContinue(msg.run) : canResume(msg.run))) return
     if (this.paused) return // startup recovery waits in the scheduler until unpaused
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)

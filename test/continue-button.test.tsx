@@ -83,11 +83,36 @@ describe('a reply the app cut', () => {
     expect(buttons()).toContain('Try again')
   })
 
-  it('offers only Try again when all it did was think', async () => {
-    fake = { ...fake, messages: { d1: [cut([step('Thought', 'done')])] } }
+  // Cut while it was still thinking, with no tool call behind it: the person's call, not the app's.
+  // It used to be Try again alone, which buried every reply the app closed in the middle of before it
+  // had read anything.
+  it('offers Continue even when all it did was think', async () => {
+    fake = { ...fake, messages: { d1: [cut([step('Thinking', 'done')])] } }
+    await render(<ConversationView id="d1" />)
+    expect(buttons()[0]).toBe('Continue')
+    expect(buttons()).toContain('Try again')
+  })
+
+  // It leads the reply's own actions: before Try again, and before the footer line that carries
+  // Follow Up.
+  it('comes before Try again and before the footer line', async () => {
+    fake = { ...fake, messages: { d1: [cut([step('Thought', 'done'), step('Ran npx vitest run', 'done')])] } }
+    await render(<ConversationView id="d1" />)
+    const labels = [...document.querySelectorAll('button.retry')].map((b) => b.textContent?.trim())
+    expect(labels.indexOf('Continue')).toBe(0)
+    expect(labels.indexOf('Continue')).toBeLessThan(labels.indexOf('Try again'))
+    const all = [...document.querySelectorAll('button')].map((b) => b.textContent?.trim())
+    const meta = document.querySelector('.msg__meta')
+    const firstInMeta = meta ? [...meta.querySelectorAll('button')].map((b) => b.textContent?.trim()) : []
+    expect(firstInMeta).not.toContain('Continue')
+    expect(all.indexOf('Continue')).toBeGreaterThanOrEqual(0)
+  })
+
+  it('keeps a finished reply without one', async () => {
+    const done: Message = { id: 'm2', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: 'Pronto.', at: 3, run: { status: 'done', task: 'x', steps: [step('Ran', 'done')] } }
+    fake = { ...fake, messages: { d1: [done] } }
     await render(<ConversationView id="d1" />)
     expect(buttons()).not.toContain('Continue')
-    expect(buttons()).toContain('Try again')
   })
 
   it('goes on with the reply that was cut when Continue is pressed', async () => {

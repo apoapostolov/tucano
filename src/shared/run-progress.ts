@@ -14,5 +14,13 @@ export const workedOn = (run: Run): boolean =>
   (run.steps ?? []).some((s) => s.status !== 'running' && !WORKLESS_LABELS.includes(s.label))
 
 // A reply paused at its budget always goes on; a cut one only when there is something to go on with.
+// That is the bar for going on by itself: a reply that never got a tool call back doesn't restart in
+// a loop. A person's Continue is their call, so it takes any reply the app cut, including one cut
+// while it was still thinking.
 export const canContinue = (run: Run): boolean =>
   run.status === 'paused' || (CUT.includes(run.status) && workedOn(run))
+
+// What the person's Continue accepts: any reply the app cut, even one with nothing but thoughts behind
+// it (the app closing mid-sentence, a stop from the rail). The core uses this for a Continue that was
+// asked for, and `canContinue` for one that goes on by itself.
+export const canResume = (run: Run): boolean => run.status === 'paused' || CUT.includes(run.status)

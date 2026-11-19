@@ -15,7 +15,7 @@ import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
 import { saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
-import { CUT, canContinue } from '../../../shared/run-progress'
+import { CUT, canContinue, canResume } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -808,6 +808,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
   const name = agent ? agent.name : ghost ? L('Agente', 'Agent') : (other ?? me.name)
   // A reply answers what an agent or a person said, once it stopped working (my own too: a note under it).
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
+  // Any reply the app cut goes on where it stopped when the person says so, even one cut while it was
+  // still thinking: what it read, wrote and ran is in the task the new reply reads (#390), and a reply
+  // with nothing behind it is no worse for being asked to try (runs.ts, canResume).
+  const resumable = !!message.run && CUT.includes(message.run.status) && canResume(message.run)
   const hasFooter = !!(message.run?.receipt || (message.run?.status === 'done' && (message.author.kind === 'agent' || (message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation))))
   const openMenu = (e: React.MouseEvent<HTMLElement>): void => {
     if (!canReply || (e.target as HTMLElement).closest('a, button, input, textarea, select, [role="menu"]')) return
@@ -1004,9 +1008,12 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
         {message.run?.status === 'paused' && message.run.held && (
           <div className="note">{L('Em espera: você segurou esta resposta. Ela continua do ponto em que parou.', 'On hold: you held this reply. It goes on from where it stopped.')}</div>
         )}
-        {/* Cut with work behind it, the reply goes on instead of starting over: what it read, wrote and ran
-            is in the task the new reply reads, so nothing it already did is done twice (#390). */}
-        {message.run && CUT.includes(message.run.status) && canContinue(message.run) && (
+        {/* Any reply the app cut goes on where it stopped instead of starting over: what it read, wrote
+            and ran is in the task the new reply reads, so nothing it already did is done twice (#390).
+            It comes before Try again and before anything on the footer line below, Follow Up included:
+            it is the first thing a cut reply owes the person. A reply cut while it was still thinking
+            has nothing behind it, and still takes it — that is the person's call, not the app's. */}
+        {resumable && (
           <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
             {L('Continuar', 'Continue')}
           </button>

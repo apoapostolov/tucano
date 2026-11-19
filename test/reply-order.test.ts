@@ -23,8 +23,18 @@ describe('asSaid', () => {
     expect(ids([said('pedido', 1), said('lenta', 2, 'done', 9), said('rápida', 3, 'done', 4), said('depois', 5)])).toEqual(['pedido', 'rápida', 'depois', 'lenta'])
   })
 
-  it('leaves whoever is still working at the end, in the order they started', () => {
-    expect(ids([said('pedido', 1), said('b', 3, 'working'), said('a', 2, 'working'), said('pronta', 4, 'done', 5), said('depois', 6)])).toEqual(['pedido', 'pronta', 'depois', 'a', 'b'])
+  // A session at work with no prompt to stand under keeps its own place in time: it used to be put
+  // after everything, so a prompt sent while it was still going showed up above it.
+  it('keeps whoever is still working where it started, in the order they started', () => {
+    expect(ids([said('pedido', 1), said('b', 3, 'working'), said('a', 2, 'working'), said('pronta', 4, 'done', 5), said('depois', 6)])).toEqual(['pedido', 'a', 'b', 'pronta', 'depois'])
+  })
+
+  it('puts a new prompt below a session that was already working, not above it', () => {
+    // A routine's run (no prompt of its own here) is still going when the person writes again.
+    const routine = { ...said('giro', 2, 'working'), run: { status: 'working' as const, steps: [] } }
+    const asked = said('pergunta', 5)
+    const answer = { ...said('resposta', 6, 'working'), run: { status: 'working' as const, steps: [], replyTo: 'pergunta' } }
+    expect(ids([said('antes', 1), routine, asked, answer])).toEqual(['antes', 'giro', 'pergunta', 'resposta'])
   })
 
   it('counts a reply as said however it ended, or that it asks something', () => {
@@ -43,7 +53,7 @@ describe('asSaid', () => {
     expect(ids([prompt('p1', 1), prompt('p2', 2), reply('theo', 3, 'p2'), reply('lia', 4, 'p1')])).toEqual(['p1', 'lia', 'p2', 'theo'])
     // One answering the same prompt keeps the order it started in, right under it.
     expect(ids([prompt('p', 1), reply('a', 2, 'p'), reply('b', 3, 'p')])).toEqual(['p', 'a', 'b'])
-    // A prompt that isn't here (an older page), or none at all, leaves the reply at the end.
+    // A prompt that isn't here (an older page), or none at all, keeps the reply's own time.
     expect(ids([prompt('p', 1), reply('fora', 2, 'antiga'), reply('sem', 3)])).toEqual(['p', 'fora', 'sem'])
   })
 

@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Agent, EngineId, Message, Run, Settings, Step } from '../src/shared/types'
 import { setLang } from '../src/shared/lang'
-import { canContinue, workedOn } from '../src/shared/run-progress'
+import { canContinue, canResume, workedOn } from '../src/shared/run-progress'
 import { Db } from '../src/core/db'
 import { fakeEngine } from '../src/core/engines/fake'
 import type { Engine, Turn } from '../src/core/engines/types'
@@ -126,14 +126,27 @@ describe('continuing a reply the app cut', () => {
     expect(sent).toContain("Pick up where you left off, without redoing what's already done")
   })
 
-  it('is not offered on a reply killed before any tool call came back', async () => {
+  // A reply cut before any tool call came back used to be refused a Continue: nothing to go on with.
+  // That buried every reply the app closed while it was still thinking. Asked for, it goes on; the
+  // bar that keeps something to go on with is the automatic pass's, not the person's.
+  it('goes on when the person asks for it, even with no tool call behind it', async () => {
     const prompt = put('d1', { kind: 'person', id: db.ownerId() }, 'faça o relatório')
     const cut = put('d1', { kind: 'agent', id: 'a1' }, '', { status: 'failed', task: 'faça o relatório', steps: [step('Thought', 'done')] }, prompt.id)
     const r = runner()
     await r.continue(cut.id)
     await r.idle()
-    expect(replies().filter((m) => m.id !== cut.id)).toHaveLength(0)
-    expect(db.message(cut.id)?.run?.status).toBe('failed') // still waiting on "Try again"
+    const made = replies().filter((m) => m.id !== cut.id)
+    expect(made).toHaveLength(1)
+    expect(made[0]!.threadId).toBe(prompt.id)
+    expect(turns.map((t) => t.prompt).join(' ')).toContain('faça o relatório')
+  })
+
+  // The bar that keeps something to go on with stays where it was for anything the app starts on its
+  // own: only the person's Continue is looser.
+  it('leaves the automatic bar where it was', () => {
+    const onlyThoughts = { status: 'interrupted' as const, steps: [step('Thinking', 'done')] }
+    expect(canContinue(onlyThoughts as never)).toBe(false)
+    expect(canResume(onlyThoughts as never)).toBe(true)
   })
 
   it('says the failure differently from the app closing, and from a stop', async () => {

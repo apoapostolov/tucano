@@ -520,16 +520,17 @@ export interface Message {
 // started, since that's what decides what it had read: agents read each other in that order.
 export const saidAt = (m: Message): number => m.run?.endedAt ?? m.at
 
-// A conversation as people read it: in the order things were said, and whoever is still working at the end.
-// A reply at work is the one exception: it stays with the prompt it answers, so that a second prompt
-// written while the first is still running reads below that reply instead of on top of it.
+// A conversation as people read it: in the order things were said, and a reply at work where it is.
+// A reply at work stays with the prompt it answers, so that a second prompt written while the first is
+// still running reads below that reply instead of on top of it; one with no prompt here stands where
+// it started, so a session begun before a newer prompt never shows up after it.
 export function asSaid(messages: Message[]): Message[] {
   const working = (m: Message): boolean => m.run?.status === 'working'
   const said = messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b))
   const atWork = messages.filter(working).sort((a, b) => a.at - b.at)
   if (atWork.length === 0) return said
   // Who answers what: a reply whose prompt is here goes right under it; one whose prompt is on a
-  // page not loaded yet (or was a note) has nowhere to stand, so it waits at the end as before.
+  // page not loaded yet (or was a note) has nowhere of its own to stand, and keeps its own time.
   const answering = new Map<string, Message[]>()
   const standing: Message[] = []
   const here = new Set(said.map((m) => m.id))
@@ -543,14 +544,24 @@ export function asSaid(messages: Message[]): Message[] {
     if (had) had.push(m)
     else answering.set(to, [m])
   }
-  if (answering.size === 0) return [...said, ...standing]
+  // A reply with nowhere of its own to stand used to be put after everything, which put a session
+  // that started before a newer prompt below it: the channel read out of order. It goes where it
+  // started instead, between the messages that were said around it.
+  const left = [...standing].sort((a, b) => a.at - b.at)
+  const take = (until: number): Message[] => {
+    const now: Message[] = []
+    while (left.length && left[0]!.at <= until) now.push(left.shift()!)
+    return now
+  }
   const out: Message[] = []
   for (const m of said) {
+    out.push(...take(saidAt(m)))
     out.push(m)
     const replies = answering.get(m.id)
     if (replies) out.push(...replies)
   }
-  return [...out, ...standing]
+  out.push(...take(Infinity))
+  return out
 }
 
 // A thread's own summary, kept on its first message. `until`: the `at` of the last message it covers.
