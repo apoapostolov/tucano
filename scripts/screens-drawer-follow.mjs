@@ -40,20 +40,26 @@ await win.press('.composer__field textarea', 'Enter')
 
 // The reply ends on its own (fake engine), and its row stays in the drawer's Finished group.
 try {
-  await win.waitForSelector('.work-row--done .steps__ask-pill', { timeout: 60000 })
-} catch (e) {
-  console.log(JSON.stringify(await win.evaluate(() => ({
-    messages: document.querySelectorAll('.msg').length,
-    drawer: !!document.querySelector('.work-drawer'),
-    rows: [...document.querySelectorAll('.work-row')].map((r) => r.className),
-    head: document.querySelector('.work-drawer__head')?.textContent ?? null,
-    pills: document.querySelectorAll('.steps__ask-pill').length,
-    alerts: [...document.querySelectorAll('[role="alert"], .toast, .notice')].map((n) => n.textContent)
-  })), null, 2))
-  await shot('00-no-finished-row')
-  console.log(errors.length ? `ERRORS:\n${errors.join('\n')}` : 'no console errors')
-  await app.close()
-  throw e
+  await win.waitForSelector('.work-row--done .steps__ask-pill', { timeout: 30000 })
+} catch {
+  // The drawer can be shut by the time the reply ends: its head opens it, and the finished row is there.
+  await win.click('.work-drawer__head').catch(() => {})
+  try {
+    await win.waitForSelector('.work-row--done .steps__ask-pill', { timeout: 30000 })
+  } catch (e) {
+    console.log(JSON.stringify(await win.evaluate(() => ({
+      messages: document.querySelectorAll('.msg').length,
+      drawer: !!document.querySelector('.work-drawer'),
+      rows: [...document.querySelectorAll('.work-row')].map((r) => r.className),
+      head: document.querySelector('.work-drawer__head')?.textContent ?? null,
+      pills: document.querySelectorAll('.steps__ask-pill').length,
+      alerts: [...document.querySelectorAll('[role="alert"], .toast, .notice')].map((n) => n.textContent)
+    })), null, 2))
+    await shot('00-no-finished-row')
+    console.log(errors.length ? `ERRORS:\n${errors.join('\n')}` : 'no console errors')
+    await app.close()
+    throw e
+  }
 }
 await win.waitForTimeout(600)
 
