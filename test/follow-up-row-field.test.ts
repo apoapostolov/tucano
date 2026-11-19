@@ -2,7 +2,8 @@
 // pressing Follow Up on a reply that ended opens a field on that row's own second line — one line tall,
 // as wide as the row, starting where the session's name starts (past the state glyph, not at its edge),
 // with the glyph that sends at that end. Laid out as the app draws it and measured in Chromium, at a
-// window's width and at a phone's.
+// window's width and at a phone's. The row carries no written label for how it ended (that is the
+// glyph's title), because the label took the line's room and pushed the pill onto a second line.
 import { existsSync, readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
@@ -21,7 +22,6 @@ const ROW = (open: boolean): string => `
           <span class="work-row__name">Astra</span>
           <span class="work-row__text">· fix the line under the header so it never wraps</span>
         </button>
-        <span class="work-row__meta">Concluída</span>
         <div class="work-row__follow">
           <div class="steps__ask steps__ask--down">
             <button type="button" class="steps__ask-pill" aria-expanded="${open}">Follow Up</button>
@@ -73,7 +73,6 @@ it.skipIf(skip)('puts the open follow up field on the finished row’s second li
     const go = await box(p, '.work-row__go')
     const state = await box(p, '.work-row__state')
     const name = await box(p, '.work-row__name')
-    const meta = await box(p, '.work-row__meta')
     const pill = await box(p, '.steps__ask-pill')
     const thread = await box(p, '.work-row__thread-btn')
     const remove = await box(p, '.work-row__remove')
@@ -93,7 +92,8 @@ it.skipIf(skip)('puts the open follow up field on the finished row’s second li
     // It is the row's second line: the pill, the numbers and the two glyphs keep the row they were on.
     expect(note.top).toBeGreaterThan(pill.bottom)
     expect(note.left).toBeCloseTo(go.left + 6 + state.w + 7, 0)
-    expect(band(pill, meta)).toBeGreaterThan(8)
+    // One line: the pill shares the band with the jump button beside it, not with the field below.
+    expect(band(pill, go)).toBeGreaterThan(8)
     expect(band(pill, thread)).toBeGreaterThan(8)
     expect(band(thread, remove)).toBeGreaterThan(8)
     expect(pill.right).toBeLessThan(thread.left)
@@ -112,12 +112,12 @@ it.skipIf(skip)('leaves the finished row a single line while the follow up field
     await p.setContent(page(ROW(false)))
 
     const row = await box(p, '.work-row')
+    const go = await box(p, '.work-row__go')
     const pill = await box(p, '.steps__ask-pill')
-    const meta = await box(p, '.work-row__meta')
     const remove = await box(p, '.work-row__remove')
     // Shut, the row is the flex line it always was: every part of it shares one band, and the pill sits
-    // between the numbers and the two glyphs, where a working row carries its steer.
-    expect(band(meta, pill)).toBeGreaterThan(8)
+    // between the name's own line and the two glyphs, where a working row carries its steer.
+    expect(band(go, pill)).toBeGreaterThan(8)
     expect(band(pill, remove)).toBeGreaterThan(8)
     expect(pill.right).toBeLessThan(boxRight(await box(p, '.work-row__thread-btn')))
     expect(await p.locator('.steps__ask-note').count()).toBe(0)

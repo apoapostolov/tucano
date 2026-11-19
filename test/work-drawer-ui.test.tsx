@@ -214,6 +214,19 @@ describe('the work drawer', () => {
     expect(document.querySelector('.work-row__state--ok')).toBeNull()
   })
 
+  it('says how a finished row ended in its glyph alone, leaving the line to the Follow Up pill', async () => {
+    const conv = nextConv()
+    await render(conv, [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await render(conv, [said('m1', 'corrige o login', 1), reply('r1', 'm1', 'done')])
+    await act(async () => button('1 terminada').click())
+    const row = document.querySelector('.work-row--done')!
+    // No written label: it took the row's room and pushed the pill beside it onto a second line.
+    expect(row.querySelector('.work-row__meta')).toBeNull()
+    // What it ended as is still said once, in the glyph's own title, and the pill is there to go on.
+    expect(row.querySelector('.work-row__state')?.getAttribute('title')).toBe('Concluída')
+    expect(row.querySelector('.work-row__follow .steps__ask-pill')).not.toBeNull()
+  })
+
   it('a finished row carries a trash that takes it off, and the drawer goes with it', async () => {
     const conv = nextConv()
     await render(conv, [said('m1', 'corrige o login', 1), reply('r1', 'm1')])

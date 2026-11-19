@@ -3392,8 +3392,10 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                       </span>
                       {what(m)}
                     </button>
-                    <span className="work-row__meta">{how.said}</span>
-                    {/* The pill a working row carries, for a reply that isn't at work any more: it says
+                    {/* How it ended is the glyph in the row's own lead, with its words in the title: a
+                        written label here costs the line its room, and the pill below wrapped to a second
+                        line to keep it company, so the row says it once. The pill itself is what a working
+                        row carries for a reply that isn't at work any more: it says
                         how this one goes on, in the row it already owns, instead of turning into another
                         message (src/core/runs.ts, `followUp`). A reply stopped at the plan's limit has
                         nothing to go on with, so it alone keeps no pill. */}
