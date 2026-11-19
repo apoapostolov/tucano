@@ -3296,10 +3296,10 @@ h3 {
   min-width: 0;
   max-width: 100%;
 }
-/* One option, as the card draws it: the number's square held at the top left, and the answer as
-   running text in the column beside it, so a long label wraps onto as many lines as it needs and the
-   agent's tag lands at the end of the last one. An option nobody took is a raised surface on the card,
-   a shade above it: the record's own background read as a black hole punched in it. */
+/* One option, as the card draws it: the number's square beside the answer, and the answer as running
+   text in the column beside it, so a long label wraps onto as many lines as it needs and the agent's tag
+   lands at the end of the last one. An option nobody took is a raised surface on the card, a shade above
+   it: the record's own background read as a black hole punched in it. */
 .history-question__option {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3333,6 +3333,9 @@ h3 {
   display: grid;
   place-items: center;
   flex: none;
+  /* Centered on the answer's own block: with the text starting at the row's top, a two or three line
+     answer would otherwise leave its number riding the first line alone. */
+  align-self: center;
   width: 20px;
   height: 20px;
   border-radius: 6px;

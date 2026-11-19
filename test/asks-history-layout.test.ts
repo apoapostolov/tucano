@@ -117,6 +117,29 @@ it.skipIf(skip)('draws the option the person took as the negative of the others'
   }
 })
 
+it.skipIf(skip)('centers the number on the answer, not on the answer\u2019s first line', async () => {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    // A window narrow enough that the long answer takes three lines: one line would not show the rule.
+    const p = await browser.newPage({ viewport: { width: 420, height: 900 } })
+    await p.setContent(page(ASK({ long: true })))
+    const seen = await p.evaluate(() => {
+      const rect = (sel: string) => document.querySelector(sel)!.getBoundingClientRect()
+      const number = rect('.history-question__option:not(.is-answered) .history-question__number')
+      const body = rect('.history-question__option:not(.is-answered) .history-question__body')
+      return { numberMid: number.top + number.height / 2, bodyMid: body.top + body.height / 2, numberTop: number.top, bodyTop: body.top, bodyH: body.height }
+    })
+    // The answer really did wrap, so the measurement is about a block and not a single line.
+    expect(seen.bodyH).toBeGreaterThan(34)
+    // Centered on the block: half its height from either end, within a pixel.
+    expect(Math.abs(seen.numberMid - seen.bodyMid)).toBeLessThanOrEqual(1.5)
+    // And clear of the first line, which is where it used to sit.
+    expect(seen.numberTop).toBeGreaterThan(seen.bodyTop + 5)
+  } finally {
+    await browser.close()
+  }
+})
+
 it.skipIf(skip)('draws an untouched option as very dark grey on the dark theme, never as the record black', async () => {
   const browser = await chromium.launch({ headless: true })
   try {
