@@ -16,6 +16,8 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   olderMessages: { conversationId: 's', before: 'n', through: 's?' },
   threadMessages: { rootId: 's' },
   stopRun: { messageId: 's' },
+  startQueued: { messageId: 's' },
+  reorderQueued: { conversationId: 's', ids: 'S' },
   pauseRun: { messageId: 's' },
   resumeRun: { messageId: 's' },
   retryRun: { messageId: 's' },

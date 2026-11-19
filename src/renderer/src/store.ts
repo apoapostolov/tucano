@@ -1139,6 +1139,10 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 }
 
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
+// A prompt in the queue goes now, cap or no cap (the Start on its row in the work drawer); and the
+// order a person drags the rows into is what the queue runs in.
+export const startQueued = (messageId: string): void => void fire(L('Não consegui começar este pedido agora.', "I couldn't start that prompt now."), 'startQueued', { messageId })
+export const reorderQueued = (conversationId: string, ids: string[]): void => void fire(L('Não consegui guardar a ordem da fila.', "I couldn't keep the queue's order."), 'reorderQueued', { conversationId, ids })
 // Pausing, resuming and going on from a reply are named here and answered by the core's table
 // (src/core/index.ts registers the method, src/core/policy-people.ts who may call it). They are sent
 // by name because that table is not part of this change: a core that doesn't know one refuses it, and

@@ -90,6 +90,8 @@ export const NEEDS: Record<Method, Need> = {
   olderMessages: 'anyone',
   threadMessages: 'anyone',
   stopRun: 'anyone',
+  startQueued: 'anyone', // whoever may write in the conversation may move its queue on
+  reorderQueued: 'anyone',
   pauseRun: 'anyone',
   resumeRun: 'anyone',
   retryRun: 'anyone',

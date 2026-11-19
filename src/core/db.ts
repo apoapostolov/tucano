@@ -612,7 +612,10 @@ const COLUMNS: [string, string, string][] = [
   // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
   ['messages', 'reply', 'TEXT'],
   // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
-  ['messages', 'send_mode', 'TEXT']
+  ['messages', 'send_mode', 'TEXT'],
+  // Where a queued prompt sits among the ones waiting in its conversation, when a person moved it in
+  // the drawer (runs.ts, `reorderQueued`). Empty: the order it was written in.
+  ['messages', 'queue_pos', 'INTEGER']
 ]
 
 type Row = Record<string, unknown>
@@ -1247,6 +1250,7 @@ export class Db {
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
       ...(r['send_mode'] ? { sendMode: str(r['send_mode']) as SendMode } : {}),
+      ...(r['queue_pos'] === null || r['queue_pos'] === undefined ? {} : { queuePos: Number(r['queue_pos']) }),
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
       ...(r['title'] ? { title: str(r['title']) } : {}),
       reply: r['reply'] ? (JSON.parse(str(r['reply'])) as Message['reply']) : undefined
@@ -1530,8 +1534,17 @@ export class Db {
   // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
   // Only 'queue': a message handed into a running reply keeps its 'steer' mark after that reply answered
   // it, and an app that opened again must not answer it a second time.
+  // A prompt a person moved in the drawer goes where they put it; the rest keep the order they were
+  // written in, after the moved ones (no position: last).
   queuedMessages(): Message[] {
-    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
+    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY COALESCE(queue_pos, 9223372036854775807), at`).all() as Row[]).map((r) => this.toMessage(r))
+  }
+
+  // Where a queued prompt sits in its conversation's queue. Written on its own, like a session's name:
+  // the message may be waiting beside a row that is still moving, and a whole save from a stale copy
+  // would put the rest back.
+  setQueuePos(id: string, pos: number | null): void {
+    this.db.prepare('UPDATE messages SET queue_pos = ? WHERE id = ?').run(pos, id)
   }
 
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of

@@ -2015,6 +2015,15 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
+  // A prompt waiting in the queue (the work drawer): Start sends it now, even with the channel's cap
+  // used up; the order is what a person made by dragging the rows.
+  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
+  reorderQueued: ({ conversationId, ids }, ctx) => {
+    reach(ctx, conversationId)
+    if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
+    runner.reorderQueued(conversationId, ids)
+  },
+
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
   deleteMessage: ({ messageId }, ctx) => {

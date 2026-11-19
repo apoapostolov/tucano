@@ -431,6 +431,10 @@ export function routedHistory(db: Pick<Db, 'message'>, windowed: Message[], anch
 
 // The name an engine is given for a model. Settings hold a model as `<harness>:<name>` (an agent's own
 // pick, and a chain entry built from the same picker); the engine takes `<name>`.
+// Where a prompt sits in its conversation's queue: the place a person gave it in the drawer, or — with
+// none — the order it was written in (Infinity: last, and stable among themselves, runs.ts `drainIn`).
+const rank = (m?: Message): number => m?.queuePos ?? Number.POSITIVE_INFINITY
+
 const bareModelFor = (engine: EngineId, model: string): string => {
   const info = modelInfo(model)
   return info && info.engine === engine ? info.id : model
@@ -458,7 +462,9 @@ export class Runner {
   // Replies running in each conversation, and the prompts a person marked as queued behind them
   // (`send` with mode 'queue'): each waits for what is ahead of it there, and only there.
   private convRuns = new Map<string, number>()
-  private convWaiting = new Map<string, { job: () => Promise<unknown>; queued?: Message; direct?: boolean }[]>()
+  // What waits in each conversation, in the order it was written. `slot`: the parallel cap it ran into
+  // (0: it waits for the conversation to go quiet, like a prompt sent as `queue`).
+  private convWaiting = new Map<string, { job: () => Promise<unknown>; queued?: Message; direct?: boolean; slot?: number; launch?: (beside: boolean) => Promise<unknown> }[]>()
 
   // Goals under way, by the message that set them (src/core/goals.ts).
   private goals = new Map<string, Goal>()
@@ -666,7 +672,10 @@ export class Runner {
     // Parallel has a per-channel cap. What comes past it waits in that channel's queue like a
     // queued prompt, marked on the message so it starts once after a restart, not twice.
     const parallelCap = mode === 'parallel' ? maxParallelSessionsCap((await this.deps.settings()).maxParallelSessions) : 0
-    const room = (): boolean => (this.convRuns.get(conv.id) ?? 0) < parallelCap
+    // A prompt already waiting for a slot holds the place it is waiting for: a newer one goes behind it
+    // instead of jumping the line (drainIn starts them in the order they were written).
+    const room = (): boolean =>
+      (this.convRuns.get(conv.id) ?? 0) + (this.convWaiting.get(conv.id)?.filter((w) => (w.slot ?? 0) > 0).length ?? 0) < parallelCap
     const queued = this.busyIn(conv.id) && (mode === 'queue' || (mode === 'parallel' && !room()))
 
     const mine: Message = { id: randomUUID(), conversationId, author: { kind: 'person', id: writer.id }, text: body, at: Date.now(), ...(thread ? { threadId: thread } : {}) }
@@ -796,21 +805,24 @@ export class Runner {
       // Checked per responder: mentioning two agents past the cap queues the second one too.
       const beside = mode === 'parallel' && room()
       const wait = mode === 'queue' || (mode === 'parallel' && !beside)
+      // Waiting for a slot is not waiting for the whole channel to go quiet: `slot` is the cap it ran
+      // into, and it goes the moment one frees, in the order it was written (drainIn).
+      const slot = mode === 'parallel' && parallelCap > 0 && !beside ? parallelCap : 0
       // The first answers my message as any reply does; the ones after it read what it answered.
       const after = !!before
-      const start = (): Promise<Message | undefined> =>
+      const start = (goesBeside: boolean): Promise<Message | undefined> =>
         // startReply takes its own place in the queue once the agent is free, so a job that only
-        // launches it gives its place back at once, and one that waits keeps what it was written for.
+        // launches it gives its place back at once instead of holding one until the reply ends.
         this.startReply(
           agent,
           conv,
           { depth: 1, threadId: replyIn, replyTo: mine.id, ...(after ? { trigger: mine.id } : {}), ...(goalOn ? { goal: goalOn } : {}), ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) },
           // A queued prompt answers the message it was written for, never taking over an earlier one.
-          { urgent: true, merge: !wait, parallel: beside }
+          { urgent: true, merge: !wait, parallel: goesBeside }
         )
-      if (wait) this.runIn(conv.id, () => { void start(); return Promise.resolve() }, true, queued ? mine : undefined)
-      else if (beside) void start()
-      else before = before ? before.then(start, start) : start()
+      if (wait) this.runIn(conv.id, () => start(beside || slot > 0), true, queued ? mine : undefined, false, slot, start)
+      else if (beside) void start(true)
+      else before = before ? before.then(() => start(false), () => start(false)) : start(false)
     }
   }
 
@@ -886,17 +898,43 @@ export class Runner {
   // Only 'queue' is one waiting to happen: a message handed into a running reply keeps its 'steer'
   // mark, and an app that opened again must not answer it a second time.
   resumeQueued(): void {
-    const { db } = this.deps
     if (this.paused) return // they keep their mark, and go at the next start
-    for (const m of db.queuedMessages()) {
-      const conv = db.conversation(m.conversationId)
-      const members = conv ? this.members(conv) : []
-      if (!conv || !members.length || m.author.kind !== 'person') continue
-      const named = mentioned(m.text, members).slice(0, MAX_MENTIONS)
-      if (!named.length && conv.kind !== 'dm' && members.length > 1)
-        this.runIn(conv.id, () => this.routeAndRun(conv, members, m.threadId, m.id), true, m)
-      else for (const agent of named.length ? named : members) this.runIn(conv.id, () => this.execute(agent, conv, { depth: 1, threadId: m.threadId, replyTo: m.id }), true, m)
+    for (const m of this.deps.db.queuedMessages()) this.queuedStart(m, true)
+  }
+
+  // A queued prompt of mine starts: whoever it names, or the router when the room has more than one
+  // agent and it names nobody. `after`: it waits its turn (a restart, in the order written); without
+  // it, it goes now (the Start on its row in the drawer).
+  private queuedStart(m: Message, after: boolean): void {
+    const { db } = this.deps
+    const conv = db.conversation(m.conversationId)
+    const members = conv ? this.members(conv) : []
+    if (!conv || !members.length || m.author.kind !== 'person') return
+    const named = mentioned(m.text, members).slice(0, MAX_MENTIONS)
+    if (!named.length && conv.kind !== 'dm' && members.length > 1)
+      this.runIn(conv.id, () => this.routeAndRun(conv, members, m.threadId, m.id), after, m)
+    else
+      for (const agent of named.length ? named : members)
+        this.runIn(conv.id, () => this.execute(agent, conv, { depth: 1, threadId: m.threadId, replyTo: m.id }), after, m)
+  }
+
+  // The person presses Start on a queued prompt (its row in the work drawer): it goes now, beside
+  // whatever runs there, even with the channel's cap used up — that is what pressing it is asking for.
+  // The rest of the queue keeps its order and its turn. Nothing here starts a prompt twice: a message
+  // whose reply already went is no longer marked (startIn takes the mark off in the same step).
+  startQueued(messageId: string): void {
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const at = waiting.findIndex((w) => w.queued?.id === messageId)
+      if (at < 0) continue
+      const [entry] = waiting.splice(at, 1)
+      if (!waiting.length) this.convWaiting.delete(conversationId)
+      if (entry?.launch) return void entry.launch(true)
+      return this.startIn(conversationId, entry!.job, entry!.queued, entry!.direct)
     }
+    // Waiting in the database and not in this session's list (another process, or a restart that has
+    // not read it yet): it starts as the prompt it is.
+    const m = this.deps.db.message(messageId)
+    if (m?.sendMode === 'queue') this.queuedStart(m, false)
   }
 
   // Something is answering in this conversation: a reply running there (however it was started), a
@@ -912,28 +950,73 @@ export class Runner {
   // `direct`: the job starts a reply, which takes its own place in the queue (startReply, launch):
   // running it here too would hold a second one for as long as the reply lasts, and MAX_CONCURRENT_URGENT
   // counts replies, not the calls that begin them.
-  private runIn(conversationId: string, job: () => Promise<unknown>, after: boolean, queued?: Message, direct = false): void {
+  private runIn(conversationId: string, job: () => Promise<unknown>, after: boolean, queued?: Message, direct = false, slot = 0, launch?: (beside: boolean) => Promise<unknown>): void {
     if (!after || !this.busyIn(conversationId)) return this.startIn(conversationId, job, queued, direct)
-    this.convWaiting.set(conversationId, [...(this.convWaiting.get(conversationId) ?? []), { job, queued, direct }])
+    this.convWaiting.set(conversationId, [...(this.convWaiting.get(conversationId) ?? []), { job, queued, direct, slot, launch }])
   }
 
   // A prompt goes out (now, or once the one before it let go): the mark a queued one kept for a restart
   // drops in the same step, so the app never starts it twice. From here `execute` counts it as running.
   private startIn(conversationId: string, job: () => Promise<unknown>, queued?: Message, direct = false): void {
-    if (queued?.sendMode) this.update(queued, { sendMode: undefined })
+    if (queued?.sendMode) {
+      this.update(queued, { sendMode: undefined })
+      // The place a person gave it in the queue is spent with the mark: what waits after it starts from
+      // the order it was written in.
+      if (queued.queuePos !== undefined) {
+        this.deps.db.setQueuePos(queued.id, null)
+        queued.queuePos = undefined
+      }
+    }
     if (direct) return void job().catch((e: unknown) => console.error('[runner]', e))
     void this.enqueue(job, true)
   }
 
-  // A reply ended there: the next queued prompt goes, or the conversation is free again.
+  // A reply ended there: a slot is free, and what was waiting for one goes (drainIn).
   private settleIn(conversationId: string): void {
     const left = (this.convRuns.get(conversationId) ?? 1) - 1
-    if (left > 0) return void this.convRuns.set(conversationId, left)
-    this.convRuns.delete(conversationId)
+    if (left > 0) this.convRuns.set(conversationId, left)
+    else this.convRuns.delete(conversationId)
+    this.drainIn(conversationId)
+  }
+
+  // What waits goes, from the first one written (or the first one a person put in the drawer): a prompt
+  // that only needed a slot goes while the cap has room for it, and one that waits for the conversation
+  // to go quiet goes alone, once nothing is running there. Nothing behind the first one may jump ahead
+  // of it, which is what makes the order on screen the order it runs in.
+  private drainIn(conversationId: string): void {
     const waiting = this.convWaiting.get(conversationId)
-    const next = waiting?.shift()
-    if (!waiting?.length) this.convWaiting.delete(conversationId)
-    if (next) this.startIn(conversationId, next.job, next.queued, next.direct)
+    if (!waiting?.length) return
+    waiting.sort((a, b) => rank(a.queued) - rank(b.queued))
+    for (;;) {
+      const next = waiting[0]
+      if (!next) break
+      const slot = next.slot ?? 0
+      const at = this.convRuns.get(conversationId) ?? 0
+      // `slot` 0: it waits for the whole conversation to end, and takes it alone when it does.
+      if (slot > 0 ? at >= slot : at > 0) break
+      waiting.shift()
+      this.startIn(conversationId, next.job, next.queued, next.direct)
+      if (slot === 0) break
+    }
+    if (!waiting.length) this.convWaiting.delete(conversationId)
+  }
+
+  // The order a person gave the queue in the drawer (Conversation.tsx, `reorderQueued` in rpc.ts): the
+  // place is kept on each message, so a restart reads the same order, and the jobs waiting here take it
+  // now. Any prompt the list leaves out keeps the order it was written in, after the ones moved.
+  reorderQueued(conversationId: string, ids: string[]): void {
+    const place = new Map(ids.map((id, i) => [id, i]))
+    const waiting = this.convWaiting.get(conversationId) ?? []
+    for (const m of this.deps.db.queuedMessages()) {
+      if (m.conversationId !== conversationId) continue
+      const at = place.get(m.id)
+      if (at === undefined || m.queuePos === at) continue
+      this.deps.db.setQueuePos(m.id, at)
+      const entry = waiting.find((w) => w.queued?.id === m.id)
+      if (entry?.queued) entry.queued.queuePos = at
+      this.deps.emit({ type: 'message', message: { ...m, queuePos: at } })
+    }
+    if (waiting.length) waiting.sort((a, b) => rank(a.queued) - rank(b.queued))
   }
 
   // Stopping what runs in one conversation, and only there: what it wrote stays, as the stop button leaves it.

@@ -507,6 +507,10 @@ export interface Message {
   // A prompt of mine waiting its turn in a conversation that was already answering: 'queue' while it
   // waits, unset once its reply goes. Kept in the database, so it outlives a restart (runs.ts, resumeQueued).
   sendMode?: SendMode
+  // Where a queued prompt sits among the ones waiting in its conversation, as a person put it in the
+  // drawer (runs.ts, reorderQueued). Unset: the order it was written in, which is what a queue starts
+  // as. Kept in the database like `sendMode`, so a restart reads the same order.
+  queuePos?: number
 }
 
 // When a message was said: a reply when it ended, anything else when it was written. `at` stays when it
