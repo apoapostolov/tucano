@@ -1171,7 +1171,11 @@ runner.setPaused(!!settings().paused)
 // Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
 // for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
 const retention = new Retention(db, settings, {
-  deleted: (ids) => ids.forEach((id) => runner.drop(id)),
+  deleted: (ids) =>
+    ids.forEach((id) => {
+      runner.forget(id) // nothing answers what the period took away
+      runner.drop(id)
+    }),
   forgetSessions: (of) => runner.forgetSessions(of),
   cleared: (conversationIds) => {
     emit({ type: 'history_wiped', conversationIds })
@@ -2042,8 +2046,12 @@ const api: Handlers = {
     const m = db.message(messageId)
     if (!m || (m.author.kind !== 'agent' && m.author.kind !== 'routine' && m.author.kind !== 'person')) return []
     manage(ctx, m.conversationId)
+    // What still held those messages lets go first: a queued prompt waiting to answer one of them must
+    // not start once a slot frees (runs.ts, `forget`), whatever deleted it.
+    for (const id of [messageId]) runner.forget(id)
     const gone = db.deleteMessage(messageId)
     // A finished parent can still have replies running in the thread that went with it.
+    for (const id of gone) runner.forget(id)
     for (const id of gone) runner.drop(id)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     record(ctx, 'session.deleted', m.conversationId, { message: messageId, went: gone.length })
