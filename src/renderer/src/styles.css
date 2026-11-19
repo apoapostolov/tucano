@@ -2218,6 +2218,62 @@ h3 {
   padding: 2px 6px;
   font-size: 11px;
 }
+/* Steering from the drawer's row: the field opens on the row's own second line — one line tall, from
+   where the session's name starts (past the pulsing dot) to the row's right end, with the glyph that
+   sends at that end. The row is a grid only while that field is open; shut, it stays the flex line it
+   always was, so nothing about a working row moves until a person steers it. */
+.work-row:has(.steps__ask-note--row) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+/* The wrapper and its inner grid dissolve, so the pill keeps the row it was on and the field becomes
+   the row's own second line (the trick the chain's Pause row uses, .steps__hold). */
+.work-row:has(.steps__ask-note--row) > .work-row__steer,
+.work-row:has(.steps__ask-note--row) > .work-row__steer > .steps__ask {
+  display: contents;
+}
+/* The name starts 19px into the row — the go button's 6px of padding, the 6px dot and its 7px gap —
+   and the field starts where the name does, not at the dot's edge. */
+.work-row:has(.steps__ask-note--row) .steps__ask-note--row {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-left: 19px;
+}
+/* Two classes: it is a .steps__ask-note too, and that one is a grid of a field over its buttons —
+   here the field and its glyph are one line, so this rule has to outrank it. */
+/* As the row's own second line it stretches across the row less the 19px it starts in, so it takes
+   no width of its own: 100% plus that margin made it hang 19px past the row's end. */
+.steps__ask-note.steps__ask-note--row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: none;
+}
+/* One line tall: the field never grows, and Enter sends because there is no second line to want one. */
+.steps__ask-note--row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.steps__ask-send {
+  flex: none;
+  color: var(--text-3);
+}
+/* A row turns its glyphs red under the pointer (that is the stop); the one that sends is not that. */
+.work-row .steps__ask-send:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.work-row .steps__ask-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+  background: none;
+}
 /* A reply that ended: the glyph says how, and its row stays until the trash takes it off. */
 .work-row__state {
   display: inline-flex;

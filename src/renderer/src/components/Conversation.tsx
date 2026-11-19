@@ -2362,7 +2362,7 @@ export function FollowUpPill({ message }: { message: Message }): ReactNode {
 
 // The one pill both use: quiet until it's wanted, then a field and the send asleep until there is
 // something to send. Ctrl+Enter sends, Escape closes and sends nothing.
-function PillPrompt(p: { icon: IconName; label: string; title: string; aria: string; placeholder: string; place?: 'rail' | 'reply'; onSend: (text: string) => void }): ReactNode {
+function PillPrompt(p: { icon: IconName; label: string; title: string; aria: string; placeholder: string; place?: 'rail' | 'reply' | 'row'; onSend: (text: string) => void }): ReactNode {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const typed = note.trim()
@@ -2379,7 +2379,31 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
       <button type="button" className="steps__ask-pill" aria-expanded={open} title={p.title} onClick={() => (open ? close() : setOpen(true))}>
         <Icon name={p.icon} size={11} /> {p.label}
       </button>
-      {open && (
+      {/* In the work drawer the field is the row's second line: one line tall, as wide as the row and
+          starting where the session's name starts, with the glyph that sends at its right end. Enter
+          sends there, because a field that never grows has no second line to want one for. */}
+      {open && p.place === 'row' && (
+        <div className="steps__ask-note steps__ask-note--row">
+          <input
+            aria-label={p.aria}
+            placeholder={p.placeholder}
+            value={note}
+            autoFocus
+            onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && typed && !e.shiftKey) {
+                e.preventDefault()
+                go(typed)
+              }
+              if (e.key === 'Escape') close()
+            }}
+          />
+          <button type="button" className="icon-btn icon-btn--sm steps__ask-send" title={L('Enviar', 'Send')} aria-label={p.aria} disabled={!typed} onClick={() => go(typed)}>
+            <Icon name="send" size={12} />
+          </button>
+        </div>
+      )}
+      {open && p.place !== 'row' && (
         <div className="steps__ask-note">
           <textarea
             aria-label={p.aria}
@@ -3237,6 +3261,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   label={L('Orientar', 'Steer')}
                   title={L('Dizer como seguir, sem parar esta resposta', 'Say how to go on without stopping this reply')}
                   aria={L('Orientação para esta resposta', 'A steer for this reply')}
+                  place="row"
                   placeholder={L('Como ele deve seguir?', 'How should it go on?')}
                   onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], undefined, 'steer', m.id)}
                 />
