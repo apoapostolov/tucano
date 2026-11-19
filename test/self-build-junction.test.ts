@@ -7,8 +7,12 @@ import { expect, it } from 'vitest'
 it('refuses packaging a shared dependency junction before invoking build tools', () => {
   const fixture = mkdtempSync(join(tmpdir(), 'tucano-build-preflight-'))
   const linked = join(fixture, 'node_modules')
-  mkdirSync(join(fixture, 'scripts'))
-  for (const file of ['self-build.mjs', 'self-build-launch.mjs']) copyFileSync(new URL(`../scripts/${file}`, import.meta.url), join(fixture, 'scripts', file))
+  mkdirSync(join(fixture, 'scripts', 'lib'), { recursive: true })
+  mkdirSync(join(fixture, 'src', 'main'), { recursive: true })
+  mkdirSync(join(fixture, 'src', 'shared'), { recursive: true })
+  for (const file of ['self-build.mjs', 'self-build-launch.mjs', 'lib/identity.mjs']) copyFileSync(new URL(`../scripts/${file}`, import.meta.url), join(fixture, 'scripts', file))
+  // The identity gate reads these two, and a fixture that fails it would stop before the junction check.
+  for (const file of ['src/main/index.ts', 'src/shared/app-identity.ts']) copyFileSync(new URL(`../${file}`, import.meta.url), join(fixture, file))
   writeFileSync(join(fixture, 'package.json'), readFileSync(new URL('../package.json', import.meta.url)))
   symlinkSync(resolve('node_modules'), linked, process.platform === 'win32' ? 'junction' : 'dir')
   try {
