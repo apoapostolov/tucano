@@ -12,16 +12,20 @@ import { basename, join, resolve, sep } from 'node:path'
 import { randomBytes, randomUUID } from 'node:crypto'
 import type { MessagePortMain } from 'electron'
 import { L, lang, langOf, locale, setLang, type Lang } from '../shared/lang'
+import { setClock, type Clock } from '../shared/clock'
 import { errorFor, UserError } from '../shared/errors'
 import type { Api, CoreEvent, Method, Params, Request, Wire } from '../shared/rpc'
 import { limitError, paramsError } from '../shared/rpc-shapes'
-import { ACCOUNT_ENGINES, accountsOn, applyOrder, proposalsOf, type Proposal, type ProposalsResult, channelName, ENGINES, inQuietHours, modelInfo, personScope, rememberModels, scopePerson, usable, WEBHOOK_PORT, type Account, type AccountEngine, type Agent, type BrowserReply, type Message, type EngineId, type EngineStatus, type Person, type NodeInfo, type Routine, type Settings, type Task, isTeam, MAX_TASK_TITLE, MAX_TASK_NOTES, type WikiChange, type WikiSource } from '../shared/types'
+import { ACCOUNT_ENGINES, accountsOn, applyOrder, artifactUrl, proposalsOf, type Proposal, type ProposalsResult, channelName, ENGINES, inQuietHours, modelInfo, personScope, rememberModels, scopePerson, usable, WEBHOOK_PORT, wikiAccess, type Account, type AccountEngine, type Agent, type BrowserReply, type Message, type EngineId, type EngineStatus, type Person, type NodeInfo, type Routine, type Settings, type Task, isTeam, MAX_TASK_TITLE, MAX_TASK_NOTES, type WikiChange, type WikiSource } from '../shared/types'
+import { noticeOf, type NoticeArea, type NoticePicture } from '../shared/notice'
 import { agentOwner, channelEditError, cleanName, dmOwner, Hub, MAX_NAME, mayEditChannel, nameLongError, nameTakenError, People, routineDetail, stripInvisible, type Purged } from './people'
 import { restricted } from '../shared/access'
 import { assertAgentVisible, assertChannelVisible, assertReplyVisible, grantOwnChannel, membersFor, restrictedIds } from './access-policy'
 import { adminError, admit, admitComputer, can, isAdmin, must } from './policy-people'
 import { cleanRules, isAutonomy } from '../shared/actions'
+import { cleanRetentionDays } from '../shared/retention'
 import { possibleBosses } from '../shared/org'
+import { defaultRouting, normalizeRouting, validateRouting } from '../shared/routing'
 import { cleanEndpoint, listModels, quietClaude, quietCodex, withChoice } from './harness'
 import { cleanLook } from './agent-look'
 import { Db, MIGRATIONS } from './db'
@@ -52,15 +56,23 @@ import { ConnectorManager, notAuthorized } from './connectors'
 import { harnessMcps, publicMcp, type FoundMcp } from './harness-mcp'
 import { Gateway } from './gateway'
 import { createServer } from 'node:http'
+import { classifierFor, classifierJobsOf, classifierList, JEV_CLASSIFIER, type ClassifierConfig } from '../shared/classifiers'
+import { checkClassifierKey, classifierSecret } from './classifiers'
 import { checkJevKey, JEV_MODEL, JEV_SECRET } from './jev'
+import { LISTEN_STUB_KEY, listenStub } from './jev-fake'
 import { report } from './report'
+import { readQuotas, fixtureRequest } from './quotas'
+import { quotaCache } from './quota-cache'
+import { Retention } from './retention'
 import { usage } from './usage'
 import { Skills } from './skills'
 import { cleanTitle, pageKey, Wiki, type WikiView } from './wiki'
+import { canHandOff, handOffText } from './wiki-handoff'
 import { COPY_SUFFIX, WikiGit } from './wiki-git'
 import { settingsPatchError } from './settings-patch'
 import { WikiCurator } from './wiki-curator'
 import { WikiReviewer } from './wiki-review'
+import { WikiResolver } from './wiki-resolver'
 import { extractFile, extractLink } from './wiki-extract'
 import { backup, backupIfDue, exportTeam, importTeam } from './team'
 import { cancelRestore, finishRestore, markRestoreReady, stageRestore, writeBackup } from './restore'
@@ -79,7 +91,7 @@ import { loginEnv, MacComputer } from './mac'
 import { NodeLog, NodeServer } from './node-server'
 import { NodeLinks, NodeUplink, type LinkPort } from './node-link'
 import { nodeOf } from '../shared/node-link'
-import { findLocalSkills } from './local-skills'
+import { findLocalSkills, skillFolders } from './local-skills'
 import { Routines } from './routines'
 import { Runner } from './runs'
 import { agentFromDraft, availableModels, tucaAgent, tucaHello, tucaUpToDate } from './tuca'
@@ -94,6 +106,10 @@ companyNetwork()
 
 const dataDir = process.env['TUCANO_DATA'] ?? join(process.cwd(), '.tucano')
 const fake = process.env['TUCANO_FAKE_ENGINES'] === '1'
+// Who Jev brings in when there is no TypeSafe key to ask with: a stand-in for the listen question
+// and the router's, so the built app and a test can drive a listening channel on a machine that
+// has no key. Off unless asked for: TUCANO_FAKE_LISTEN=<handle> brings that agent in, `none` never.
+const fakeListen = fake ? process.env['TUCANO_FAKE_LISTEN'] : undefined
 // Run by the server (src/server): no window, and the screens are in a browser elsewhere.
 const serverMode = process.env['TUCANO_SERVER'] === '1'
 const publicUrl = process.env['TUCANO_URL']?.replace(/\/+$/, '')
@@ -120,6 +136,7 @@ const clineDir = clineAppDir(dataDir)
 const clineLogin = clineLoginDir(clineDir)
 // Until the settings are read, the language of a new install: the Mac's.
 setLang(langOf(process.env['TUCANO_LOCALE']))
+setClock(undefined) // the reading follows the language until a workspace says otherwise
 initializeWorkspace(db)
 // A workspace made from the switcher starts with the name it was given there.
 if (db.created && process.env['TUCANO_WORKSPACE_LABEL']) db.setSettings({ workspaceLabel: process.env['TUCANO_WORKSPACE_LABEL'] })
@@ -305,10 +322,29 @@ const enginesReady = pathReady.then(detect)
 // The window waits only for the database, open by now, and the gateway.
 const ready = gateway.start()
 
+// A classifier's key, as the page sees it: saved or not. An install from before Settings ›
+// Classifiers kept Jev's under the old name, and that one still counts.
+const classifierKeySaved = (c: ClassifierConfig): boolean =>
+  db.getSecret(classifierSecret(c.id)) !== undefined || (c.id === JEV_CLASSIFIER.id && db.getSecret(JEV_SECRET) !== undefined)
+const classifierKeyOf = async (c: ClassifierConfig): Promise<string | undefined> =>
+  (await secrets.get(classifierSecret(c.id))) ?? (c.id === JEV_CLASSIFIER.id ? await secrets.get(JEV_SECRET) : undefined)
+
 const settings = (): Settings => {
   const s = db.getSettings(DEFAULTS)
   setLang(s.language)
-  return { ...s, engines: withChoice({ ...engines, endpoint: endpointStatus(s.endpoint) }, s.harnesses), ...(s.endpoint ? { endpoint: { ...s.endpoint, hasKey: db.getSecret(ENDPOINT_SECRET) !== undefined } } : {}), jevKey: db.getSecret(JEV_SECRET) !== undefined, telegram: telegram?.info(), accounts: (s.accounts ?? []).map((a) => ({ ...a, ...accountLogins.get(a.id) })) }
+  setClock(s.clock)
+  const classifiers = classifierList(s)
+  return {
+    ...s,
+    classifiers,
+    classifierJobs: classifierJobsOf(s),
+    classifierKeys: Object.fromEntries(classifiers.map((c) => [c.id, classifierKeySaved(c)])),
+    engines: withChoice({ ...engines, endpoint: endpointStatus(s.endpoint) }, s.harnesses),
+    ...(s.endpoint ? { endpoint: { ...s.endpoint, hasKey: db.getSecret(ENDPOINT_SECRET) !== undefined } } : {}),
+    jevKey: classifiers.some((c) => c.provider === 'typesafe' && classifierKeySaved(c)),
+    telegram: telegram?.info(),
+    accounts: (s.accounts ?? []).map((a) => ({ ...a, ...accountLogins.get(a.id) }))
+  }
 }
 
 // More logins of Claude Code, Codex and Antigravity (Settings › Accounts): each in its own folder, checked with
@@ -515,11 +551,24 @@ const feedback = new Feedback({ url: feedbackUrl(), dir: installDir, version: ap
 // Desktop notification, and the same on the phone.
 // `fullText`: the whole reply, for the phone; `page`: a click opens that screen instead of a conversation.
 // `to`: the people it's for; unset, everyone (but a DM's news only ever reaches its person).
-const notifyAll = (title: string, shortText: string, conversationId?: string, fullText?: string, more: { kind?: 'approval'; page?: 'skills'; threadId?: string; to?: string[] } = {}): void => {
+// `messageId`: the reply it's about, for the pictures the card over the window shows.
+const noticePictures = (messageId: string): NoticePicture[] =>
+  db
+    .artifactsOf(messageId)
+    .slice(0, 4)
+    .map((a) => ({ url: artifactUrl(a), title: a.title || a.name, kind: a.kind }))
+const notifyAll = (title: string, shortText: string, conversationId?: string, fullText?: string, more: { kind?: 'approval'; page?: 'skills'; threadId?: string; to?: string[]; messageId?: string } = {}): void => {
   const to = notifyTo(conversationId, more.to)
-  toMain({ type: 'notify', title, body: shortText, conversationId, ...more, ...(to ? { to } : {}), sound: settings().sounds !== false })
+  const pictures = more.messageId ? noticePictures(more.messageId) : []
+  toMain({ type: 'notify', title, body: shortText, conversationId, ...more, ...(to ? { to } : {}), ...(pictures.length ? { pictures } : {}), sound: settings().sounds !== false })
   void push.send({ title, body: shortText, ...(conversationId ? { conversationId } : {}), ...(more.threadId ? { threadId: more.threadId } : {}), ...(more.kind ? { kind: more.kind } : {}) }, to)
   if (!to || to.includes(db.ownerId())) void telegram?.notice(title, fullText ?? shortText)
+}
+// Whether the cards go over every window instead of the system's own notification (Settings): the
+// mode is the choice, and `on` its reading, so Native leaves the system's own as 0.2.37 had them.
+const noticePrefs = (): { on: boolean; area?: NoticeArea } => {
+  const rules = noticeOf(settings())
+  return { on: rules.on, ...(rules.area ? { area: rules.area } : {}) }
 }
 function notifyTo(conversationId: string | undefined, to: string[] | undefined): string[] | undefined {
   const c = conversationId ? db.conversationOwner(conversationId) : undefined
@@ -536,19 +585,20 @@ type ToMain =
   | { type: 'open_local'; path: string; how: 'open' | 'reveal' }
   | { type: 'wiki_dir'; path: string } // the wiki's folder, which the app may open
   | { type: 'restart' } // a server: start again, to restore a backup (src/server)
-  | { type: 'notify'; title: string; body: string; conversationId?: string; threadId?: string; kind?: 'approval' | 'question' | 'done'; page?: 'skills'; sound?: boolean; to?: string[] } // to: the people it's for (a server delivers it only to them); unset: everyone
+  | { type: 'notify'; title: string; body: string; conversationId?: string; threadId?: string; kind?: 'approval' | 'question' | 'done'; page?: 'skills'; sound?: boolean; to?: string[]; messageId?: string; pictures?: NoticePicture[] } // to: the people it's for (a server delivers it only to them); unset: everyone
+  | { type: 'notice-pref'; on: boolean; area?: NoticeArea } // the cards over every window (src/main/notice.ts), as the settings say now
   | { type: 'auth-result'; id: string; person?: Person; removed?: true } // removed: a key of someone removed since
   | { type: 'join-result'; id: string; data: { key?: string; person?: Person; error?: string } }
   | { type: 'device-key-result'; id: string; data: { key?: string; person?: Person } }
   | { type: 'person-removed'; id: string }
   | { type: 'person-changed'; id: string } // a role changed: the server forgets what it remembered of them
-  | { type: 'login_item'; open: boolean }
+  | { type: 'login_item'; open: boolean; minimized?: boolean }
   | { type: 'busy'; busy: boolean }
-  | { type: 'lang'; lang: Lang }
+  | { type: 'lang'; lang: Lang; clock?: Clock }
 const toMain = (msg: ToMain): void =>
   process.parentPort.postMessage(msg)
 // The menu is the main process's: it follows the language picked here.
-toMain({ type: 'lang', lang: db.getSettings(DEFAULTS).language })
+toMain({ type: 'lang', lang: db.getSettings(DEFAULTS).language, clock: db.getSettings(DEFAULTS).clock })
 if (!serverMode && defaultWorkspace) toMain({ type: 'theme', theme: db.getSettings(DEFAULTS).theme, initial: true })
 
 // Screenshots use Electron's Chromium, which lives in the main process.
@@ -824,7 +874,11 @@ const browser = new Browser({
   dataDir,
   emit,
   me: () => settings().workspaceName,
-  jev: { key: () => secrets.get(JEV_SECRET), on: () => !!settings().browserJev && settings().jevKey === true },
+  jev: {
+    key: () => classifierKeyOf(classifierFor(settings(), 'browser') ?? JEV_CLASSIFIER),
+    on: () => !!classifierFor(settings(), 'browser'),
+    target: () => classifierFor(settings(), 'browser')
+  },
   onHandback: (agentId) => void runner.handedBack(agentId)
 })
 const connectors = new ConnectorManager({
@@ -836,6 +890,8 @@ const connectors = new ConnectorManager({
   // On a server behind https (TUCANO_URL), the provider sends the person back to the server's own
   // address, which src/server hands over here; on a desktop, to the gateway on this computer.
   oauthCallbackUrl: () => (serverMode && publicUrl?.startsWith('https://') ? `${publicUrl}/oauth/callback` : gateway.url('/oauth/callback')),
+  // A provider that takes only a loopback address back (Canva's): on that server, the address the person pastes.
+  localCallbackUrl: () => gateway.url('/oauth/callback'),
   // Slack's app registers its address once: the workspace's webhook port, which doesn't change.
   fixedCallbackUrl: () => (serverMode && publicUrl?.startsWith('https://') ? `${publicUrl}/oauth/callback` : `http://localhost:${runtimePorts.webhook}/oauth/callback`)
 })
@@ -1021,10 +1077,11 @@ function mergeWiki(from: { root: string; dir: string; held: { key: string; perso
   return { copied, copies }
 }
 // The curator reads the conversations with the memory's cheap model, and keeps what lasts.
-const wikiLlm = async (system: string, prompt: string): Promise<string> => {
+// The model the wiki reads with: the memory's by default, or the one a job names (the resolver's).
+const wikiLlm = async (system: string, prompt: string, pick?: string): Promise<string> => {
   await enginesReady
   const s = settings()
-  const model = usable(modelInfo(s.memoryModel)) ?? modelInfo('haiku')!
+  const model = usable(modelInfo(pick || s.memoryModel)) ?? modelInfo('haiku')!
   const st = s.engines[model.engine]
   if (!st.installed || !st.loggedIn) throw new Error(L(`O ${ENGINES[model.engine].label} não está pronto pra organizar a wiki.`, `${ENGINES[model.engine].label} isn't ready to organize the wiki.`))
   const cwd = join(dataDir, 'agents', '_wiki')
@@ -1044,6 +1101,8 @@ const wikiLlm = async (system: string, prompt: string): Promise<string> => {
 const curator = new WikiCurator({ wiki, db, settings, emitMessage: (message) => emit({ type: 'message', message }), llm: wikiLlm, hidden: (id) => wiki.heldTitles(id ? (dmOf(id) ?? undefined) : undefined), beforeWrite: () => gitSync.pull() })
 // The review: by hand, or once a week when asked (checked every hour).
 const reviewer = new WikiReviewer({ wiki, settings, llm: wikiLlm })
+// The resolver: a finding the review couldn't settle, read again whole when the person asks (Wiki settings).
+const resolver = new WikiResolver({ wiki, settings, llm: (system, prompt) => wikiLlm(system, prompt, settings().wikiResolveModel) })
 setInterval(() => {
   if (reviewer.due()) void reviewer.review().then(() => emit({ type: 'wiki' }))
 }, 3600_000).unref()
@@ -1067,13 +1126,26 @@ const runner = new Runner({
   wikiCurator: curator,
   models: () => availableModels(settings(), allListed()),
   // Approvals and questions reach the phone with their buttons, through toPhone; a finished reply stays on the Mac.
-  notify: (title, body, conversationId, kind, threadId, to) => {
-    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}) })
+  notify: (title, body, conversationId, kind, threadId, to, messageId) => {
+    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}), ...(messageId ? { messageId } : {}) })
     const who = notifyTo(conversationId, to)
-    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), sound: settings().sounds !== false })
+    const pictures = messageId ? noticePictures(messageId) : []
+    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), ...(messageId ? { messageId } : {}), ...(pictures.length ? { pictures } : {}), sound: settings().sounds !== false })
     void push.send({ title, body, ...(conversationId ? { conversationId } : {}), ...(threadId ? { threadId } : {}), kind }, who)
   },
-  jev: { key: () => secrets.get(JEV_SECRET) },
+  // A job's key: the classifier chosen for it, and Jev's where none is. The fake listen key, when the
+  // built app runs without one, answers every job it is asked for.
+  jev: {
+    key: async (job) => {
+      if (fakeListen) return LISTEN_STUB_KEY
+      // A job reads the classifier chosen for it; with no job, Jev's own classifier, which is also
+      // what an install from before the classifiers keeps using.
+      const c = job ? classifierFor(settings(), job) : JEV_CLASSIFIER
+      return c ? classifierKeyOf(c) : undefined
+    },
+    target: (job) => classifierFor(settings(), job ?? 'routing'),
+    ...(fakeListen ? { fetch: listenStub(fakeListen) } : {})
+  },
   onBusy: (busy) => toMain({ type: 'busy', busy }),
   onQuota: (quota) => {
     db.setSettings({ quota })
@@ -1081,6 +1153,18 @@ const runner = new Runner({
   }
 })
 runner.setPaused(!!settings().paused)
+// Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
+// for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
+const retention = new Retention(db, settings, {
+  deleted: (ids) => ids.forEach((id) => runner.drop(id)),
+  forgetSessions: (of) => runner.forgetSessions(of),
+  cleared: (conversationIds) => {
+    emit({ type: 'history_wiped', conversationIds })
+    emitConversations(conversationIds)
+    // A question waiting in a thread whose first message went is closed: the list it was in changes.
+    emit({ type: 'inbox' })
+  }
+})
 // Installs from before the Tuca get him at the first start after the introduction.
 void enginesReady.then(() => {
   if (settings().onboarding?.done) ensureTuca()
@@ -1134,6 +1218,9 @@ hooks.on('error', (e) => console.error(`[gatilhos] porta ${runtimePorts.webhook}
 
 void ready.then(async () => {
   toMain({ type: 'ready' })
+  // How this workspace's notifications show, before the first one arrives (never a server's: it
+  // has no window to draw them in).
+  if (!serverMode) toMain({ type: 'notice-pref', ...noticePrefs() })
   workspaceSummary()
   await runner.expireApprovals()
   const settled = await runner.settleDecidedRuns()
@@ -1144,6 +1231,10 @@ void ready.then(async () => {
   // A question to someone that waited past its deadline: its requester hears of it.
   setInterval(() => runner.sweepQuestions(), 60_000).unref()
   setInterval(() => runner.sweepDelegations(), 60_000).unref()
+  // Read once as the core comes up, so the first visit to Usage and limits draws at once, and every
+  // twenty minutes after that whether or not anyone is looking.
+  void quotaReads.refresh()
+  setInterval(() => void quotaReads.refresh(), QUOTA_POLL_MS).unref()
   if (!fake) {
     // A port taken (another Tucano open, say) is logged and the rest goes on: a call there reaches
     // a server that doesn't know its token, never this workspace's data.
@@ -1163,6 +1254,27 @@ void ready.then(async () => {
     } catch (e) {
       console.error('[people]', e)
     }
+    // What the periods no longer keep (completed hourly, due once a day at most).
+    try {
+      if (retention.due()) {
+        const gone = retention.sweep()
+        if (gone) {
+          console.log(`[history] ${gone} message(s) past their period, gone`)
+          record(undefined, 'history.swept', undefined, { messages: gone })
+        }
+      }
+    } catch (e) {
+      console.error('[history]', e)
+    }
+    // The planner's statistics while the tables change size, and a slice of the pages that deletes
+    // have already freed. A file rebuilt with incremental auto-vacuum gives those pages back here,
+    // a thousand at a time, so the file stops holding its high-water mark without another rewrite.
+    try {
+      db.statistics()
+      db.trim()
+    } catch (e) {
+      console.error('[db]', e)
+    }
   }
   daily()
   setInterval(daily, 3_600_000).unref()
@@ -1172,14 +1284,17 @@ void ready.then(async () => {
   returnChannelFolders()
   for (const a of db.agents()) if (a.computer && !a.archived) void computers.refresh(a)
   await enginesReady
+  await runner.resumeInterrupted()
   routines.start()
+  // A prompt of mine that was still queued when the app closed goes now (runs.ts, resumeQueued).
+  runner.resumeQueued()
   // A Tucano that had more people (or an invite out) before the heritage existed gets it now.
   if (db.people({ removed: true }).length > 1 || db.invites().length) inherit()
 }).catch((e: unknown) => {
   console.error('[core] startup failed', e)
   process.exit(1)
 })
-toMain({ type: 'login_item', open: !!settings().openAtLogin })
+toMain({ type: 'login_item', open: !!settings().openAtLogin, minimized: !!settings().launchMinimized })
 
 // Channels used to lend a project folder to their members; those folders go back.
 function returnChannelFolders(): void {
@@ -1347,7 +1462,15 @@ function applyOne(ctx: Ctx, messageId: string, index: number, batch = false): { 
     const agent = db.agent(p.agentId)
     if (!agent || agent.archived) throw new Error(L('Esse agente não existe mais.', 'That agent no longer exists.'))
     const channelIds = db.conversations().filter((c) => c.kind === 'channel' && c.members.includes(agent.id)).map((c) => c.id)
-    api.saveAgent({ agent: { ...agent, ...p.changes }, channelIds }, ctx)
+    // The skills it follows aren't on the agent: they are each skill's own list of agents.
+    const { skills: wanted, ...changes } = p.changes
+    api.saveAgent({ agent: { ...agent, ...changes }, channelIds }, ctx)
+    if (wanted) {
+      const r = skills.assign(agent.id, wanted)
+      if (r.unknown.length) throw new Error(L(`Não existe skill ativa ${r.unknown.map((u) => `"${u}"`).join(', ')}.`, `There's no active skill ${r.unknown.map((u) => `"${u}"`).join(', ')}.`))
+      if (r.alone) throw new Error(L(`"${r.alone}" é de todos e não dá pra tirar só deste agente: arquive a skill.`, `"${r.alone}" is everyone's and can't be taken from just this agent: archive the skill.`))
+      for (const k of r.changed) record(ctx, 'skill.updated', k.id, { agents: k.agents, why: 'proposal' })
+    }
     id = agent.id
   } else if (p.kind === 'routine') {
     if (p.routine.conversationId) reach(ctx, p.routine.conversationId)
@@ -1521,6 +1644,17 @@ const titleUnavailable = (title: string): string => L(`Não dá pra usar o títu
 const nameOf = (ctx: Ctx): string => (ctx.person.role === 'owner' ? settings().workspaceName : ctx.person.name) || L('Você', 'You')
 const emitPeople = (): void => emit({ type: 'people', people: db.people(), former: db.formerPeople() })
 
+// The providers' quotas, kept between looks: the page opens on the last read and catches up behind it.
+// Twenty minutes is the poll asked for: the five-hour windows providers report move slower than that,
+// and a read costs one request per provider.
+const QUOTA_POLL_MS = 20 * 60_000
+const quotaReads = quotaCache(() =>
+  readQuotas({
+    home: process.env['TUCANO_QUOTA_HOME'] || homedir(),
+    ...(process.env['TUCANO_QUOTA_FIXTURES'] ? { get: fixtureRequest(process.env['TUCANO_QUOTA_FIXTURES']) } : {})
+  })
+)
+
 const api: Handlers = {
   markRead: ({ conversationId }, ctx) => {
     reach(ctx, conversationId)
@@ -1593,9 +1727,22 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
     reach(ctx, conversationId)
-    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, files?.length ? { files } : {}), 'sendMessage')
+    // `mode`: how this one joins a reply already running here (the window sends what Enter or the
+    // modifier keys said); without it, as replies have always gone, one at a time there.
+    const how = mode === 'parallel' || mode === 'queue' || mode === 'steer' || mode === 'interrupt' ? mode : undefined
+    const sent = runner.send(conversationId, text, images, threadId, ctx.person.id, {
+      ...(files?.length ? { files } : {}),
+      ...(how ? { mode: how } : {}),
+      ...(steerTo ? { steerTo } : {}),
+      ...(reply ? { reply } : {})
+    })
+    // A failure here is logged, never a crash (0.2.39: on a server, an unhandled rejection ends
+    // everyone's Tucano) and a reply it can't take still comes back to whoever wrote it, so the
+    // draft isn't lost as if it had been sent.
+    bg(sent, 'sendMessage')
+    return sent
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {
@@ -1605,7 +1752,14 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
+  // A reply put on hold keeps its session and its place; the next work starts when it's let go.
+  pauseRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.pause(messageId)),
+
+  resumeRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.resume(messageId)),
+
   retryRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.retry(messageId)),
+
+  followUpRun: ({ messageId, text }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.followUp(messageId, text)),
 
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), bg(runner.continue(messageId), 'continueRun')),
 
@@ -1639,6 +1793,11 @@ const api: Handlers = {
     // Its owner changes only with the removal hand-over, never by an edit (one with none is the
     // Tucano owner's, as db.agent reads it): a new one is whoever made it.
     const clean: Agent = { ...cleanLook(agent), name: agent.name.trim(), handle: agent.handle.trim().toLowerCase(), archived: before?.archived ?? false, owner: before ? (before.owner ?? db.ownerId()) : ctx.person.id }
+    // How long its history is kept (src/shared/retention.ts), when its page says: whole days, 0 for good.
+    // Anything else isn't a period: it follows the Tucano's again.
+    const kept = cleanRetentionDays(agent.retentionDays)
+    if (kept === undefined) delete clean.retentionDays
+    else clean.retentionDays = kept
     // One handle per agent (archived ones keep theirs), and none that reads as a person's (People.agentNameError).
     const taken = people.agentNameError({ id: clean.id, name: clean.name, handle: clean.handle })
     if (taken) throw new Error(taken)
@@ -1661,6 +1820,9 @@ const api: Handlers = {
     const doesNext = typeof sectorDoes === 'string' ? sectorDoes.replace(/\s+/g, ' ').trim().slice(0, 200) : ''
     if (doesNext) clean.sectorDoes = doesNext
     else delete clean.sectorDoes
+    // On, off, or inherit (absent): anything else, a cleared switch included, goes back to following the
+    // global one instead of turning into an off that reads as a choice.
+    if (clean.smartRouting !== true && clean.smartRouting !== false) delete clean.smartRouting
     const linux = (a?: Agent): boolean => !!a?.computer && a.computerKind !== 'mac'
     const mac = (a?: Agent): boolean => !!a?.computer && a.computerKind === 'mac'
     db.saveAgent(clean)
@@ -1718,13 +1880,21 @@ const api: Handlers = {
     db.setTopic(id, topic.trim() || undefined)
     emitConversations([id])
   },
-  setChannelMembers: ({ id, agentIds }, ctx) => {
+  setChannelMembers: ({ id, agentIds, mentionOnly, listen }, ctx) => {
     const conv = db.conversation(id)
     if (conv?.kind !== 'channel') return
     if (!mayEditChannel(ctx.person, conv, db.ownerId())) throw new Error(channelEditError())
     assertChannelVisible(db, ctx.person, conv)
     const known = new Set(db.agents().filter((a) => !a.archived).map((a) => a.id))
-    db.setMembers(id, membersFor(db, ctx.person, conv.members, agentIds.filter((a) => known.has(a))))
+    const kept = agentIds.filter((a) => known.has(a))
+    const roster = membersFor(db, ctx.person, conv.members, kept)
+    // A mode is only for whoever is in the channel: an agent taken out can't stay in one.
+    db.setMembers(
+      id,
+      roster,
+      mentionOnly === undefined ? undefined : mentionOnly.filter((a) => roster.includes(a)),
+      listen === undefined ? undefined : listen.filter((a) => roster.includes(a))
+    )
     emitConversations([id])
   },
   // Everything that only made sense there goes too: replies still running stop,
@@ -1749,6 +1919,32 @@ const api: Handlers = {
     if (found) toMain({ type: 'open_local', path: found.path, how: how === 'open' && (found.kind === 'folder' || found.kind === 'pdf') ? 'open' : 'reveal' })
   },
 
+  // Clearing the history of a conversation, keeping the conversation: the DM stays where it is and
+  // the rows stay, but the screen starts empty and the next turns stop reading what came before.
+  clearConversation: ({ id }, ctx) => {
+    const c = db.conversation(id)
+    if (!c) return
+    reach(ctx, id)
+    if (c.kind === 'channel') must(ctx.person, { kind: 'admin' })
+    record(ctx, c.kind === 'channel' ? 'channel.cleared' : 'dm.cleared', id, c.kind === 'channel' ? { name: c.name } : undefined)
+    // A reply at work is not cleared under the person's feet: it is stopped, and what it had said so
+    // far is before the cut.
+    for (const m of db.messagesWithRun(['working', 'waiting_approval'])) if (m.conversationId === id) runner.stop(m.id)
+    // The harnesses keep a session of their own per conversation: without this the model would go on
+    // from a history the person just cleared.
+    runner.forgetSessions({ conversationId: id })
+    // What was waiting in there can't be reached any more, and leaving it would be worse than
+    // dropping it: an approval's card sits in a message that is now off the screen, so it could
+    // neither be decided nor seen until it expired on its own; an open question would show up in
+    // Questions with nothing behind it.
+    for (const a of db.approvals()) if (a.conversationId === id && a.state === 'pending' && db.decideApproval(a.id, 'expired', L('O histórico da conversa foi limpo.', 'The history was cleared.'))) emit({ type: 'approval', approval: db.approval(a.id)! })
+    const asked = db.openQuestionsIn(id)
+    for (const q of asked) db.saveQuestion({ ...q, state: 'closed' })
+    if (asked.length) emit({ type: 'inbox' })
+    db.clearConversation(id)
+    emit({ type: 'conversation', conversation: db.conversation(id)! })
+  },
+
   deleteConversation: ({ id }, ctx) => {
     const c = db.conversation(id)
     if (!c) return
@@ -1761,6 +1957,17 @@ const api: Handlers = {
     runner.forgetSessions({ conversationId: id })
     db.deleteConversation(id)
     emit({ type: 'conversation_removed', id, ...(c.kind === 'dm' ? { for: dmOwner(c, db.ownerId()) } : {}) })
+  },
+
+  // Taking a history away at once, whatever the period says: every bot's — everything said in this
+  // workspace — or one bot's, which is what it wrote anywhere and every word of its own DMs. The receipts
+  // stay (Usage and the monthly limit count them) and so do the files an agent showed.
+  wipeHistory: ({ agentId }, ctx) => {
+    const agent = agentId ? db.agent(agentId) : undefined
+    if (agentId && !agent) throw new Error(L('Esse agente não existe mais.', 'That agent no longer exists.'))
+    const gone = retention.wipe(agentId)
+    record(ctx, 'history.wiped', agentId ?? 'workspace', agent ? { agent: agent.name, messages: gone } : { messages: gone })
+    return gone
   },
 
   createChannel: ({ name, threads }, ctx) => {
@@ -1910,6 +2117,8 @@ const api: Handlers = {
     return saved
   },
   localSkills: () => findLocalSkills(),
+  // Every folder skills are read from on this computer, on and off (src/core/local-skills.ts).
+  skillFolders: () => skillFolders(undefined, settings().skillFolders ?? [], settings().skillFoldersOff ?? []),
   linkSkill: ({ source, agents }, ctx) => {
     if (!findLocalSkills().some((k) => k.source === source)) throw new Error(L('Essa skill não está mais no seu Claude Code nem no Codex.', "That skill is no longer in your Claude Code or Codex."))
     const linked = skills.link(source, agents)
@@ -1970,6 +2179,22 @@ const api: Handlers = {
     return r.summary
   },
   backupNow: () => backup(db, backups, workspaceLabel(db.getSettings(DEFAULTS))),
+  // The file's own numbers, from the moment the card opens: size, the free pages nothing will reuse,
+  // and whether it reads back sound (a quick check, 20 ms at 23 MB).
+  dbHealth: () => ({ ...db.size(), ...db.check() }),
+  // Empties the log, rebuilds the file and refreshes the planner. Not while a reply is at work: the
+  // rebuild holds the core's only thread, and that is where the run is writing.
+  optimizeDb: () => {
+    if (db.messagesWithRun(['working', 'waiting_approval']).length) {
+      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', 'A reply is at work right now. Optimize when it finishes.'))
+    }
+    const before = db.size()
+    db.rebuild()
+    const after = db.size()
+    const check = db.check()
+    record(undefined, 'db.optimized', undefined, { before: before.bytes, after: after.bytes })
+    return { before: before.bytes, after: after.bytes, free: after.free, ...check }
+  },
   // Everything in one .zip in Downloads, shown in the Finder: to take to a server, which restores it.
   exportBackup: () => {
     if (serverMode) throw new Error(L('O backup completo sai do app do computador.', 'The full backup comes from the desktop app.'))
@@ -2008,9 +2233,12 @@ const api: Handlers = {
     refreshCodexQuota()
     return usage(db)
   },
+  // What each provider says is left, read from the logins already on this computer. The last read is
+  // handed back at once, so the panel draws without waiting on a provider.
+  quotas: () => quotaReads.get(),
+  quotasRefresh: () => quotaReads.refresh(),
   unpairTelegram: () => void (telegram && bg(telegram.unpair(), 'unpairTelegram')),
 
-  // Checked with TypeSafe before it's saved; null removes it.
   nodeInfo: async () => nodeInfo(),
   setNode: async ({ apps }) => {
     db.setSettings({ node: { ...(settings().node ?? {}), apps } })
@@ -2032,10 +2260,13 @@ const api: Handlers = {
     return nodeInfo()
   },
   nodeLog: async ({ limit }) => nodeLog.read(limit ?? 100),
+  // Checked with TypeSafe before it's saved; null removes it. Jev's own row, for the pages that
+  // still ask for it; Settings › Classifiers uses setClassifierKey, which takes the id.
   setJevKey: async ({ key }) => {
     const k = key?.trim()
     if (k) await checkJevKey(k)
-    await secrets.set(JEV_SECRET, k || undefined)
+    await secrets.set(classifierSecret(JEV_CLASSIFIER.id), k || undefined)
+    await secrets.set(JEV_SECRET, undefined) // the old name is retired the first time the key is saved here
     if (!k && settings().routerModel === JEV_MODEL) db.setSettings({ routerModel: 'haiku' })
     emit({ type: 'settings', settings: settings() })
   },
@@ -2067,6 +2298,18 @@ const api: Handlers = {
       const chosen = db.getSettings(DEFAULTS).harnesses
       if (chosen && !chosen.includes('endpoint')) db.setSettings({ harnesses: [...chosen, 'endpoint'] })
     }
+    emit({ type: 'settings', settings: settings() })
+  },
+
+  // A classifier's key, checked with its own provider before it's saved; null removes it. Each
+  // classifier keeps its own key, so two accounts of one provider never share one.
+  setClassifierKey: async ({ id, key }) => {
+    const c = classifierList(db.getSettings(DEFAULTS)).find((x) => x.id === id)
+    if (!c) throw new Error(L('Esse classificador não existe mais.', 'That classifier no longer exists.'))
+    const k = key?.trim()
+    if (k) await checkClassifierKey(c, k)
+    await secrets.set(classifierSecret(c.id), k || undefined)
+    if (c.id === JEV_CLASSIFIER.id) await secrets.set(JEV_SECRET, undefined) // one home for the key
     emit({ type: 'settings', settings: settings() })
   },
 
@@ -2149,6 +2392,23 @@ const api: Handlers = {
     const why = voiceRefusal(patch.voice)
     if (why) throw new Error(why)
     if (patch.actionRules) patch.actionRules = cleanRules(patch.actionRules)
+    // A routing setup is judged, not cleaned: an entry this build can't run (a harness it doesn't have,
+    // a thinking level it doesn't support) is refused with where it is, so nothing is quietly turned
+    // into something else. Reading an old or hand-edited setup stays tolerant, inside normalizeRouting.
+    if (patch.routing !== undefined) {
+      if (patch.routing === null) patch.routing = defaultRouting()
+      else {
+        const checked = validateRouting(patch.routing)
+        if (!checked.ok) {
+          const where = checked.problems
+            .slice(0, 4)
+            .map((p) => `${p.path || 'routing'}: ${p.message}`)
+            .join(' · ')
+          throw new Error(L(`Rotas não salvas — ${where}`, `Routing not saved — ${where}`))
+        }
+        patch.routing = checked.value
+      }
+    }
     db.setSettings(patch)
     // The settings' name is the owner's: what the agents call them.
     if (patch.workspaceName && cleanName(patch.workspaceName)) {
@@ -2157,9 +2417,10 @@ const api: Handlers = {
     }
     if (!serverMode && patch.theme !== undefined) toMain({ type: 'theme', theme: patch.theme })
     if (patch.paused !== undefined) runner.setPaused(patch.paused)
-    if (patch.openAtLogin !== undefined) toMain({ type: 'login_item', open: patch.openAtLogin })
+    if (patch.openAtLogin !== undefined || patch.launchMinimized !== undefined) toMain({ type: 'login_item', open: !!settings().openAtLogin, minimized: !!settings().launchMinimized })
     if (patch.onboarding?.done) bg(enginesReady.then(() => ensureTuca()), 'ensureTuca') // skipping the introduction still gets the Tuca
-    if (patch.language) toMain({ type: 'lang', lang: patch.language })
+    if (patch.language || 'clock' in patch) toMain({ type: 'lang', lang: patch.language ?? db.getSettings(DEFAULTS).language, clock: patch.clock ?? db.getSettings(DEFAULTS).clock })
+    if (!serverMode && patch.notice !== undefined) toMain({ type: 'notice-pref', ...noticePrefs() })
     emit({ type: 'settings', settings: settings() })
   },
 
@@ -2176,6 +2437,7 @@ const api: Handlers = {
     bg(connectors.connect(id), 'reconnectConnector')
   },
   setConnectorToken: ({ id, token }) => connectors.setToken(id, token),
+  setConnectorIcon: ({ id, icon }) => connectors.setIcon(id, icon),
   // The store for a screen without the catalog's file (the iPhone app): its entries as data, in the
   // person's language; a connector added by its entry and the values asked, filled in here.
   connectorCatalog: () => ({ categories: CATEGORIES(), entries: catalogView(), added: connectors.list().map((c) => entryOf(c)?.id).filter((id): id is string => !!id) }),
@@ -2455,6 +2717,28 @@ const api: Handlers = {
     emit({ type: 'wiki' })
   },
   wikiDismissFinding: ({ id }) => wiki.dismissFinding(id),
+  // The review's card hands the job to an agent: one message in its DM with what the finding
+  // needs (the titles, the lines around them), and the card goes. The next review brings it
+  // back if it still holds.
+  wikiAsk: ({ id, agentId }, ctx) => {
+    const f = reviewer.status().findings.find((x) => x.id === id)
+    if (!f || !canHandOff(f.kind) || f.change || f.pages.some((t) => heldFrom(ctx, t))) throw new Error(L('Esse aviso não existe mais.', 'That finding is gone.'))
+    const agent = db.agent(agentId)
+    if (!agent || agent.archived || agent.kind === 'tuca') throw new Error(L('Esse agente não existe mais.', 'That agent no longer exists.'))
+    if (wikiAccess(agent) !== 'read_write')
+      throw new Error(
+        L(`@${agent.handle} ainda não escreve na wiki: escolha "Lê e escreve" em Ferramentas nas configurações dele.`, `@${agent.handle} doesn't write on the wiki yet: choose "Read and write" under Tools in its settings.`)
+      )
+    const conversationId = api.openDm({ agentId: agent.id }, ctx)
+    bg(runner.send(conversationId, handOffText(f, (t) => wiki.page(t)), [], undefined, ctx.person.id), 'wikiAsk')
+    wiki.dismissFinding(id)
+    return conversationId
+  },
+  wikiResolveFinding: async ({ id }) => {
+    const r = await resolver.resolve(id)
+    emit({ type: 'wiki' })
+    return { resolved: !!r.change, ...(r.note ? { note: r.note } : {}), ...(r.gone ? { gone: true } : {}) }
+  },
   wikiImport: ({ dir }, ctx) => wiki.importVault(dir, nameOf(ctx)),
   // On a server: a vault zipped on the person's computer and sent up. Only from the uploads folder
   // the server writes to; unpacked apart, copied in as any vault, then both go.
@@ -2616,8 +2900,23 @@ const api: Handlers = {
   },
   activity: ({ personId, kind, before }) => db.activity({ personId, kind, before }),
   inbox: (_, ctx) => people.inbox(ctx.person),
+  // The window over every window (src/main/notice.ts) reads nothing else: its rules, what waits on
+  // this person with the buttons to decide it, and the names to say where each card happened.
+  noticeFeed: (_, ctx) => {
+    const mine = people.settingsFor(ctx.person, settings())
+    return {
+      rules: noticeOf(mine),
+      language: mine.language,
+      agents: db.agents().map((a) => ({ id: a.id, name: a.name, color: a.color, ...(a.customColor ? { customColor: a.customColor } : {}), ...(a.picture ? { picture: a.picture } : {}), ...(a.avatar ? { avatar: a.avatar } : {}) })),
+      // Only the conversations this person may see: a card never says the name of someone else's DM.
+      conversations: db.conversations().filter((c) => people.canSeeConversation(ctx.person, c)).map((c) => ({ id: c.id, name: c.name, kind: c.kind })),
+      inbox: people.inbox(ctx.person)
+    }
+  },
   answerQuestion: ({ id, text }, ctx) => runner.answer(id, text, ctx.person),
+  questionsHistory: ({ limit }, ctx) => people.history(ctx.person, limit), // answered and closed, newest first: the Asks page's History
   confirmQuestion: ({ id, ok }, ctx) => runner.confirm(id, ok, ctx.person),
+  dismissQuestion: ({ id }, ctx) => runner.dismiss(id, ctx.person), // leave an ask unanswered: it closes and the reply goes on
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),

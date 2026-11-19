@@ -4,6 +4,30 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.2.39] - 2026-11-18
+
+> **Em português:**
+> - **Corrigido:** o uso do mês de um agente no **Antigravity** não fica mais negativo (como "−2003590 de 2 mi"), e o limite mensal dele volta a valer. Algumas respostas do Antigravity contam o cache à parte da entrada, e a conta subtraía o cache como se estivesse dentro. Os recibos antigos também passam a contar certo.
+
+### Fixed
+
+- **An Antigravity agent's month no longer goes negative.** Tokens count as input − 90% of cache reads + output, which assumes the input counts the cache reads in. Some Antigravity runs report more cache reads than input, so the month showed as "−2003590 of 2M" and the agent's monthly limit never fired. More cache reads than input now means they came apart: the input counts whole and the cache a tenth, in every total, so receipts already saved read right too; new ones from Antigravity add the cache reads to the input. Agents that were past their limit without it showing now stop at it, and say it can be raised on their page. (#547)
+- **TucanoNext takes upstream 0.2.39.** The quota strip, the hover cards and an agent's page follow the counted-token fix in it (#547), so an Antigravity receipt whose cache reads exceed its input no longer shows a negative month in the strip either.
+
+## [0.2.38] - 2026-11-18
+
+> **Em português:**
+> - **Corrigido:** no **Tucano num servidor** (como o do Tucano Pro), o **Canva** conecta. Ele só aceita voltar pra um endereço local, então o Tucano percebe e passa pro jeito de colar o endereço em que a página terminou.
+> - **Mudou:** no servidor, escolher uma pasta diz que essas são as pastas do servidor, e um **Linux isolado** sem Docker diz que o Docker precisa estar no servidor. Os dois apontam pra **Configurações › Servidores › Deixar este servidor usar este computador**, no app do computador, pra usar as pastas e o terminal dele.
+
+### Fixed
+
+- **Canva connects on a server.** Canva's MCP registers any return address, but its authorization page takes only a loopback one and answered a server's https address with "Invalid redirect URI.", so it never connected on a server such as Tucano Pro's. When a provider turns the server's own address away, the sign-in starts again with the loopback one and the step where you paste the address the page ended on; it then renews by itself after a restart. (#544)
+
+### Changed
+
+- **On a server, folders and the isolated Linux say where they live.** The folder picker says these are the server's folders, and a missing Docker says the isolated Linux needs Docker on the server, instead of asking to install it on "this computer". Both point to Settings › Servers › Let this server use this computer, in the app on your computer, to use its folders and terminal. (#544)
+
 ## [0.2.37] - 2026-11-17
 
 > **Em português:**
@@ -223,6 +247,9 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **An English workspace no longer teaches a model Portuguese words for the app.** The screen links the Tuca is taught (`#abrir/conectores`), the areas of `ver_estado` and the guide's index it carries on every message were in Portuguese whatever the workspace's language, and the model wrote those words back into replies, skills and wiki pages. The ids are now language-free (`#abrir/connectors`, `#abrir/settings/models`), the guide's index has an English version, and the old ids in messages and memories keep working. The body of a guide page is still Portuguese.
 
 - **A Hermes skill says it came from Hermes.** In the skills list and in an agent's tab, a skill linked from Hermes was tagged "from your Claude Code".
+
+
+- **A routed reply finds its model again.** A pool entry is stored the way an agent's page stores a model, with the harness in front (`pi:opencode-go/deepseek-v4.1-flash`), and that name went to the engine exactly as stored: pi answered `Model "pi:opencode-go/deepseek-v4.1-flash" not found` and the reply died as soon as smart routing was on. The prefix now comes off where the engine is handed the name, so a chain built from the picker runs, and pools already written that way keep working.
 
 ## [0.2.28] - 2026-11-12
 

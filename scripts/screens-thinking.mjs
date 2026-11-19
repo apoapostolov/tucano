@@ -1,5 +1,7 @@
 // Frames for the model's thinking (#235 / PR #245): off unless the person turns it on, then dim and
-// small under the steps, live as it arrives, and kept after the turn so it can be read back.
+// Frames for the model's thinking (#235 / PR #245): off unless the person turns it on, then dim and
+// small under the run's steps, live as it arrives, kept after the turn so it can be read back, and,
+// the reply over, folded to the line it ended on with the whole of it one click away.
 // TUCANO_FAKE_THINKING=1 makes the fake engine think out loud (see src/core/engines/fake.ts).
 import { _electron as electron } from 'playwright'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
@@ -51,18 +53,35 @@ const ask = async () => {
   await win.locator('.composer textarea').fill('Lia, o test/wiki-git.test.ts falha aqui. É do build ou da máquina?')
   await win.keyboard.press('Enter')
 }
-// The state of the thinking block, and whether the reply is still at work.
+// The state of the thinking block, and whether the reply is still at work. Folded, there is no text
+// node at all: the head carries the label and the line it ended on, nothing else.
 const look = () =>
   win.evaluate(() => {
-    const t = document.querySelector('.thought')
+    const blocks = [...document.querySelectorAll('.thought')]
+    const t = blocks[blocks.length - 1]
     const box = t?.querySelector('.thought__text')
+    const head = t?.querySelector('.thought__head')
+    const steps = t?.closest('.steps')
+    const list = steps?.querySelector('.steps__list')
     const b = t?.getBoundingClientRect()
+    const l = list?.getBoundingClientRect()
+    const lh = t?.querySelector('.thought__last')
     return {
-      blocks: document.querySelectorAll('.thought').length,
+      blocks: blocks.length,
+      open: t?.classList.contains('is-open') ?? null,
+      atWork: t?.classList.contains('is-working') ?? null,
       label: t?.querySelector('.thought__label')?.textContent ?? null,
+      expanded: head?.getAttribute('aria-expanded') ?? null,
+      headTitle: head?.getAttribute('title') ?? null,
+      lastLine: lh?.textContent ?? null,
+      lastClipped: lh ? lh.scrollWidth > lh.clientWidth : null,
+      hasText: !!box,
       chars: box?.textContent?.length ?? 0,
-      text: box?.textContent?.slice(0, 120) ?? null,
+      text: box?.textContent?.slice(0, 160) ?? null,
       height: b ? Math.round(b.height) : 0,
+      insideTheSteps: !!steps,
+      underTheList: l && b ? Math.round(b.top) >= Math.round(l.bottom) - 1 : null,
+      gapBelowTheList: l && b ? Math.round(b.top - l.bottom) : null,
       fontPx: box ? getComputedStyle(box).fontSize : null,
       opacity: box ? getComputedStyle(box).opacity : null,
       atTheBottom: b ? Math.round(b.bottom) <= Math.round(document.querySelector('.messages').getBoundingClientRect().bottom) : null,
@@ -80,7 +99,7 @@ await win.waitForTimeout(400)
 console.log('the switch after:', JSON.stringify(await switchState()))
 await shot('02-the-switch-on')
 
-// 2. Turned on: the reasoning arrives under the steps, live.
+// 2. Turned on: the reasoning arrives under the steps, live, and stays open while it works.
 await ask()
 let live = await look()
 for (let i = 0; i < 150; i++) {
@@ -90,14 +109,30 @@ for (let i = 0; i < 150; i++) {
 }
 console.log('while thinking:', JSON.stringify(live, null, 1))
 await shot('03-thinking-as-it-arrives')
+const thoughtSoFar = live.chars
 
-// 3. And it stays after the turn, said in the past.
-for (let i = 0; i < 120 && (await look()).working; i++) await win.waitForTimeout(250)
-const kept = await look()
-console.log('after the turn:', JSON.stringify({ label: kept.label, chars: kept.chars, blocks: kept.blocks }))
-await shot('04-kept-after-the-turn')
+// 3. The reply over: folded to the line it ended on, no text node, one line tall.
+for (let i = 0; i < 160 && (await look()).working; i++) await win.waitForTimeout(250)
+await win.waitForTimeout(600)
+const folded = await look()
+console.log('after the turn, folded:', JSON.stringify({ label: folded.label, open: folded.open, hasText: folded.hasText, lastLine: folded.lastLine, height: folded.height }))
+await shot('04-folded-when-the-reply-is-over')
 
-// 4. Turned off again: the same turn shows the steps and the answer, and nothing of the reasoning.
+// 4. One click: the whole of it, in the page.
+await win.locator('.thought__head').last().click()
+await win.waitForTimeout(300)
+const opened = await look()
+console.log('one click opens it:', JSON.stringify({ open: opened.open, chars: opened.chars, endsWith: opened.text?.slice(-60) ?? null }))
+await shot('05-one-click-opens-it')
+
+// 5. Another click: folded again, to the same line.
+await win.locator('.thought__head').last().click()
+await win.waitForTimeout(300)
+const refolded = await look()
+console.log('a click folds it back:', JSON.stringify({ open: refolded.open, height: refolded.height, lastLine: refolded.lastLine?.slice(-60) ?? null, foldedHeight: folded.height }))
+await shot('06-a-click-folds-it-back')
+
+// 6. Turned off again: the same turn shows the steps and the answer, and nothing of the reasoning.
 await settings()
 await win.locator(`${switchRow} .toggle`).click()
 await win.waitForTimeout(400)
@@ -113,9 +148,9 @@ for (let i = 0; i < 80 && !finished; i++) {
 }
 console.log('off again:', JSON.stringify({ thoughtBlocksSeen: seenOff, finished }))
 await win.waitForTimeout(1000)
-await shot('05-off-again-nothing-shown')
+await shot('07-off-again-nothing-shown')
 
-// 5. Reading further up while the rest arrives: the block keeps the place the person is reading, and
+// 7. Reading further up while the rest arrives: the block keeps the place the person is reading, and
 // so does its place on the page. Two things pulled it away before: the block scrolled itself to the end
 // on every piece (fixed by `followsTheEnd`), and the list underneath kept following the end of the
 // reply, carrying the whole block up out of view as the answer streamed in below.
@@ -214,7 +249,7 @@ for (let i = 0; i < 40 && held.chars <= reading.chars; i++) {
   held = await turn()
 }
 console.log('reading above the stream:', JSON.stringify({ reading, held }))
-await shot('06-reading-above-the-stream')
+await shot('08-reading-above-the-stream')
 
 // Back at the end by hand: the block follows the rest of what arrives.
 await scrollBlock('end')
@@ -226,9 +261,9 @@ for (let i = 0; i < 40 && following.chars <= back.chars; i++) {
   following = await turn()
 }
 console.log('back at the end:', JSON.stringify({ back, following }))
-await shot('07-back-at-the-end')
+await shot('09-back-at-the-end')
 
-// 6. The same reading carried through to the answer. The block's own scroll is held by then, but the
+// 8. The same reading carried through to the answer. The block's own scroll is held by then, but the
 // list underneath kept following the end of the reply, so as the answer streamed in below, the block
 // was carried up the page and out of the reading. A wheel inside the block holds the list too.
 await ask()
@@ -240,9 +275,9 @@ const worst = seen2.reduce(
   { listTop: reading2.listTop, blockTop: reading2.onScreen }
 )
 console.log('through the answer:', JSON.stringify({ arrived2, reading2, worst, settled: seen2.at(-1) }))
-await shot('08-through-the-answer')
+await shot('10-through-the-answer')
 
-// 7. Back at the end of the reasoning, on another turn: the list follows the reply again, so the answer
+// 9. Back at the end of the reasoning, on another turn: the list follows the reply again, so the answer
 // arriving below is in view, the way it was before anyone read back into the block.
 await ask()
 const arrived3 = await untilReadable()
@@ -262,9 +297,16 @@ const released = await turn()
 await throughTheTurn()
 const afterRelease = await turn()
 console.log('the list takes the end back:', JSON.stringify({ arrived3, following3, reading3, released, afterRelease }))
-await shot('09-the-list-follows-again')
+await shot('11-the-list-follows-again')
 
 const fails = []
+// Phases 3-6: the lifecycle #245 asked for - folded once the reply is over, the whole of it one
+// click away, and folded back by the next click - on top of this fork's page behaviour below.
+if (folded.open !== false) fails.push('the block stayed open after the reply was over')
+if (folded.hasText) fails.push('the folded block still carried its whole text')
+if (!folded.lastLine) fails.push('the folded block did not say the line it ended on')
+if (opened.open !== true || !opened.hasText) fails.push('one click did not open the whole of it')
+if (refolded.open !== false || refolded.hasText) fails.push('a second click did not fold it back')
 // Phase 5: the block's own scroll, while the reasoning streams.
 if (!arrived?.atTheEnd) fails.push('the block did not open at the end of the reasoning')
 if (reading.top !== 0) fails.push(`the block was not put at the top of its reasoning (${reading.top})`)
@@ -288,6 +330,7 @@ if (released.atTheEnd !== true) fails.push('the block did not take the end back 
 if (!afterRelease || afterRelease.listTop < afterRelease.bottom - 4) fails.push(`the list did not take the end back (${afterRelease?.listTop} of ${afterRelease?.bottom})`)
 console.log('scroll check:', fails.length === 0 ? 'ok' : JSON.stringify(fails))
 if (fails.length > 0) process.exitCode = 1
+console.log('thinking text seen while it worked:', thoughtSoFar)
 
 console.log('errors:', JSON.stringify(errors))
 await app.close()

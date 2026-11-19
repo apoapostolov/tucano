@@ -24,9 +24,10 @@ type Section = {
 export function settingsStructure({ admin, owner, team, servers }: SettingsAccess) {
   return [
     { id: 'app-appearance', page: 'app', label: L('Aparência', 'Appearance'), keys: ['theme', 'language', 'clock'], scope: 'mixed', visible: true },
-    { id: 'app-conversation', page: 'app', label: L('Conversa', 'Conversation'), keys: ['stepsOpen', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest'], scope: 'personal', visible: true },
+    { id: 'app-conversation', page: 'app', label: L('Conversa', 'Conversation'), keys: ['stepsOpen', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'replyShortcut'], scope: 'personal', visible: true },
     { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'app', label: L('Notificações', 'Notifications'), keys: ['sounds', 'notice'], scope: 'personal', visible: true },
+    { id: 'app-quotas', page: 'app', label: L('Cotas', 'Quotas'), keys: ['quotaView', 'quotaHidden'], scope: 'personal', visible: admin },
     { id: 'app-dictation', page: 'app', label: L('Ditado', 'Dictation'), keys: ['voice'], scope: 'mixed', visible: admin },
     { id: 'app-startup', page: 'app', label: L('Inicialização', 'Startup'), keys: ['openAtLogin', 'launchMinimized'], scope: 'computer', visible: admin },
     { id: 'app-updates', page: 'app', label: L('Atualizações', 'Updates'), keys: [], scope: 'computer', visible: admin },
@@ -46,7 +47,9 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'models-agents', page: 'models', label: L('Modelos dos agentes', 'Agent models'), keys: [], scope: 'workspace', visible: admin },
     { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'mixed', visible: admin },
-    { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevRecommend', 'jevNextSteps'], scope: 'workspace', visible: admin },
+    { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevNextSteps'], scope: 'workspace', visible: admin },
+    { id: 'models-classifier-uses', page: 'models', label: L('Usos dos classificadores', 'Classifier Uses'), keys: [], scope: 'workspace', visible: admin },
+    { id: 'models-router', page: 'models', label: L('Roteador', 'Router'), keys: [], scope: 'workspace', visible: admin },
     { id: 'models-routing', page: 'models', label: L('Roteamento', 'Routing'), keys: ['routing'], scope: 'workspace', visible: admin },
     { id: 'knowledge-memory', page: 'knowledge', label: L('Memória', 'Memory'), keys: ['memoryModel', 'memoryLearning'], scope: 'workspace', visible: admin },
     { id: 'knowledge-wiki-capture', page: 'knowledge', label: L('Captura da wiki', 'Wiki capture'), keys: ['wikiCapture', 'wikiEdits', 'wikiReview'], scope: 'workspace', visible: admin },
@@ -75,6 +78,29 @@ export const settingsPages = (): readonly (readonly [SettingsPageId, string])[] 
 const legacy: Readonly<Record<string, string>> = {
   geral: 'app', modelos: 'models', agentes: 'agents', roteamento: 'models-routing',
   integracoes: 'connections-phone', pessoas: 'workspace-people', atividade: 'workspace-activity', servidores: 'connections-servers'
+}
+
+// The tab bar is older than this structure. `geral` carries the app's own sections and the
+// workspace's cards, and Pessoas, Atividade and Servidores kept tabs of their own, so one page's
+// sections can spread over several tabs. Each tab names the sections whose cards it shows, in the
+// order they read on screen. A section whose card hasn't been written yet stays out of these lists:
+// the strip never shows a link to nothing and the nav drops any section the pane doesn't render.
+const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
+  geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
+  modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
+  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits'],
+  integracoes: ['connections-phone'],
+  pessoas: ['workspace-people'],
+  atividade: ['workspace-activity'],
+  servidores: ['connections-servers']
+}
+
+// The sections of one tab, in its reading order, each one still owned — label, keys and access —
+// by the structure above.
+export function settingsTabStructure(tab: string, sections: readonly SettingsSection[]): readonly SettingsSection[] {
+  return (tabSections[tab] ?? [])
+    .map(id => sections.find(section => section.id === id))
+    .filter((section): section is SettingsSection => section !== undefined)
 }
 
 export function settingsDestination(requested: string | undefined, sections: readonly SettingsSection[]) {

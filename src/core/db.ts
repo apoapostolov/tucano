@@ -4,11 +4,14 @@ import { cleanAccess } from '../shared/access'
 import { MAX_MONTHLY_LIMIT, safeLimit } from '../shared/limits'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, renameSync, rmSync } from 'node:fs'
+import { cleanRetentionDays } from '../shared/retention'
+import { retentionSelection } from './retention-selection'
 import { ALL_PARTS, GENERAL_SETTINGS, WORKSPACE_PARTS, type WorkspaceParts } from '../shared/workspaces'
 import { dirname, join } from 'node:path'
 import {
   CACHE_READ_WEIGHT,
   nextRun,
+  isWikiAccess,
   routineCap,
   type Agent,
   type AgentApp,
@@ -40,6 +43,7 @@ import {
   type Routine,
   type RoutineRun,
   type Run,
+  type SendMode,
   type Settings,
   type Skill,
   type SkillVersion,
@@ -560,6 +564,9 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'action_rules', "TEXT NOT NULL DEFAULT '{}'"],
   ['agents', 'autonomy', 'TEXT'],
   ['agents', 'outside_guard', 'INTEGER'],
+  // Smart routing (Settings › Routing): Jev picks the model from the person's pools instead of the agent's own.
+  // 1 on for this agent · 0 off for this agent · NULL follow the global switch (Settings › Models › Router).
+  ['agents', 'smart_routing', 'INTEGER'],
   // A phone's push handle (src/core/push.ts), on its device key: {"handle", "tag"} as JSON.
   ['person_keys', 'push', 'TEXT'],
   // A routine on a date ("2026-11-17", once) or on a day of every month (1–31).
@@ -589,9 +596,24 @@ const COLUMNS: [string, string, string][] = [
   ['connector_tools', 'cls_floor', 'TEXT'],
   ['connector_tools', 'remote_high_risk', 'INTEGER NOT NULL DEFAULT 0'],
   // A request's title in a few words, made by a cheap model when work on it starts (src/core/titles.ts).
-  ['messages', 'title', 'TEXT']
+  ['messages', 'title', 'TEXT'],
+  // A channel's mention mode, per member: in the room, answering only when mentioned.
+  ['members', 'mention_only', 'INTEGER NOT NULL DEFAULT 0'],
+  // A channel's listen mode, per member: in the room, and Jev says when a message is for them.
+  ['members', 'listen', 'INTEGER NOT NULL DEFAULT 0'],
+  // How long an agent's history is kept (src/shared/retention.ts), in days: its replies and its own DMs.
+  // NULL: the Tucano's period. 0: everything, for good, whatever that period says.
+  ['agents', 'retention_days', 'INTEGER'],
+  // Clearing a conversation's history without deleting it: what came before stays a row, out of sight.
+  ['conversations', 'cleared_at', 'INTEGER'],
+  // The picture a connector wears: a small image as a data URL (src/renderer/src/connector-icon.ts).
+  // Empty: the store's mark, or the icon of its kind.
+  ['connectors', 'icon', 'TEXT'],
+  // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
+  ['messages', 'reply', 'TEXT'],
+  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
+  ['messages', 'send_mode', 'TEXT']
 ]
-
 
 type Row = Record<string, unknown>
 
@@ -603,10 +625,31 @@ function parseAccess(v: unknown): PersonAccess | undefined {
     return a?.mode === 'picked' ? { mode: 'picked', sectors: a.sectors ?? [], agents: a.agents ?? [], channels: a.channels ?? [] } : undefined
   } catch { return undefined }
 }
+// A row of `members`, the one place a channel's modes are read from.
+type MemberRow = { conversation_id?: string; agent_id: string; mention_only: number; listen: number }
 
-// countedTokens, in SQL: cache reads count CACHE_READ_WEIGHT.
-const COUNTED = `input_tokens - cache_read_tokens * ${1 - CACHE_READ_WEIGHT} + output_tokens`
+// The agents of these rows whose `column` is on.
+const idsWhere = (rows: MemberRow[], column: 'mention_only' | 'listen'): string[] => rows.filter((m) => m[column] === 1).map((m) => m.agent_id)
+// countedTokens, in SQL: cache reads count CACHE_READ_WEIGHT, and more of them than input came apart from it.
+const COUNTED = `(CASE WHEN cache_read_tokens > input_tokens THEN input_tokens + cache_read_tokens * ${CACHE_READ_WEIGHT} ELSE input_tokens - cache_read_tokens * ${1 - CACHE_READ_WEIGHT} END) + output_tokens`
+// A message still counts for a conversation that was never cleared, or for what came after the cut.
+const STILL_THERE = 'at > COALESCE((SELECT cleared_at FROM conversations WHERE conversations.id = messages.conversation_id), 0)'
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+
+// A message a period no longer keeps, or a wipe takes: the row and where it was said.
+export type Said = { id: string; conversationId: string }
+const said = (r: Row): Said => ({ id: str(r['id']), conversationId: str(r['conversation_id']) })
+
+// Still a run writing into it, or one waiting on the person: never taken away from under either.
+const AT_WORK = `(run IS NULL OR json_extract(run, '$.status') NOT IN ('working', 'waiting_approval', 'waiting_input'))`
+// node:sqlite takes a bounded number of parameters, so a bulk delete goes a chunk at a time.
+const CHUNK = 400
+const marks = (chunk: readonly unknown[]): string => chunk.map(() => '?').join(', ')
+const inChunks = (all: readonly string[]): string[][] => {
+  const out: string[][] = []
+  for (let i = 0; i < all.length; i += CHUNK) out.push(all.slice(i, i + CHUNK))
+  return out
+}
 
 export const monthStart = (now = new Date()): number => new Date(now.getFullYear(), now.getMonth(), 1).getTime()
 
@@ -619,7 +662,9 @@ export class Db {
   constructor(private file: string) {
     this.db = new DatabaseSync(file)
     this.keepStatements()
-    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
+    // A lock is waited for rather than failed on: the file has one writer, and a backup or a
+    // checkpoint overlapping a turn is a wait of milliseconds, not an error worth showing.
+    this.db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 3000;')
     try { this.migrate(file) }
     catch (error) { this.db.close(); throw error }
   }
@@ -720,7 +765,7 @@ export class Db {
   // comes archived (with no agents it would apply to everyone), a routine needs its agent and place.
   private keepOnly(parts: WorkspaceParts): void {
     if (WORKSPACE_PARTS.every((p) => parts[p])) return
-    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'folded'] : [])])
+    const kept = new Set(['seenVersion', 'theme', 'quotaView', 'quotaHidden', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'dmOrder', 'agentOrder', 'navOrder', 'navHidden', 'folded'] : [])])
     for (const { key } of this.db.prepare('SELECT key FROM settings').all() as { key: string }[]) if (!kept.has(key)) this.db.prepare('DELETE FROM settings WHERE key = ?').run(key)
     if (!parts.general) this.db.prepare('DELETE FROM secrets WHERE key = ?').run(JEV_KEY)
     if (!parts.connectors) {
@@ -880,12 +925,14 @@ export class Db {
       ...(r['custom_color'] ? { customColor: str(r['custom_color']) } : {}),
       ...(r['picture'] ? { picture: str(r['picture']) } : {}),
       ...(r['avatar'] ? { avatar: JSON.parse(str(r['avatar'])) as Agent['avatar'] } : {}),
-      ...(r['wiki'] === 'none' || r['wiki'] === 'read' ? { wiki: r['wiki'] } : {}),
+      ...(isWikiAccess(r['wiki']) ? { wiki: r['wiki'] } : {}),
       autoApprove: JSON.parse(str(r['auto_approve']) || '[]') as string[],
       ...(str(r['action_rules']) && str(r['action_rules']) !== '{}' ? { actionRules: cleanRules(JSON.parse(str(r['action_rules']))) } : {}),
       ...(isAutonomy(r['autonomy']) ? { autonomy: r['autonomy'] } : {}),
       ...(r['outside_guard'] === 0 || r['outside_guard'] === 1 ? { outsideGuard: r['outside_guard'] === 1 } : {}),
+      ...(r['smart_routing'] === 0 || r['smart_routing'] === 1 ? { smartRouting: r['smart_routing'] === 1 } : {}),
       folders: JSON.parse(str(r['folders']) || '[]') as LentFolder[],
+      ...(r['retention_days'] === 0 || r['retention_days'] ? { retentionDays: Number(r['retention_days']) } : {}),
       archived: r['archived'] === 1,
       ...(str(r['kind']) === 'tuca' ? { kind: 'tuca' as const } : {}),
       // One with no owner (put there by another tool, after the people came) is the Tucano owner's.
@@ -909,14 +956,14 @@ export class Db {
   saveAgent(a: Agent): void {
     this.db
       .prepare(
-        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, archived, kind, custom_color, picture, avatar, wiki, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO agents (id, name, handle, role, color, instructions, model, fallback_model, fallback_account, account, effort, limit_tokens, max_routines, grants, memory_mode, computer, computer_kind, web, browser, apps, auto_approve, action_rules, autonomy, outside_guard, smart_routing, retention_days, archived, kind, custom_color, picture, avatar, wiki, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (id) DO UPDATE SET name = excluded.name, handle = excluded.handle, role = excluded.role,
-           color = excluded.color, instructions = excluded.instructions, model = excluded.model, fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account, account = excluded.account, effort = excluded.effort,
+           color = excluded.color, instructions = excluded.instructions, model = excluded.model, fallback_model = excluded.fallback_model, fallback_account = excluded.fallback_account, account = excluded.account, effort = excluded.effort, smart_routing = excluded.smart_routing,
            limit_tokens = excluded.limit_tokens, max_routines = excluded.max_routines, grants = excluded.grants, memory_mode = excluded.memory_mode,
-           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web, browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve, action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard, archived = excluded.archived, kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color, picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
+           computer = excluded.computer, computer_kind = excluded.computer_kind, web = excluded.web, browser = excluded.browser, apps = excluded.apps, auto_approve = excluded.auto_approve, action_rules = excluded.action_rules, autonomy = excluded.autonomy, outside_guard = excluded.outside_guard, retention_days = excluded.retention_days, archived = excluded.archived, kind = COALESCE(excluded.kind, agents.kind), custom_color = excluded.custom_color, picture = excluded.picture, avatar = excluded.avatar, wiki = excluded.wiki`
       )
-      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, a.wiki ?? null, Date.now())
+      .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, a.smartRouting === true ? 1 : a.smartRouting === false ? 0 : null, cleanRetentionDays(a.retentionDays) ?? null, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, isWikiAccess(a.wiki) ? a.wiki : null, Date.now())
     // An agent made without one belongs to the Tucano's owner; a save that doesn't say keeps it.
     this.db.prepare('UPDATE agents SET owner = COALESCE(?, owner, (SELECT id FROM people WHERE role = ?)) WHERE id = ?').run(a.owner ?? null, 'owner', a.id)
     this.db.prepare('UPDATE agents SET reports_to = ?, sector_name = ?, sector_does = ?, entry = ? WHERE id = ?').run(a.reportsTo || null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.id)
@@ -946,26 +993,54 @@ export class Db {
          ORDER BY c.created_at`
       )
       .all(personId) as Row[]
-    const members = this.db.prepare('SELECT conversation_id, agent_id FROM members').all() as { conversation_id: string; agent_id: string }[]
-    return rows.map((r) => this.toConversation(r, members.filter((m) => m.conversation_id === r['id']).map((m) => m.agent_id)))
+    const members = this.db.prepare('SELECT conversation_id, agent_id, mention_only, listen FROM members').all() as MemberRow[]
+    return rows.map((r) => {
+      const mine = members.filter((m) => m.conversation_id === r['id'])
+      return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
+    })
   }
 
-  private toConversation(r: Row, members: string[]): Conversation {
+  // `mentionOnly`: the agents of a channel that answer only when mentioned; `listen`: the ones Jev
+  // brings in when the message is theirs (each left out when empty).
+  private toConversation(r: Row, members: string[], mentionOnly: string[] = [], listen: string[] = []): Conversation {
     return {
       id: str(r['id']),
       kind: str(r['kind']) as Conversation['kind'],
       name: str(r['name']),
       topic: r['topic'] ? str(r['topic']) : undefined,
       members,
+      ...(mentionOnly.length ? { mentionOnly } : {}),
+      ...(listen.length ? { listen } : {}),
       summary: r['summary'] ? str(r['summary']) : undefined,
       summaryUntil: r['summary_until'] ? Number(r['summary_until']) : undefined,
       summaryAt: r['summary_at'] ? Number(r['summary_at']) : undefined,
       ...(r['wiki_capture'] === 0 ? { wikiCapture: false } : {}),
       ...(r['threads'] === 1 ? { threads: true } : {}),
+      ...(r['cleared_at'] ? { clearedAt: Number(r['cleared_at']) } : {}),
       ...(r['owner'] ? { owner: str(r['owner']) } : {}),
       ...(r['created_by'] ? { createdBy: str(r['created_by']) } : {}),
       unread: Number(r['unread'])
     }
+  }
+
+  // Clearing a conversation's history without deleting it. The rows stay (receipts, approvals and the
+  // costs they carry point at message ids), the summary goes with them because it was written about
+  // them, and `summary_until` is moved so the next turns stop looking behind the cut. What nobody can
+  // reach any more goes with it: the threads' summaries, and an unread badge that would sit over an
+  // empty screen until the conversation was opened again.
+  clearConversation(id: string, at = Date.now()): void {
+    this.tx(() => {
+      this.db.prepare('UPDATE conversations SET cleared_at = ?, summary = NULL, summary_until = ?, summary_at = ? WHERE id = ?').run(at, at, at, id)
+      this.db.prepare('DELETE FROM unread WHERE message_id IN (SELECT id FROM messages WHERE conversation_id = ?)').run(id)
+      // A thread's summary was written about messages that are now behind the cut, and the reply that
+      // would read it can't be reached any more.
+      this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ?').run(id)
+    })
+  }
+
+  // The questions still waiting in one conversation: their message is about to be off the screen.
+  openQuestionsIn(conversationId: string): Question[] {
+    return (this.db.prepare("SELECT * FROM questions WHERE state = 'open' AND conversation_id = ? ORDER BY created_at").all(conversationId) as Row[]).map((r) => this.toQuestion(r))
   }
 
   // `until` is the `at` of the last message the summary covers; leave it out to keep it (a hand edit).
@@ -983,8 +1058,8 @@ export class Db {
       )
       .get(personId, id) as Row | undefined
     if (!r) return undefined
-    const members = (this.db.prepare('SELECT agent_id FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as { agent_id: string }[]).map((m) => m.agent_id)
-    return this.toConversation(r, members)
+    const mine = this.db.prepare('SELECT agent_id, mention_only, listen FROM members WHERE conversation_id = ? ORDER BY rowid').all(id) as MemberRow[]
+    return this.toConversation(r, mine.map((m) => m.agent_id), idsWhere(mine, 'mention_only'), idsWhere(mine, 'listen'))
   }
 
   // Only whose a conversation is, for checks on every event (no counts, no members).
@@ -1028,11 +1103,21 @@ export class Db {
     this.db.prepare('UPDATE conversations SET topic = ? WHERE id = ?').run(topic ?? null, id)
   }
 
-  // Exactly these agents in the conversation.
-  setMembers(id: string, agentIds: string[]): void {
+  // Exactly these agents in the conversation. `mentionOnly`: which of them answer only when
+  // mentioned (a channel's mention mode); `listen`: which of them Jev brings in when a message is
+  // about what they do (a channel's listen mode). Left out, each agent keeps the mode it had. An
+  // agent is in one mode or the other, never both: the one named in `listen` leaves mention mode.
+  setMembers(id: string, agentIds: string[], mentionOnly?: string[], listen?: string[]): void {
+    const agents = [...new Set(agentIds)]
+    const before = this.conversation(id)
+    const quiet = new Set(mentionOnly === undefined ? before?.mentionOnly ?? [] : mentionOnly)
+    const hears = new Set(listen === undefined ? before?.listen ?? [] : listen)
+    for (const a of hears) quiet.delete(a)
+    for (const a of quiet) hears.delete(a)
     this.tx(() => {
       this.db.prepare('DELETE FROM members WHERE conversation_id = ?').run(id)
-      for (const a of new Set(agentIds)) this.db.prepare('INSERT INTO members (conversation_id, agent_id) VALUES (?, ?)').run(id, a)
+      for (const a of agents)
+        this.db.prepare('INSERT INTO members (conversation_id, agent_id, mention_only, listen) VALUES (?, ?, ?, ?)').run(id, a, quiet.has(a) ? 1 : 0, hears.has(a) ? 1 : 0)
     })
   }
 
@@ -1126,8 +1211,10 @@ export class Db {
       run: r['run'] ? (JSON.parse(str(r['run'])) as Run) : undefined,
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
+      ...(r['send_mode'] ? { sendMode: str(r['send_mode']) as SendMode } : {}),
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
-      ...(r['title'] ? { title: str(r['title']) } : {})
+      ...(r['title'] ? { title: str(r['title']) } : {}),
+      reply: r['reply'] ? (JSON.parse(str(r['reply'])) as Message['reply']) : undefined
     }
   }
 
@@ -1150,10 +1237,12 @@ export class Db {
 
   // `threadId`: only that thread's replies; null: only what's outside threads; left out: everything.
   // `before`: only those from before that moment.
+  // Nothing from before the conversation was cleared: the rows stay (receipts and approvals point at
+  // them) but no read path sees them again, the model's included.
   recentMessages(conversationId: string, limit: number, threadId?: string | null, before?: number): Message[] {
     const where = (threadId === undefined ? '' : threadId === null ? ' AND thread_id IS NULL' : ' AND thread_id = ?') + (before === undefined ? '' : ' AND at < ?')
     const args = [conversationId, ...(typeof threadId === 'string' ? [threadId] : []), ...(before === undefined ? [] : [before]), limit]
-    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ?${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
+    const rows = this.db.prepare(`SELECT * FROM messages WHERE conversation_id = ? AND ${STILL_THERE}${where} ORDER BY at DESC LIMIT ?`).all(...args) as Row[]
     return rows.reverse().map((r) => this.toMessage(r))
   }
 
@@ -1219,7 +1308,10 @@ export class Db {
     const cut = this.db
       .prepare(`WITH ${ranked} SELECT conversation_id, at FROM ranked WHERE thread_id IS NULL AND n = ? AND conversation_id IN (SELECT conversation_id FROM ranked WHERE thread_id IS NULL AND n = ?)`)
       .all(n, n + 1) as Row[]
-    return { messages: rows.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
+    // A cleared conversation opens after its cut, the same place every other read starts.
+    const cleared = new Map((this.db.prepare('SELECT id, cleared_at FROM conversations WHERE cleared_at IS NOT NULL').all() as Row[]).map((r) => [str(r['id']), Number(r['cleared_at'])]))
+    const seen = rows.filter((r) => Number(r['at']) > (cleared.get(str(r['conversation_id'])) ?? 0))
+    return { messages: seen.map((r) => this.toMessage(r)), since: Object.fromEntries(cut.map((r) => [str(r['conversation_id']), Number(r['at'])])) }
   }
 
   // Further back, a page at a time: the `n` messages outside threads before `before` (all of them back
@@ -1227,11 +1319,11 @@ export class Db {
   messagesBefore(conversationId: string, before: number, n: number, from?: number): { messages: Message[]; since: number } {
     const page = (
       from === undefined
-        ? this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? ORDER BY at DESC LIMIT ?').all(conversationId, before, n)
-        : this.db.prepare('SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? AND at >= ? ORDER BY at DESC').all(conversationId, before, from)
+        ? this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND at < ? ORDER BY at DESC LIMIT ?`).all(conversationId, before, n)
+        : this.db.prepare(`SELECT id, at FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND at < ? AND at >= ? ORDER BY at DESC`).all(conversationId, before, from)
     ) as Row[]
     const oldest = page.length ? Number(page.at(-1)!['at']) : Math.min(before, from ?? before)
-    const more = !!this.db.prepare('SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND at < ? LIMIT 1').get(conversationId, oldest)
+    const more = !!this.db.prepare(`SELECT 1 FROM messages WHERE conversation_id = ? AND thread_id IS NULL AND ${STILL_THERE} AND at < ? LIMIT 1`).get(conversationId, oldest)
     const since = more ? oldest : 0
     if (!page.length) return { messages: [], since }
     const ids = JSON.stringify(page.map((r) => str(r['id'])))
@@ -1239,6 +1331,101 @@ export class Db {
       .prepare('SELECT * FROM messages WHERE conversation_id = ? AND (id IN (SELECT value FROM json_each(?)) OR thread_id IN (SELECT value FROM json_each(?))) ORDER BY at')
       .all(conversationId, ids, ids) as Row[]
     return { messages: rows.map((r) => this.toMessage(r)), since }
+  }
+
+  // ---------- history: what a period no longer keeps, and what a wipe takes away ----------
+
+  historyRevision(conversationId: string): number {
+    return Number(this.meta(`history:revision:${conversationId}`) ?? 0)
+  }
+
+  // Everything said before `cutoff`, with its conversation: what the Tucano's period takes away. A reply
+  // still at work or waiting on an approval stays — its run would write into a row that's gone — and so
+  // does every word of a bot that has a period of its own (`own`), which decides for its DMs too.
+  oldMessages(cutoff: number, own: string[]): Said[] {
+    const others = own.map(() => '?').join(', ')
+    const skip = own.length ? ` AND NOT (author_kind = 'agent' AND author_id IN (${others})) AND conversation_id NOT IN (SELECT id FROM conversations WHERE kind = 'dm' AND name IN (${others}))` : ''
+    const rows = this.db
+      .prepare(`SELECT id, conversation_id FROM messages WHERE at < ? AND ${AT_WORK}${skip}`)
+      .all(cutoff, ...own, ...own) as Row[]
+    return rows.map(said)
+  }
+
+  // One bot's history before `cutoff`: what it wrote, wherever it was, and every word of its own DMs —
+  // the words there are its conversation, the person's prompts included. Its period, not the Tucano's.
+  botMessagesBefore(botId: string, cutoff: number): Said[] {
+    const rows = this.db
+      .prepare(
+        `SELECT id, conversation_id FROM messages WHERE at < ? AND ${AT_WORK}
+           AND ((author_kind = 'agent' AND author_id = ?) OR conversation_id IN (SELECT id FROM conversations WHERE kind = 'dm' AND name = ?))`
+      )
+      .all(cutoff, botId, botId) as Row[]
+    return rows.map(said)
+  }
+
+  // Every word of a bot's history — what it wrote anywhere, and all of its own DMs — or of the whole
+  // workspace's when there's no bot: what the two wipe buttons take, whatever the period says.
+  historyOf(botId?: string): Said[] {
+    const rows = (
+      botId
+        ? this.db
+            .prepare(
+              `SELECT id, conversation_id FROM messages
+                WHERE (author_kind = 'agent' AND author_id = ?) OR conversation_id IN (SELECT id FROM conversations WHERE kind = 'dm' AND name = ?)`
+            )
+            .all(botId, botId)
+        : this.db.prepare('SELECT id, conversation_id FROM messages').all()
+    ) as Row[]
+    return rows.map(said)
+  }
+
+  // They go, with the replies in the threads they started and the approvals that pointed at them; unread
+  // notifications follow by foreign key. What a reply spent stays in the receipts, which is what Usage
+  // and the monthly limit count, and the artifacts stay too (their files are on disk). A question waiting
+  // in a thread whose first message went is closed: there's nothing left to show it under.
+  forget(ids: string[], cascade = true): { conversations: string[]; gone: number; ids: string[] } {
+    if (!ids.length) return { conversations: [], gone: 0, ids: [] }
+    return this.tx(() => {
+      // id → the conversation it was said in, grown until no reply is left hanging under a thread.
+      const gone = new Map<string, string>()
+      const parents = new Map<string, string | undefined>()
+      for (const chunk of inChunks(ids)) {
+        for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
+          gone.set(str(r['id']), str(r['conversation_id']))
+          parents.set(str(r['id']), r['thread_id'] ? str(r['thread_id']) : undefined)
+        }
+      }
+      for (let roots = [...gone.keys()]; roots.length; ) {
+        const replies = new Map<string, string>()
+        for (const chunk of inChunks(roots)) {
+          for (const r of this.db.prepare(`SELECT id, conversation_id, thread_id FROM messages WHERE thread_id IN (${marks(chunk)})`).all(...chunk) as Row[]) {
+            const id = str(r['id'])
+            parents.set(id, str(r['thread_id']))
+            if (!gone.has(id)) replies.set(id, str(r['conversation_id']))
+          }
+        }
+        for (const [id, conversationId] of replies) gone.set(id, conversationId)
+        roots = [...replies.keys()]
+      }
+      if (!cascade) {
+        const eligible = retentionSelection(new Set(ids), parents)
+        for (const id of gone.keys()) if (!eligible.has(id)) gone.delete(id)
+      }
+      for (const chunk of inChunks([...gone.keys()])) {
+        this.db.prepare(`DELETE FROM approvals WHERE message_id IN (${marks(chunk)})`).run(...chunk)
+        this.db.prepare(`DELETE FROM messages WHERE id IN (${marks(chunk)})`).run(...chunk)
+      }
+      const conversations = [...new Set(gone.values())]
+      for (const id of conversations) {
+        // Summaries can contain removed words too. Invalidate pending model output before it
+        // can save those words again; future summaries use only the surviving history.
+        this.setMeta(`history:revision:${id}`, String(this.historyRevision(id) + 1))
+        this.db.prepare('UPDATE conversations SET summary = NULL, summary_until = NULL, summary_at = NULL WHERE id = ?').run(id)
+        this.db.prepare('UPDATE messages SET thread_summary = NULL WHERE conversation_id = ? AND thread_summary IS NOT NULL').run(id)
+      }
+      this.db.prepare(`UPDATE questions SET state = 'closed' WHERE state = 'open' AND thread_id IS NOT NULL AND thread_id NOT IN (SELECT id FROM messages)`).run()
+      return { conversations, gone: gone.size, ids: [...gone.keys()] }
+    })
   }
 
   // The connector tools an agent called in its replies since `since`, most used first, as each step
@@ -1272,8 +1459,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, reply, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, reply = excluded.reply, send_mode = excluded.send_mode`
       )
       .run(
         m.id,
@@ -1284,8 +1471,17 @@ export class Db {
         m.at,
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
-        m.threadId ?? null
+        m.threadId ?? null,
+        m.reply ? JSON.stringify(m.reply) : null,
+        m.sendMode ?? null
       )
+  }
+
+  // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
+  // Only 'queue': a message handed into a running reply keeps its 'steer' mark after that reply answered
+  // it, and an app that opened again must not answer it a second time.
+  queuedMessages(): Message[] {
+    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
   }
 
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of
@@ -1312,7 +1508,7 @@ export class Db {
       n++
       this.saveMessage({
         ...m,
-        run: { ...m.run, status: 'interrupted', steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
+        run: { ...m.run, status: 'interrupted', restartPending: true, steps: m.run.steps.map((s) => (s.status === 'running' ? { ...s, status: 'error' } : s)) }
       })
     }
     return n
@@ -1381,8 +1577,14 @@ export class Db {
       args: JSON.parse(str(r['args']) || '[]') as string[],
       envKeys: JSON.parse(str(r['env_keys']) || '[]') as string[],
       auth: str(r['auth']) as ConnectorAuth,
+      icon: r['icon'] ? str(r['icon']) : undefined,
       tools: this.tools(id).map(({ inputSchema: _, ...t }) => t)
     }
+  }
+
+  // The picture a connector wears; null goes back to the store's mark (or the icon of its kind).
+  setConnectorIcon(id: string, icon: string | null): void {
+    this.db.prepare('UPDATE connectors SET icon = ? WHERE id = ?').run(icon, id)
   }
 
   saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth }): void {
@@ -1616,6 +1818,11 @@ export class Db {
 
   artifacts(): Artifact[] {
     return (this.db.prepare('SELECT * FROM artifacts ORDER BY created_at').all() as Row[]).map((r) => this.toArtifact(r))
+  }
+
+  // What one reply showed: the card over the desktop shows its pictures.
+  artifactsOf(messageId: string): Artifact[] {
+    return (this.db.prepare('SELECT * FROM artifacts WHERE message_id = ? ORDER BY created_at').all(messageId) as Row[]).map((r) => this.toArtifact(r))
   }
 
   artifact(id: string): Artifact | undefined {
@@ -2091,6 +2298,56 @@ export class Db {
     this.db.exec('PRAGMA wal_checkpoint(TRUNCATE); VACUUM; PRAGMA wal_checkpoint(TRUNCATE);')
   }
 
+  // ---------- the file itself ----------
+
+  // What the file takes on disk, and how much of that is pages nothing will reuse: the number a
+  // person sees beside the size, and the one that explains why deleting never made the file smaller.
+  size(): { bytes: number; free: number } {
+    const page = Number((this.db.prepare('PRAGMA page_size').get() as Row)['page_size'])
+    const pages = Number((this.db.prepare('PRAGMA page_count').get() as Row)['page_count'])
+    const free = Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
+    return { bytes: pages * page, free: free * page }
+  }
+
+  // Whether every page and index reads back consistent: 20 ms at 23 MB, so it can be asked at every
+  // start. Not `integrity_check`, which says the same about a bare file but takes the same road.
+  check(): { sound: boolean; said: string } {
+    const said = String(Object.values((this.db.prepare('PRAGMA quick_check').get() as Row | undefined) ?? {})[0] ?? '')
+    return { sound: said === 'ok', said }
+  }
+
+  // The query planner's statistics, refreshed: milliseconds, and the only thing that keeps the
+  // planner honest while the tables change size all day.
+  statistics(): void {
+    this.db.exec('PRAGMA optimize')
+  }
+
+  // Hands freed pages back to the disk in slices, so a daily tick never carries a whole rewrite:
+  // only when the file was switched to incremental auto-vacuum (see `rebuild`), and never more than
+  // `pages` of them at a time. Returns the pages that actually went.
+  trim(pages = 1000): number {
+    const mode = Number((this.db.prepare('PRAGMA auto_vacuum').get() as Row)['auto_vacuum'])
+    if (mode !== 2) return 0
+    const before = Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
+    if (!before) return 0
+    this.db.exec(`PRAGMA incremental_vacuum(${Math.max(1, Math.floor(pages))})`)
+    return before - Number((this.db.prepare('PRAGMA freelist_count').get() as Row)['freelist_count'])
+  }
+
+  // Empties the write-ahead log and rebuilds the file: rows that are gone stop taking space, and
+  // every index is rebuilt tightly. `incremental` (not `full`) auto-vacuum keeps a page map that
+  // costs nothing to write and lets `trim` hand pages back later; switching it on takes effect with
+  // this VACUUM, which is the only place it can. Holds the connection for the whole rewrite: 3.5 s
+  // at 23 MB, so whoever calls this decides when, never a read.
+  rebuild(): void {
+    this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
+    const mode = Number((this.db.prepare('PRAGMA auto_vacuum').get() as Row)['auto_vacuum'])
+    if (mode === 0) this.db.exec('PRAGMA auto_vacuum = INCREMENTAL')
+    this.db.exec('VACUUM')
+    this.db.exec('PRAGMA optimize')
+    this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
+  }
+
   // ---------- questions ----------
 
   private toQuestion(r: Row): Question {
@@ -2130,6 +2387,13 @@ export class Db {
   // Answered since `since`, newest first.
   answeredQuestions(since: number): Question[] {
     return (this.db.prepare("SELECT * FROM questions WHERE state = 'answered' AND answered_at >= ? ORDER BY answered_at DESC").all(since) as Row[]).map((r) => this.toQuestion(r))
+  }
+
+  // Answered and closed questions, newest first: the Asks page's History, which is what the open
+  // list drops off. A closed one has no `answered_at` (nobody answered it), so it sorts by when it
+  // was asked.
+  pastQuestions(limit = 50): Question[] {
+    return (this.db.prepare("SELECT * FROM questions WHERE state != 'open' ORDER BY COALESCE(answered_at, created_at) DESC LIMIT ?").all(limit) as Row[]).map((r) => this.toQuestion(r))
   }
 
   openQuestions(): Question[] {

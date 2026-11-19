@@ -14,7 +14,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 
 // What a person may change of the settings without being an admin: how the app looks to them.
 // Each person's own (kept on them, see People.settingsFor); the owner's are the settings themselves.
-export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'stepsOpen', 'channelLayout', 'folded', 'sidebarHidden', 'language', 'seenVersion', 'onboarding', 'clock', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'notice', 'voice', 'openAtLogin', 'launchMinimized']
+export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'stepsOpen', 'replyShortcut', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'channelLayout', 'folded', 'sidebarHidden', 'language', 'seenVersion', 'onboarding', 'clock', 'hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'notice', 'voice', 'openAtLogin', 'launchMinimized', 'quotaView', 'quotaHidden', 'lastImageFolder']
 export const isPersonalSetting = (k: string): boolean => (PERSONAL_SETTINGS as readonly string[]).includes(k)
 
 export type Action =
@@ -90,13 +90,18 @@ export const NEEDS: Record<Method, Need> = {
   olderMessages: 'anyone',
   threadMessages: 'anyone',
   stopRun: 'anyone',
+  pauseRun: 'anyone',
+  resumeRun: 'anyone',
   retryRun: 'anyone',
+  followUpRun: 'anyone',
   continueRun: 'anyone',
   createChannel: 'anyone',
   renameChannel: 'anyone',
   setTopic: 'anyone',
   setChannelMembers: 'anyone',
+  clearConversation: 'target', // one's DM; a channel, admins
   deleteConversation: 'target', // one's DM; a channel, admins
+  wipeHistory: 'admin', // it reaches conversations the admin isn't in, and nothing comes back
   openDm: 'anyone',
   // one's own to-dos on the board: each handler checks it's theirs
   tasks: 'anyone',
@@ -170,6 +175,8 @@ export const NEEDS: Record<Method, Need> = {
   wikiRedoChange: 'admin',
   wikiRunReview: 'admin',
   wikiDismissFinding: 'admin',
+  wikiAsk: 'anyone', // the agent that writes is the one with wiki write access; this only asks it
+  wikiResolveFinding: 'admin', // the resolver works on the whole wiki, as the review does
   wikiImport: 'admin',
   wikiImportZip: 'admin',
   setWikiDir: 'admin',
@@ -183,8 +190,11 @@ export const NEEDS: Record<Method, Need> = {
   setMyName: 'anyone',
   setDelegation: 'anyone',
   inbox: 'anyone',
+  noticeFeed: 'anyone',
   answerQuestion: 'target',
+  questionsHistory: 'anyone', // only what this person can see anyway
   confirmQuestion: 'target',
+  dismissQuestion: 'target', // who may answer it may also leave it unanswered
   answerDecision: 'target', // who may answer the question (Runner.decidable)
   submitDecisions: 'target',
   // agents, skills and the team
@@ -198,6 +208,7 @@ export const NEEDS: Record<Method, Need> = {
   folderAction: 'admin',
   saveSkill: 'admin',
   localSkills: 'admin',
+  skillFolders: 'admin',
   linkSkill: 'admin',
   decideSkill: 'admin',
   restoreSkill: 'admin',
@@ -220,6 +231,7 @@ export const NEEDS: Record<Method, Need> = {
   removeConnector: 'admin',
   reconnectConnector: 'admin',
   setConnectorToken: 'admin',
+  setConnectorIcon: 'admin',
   connectorCatalog: 'admin',
   addCatalogConnector: 'admin',
   ownAppGuide: 'admin',
@@ -253,6 +265,7 @@ export const NEEDS: Record<Method, Need> = {
   addNodeFolder: 'owner',
   removeNodeFolder: 'owner',
   nodeLog: 'owner',
+  setClassifierKey: 'admin',
   voiceDownload: 'admin',
   voiceCancelDownload: 'admin',
   voiceRemoveModel: 'admin',
@@ -263,9 +276,15 @@ export const NEEDS: Record<Method, Need> = {
   installDesktop: 'admin',
   desktopPermissions: 'admin',
   backupNow: 'admin',
+  // The file's size, its free pages and whether it reads back sound. Nothing changes.
+  dbHealth: 'admin',
+  // Rebuilds the file: it holds the core's only thread for seconds, so it is an admin's press.
+  optimizeDb: 'admin',
   openBackups: 'admin',
   report: 'admin',
   usage: 'admin',
+  quotas: 'admin',
+  quotasRefresh: 'admin', // the person's own provider logins: an admin's business, like the spending
   // people
   createInvite: 'admin',
   revokeInvite: 'admin',
