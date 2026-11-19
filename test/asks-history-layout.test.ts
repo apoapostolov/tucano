@@ -134,7 +134,7 @@ it.skipIf(skip)('draws an untouched option as very dark grey on the dark theme, 
     const plain = rgb(seen.plain)
     const card = rgb(seen.card)
     // A shade above the card, not a hole in it: every channel lighter than the card's own.
-    expect(plain.every((v, i) => v > card[i])).toBe(true)
+    expect(plain.every((v, i) => v > (card[i] ?? 0))).toBe(true)
     // Very dark grey: no channel at black, and none of them light.
     expect(Math.min(...plain)).toBeGreaterThan(20)
     expect(Math.max(...plain)).toBeLessThan(70)
