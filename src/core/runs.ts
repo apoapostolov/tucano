@@ -52,7 +52,7 @@ import { commandStep, execSummary, keyArg, maskSecrets, resultSummary } from './
 import { askMessage, askTask, byCode, wantsDm, inPlace, placeOf, CANCELAR_PEDIDO, channelNamed, codeOf, DELEGATION_TOOL_NAMES, DELEGATION_TOOLS, MAX_DELEGATIONS_PER_REPLY, MAX_OPEN_DELEGATIONS, parseAsk, PEDIR, RESPONDER_PEDIDO, returnTask, teamMember, teamSection, type Returned } from './delegations'
 import { askKind, channelsOf, entriesOf, headsOf, MAX_CHAIN, reachOf, sectorName, sectorOf } from '../shared/org'
 import type { Delegation, DelegationRef } from '../shared/types'
-import { canContinue, canResume, WORKLESS_LABELS } from '../shared/run-progress'
+import { canContinue, canResume, finishedSilently, WORKLESS_LABELS } from '../shared/run-progress'
 import { CONCLUIR_OBJETIVO, GOAL_MAX_TURNS, goalEnd, goalTask, goalText, sameReply, type Goal } from './goals'
 
 const refOf = (d: Delegation): DelegationRef => ({ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) })
@@ -1157,15 +1157,19 @@ export class Runner {
     const msg = db.message(messageId)
     if (!msg?.run || msg.author.kind !== 'agent') return
     // Going on by itself asks for something to go on with; a person's Continue takes any reply the
-    // app cut, even one cut while it was still thinking and has no tool call behind it.
-    if (!(automatic ? canContinue(msg.run) : canResume(msg.run))) return
+    // app cut, even one cut while it was still thinking and has no tool call behind it, and a session
+    // left showing no answer at all (`done` with no words: the app cut it and the continuation that was
+    // started from the row never wrote one — the pill the person is owed, run-progress.ts).
+    if (!(automatic ? canContinue(msg.run) : canResume(msg.run, msg.text))) return
     if (this.paused) return // startup recovery waits in the scheduler until unpaused
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)
     if (!agent || !conv) return
     const me = (await this.deps.settings()).workspaceName
-    // Read before the status changes: how it was cut is what the next reply is told.
+    // Read before the status changes: how it was cut is what the next reply is told. A row marked done
+    // with nothing said is a cut reply whose continuation never wrote: it is told where it stopped.
     const cut = msg.run.status
+    const silent = finishedSilently(msg.run, msg.text)
     // Said when the new reply is really on its way, never before: a continuation that doesn't start
     // (the app closed again, no engine up, the agent let go) would otherwise mark the cut reply done for
     // good, with neither a reply nor a Continue to show for it. Until then it keeps its cutAt and its
@@ -1200,10 +1204,15 @@ export class Runner {
             `Você pausou a sua última resposta ao chegar no teto de gasto dela, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
             `You paused your last reply when it reached its spending cap, and ${me} asked you to go on. What you wrote is in your last message above.`
           )
-        : L(
-            `A sua última resposta foi cortada ${cutOf(cut)}, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
-            `Your last reply was cut ${cutOf(cut)}, and ${me} asked you to go on. What you wrote is in your last message above.`
-          ),
+        : silent
+          ? L(
+              `A sua última resposta não chegou a dizer nada: ela foi cortada quando o app fechou, e ${me} pediu pra continuar. Se você já escreveu algo antes disso, está na sua última mensagem acima.`,
+              `Your last reply never got to say anything: it was cut when the app closed, and ${me} asked you to go on. Anything you wrote before that is in your last message above.`
+            )
+          : L(
+              `A sua última resposta foi cortada ${cutOf(cut)}, e ${me} pediu pra continuar. O que você escreveu está na sua última mensagem acima.`,
+              `Your last reply was cut ${cutOf(cut)}, and ${me} asked you to go on. What you wrote is in your last message above.`
+            ),
       steps.length ? `${L('Os passos que você fez', 'The steps you took')}:\n${steps.join('\n')}` : '',
       L('Continue de onde parou, sem refazer o que já está feito, e termine com o resultado.', "Pick up where you left off, without redoing what's already done, and finish with the result.")
     ]
@@ -3552,7 +3561,9 @@ ${note}`,
       if (question && !up) this.asked(agent, msg, question, askedTo, requester, confirming, settings)
       // Streamed text keeps every model call of the turn; the final result may hold only the last one.
       const text = msg.text.trim() ? msg.text.trim() : result.text.trim() ? result.text : (narration ?? '') // said it all before its last tool
-      const run: Run = { ...base, status: questions ? 'waiting_input' : waiting ? 'waiting_approval' : 'done', steps: closeThinking('done', L('Respondeu', 'Replied')) }
+      // `again` too (the task it answered, the work it was handed): a reply that ended well used to forget what
+      // it was asked, so a Try again or a Follow up on it had no request to build the next turn from.
+      const run: Run = { ...base, ...again, status: questions ? 'waiting_input' : waiting ? 'waiting_approval' : 'done', steps: closeThinking('done', L('Respondeu', 'Replied')) }
       // A routine's run that answered only the no-news phrase is marked, so the conversation folds it.
       save({ text: kept(text), run: routineAskId && noNewsRun(text, run) ? { ...run, noNews: true } : run })
       // What the Tuca proposed inside the app goes in now, for the person he worked for (applyNow checks

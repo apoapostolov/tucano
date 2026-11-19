@@ -15,7 +15,7 @@ import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
 import { saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
-import { CUT, canContinue, canResume } from '../../../shared/run-progress'
+import { canResume } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -810,8 +810,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
   // Any reply the app cut goes on where it stopped when the person says so, even one cut while it was
   // still thinking: what it read, wrote and ran is in the task the new reply reads (#390), and a reply
-  // with nothing behind it is no worse for being asked to try (runs.ts, canResume).
-  const resumable = !!message.run && CUT.includes(message.run.status) && canResume(message.run)
+  // with nothing behind it is no worse for being asked to try (runs.ts, canResume). A session left with
+  // no answer — the app cut it and the continuation started from it never wrote — takes it too: an
+  // install every ten minutes used to bury those under a chain with no words and no way on.
+  const resumable = !!message.run && canResume(message.run, message.text)
   const hasFooter = !!(message.run?.receipt || (message.run?.status === 'done' && (message.author.kind === 'agent' || (message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation))))
   const openMenu = (e: React.MouseEvent<HTMLElement>): void => {
     if (!canReply || (e.target as HTMLElement).closest('a, button, input, textarea, select, [role="menu"]')) return
@@ -1013,7 +1015,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
             It comes before Try again and before anything on the footer line below, Follow Up included:
             it is the first thing a cut reply owes the person. A reply cut while it was still thinking
             has nothing behind it, and still takes it — that is the person's call, not the app's. */}
-        {resumable && (
+        {resumable && !hasFooter && (
           <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
             {L('Continuar', 'Continue')}
           </button>
@@ -1035,6 +1037,15 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
           <div className="msg__meta">
             {hasFooter && (
               <>
+                {/* A session that shows no answer keeps its Continue here, first in its own footer line:
+                    before Follow up, and before the numbers. A reply with a footer of its own (a receipt,
+                    a done run) used to lose the pill to that line entirely, which is how a chain with no
+                    answer ended up with no way on. */}
+                {resumable && (
+                  <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
+                    {L('Continuar', 'Continue')}
+                  </button>
+                )}
                 {/* The way on from this reply, first in its own footer line, before the numbers: it is
                     about the reply above it, not about the conversation below. */}
                 <FollowUpPill message={message} />

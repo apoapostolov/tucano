@@ -108,6 +108,25 @@ describe('a reply the app cut', () => {
     expect(all.indexOf('Continue')).toBeGreaterThanOrEqual(0)
   })
 
+  // A session left with no answer: the app cut it, a continuation was started from the row (so the row
+  // is `done`, its `cutAt` still there) and the words never came. It showed a chain, a Follow up and no
+  // way on at all: an install every ten minutes filled a whole channel with those.
+  it('offers Continue on a session that ended without a word, before Follow up', async () => {
+    const silent: Message = {
+      id: 'm3', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: '', at: 4,
+      run: { status: 'done', task: 'conserta o teste', cutAt: 3, steps: [step('Thought', 'done'), step('Ran npx vitest run', 'done')] }
+    }
+    fake = { ...fake, messages: { d1: [silent] } }
+    await render(<ConversationView id="d1" />)
+    const meta = document.querySelector('.msg__meta')
+    const inMeta = meta ? [...meta.querySelectorAll('button')].map((b) => b.textContent?.trim() ?? '') : []
+    expect(inMeta).toContain('Continue')
+    expect(inMeta.indexOf('Continue')).toBeLessThan(inMeta.findIndex((t) => t === 'Follow Up' || t === 'Seguir'))
+    const button = [...document.querySelectorAll('button.retry')].find((b) => b.textContent?.trim() === 'Continue')
+    await act(async () => (button as unknown as { click: () => void }).click())
+    expect(continueRun).toHaveBeenCalledWith('m3')
+  })
+
   it('keeps a finished reply without one', async () => {
     const done: Message = { id: 'm2', conversationId: 'd1', author: { kind: 'agent', id: 'a1' }, text: 'Pronto.', at: 3, run: { status: 'done', task: 'x', steps: [step('Ran', 'done')] } }
     fake = { ...fake, messages: { d1: [done] } }
