@@ -2228,6 +2228,12 @@ h3 {
   margin: 0;
   padding: 0;
 }
+/* The pill keeps the width its words ask for, and the row's own text gives way instead: a shrinkable
+   pill broke "Follow Up" over two lines as soon as a session's name grew, and a pill cut in half
+   reads as two controls. Nothing in a row may shrink it — the words are what shorten. */
+.work-row__follow {
+  flex: none;
+}
 .work-row__steer .steps__ask-pill,
 .work-row__follow .steps__ask-pill {
   padding: 2px 6px;
@@ -17518,6 +17524,8 @@ button.agent-card__now:hover {
   border-radius: 999px;
   color: var(--text-3);
   font-size: 11.5px;
+  /* A label on a pill is one line wherever the pill is drawn: a wrapped one reads as two buttons. */
+  white-space: nowrap;
   transition: var(--transition-ui);
 }
 
