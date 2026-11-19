@@ -88,7 +88,7 @@ const legacy: Readonly<Record<string, string>> = {
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
   modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
-  agentes: ['agents-permissions', 'agents-automation', 'agents-limits'],
+  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits'],
   integracoes: ['connections-phone'],
   pessoas: ['workspace-people'],
   atividade: ['workspace-activity'],

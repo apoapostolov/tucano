@@ -28,7 +28,7 @@ describe('settings placement', () => {
     expect(report.passed).toBe(true)
     expect(report.sections).toBe(36)
     expect(report.tabs).toBe(7)
-    expect(report.renderedSections).toBe(24)
+    expect(report.renderedSections).toBe(25)
     expect(report.panes).toEqual(['agentes', 'atividade', 'geral', 'integracoes', 'modelos', 'pessoas', 'servidores'])
     expect(report.unownedCards).toEqual(['Talk to the people who make Tucano', 'Sidebar', 'Recovery', 'Agents’ browser', 'Skill folders'])
   })

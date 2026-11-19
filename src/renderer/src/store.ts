@@ -45,6 +45,7 @@ import {
   type ActivityEntry,
   type Routine,
   type RoutineInput,
+  type SendMode,
   type Settings,
   type SetupEngine,
   type SetupState,
@@ -60,7 +61,6 @@ import {
   type Trigger,
   type ImageUpload,
   type FileUpload,
-  type SendMode,
   type Os,
   type LocalInfo,
   type VoiceModelId,
@@ -389,6 +389,12 @@ export const isWorking = (s: State, conversationId: string): boolean => conversa
 export const workingIds = (s: State, conversationId: string, threadId?: string): string[] =>
   conversationIndex(s, conversationId)
     .working.filter((m) => m.threadId === threadId && m.author.kind === 'agent')
+    .map((m) => m.id)
+// Every reply at work in a place, threads included: a reply inside a thread is still work the
+// conversation is carrying, and the drawer shows it rather than only what's outside threads.
+export const allWorkingIds = (s: State, conversationId: string): string[] =>
+  conversationIndex(s, conversationId)
+    .working.filter((m) => m.author.kind === 'agent')
     .map((m) => m.id)
 export const askerIn = (s: State, conversationId: string, threadId?: string): Message | undefined => conversationIndex(s, conversationId).waiting.findLast((m) => m.threadId === threadId)
 export const lastBrowserIn = (s: State, conversationId: string, agentId: string): string | undefined => conversationIndex(s, conversationId).browser.get(agentId)

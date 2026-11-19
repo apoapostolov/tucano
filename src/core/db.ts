@@ -43,6 +43,7 @@ import {
   type Routine,
   type RoutineRun,
   type Run,
+  type SendMode,
   type Settings,
   type Skill,
   type SkillVersion,
@@ -609,7 +610,9 @@ const COLUMNS: [string, string, string][] = [
   // Empty: the store's mark, or the icon of its kind.
   ['connectors', 'icon', 'TEXT'],
   // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
-  ['messages', 'reply', 'TEXT']
+  ['messages', 'reply', 'TEXT'],
+  // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
+  ['messages', 'send_mode', 'TEXT']
 ]
 
 type Row = Record<string, unknown>
@@ -1208,6 +1211,7 @@ export class Db {
       run: r['run'] ? (JSON.parse(str(r['run'])) as Run) : undefined,
       routine: r['routine'] ? (JSON.parse(str(r['routine'])) as RoutineRun) : undefined,
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
+      ...(r['send_mode'] ? { sendMode: str(r['send_mode']) as SendMode } : {}),
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
       ...(r['title'] ? { title: str(r['title']) } : {}),
       reply: r['reply'] ? (JSON.parse(str(r['reply'])) as Message['reply']) : undefined
@@ -1455,8 +1459,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, reply) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, reply, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, reply = excluded.reply, send_mode = excluded.send_mode`
       )
       .run(
         m.id,
@@ -1468,8 +1472,16 @@ export class Db {
         m.run ? JSON.stringify(m.run) : null,
         m.routine ? JSON.stringify(m.routine) : null,
         m.threadId ?? null,
-        m.reply ? JSON.stringify(m.reply) : null
+        m.reply ? JSON.stringify(m.reply) : null,
+        m.sendMode ?? null
       )
+  }
+
+  // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
+  // Only 'queue': a message handed into a running reply keeps its 'steer' mark after that reply answered
+  // it, and an app that opened again must not answer it a second time.
+  queuedMessages(): Message[] {
+    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
   }
 
   // The replies whose run is in one of these states, oldest first. Found in SQL: the rest of

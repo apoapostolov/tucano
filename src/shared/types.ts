@@ -486,6 +486,9 @@ export interface Message {
   // The message this one answers, kept with the quote it showed: the agent still reads it when the
   // original has left the history it sees.
   reply?: { messageId: string; author: string; agentId?: string; text: string; at: number; excerpt?: boolean }
+  // A prompt of mine waiting its turn in a conversation that was already answering: 'queue' while it
+  // waits, unset once its reply goes. Kept in the database, so it outlives a restart (runs.ts, resumeQueued).
+  sendMode?: SendMode
 }
 
 // When a message was said: a reply when it ended, anything else when it was written. `at` stays when it
@@ -586,6 +589,7 @@ export interface Settings {
 
   memoryModel: string // summarizes conversations and extracts memories
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
+  sendMode?: SendMode // what Enter does while a reply is running: beside it, two replies at once (the default), after it, into it, or stopping it
   wikiCapture?: boolean // the curator reads the conversations and keeps what lasts; on when unset
   wikiEdits?: 'approve' | 'auto' // changing a page that exists: waits for me (the default) or goes in
   wikiReview?: 'weekly' | 'off' // reviews the wiki on its own once a week; by hand only otherwise (the default)
@@ -646,7 +650,6 @@ export interface Settings {
   navHidden?: string[] // the screens this person put under the sidebar's line, by row id: out of the way, not forgotten
   jevRecommend?: boolean // legacy: the recommended option used to be one switch, now the `recommend` classifier job; read only when migrating (classifierJobsOf)
   jevNextSteps?: boolean // Jev says which of an agent's next steps are worth doing now, and only those start ticked (each step goes to TypeSafe); off when unset
-  sendMode?: SendMode // what Enter does while a reply is running: alongside it (the default), after it, into it, or stopping it
   quotaView?: QuotaView // how the quota panels draw: the table of windows (the default) or a ring per window
   quotaHidden?: string[] // providers whose quota isn't shown, by the quota reader's id (src/shared/quota-view.ts)
   // The bot that reads the finding, by its id: its own instructions and model, with the resolver's

@@ -81,6 +81,7 @@ import {
   type EngineId,
   type GrantLevel,
   type MemoryMode,
+  type SendMode,
   type Skill,
   type ToolClass,
   type WikiAccess,
@@ -4347,6 +4348,30 @@ export function SettingsPage(): ReactNode {
           </Card>
         )}
 
+        {pane('agentes') && admin && (
+          <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
+            <Field
+              label={L('Um novo prompt com uma resposta em curso', 'While a reply is running')}
+              hint={L(
+                'O que o Enter faz quando o agente já está respondendo ali. Shift+Enter enfileira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe, seja qual for o ajuste. Ctrl+Enter quebra a linha.',
+                'Enter uses this mode. Shift+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Ctrl+Enter adds a line.'
+              )}
+            >
+              <Select
+                value={settings.sendMode ?? 'parallel'}
+                onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                options={[
+                  { value: 'parallel', label: L('Ao lado dela, em paralelo', 'Parallel replies') },
+                  { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') },
+                  { value: 'steer', label: L('Entregue à resposta em curso', 'Steer current reply') },
+                  { value: 'interrupt', label: L('Interrompe e começa com esta', 'Interrupt and restart') }
+                ]}
+                placeholder={L('Escolha', 'Pick')}
+              />
+            </Field>
+          </Card>
+        )}
+
         {pane('agentes') && <BrowserClickCard />}
 
         {pane('integracoes') && (
@@ -4465,6 +4490,7 @@ export function SettingsPage(): ReactNode {
                   onChange={(n) => updateSettings({ chainDepth: chainDepthCap(n) })}
                 />
               </Field>
+
               <Field label={L('Expiração de aprovações', 'Approvals expire after')}>
                 <Select
                   value={settings.approvalTtlHours ? String(settings.approvalTtlHours) : null}

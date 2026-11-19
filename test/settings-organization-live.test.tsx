@@ -149,8 +149,8 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     expect(labels()).toEqual(['Agent models', 'Runtimes', 'Accounts', 'Classifiers', 'Router', 'Classifier Uses', 'Memory'])
 
     await render('agentes')
-    // Recovery, Replies, Collaboration and Skills have no card on this tab: no links to nothing.
-    expect(labels()).toEqual(['Permissions', 'Automation', 'Limits'])
+    // Recovery, Collaboration and Skills have no card on this tab: no links to nothing. Replies has one.
+    expect(labels()).toEqual(['Permissions', 'Replies', 'Automation', 'Limits'])
 
     await render('integracoes')
     expect(labels()).toEqual(['Phone and Telegram'])
