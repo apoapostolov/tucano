@@ -64,7 +64,7 @@ describe('the questions section of the waiting-on-you screen', () => {
     expect(html).toContain('Fecho o mês assim?')
     expect(html).toContain('na sua DM com Lia')
     expect(html).toContain('em #vendas')
-    expect(html).toContain('Ver na conversa')
+    expect(html).toContain('>Conversa<')
   })
 
   it('answers the question on the card itself, with no team to fall back on', () => {
@@ -97,6 +97,6 @@ describe('the questions section of the waiting-on-you screen', () => {
     const html = page([q('q1', 'a1', undefined, 'Ainda quer isso?')])
     expect(html).toContain('Ainda quer isso?')
     expect(html).toContain('numa conversa que você não vê')
-    expect(html).not.toContain('Ver na conversa')
+    expect(html).not.toContain('>Conversa<')
   })
 })

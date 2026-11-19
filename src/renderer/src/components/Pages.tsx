@@ -1915,7 +1915,7 @@ function AskWhere({ conversationId, agentId, at, actions }: { conversationId?: s
       <span className="row">
         {conv && (
           <button className="link" onClick={() => navigate({ kind: 'conversation', id: conv.id })}>
-            {L('Ver na conversa', 'See in the conversation')}
+            {L('Conversa', 'Conversation')}
           </button>
         )}
         {actions}
@@ -2151,7 +2151,7 @@ export function AskedRow({
             </div>
             {there && (
               <button className="link link--quiet" onClick={() => navigate({ kind: 'conversation', id: q.conversationId! })}>
-                {L('Ver na conversa', 'See in the conversation')}
+                {L('Conversa', 'Conversation')}
               </button>
             )}
           </li>
@@ -2255,7 +2255,7 @@ function PendingApproval({ approval, where }: { approval: Approval; where: strin
         </span>
         {there && (
           <button className="link" onClick={() => navigate({ kind: 'conversation', id: approval.conversationId })}>
-            {L('Ver na conversa', 'See in the conversation')}
+            {L('Conversa', 'Conversation')}
           </button>
         )}
       </div>
@@ -2336,7 +2336,7 @@ export function HistoryRow({ group }: { group: HistoryGroup }): ReactNode {
                 </span>
                 {conversations.some((c) => c.id === a.conversationId) && (
                   <button className="link link--quiet" onClick={() => navigate({ kind: 'conversation', id: a.conversationId })}>
-                    {L('Ver na conversa', 'See in the conversation')}
+                    {L('Conversa', 'Conversation')}
                   </button>
                 )}
               </li>
