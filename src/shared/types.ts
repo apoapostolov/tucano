@@ -488,7 +488,9 @@ export interface Invite {
 export const personScope = (personId: string): string => `person:${personId}`
 
 // What the composer answers: a message, or the excerpt of it the person selected.
-export type ReplyTarget = { messageId: string; quote?: string }
+// `at`: when the message was chosen to be answered. Choosing the same one again is a new choice, and
+// the field takes the cursor back, so a reply button always ends with the person typing (Conversation).
+export type ReplyTarget = { messageId: string; quote?: string; at?: number }
 export const scopePerson = (scope: string): string | undefined => (scope.startsWith('person:') ? scope.slice('person:'.length) : undefined)
 
 export interface Message {

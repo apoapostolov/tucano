@@ -396,7 +396,7 @@ export interface RoutineEvent {
 // waited its turn, isn't what it answers (another reply is, or it was merged in, see `waiting`).
 // `replyTo`: the message a person wrote that this reply answers (a mention's, a DM's), kept on its run.
 // `routineAsk`: on a routine's run, the message the routine posted (the reply keeps it, so the conversation shows them together).
-type ReplyOpts = { depth: number; goal?: string; autoContinued?: number; existing?: Message; task?: string; work?: string; routine?: boolean; routineAsk?: string; threadId?: string; trigger?: string; replyTo?: string; followUp?: string; for?: Person; handed?: string } // goal: the goal this reply works on; for: whom it's for, when it isn't read from the conversation (an answer back); followUp: the instruction a finished reply goes on with
+type ReplyOpts = { depth: number; goal?: string; autoContinued?: number; existing?: Message; task?: string; work?: string; routine?: boolean; routineAsk?: string; threadId?: string; trigger?: string; replyTo?: string; followUp?: string; for?: Person; handed?: string; onStart?: () => void } // goal: the goal this reply works on; for: whom it's for, when it isn't read from the conversation (an answer back); followUp: the instruction a finished reply goes on with; onStart: what the reply it continues says once this one is really on its way (see continueReply)
 // A reply waiting for its agent to finish there. `merge`: a person's message, which a newer one of theirs takes over.
 type Parked = { agent: Agent; conv: Conversation; opts: ReplyOpts; urgent: boolean; merge: boolean; done: ((m: Message | undefined) => void)[] }
 // What a person wrote into a reply that was already running (`send` with mode 'steer'): the agent
@@ -1163,11 +1163,17 @@ export class Runner {
     const me = (await this.deps.settings()).workspaceName
     // Read before the status changes: how it was cut is what the next reply is told.
     const cut = msg.run.status
-    // Said before the new reply starts, so the cut one reads as answered rather than as an offer.
-    const { restartPending: _, ...run } = msg.run
+    // Said when the new reply is really on its way, never before: a continuation that doesn't start
+    // (the app closed again, no engine up, the agent let go) would otherwise mark the cut reply done for
+    // good, with neither a reply nor a Continue to show for it. Until then it keeps its cutAt and its
+    // restartPending, so the next boot picks it up again instead of burying it.
+    const run = msg.run
     // Going on by itself, it says so where the person sees it, under the reply that paused.
     const went: Step[] = auto ? [{ id: randomUUID(), label: L('Continuou sozinho', 'Went on by itself'), status: 'done' }] : []
-    this.update(msg, { run: { ...run, status: 'done', steps: [...(run.steps ?? []), ...went] } })
+    const onStart = (): void => {
+      const { restartPending: _, ...rest } = run
+      this.update(msg, { run: { ...rest, status: 'done', steps: [...(rest.steps ?? []), ...went] } })
+    }
     // At its cap, each time it goes on by itself counts; a person's Continue starts the count over.
     const autoContinued = auto === 'cap' ? (msg.run.autoContinued ?? 0) + 1 : auto === 'restart' ? msg.run.autoContinued : undefined
     const steps = (msg.run.steps ?? [])
@@ -1200,7 +1206,7 @@ export class Runner {
     ]
       .filter(Boolean)
       .join('\n\n')
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}) }, { urgent: !automatic })
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}), onStart }, { urgent: !automatic })
   }
 
   // Whether a reply that paused at its cap goes on by itself: the person didn't turn that off, it hasn't
@@ -1847,9 +1853,19 @@ export class Runner {
     msg.run = { status: 'working', depth: opts.depth, steps: [...pastSteps, ...(followUp ? [followUpStep(followUp)] : []), thinking()], ...again, ...(replyTo ? { replyTo } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), ...(goalId ? { goal: goalId } : {}) }
     // Only a new execution replaces this reply's reasoning; tool/steering updates do not.
     let attemptStart = true
+    // Said once, when this reply is really on its way: the engine answered, or it had something to
+    // say with no engine at all (out of tokens). Until then the reply it goes on from keeps its
+    // Continue, so a continuation that never starts doesn't bury it (continueReply).
+    let told = false
+    const wentOnItsWay = (): void => {
+      if (told) return
+      told = true
+      opts.onStart?.()
+    }
     const save = (patch: Partial<Message> = {}): void => {
       this.update(msg, patch, attemptStart)
       attemptStart = false
+      if (patch.text) wentOnItsWay()
     }
     // What it writes before using a tool is narration ("Vou abrir o Studio"): it
     // goes with that step, and the reply keeps only what it says at the end.
@@ -3384,6 +3400,7 @@ ${note}`,
           })
           for await (const ev of events) {
             sign()
+            wentOnItsWay()
             if (ev.type === 'text') {
               msg.text += ev.delta
               pending += ev.delta

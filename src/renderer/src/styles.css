@@ -2057,12 +2057,17 @@ h3 {
   padding: 6px 28px 18px;
   flex: none;
   width: 100%;
+  min-width: 0;
   max-width: 860px;
   margin: 0 auto;
 }
 /* The work above the field: the replies running now, and the prompts queued behind them. It sits
    inside the composer's wrapper, so it is attached to the box it belongs to. */
 .work-drawer {
+  /* Never wider than the field it sits over, whatever a row carries: the glyphs keep their size and the
+     prompt gives way, so adding a button to a row shortens its words instead of widening the box. */
+  max-width: 100%;
+  min-width: 0;
   margin-bottom: 6px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -2076,6 +2081,7 @@ h3 {
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-width: 0;
   padding: 6px 10px;
   border: 0;
   background: none;
@@ -2089,6 +2095,10 @@ h3 {
 }
 .work-drawer__count {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
 }
 .work-drawer__more {
@@ -2108,6 +2118,7 @@ h3 {
 }
 .work-row__meta {
   flex: none;
+  white-space: nowrap;
   font-size: 11px;
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
@@ -2132,13 +2143,15 @@ h3 {
   align-items: center;
   gap: 4px;
   min-width: 0;
+  max-width: 100%;
 }
 .work-row__go {
   display: flex;
   align-items: center;
   gap: 7px;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
   padding: 4px 6px;
   border: 0;
   border-radius: 8px;
@@ -2152,7 +2165,10 @@ h3 {
 .work-row__go:hover {
   background: var(--hover);
 }
+/* What a row says in the person's words: the one thing that gives way when the row gains a glyph. */
 .work-row__text {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

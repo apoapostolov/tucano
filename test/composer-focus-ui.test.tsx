@@ -41,6 +41,18 @@ describe('the message field when a conversation opens', () => {
     await act(async () => root.render(<Composer conversationId="c1" members={[]} placeholder="Mensagem" />))
     expect(focused).toBe(1)
   })
+  it('takes the cursor back when the same message is answered again', async () => {
+    touch = false
+    const target = { messageId: 'm1', at: 1 }
+    fake = { ...fake, replyTo: { c1: target } }
+    await act(async () => root.render(<Composer conversationId="c1" members={[]} placeholder="Mensagem" />))
+    const mount = focused
+    expect(mount).toBeGreaterThan(0)
+    // The same message, chosen again: a new choice, so the field takes the cursor back once more.
+    fake = { ...fake, replyTo: { c1: { ...target, at: 2 } } }
+    await act(async () => root.render(<Composer conversationId="c1" members={[]} placeholder="Mensagem" />))
+    expect(focused).toBe(mount + 1)
+  })
   it('leaves it on a touch screen, so the keyboard stays down', async () => {
     touch = true
     await act(async () => root.render(<Composer conversationId="c1" members={[]} placeholder="Mensagem" />))

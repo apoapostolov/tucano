@@ -1169,7 +1169,9 @@ function selectedQuote(message: HTMLElement | null): string | undefined {
 
 // Starts a reply to that message (or to the excerpt selected in it) in the composer under the list.
 function startReply(message: Message, quote: string | undefined, replyKey: string): void {
-  setReplyTo(replyKey, { messageId: message.id, quote })
+  // Stamped so choosing the same message twice is still a new answer to write: the field takes the
+  // cursor back both times (`at` is in the focus effect's dependencies).
+  setReplyTo(replyKey, { messageId: message.id, quote, at: Date.now() })
   window.getSelection()?.removeAllRanges()
 }
 
@@ -3397,7 +3399,7 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
   const platform = useStore((s) => s.platform)
   const agents = useStore((s) => s.agents)
   // A reply chosen under a message: the field is where the answer goes.
-  useEffect(() => { if (replyId) ref.current?.focus() }, [replyId, replyTarget?.quote])
+  useEffect(() => { if (replyId) ref.current?.focus() }, [replyId, replyTarget?.quote, replyTarget?.at])
   const allAgents = useStore((s) => s.agents.filter(isTeam))
   const isDm = useStore((s) => s.conversations.find((c) => c.id === conversationId)?.kind === 'dm')
   const team = useStore(teamMode)
