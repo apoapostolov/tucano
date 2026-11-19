@@ -37,13 +37,16 @@ afterEach(async () => {
 })
 
 describe('the thinking block', () => {
-  it('is the reasoning alone while it arrives: no label line, no fold, and a cursor on the line it is writing', async () => {
+  it('is the reasoning with only its name over it while it arrives: no fold, no chevron, a cursor on the line it writes', async () => {
     await draw(true)
     expect(block()!.className).toContain('is-working')
     expect(document.querySelector('.thought__text')!.textContent).toContain('primeiro a conta.')
     expect(document.querySelector('.thought__caret')).not.toBeNull()
-    // Nothing to click and nothing to read over the text: the header, its label and its chevron are gone.
-    expect(document.querySelector('.thought__head')).toBeNull()
+    // The name came back, the chrome did not: one line over the block, nothing to click, no fold.
+    const head = document.querySelector('.thought__head')!
+    expect(head.textContent).toBe('Pensando')
+    expect(head.hasAttribute('aria-hidden')).toBe(true)
+    expect(head.querySelector('button, svg, img')).toBeNull()
     expect(document.querySelector('.thought__label')).toBeNull()
     expect(block()!.querySelector('button')).toBeNull()
     expect(block()!.textContent).not.toContain('Pensando')
@@ -55,6 +58,7 @@ describe('the thinking block', () => {
     expect(block()!.className).not.toContain('is-open')
     expect(document.querySelector('.thought__text')!.textContent).toContain('o pedido tem duas partes.')
     expect(document.querySelector('.thought__caret')).toBeNull()
+    expect(document.querySelector('.thought__head')!.textContent).toBe('Pensou')
     expect(block()!.textContent).not.toContain('Pensou')
   })
 

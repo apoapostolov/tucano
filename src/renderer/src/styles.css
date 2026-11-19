@@ -17257,15 +17257,30 @@ button.agent-card__now:hover {
   user-select: text;
 }
 
+/* The one line naming it, as the block was read in 0.2.36 — but the word alone: no chevron, nothing
+   to fold, and no background of its own. Small, dim and in full caps, and its left edge is the block's
+   text (3px of margin, the 2px rail, the 14px of padding the reasoning sits in), so the name and the
+   reasoning under it start on the same line. */
+.thought__head {
+  margin: 7px 0 0 19px;
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  user-select: none;
+}
+
 /* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
-   arrives, so a long reply can be studied while it is being written. No header and no fold: the
-   block is the reasoning and nothing else, which is how the steps' own line reads. */
+   arrives, so a long reply can be studied while it is being written. Nothing but the name above it:
+   no chevron and no fold, and the block is the reasoning and nothing else. */
 .thought {
   /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
      border, so the rail runs unbroken from the steps into the reasoning under them. Without the
      3px the thought's line stood a hair to the left of the one above it, and the two read as one
      line drawn twice. */
-  margin: 6px 0 0 3px;
+  margin: 3px 0 0 3px;
   /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
      than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
      lines, plus the 8px of padding above and below the text. The plain rule is the middle size, so

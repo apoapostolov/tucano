@@ -7,6 +7,8 @@
 //     height and pinned all three sizes to six lines.
 //   - the block's text runs the same width as a step's row: the chain's own column, from the row's left
 //     edge to the chain's right edge, not 10 px in from each side.
+//   - the name over it is one dim line in full caps, starting on the block's own text edge, with nothing
+//     to click and no background of its own: the header the refactor removed came back as the word only.
 import { existsSync, readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
@@ -27,6 +29,7 @@ const markup = (size: keyof typeof LINES): string => `
           <li class="step step--tool step--running"><span class="step__icon"></span><span class="step__label">Reading the two last commits</span></li>
         </ol>
       </div>
+      <div class="thought__head">Pensando</div>
       <div class="thought is-working" data-size="${size}">
         <div class="thought__text">${LONG}</div>
       </div>
@@ -56,7 +59,22 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
           textBox: { l: Math.round(rect(text).left), r: Math.round(rect(text).right) },
           rowBox: { l: Math.round(rect(row).left), r: Math.round(rect(row).right) },
           blockBox: { l: Math.round(rect(thought).left), r: Math.round(rect(thought).right) },
-          listBox: { l: Math.round(rect(list).left), r: Math.round(rect(list).right) }
+          listBox: { l: Math.round(rect(list).left), r: Math.round(rect(list).right) },
+          head: (() => {
+            const head = document.querySelector('.thought__head')!
+            const cs = getComputedStyle(head)
+            return {
+              text: head.textContent,
+              left: Math.round(rect(head).left),
+              bottom: Math.round(rect(head).bottom),
+              transform: cs.textTransform,
+              size: parseFloat(cs.fontSize),
+              background: cs.backgroundColor
+            }
+          })(),
+          blockTop: Math.round(rect(thought).top),
+          blockBackground: getComputedStyle(thought).backgroundColor,
+          clickable: thought.querySelectorAll('button, [role="button"]').length + document.querySelectorAll('.thought__head button').length
         }
       })
       // The number of whole lines it shows: the setting's own count, not a fixed six.
@@ -66,6 +84,22 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
       // The same column as the steps' own rows, and the same box as the chain's list.
       expect({ size, ...m.textBox }).toEqual({ size, ...m.rowBox })
       expect({ size, ...m.blockBox }).toEqual({ size, ...m.listBox })
+      // The name over it: full caps, small, on the block's own text edge, in a line of its own above it.
+      expect({ size, text: m.head.text, left: m.head.left, transform: m.head.transform, font: m.head.size }).toEqual({
+        size,
+        text: 'Pensando',
+        left: m.textBox.l,
+        transform: 'uppercase',
+        font: 10
+      })
+      expect(m.head.bottom).toBeLessThanOrEqual(m.blockTop)
+      // Nothing to click, and no background of its own — not the name, not the block.
+      expect({ size, clickable: m.clickable, headBg: m.head.background, blockBg: m.blockBackground }).toEqual({
+        size,
+        clickable: 0,
+        headBg: 'rgba(0, 0, 0, 0)',
+        blockBg: 'rgba(0, 0, 0, 0)'
+      })
     }
   } finally {
     await browser.close()

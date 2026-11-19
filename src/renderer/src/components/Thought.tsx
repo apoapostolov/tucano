@@ -125,46 +125,55 @@ export function Thought({ message, working }: { message: Message; working: boole
   })
   if (!on || !thought) return null
   return (
-    <div
-      ref={box}
-      className={`thought${working ? ' is-working' : ''}`}
-      data-size={size}
-      style={{ overflowAnchor: 'none' }}
-      aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
-      onScroll={(e) => {
-        const el = e.currentTarget
-        if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
-        gesture.current = 0
-        position.current = el.scrollTop
-        written.current = el.scrollTop
-        follow.current = followsTheEnd(el)
-        if (follow.current) releaseList()
-        else {
-          holdList()
-          line.current = captureLine(el)
-        }
-      }}
-      onPointerDown={() => { gesture.current = Date.now() + 250 }}
-      onTouchStart={() => { gesture.current = Date.now() + 250 }}
-      onKeyDown={() => { gesture.current = Date.now() + 250 }}
-      onWheel={(e) => {
-        gesture.current = Date.now() + 250
-        if (e.deltaY < 0) {
-          follow.current = false
-          position.current = e.currentTarget.scrollTop
-          written.current = e.currentTarget.scrollTop
-          holdList()
-        } else if (e.deltaY > 0 && followsTheEnd(e.currentTarget)) {
-          follow.current = true
-          releaseList()
-        }
-      }}
-    >
-      <div className="thought__text">
-        {thought}
-        {/* The line it is writing: the stream's end, while the reply works. */}
-        {working && <span className="thought__caret" aria-hidden="true" />}
+    <>
+      {/* The one line naming it: the word alone, dim and in full caps in the sheet. The chrome the
+          header used to carry — the chevron and the fold — stayed gone; only the name came back,
+          over the reasoning rather than over the text. Screen readers get the block's own aria-label,
+          so this line is not read twice. */}
+      <div className="thought__head" aria-hidden="true">
+        {working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}
       </div>
-    </div>
+      <div
+        ref={box}
+        className={`thought${working ? ' is-working' : ''}`}
+        data-size={size}
+        style={{ overflowAnchor: 'none' }}
+        aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
+        onScroll={(e) => {
+          const el = e.currentTarget
+          if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
+          gesture.current = 0
+          position.current = el.scrollTop
+          written.current = el.scrollTop
+          follow.current = followsTheEnd(el)
+          if (follow.current) releaseList()
+          else {
+            holdList()
+            line.current = captureLine(el)
+          }
+        }}
+        onPointerDown={() => { gesture.current = Date.now() + 250 }}
+        onTouchStart={() => { gesture.current = Date.now() + 250 }}
+        onKeyDown={() => { gesture.current = Date.now() + 250 }}
+        onWheel={(e) => {
+          gesture.current = Date.now() + 250
+          if (e.deltaY < 0) {
+            follow.current = false
+            position.current = e.currentTarget.scrollTop
+            written.current = e.currentTarget.scrollTop
+            holdList()
+          } else if (e.deltaY > 0 && followsTheEnd(e.currentTarget)) {
+            follow.current = true
+            releaseList()
+          }
+        }}
+      >
+        <div className="thought__text">
+          {thought}
+          {/* The line it is writing: the stream's end, while the reply works. */}
+          {working && <span className="thought__caret" aria-hidden="true" />}
+        </div>
+      </div>
+    </>
   )
 }

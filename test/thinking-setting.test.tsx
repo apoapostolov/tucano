@@ -37,7 +37,10 @@ describe("the model's thinking on screen", () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const html = drawn()
     expect(html).toContain('class="thought is-working"')
-    expect(html).not.toContain('Pensando')
+    // The name over it, and nothing else: no fold, no below the word.
+    expect(html).toContain('class="thought__head"')
+    expect(html).toContain('Pensando')
+    expect(html).not.toContain('<button')
     expect(html).toContain('o pedido tem duas partes')
   })
 
@@ -45,8 +48,8 @@ describe("the model's thinking on screen", () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const html = renderToStaticMarkup(<Thought message={message} working={false} />)
     expect(html).toContain('o pedido tem duas partes')
-    expect(html).not.toContain('Pensou')
-    expect(html).not.toContain('thought__head')
+    expect(html).toContain('Pensou')
+    expect(html).toContain('thought__head')
   })
 
   it('is nothing at all while the model has thought nothing yet', () => {

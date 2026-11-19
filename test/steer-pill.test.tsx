@@ -110,8 +110,9 @@ describe('the steer pill', () => {
   it('folds the steps alone, leaving the reasoning whole and steering and pause reachable', async () => {
     const message = reply('working')
     await drawChain(message)
-    // The reasoning has no fold of its own: no header, no chevron, and it stays whole while the steps fold.
-    expect(document.querySelector('.thought__head')).toBeNull()
+    // The reasoning has no fold of its own: its name is a line with nothing to click, and it stays whole
+    // while the steps fold.
+    expect(document.querySelector('.thought__head')!.querySelector('button')).toBeNull()
     expect(document.querySelector('.thought')).not.toBeNull()
     await act(async () => document.querySelector<HTMLElement>('.steps__toggle')!.click())
     expect(viewSettings.folded.length).toBe(1)
