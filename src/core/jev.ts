@@ -3,8 +3,11 @@
 // takes several. It needs the user's own TypeSafe key, and each decision sends
 // the channel's recent messages to TypeSafe, so it's off unless chosen.
 import { randomUUID } from 'node:crypto'
+import { JEV_CLASSIFIER, type ClassifierConfig } from '../shared/classifiers'
 import { L } from '../shared/lang'
+import { MAX_STEPS, type Decision } from '../shared/questions'
 import type { Agent, Connector, Message, Person } from '../shared/types'
+import { ask as askClassifier, badFormat as classifierBadFormat, type ClassifierAnswers, type ClassifierQuestion } from './classifiers'
 import type { ThreadDigest } from './memory'
 import { describeAgent, MAX_ROUTED, REPLY_JSON, routerPrompt } from './router'
 
@@ -189,4 +192,74 @@ export async function jevBox(opts: { key: string; target: string; jpeg: string; 
   const box = body?.answers?.alvo?.box
   if (!box || ![box.top, box.bottom, box.left, box.right].every((n) => typeof n === 'number')) return { error: badFormat() }
   return { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2, confidence: body?.answers?.alvo?.confidence ?? 0 }
+}
+
+// ---------- the next steps an agent proposes ----------
+// A next-steps card opens with every box clear: the person ticks what they want done, like any other
+// choice. What changes that is a classifier assigned to this job in Settings › Classifiers: one small
+// typed question per step says which of them are worth doing now, and those — and only those — open
+// ticked, with the card's Recommended pill. A step that isn't picked stays in the card, a click away.
+// No classifier, or a failure: nothing is ticked, which is the card's own default.
+const STEPS_TIMEOUT_MS = 8_000
+const STEPS_CONTEXT_MAX = 1_200
+
+// The classifier a call runs on: the one chosen for that job, or Jev, as before the section existed.
+const targetOf = (t?: ClassifierConfig): ClassifierConfig => t ?? JEV_CLASSIFIER
+const failed = (a: ClassifierAnswers | { error: string }): a is { error: string } => typeof (a as { error?: unknown }).error === 'string'
+
+type StepPick = 'do' | 'later'
+
+// One step, one question: does the person do it now, or can it wait. The state carries the whole
+// list and then the step itself, so the answer is about that step and not about the list.
+async function worthDoing(opts: { target: ClassifierConfig; key: string; state: string; fetch?: Fetch }): Promise<StepPick | { error: string }> {
+  const criteria: Record<string, string> = {
+    do: L('Fazer agora: é o que o trabalho pede em seguida, o que destrava o resto, ou o de maior risco.', 'Do it now: it is what the work asks for next, what unblocks the rest, or the riskiest.'),
+    later: L('Pode esperar: é opcional, um polimento, ou depende de algo que ainda não está feito.', 'Can wait: it is optional, a polish, or it depends on something not done yet.')
+  }
+  const questions: ClassifierQuestion[] = [
+    {
+      name: 'pick',
+      type: 'choice',
+      instructions: L('Este próximo passo: a pessoa faz agora ou pode esperar?', 'This next step: does the person do it now, or can it wait?'),
+      criteria
+    }
+  ]
+  const answers = await askClassifier({ target: opts.target, key: opts.key, state: opts.state, questions, timeoutMs: STEPS_TIMEOUT_MS, fetch: opts.fetch })
+  if (failed(answers)) return { error: answers.error }
+  const choice = answers['pick']?.choice
+  return choice === 'do' || choice === 'later' ? choice : { error: classifierBadFormat(opts.target.provider) }
+}
+
+// Which steps open ticked: indexes into the list, in order. A failure, or none of them worth doing
+// now, is an empty list — the card then opens exactly as it does with no classifier at all.
+export async function stepsWorthDoing(opts: { target?: ClassifierConfig; key: string; decision: Decision; context?: string; fetch?: Fetch }): Promise<{ ticked: number[]; ms: number } | { error: string; ms: number }> {
+  const started = Date.now()
+  const ms = (): number => Date.now() - started
+  const steps = (opts.decision.options ?? []).slice(0, MAX_STEPS)
+  if (steps.length < 2) return { ticked: [], ms: ms() }
+  const context = (opts.context ?? '').replace(/\s+/g, ' ').trim().slice(0, STEPS_CONTEXT_MAX)
+  const list = steps.map((o, i) => `${i + 1}. ${o.label}${o.description ? ` — ${o.description}` : ''}`).join('\n')
+  const answers = await Promise.all(
+    steps.map((o, i) =>
+      worthDoing({
+        key: opts.key,
+        target: targetOf(opts.target),
+        state: [
+          ...(context ? [L('O que o agente disse antes de propor os passos:', 'What the agent said before proposing the steps:'), context, ''] : []),
+          L('O que os passos continuam:', 'What the steps go on with:'),
+          opts.decision.question,
+          '',
+          L('Os próximos passos:', 'The next steps:'),
+          list,
+          '',
+          L('O passo em questão:', 'The step in question:'),
+          `${i + 1}. ${o.label}${o.description ? ` — ${o.description}` : ''}`
+        ].join('\n'),
+        fetch: opts.fetch
+      })
+    )
+  )
+  const problem = answers.find((a): a is { error: string } => typeof a === 'object')
+  if (problem) return { error: problem.error, ms: ms() }
+  return { ticked: answers.flatMap((a, i) => (a === 'do' ? [i] : [])), ms: ms() }
 }

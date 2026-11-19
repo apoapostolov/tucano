@@ -8,6 +8,7 @@ import { dirname, join, normalize, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { homedir, hostname } from 'node:os'
 import { L, langOf, setLang, type Lang } from '../shared/lang'
+import { setClock, type Clock } from '../shared/clock'
 import { APP_ID } from '../shared/app-identity'
 import { chirpOf, type BrowserOp, type Settings } from '../shared/types'
 import { isAppPage, isOutsideLink } from '../shared/links'
@@ -56,6 +57,7 @@ const systemLocale = ((): string | undefined => {
   }
 })()
 setLang(langOf(systemLocale))
+setClock(undefined) // until a workspace says which clock it reads
 
 // Run from the code (npm run dev), the app keeps its own data, apart from an installed Tucano.
 if (!app.isPackaged && !process.env['TUCANO_DATA']) app.setPath('userData', join(app.getPath('appData'), `${NAME} Dev`))
@@ -184,9 +186,9 @@ type CoreRequest =
   | { type: 'open_local'; path: string; how: 'open' | 'reveal' }
   | { type: 'wiki_dir'; path: string }
   | { type: 'notify'; title: string; body: string; conversationId?: string; threadId?: string; kind?: 'approval' | 'question' | 'done'; page?: 'skills'; sound?: boolean }
-  | { type: 'login_item'; open: boolean }
+  | { type: 'login_item'; open: boolean; minimized?: boolean }
   | { type: 'busy'; busy: boolean }
-  | { type: 'lang'; lang: Lang }
+  | { type: 'lang'; lang: Lang; clock?: Clock }
   | { type: 'screenshot'; id: string; url: string; width: number; height: number; fullPage: boolean }
   | { type: 'icons'; id: string; paths: string[] }
   | { type: 'browser'; id: string; agentId: string; op: BrowserOp; args?: Record<string, unknown> }
@@ -249,13 +251,13 @@ function syncBusy(): void {
 
 // Opening at login: the system's login items on a Mac; on Linux a desktop entry in
 // ~/.config/autostart (an AppImage starts from wherever the person keeps it).
-function openAtLogin(open: boolean): void {
-  if (process.platform !== 'linux') return app.setLoginItemSettings({ openAtLogin: open })
+function openAtLogin(open: boolean, minimized: boolean): void {
+  if (process.platform !== 'linux') return app.setLoginItemSettings({ openAtLogin: open, args: minimized ? ['--minimized'] : [] })
   const file = autostartFile()
   try {
     if (!open) return rmSync(file, { force: true })
     mkdirSync(dirname(file), { recursive: true })
-    writeFileSync(file, autostartEntry(process.env['APPIMAGE'] ?? process.execPath))
+    writeFileSync(file, autostartEntry(process.env['APPIMAGE'] ?? process.execPath, minimized))
   } catch (e) {
     console.error('[main] autostart', e)
   }
@@ -372,10 +374,11 @@ function handleCore(child: UtilityProcess, msg: CoreRequest, workspace: Workspac
   } else if (msg.type === 'lang') {
     if (registry.selected().id !== workspace.id) return
     setLang(msg.lang)
+    setClock(msg.clock)
     setMenu()
   } else if (msg.type === 'login_item') {
     // Only the installed app: in dev this would register the bare Electron binary.
-    if (app.isPackaged && workspace.isDefault) openAtLogin(msg.open)
+    if (app.isPackaged && workspace.isDefault) openAtLogin(msg.open, !!msg.minimized)
   } else if (msg.type === 'browser') {
     runtime.browsers.run(msg.agentId, msg.op, msg.args).then(
       (data) => child.postMessage({ type: 'browser-result', id: msg.id, data }),
@@ -749,7 +752,7 @@ function createWindow(): BrowserWindow {
   })
 
   win.once('ready-to-show', () => {
-    if (launch.qa) return
+    if (launch.qa || process.argv.includes('--minimized')) return
     if (launch.background) win.showInactive()
     else win.show()
   })
@@ -891,7 +894,7 @@ app.on('second-instance', (_e, argv) => {
   if (argv.includes('--quit')) return app.quit()
   const link = linkIn(argv)
   if (link) openLink(link)
-  else if (!argv.includes('--background') && !argv.includes('--qa-background')) showWindow()
+  else if (!argv.includes('--background') && !argv.includes('--qa-background') && !argv.includes('--minimized')) showWindow()
 })
 
 // The app's own menu, in the app's language (Electron's would be in English).
