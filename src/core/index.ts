@@ -1521,7 +1521,8 @@ function applyOne(ctx: Ctx, messageId: string, index: number, batch = false, aut
       for (const k of r.changed) record(ctx, 'skill.updated', k.id, { agents: k.agents, why: 'proposal' })
     }
 
-    const prior = Object.fromEntries(Object.keys(p.changes).map((k) => [k, agent[k as keyof AgentChanges]])) as AgentChanges
+    // `skills` isn't kept on the agent (each skill lists its own agents): what to undo is the rest.
+    const prior = Object.fromEntries(Object.keys(p.changes).filter((k) => k !== 'skills').map((k) => [k, agent[k as keyof Agent]])) as AgentChanges
     api.saveAgent({ agent: { ...agent, ...p.changes }, channelIds }, ctx)
     id = agent.id
     extra.undo = { until, prior }

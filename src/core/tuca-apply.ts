@@ -59,7 +59,11 @@ export const routineStamp = (r: Routine): string => stable({ name: r.name, agent
 // The fields an applied change set that the agent no longer has: someone changed them since.
 export function changedSince(agent: Agent, changes: AgentChanges): (keyof AgentChanges)[] {
   const norm = (k: string, v: unknown): unknown => (k === 'web' ? v !== false : v)
-  return (Object.keys(changes) as (keyof AgentChanges)[]).filter((k) => stable(norm(k, agent[k])) !== stable(norm(k, changes[k])))
+  // Fields the agent itself holds: `skills` isn't one of them (each skill lists its own agents).
+  type Held = Exclude<keyof AgentChanges, 'skills'>
+  return (Object.keys(changes) as (keyof AgentChanges)[])
+    .filter((k): k is Held => k !== 'skills')
+    .filter((k) => stable(norm(k, (agent as unknown as Record<string, unknown>)[k])) !== stable(norm(k, changes[k])))
 }
 
 const FIELDS = (): Record<string, string> => ({ name: L('o nome', 'the name'), role: L('a função', 'the role'), instructions: L('as instruções', 'the instructions'), modelId: L('o modelo', 'the model'), effort: L('o esforço', 'the effort'), web: L('a web', 'the web'), grants: L('os conectores', 'the connectors'), limit: L('o limite', 'the limit') })
