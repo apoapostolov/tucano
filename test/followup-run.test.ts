@@ -215,6 +215,77 @@ describe('a reply that goes on from where it stopped', () => {
     expect(rows[0]!.detail).toBe('agora a segunda parte')
   })
 
+  // The press lands on the row at once. A wake doesn't start the turn where it was pressed: the agent
+  // answers one thing at a time in a conversation, so a follow-up pressed while another reply of that
+  // agent runs there waits for it — and on 19 Nov it waited with the row looking exactly as it did
+  // before the press, the field closed, which reads as a press that did nothing (Apo: "it just woke
+  // with a big delay").
+  it('says it is awake on the row the moment it is pressed, before the turn gets its place', async () => {
+    const turns: Turn[] = []
+    const r = runnerWith(recorded(turns))
+    await r.send('d1', 'faça a primeira parte')
+    await r.idle()
+    const first = replies()[0]!
+    const before = db.message(first.id)!
+
+    r.followUp(first.id, 'agora a segunda parte')
+    // Read straight back, before the turn had a chance to do anything: the row is at work, saying why.
+    const waking = db.message(first.id)!
+    expect(waking.run?.status).toBe('working')
+    expect(waking.run!.steps.at(-1)).toMatchObject({ label: 'Waking · waiting for the reply above to finish', status: 'running' })
+    // The pill is spent with the press: one wake per row, and its words are not a second offer.
+    expect(waking.run!.steps.filter((s) => s.label === 'You asked it to go on')).toHaveLength(0)
+
+    await r.idle()
+    const after = db.message(first.id)!
+    // The turn wrote its own chain over the waking line: it is the reply's, not a step left behind.
+    expect(after.run?.status).toBe('done')
+    expect(after.run!.steps.some((s) => s.label === 'Waking · waiting for the reply above to finish')).toBe(false)
+    expect(after.run!.steps.filter((s) => s.kind === 'followup')).toHaveLength(1)
+    expect(after.text).toBe('Primeira parte pronta.\n\nSegunda parte pronta.')
+    expect(before.run?.status).toBe('done') // the row it was, kept whole for the wake that never starts
+  })
+
+  it('is left at work by the sweep no longer than it takes its turn, not cut as a corpse', async () => {
+    const turns: Turn[] = []
+    const r = runnerWith(recorded(turns))
+    await r.send('d1', 'faça a primeira parte')
+    await r.idle()
+    const first = replies()[0]!
+
+    r.followUp(first.id, 'agora a segunda parte')
+    // What the app does every minute: a row at work with steps and no runner is taken as dead. The row
+    // that is only waiting its place is not dead, and cutting it would wake it a second time.
+    await wait(30)
+    expect(r.sweepOrphans(Date.now() + 5 * 60_000)).toEqual([])
+    expect(db.message(first.id)!.run?.status).toBe('working')
+    await r.idle()
+    expect(db.message(first.id)!.run?.status).toBe('done')
+  })
+
+  // A wake that never gets its turn (the conversation went, the row went with it) gives the row back as
+  // it was: a reply left at work with nobody behind it has no pill and no way on.
+  it('gives the row back when the turn never starts', async () => {
+    const turns: Turn[] = []
+    const r = runnerWith(recorded(turns))
+    await r.send('d1', 'faça a primeira parte')
+    await r.idle()
+    const first = replies()[0]!
+    // A reply whose thread is gone: it can't be placed where it belongs, so no turn starts for it.
+    const stranded: Message = { ...first, id: 'reply-que-nao-tem-thread', threadId: 'thread-que-nao-existe' }
+    db.saveMessage(stranded)
+
+    r.followUp(stranded.id, 'agora a segunda parte')
+    await r.idle()
+
+    const back = db.message(stranded.id)!
+    expect(back.run?.status).toBe('done')
+    expect(back.run!.steps.some((s) => s.label === 'Waking · waiting for the reply above to finish')).toBe(false)
+    expect(turns).toHaveLength(1) // nothing was sent
+    // And it is offered again: the row is what it was, pill and all, not a reply at work with nobody behind it.
+    expect(back.run!.steps).toEqual(first.run!.steps)
+  })
+
   it('is not offered for a reply that is still at work: a running one is steered, not followed up', async () => {
     const turns: Turn[] = []
     const r = runnerWith(recorded(turns))

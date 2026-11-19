@@ -4,7 +4,7 @@ import type { Run, RunStatus } from './types'
 
 // A step that only says the model is working is not work the reply got done: it is the same step
 // every reply has before anything came back.
-export const WORKLESS_LABELS = ['Pensou', 'Pensando', 'Pausou', 'Thought', 'Thinking', 'Paused']
+export const WORKLESS_LABELS = ['Pensou', 'Pensando', 'Pausou', 'Thought', 'Thinking', 'Paused', 'Acordando · esperando a resposta acima terminar', 'Waking · waiting for the reply above to finish']
 
 // A reply the app cut, rather than one that ran to its own end.
 export const CUT: RunStatus[] = ['stopped', 'interrupted', 'failed']

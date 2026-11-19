@@ -98,6 +98,18 @@ const followUpStep = (instruction: string): Step => ({
   detail: instruction.replace(/\s+/g, ' ').slice(0, 160),
   status: 'done'
 })
+// The row says it is awake before the turn gets its place in the queue. Waking a reply does not start
+// it at once: an agent answers one thing at a time in a conversation, so a follow-up pressed while
+// another reply of that agent runs there waits for it — and until now it waited with the row looking
+// exactly as it did before the press, the field already closed (19 Nov: "it just woke with a big
+// delay"). One line, drawn as the reply's current step, from the press until the turn starts and
+// writes its own chain over it. It says what the row is doing, not what the drawer's prompt pill says
+// for a prompt queued behind: the two wait for the same reply, and one is not the other.
+const wakeStep = (): Step => ({
+  id: randomUUID(),
+  label: L('Acordando · esperando a resposta acima terminar', 'Waking · waiting for the reply above to finish'),
+  status: 'running'
+})
 // What the agent is told: the task it already had, then the instruction, and the one rule that makes
 // it a continuation rather than a repetition.
 const followUpTask = (task: string | undefined, instruction: string): string =>
@@ -1154,8 +1166,24 @@ export class Runner {
     if (!agent || !conv) return
     // Already going on from this one: two turns on one row would fight over it.
     if (this.controllers.has(msg.id) || this.continuing.has(messageId)) return
+    // The press lands on the row now, not when the turn starts (see `wakeStep`). `before` is what it
+    // was, kept whole so a wake that never starts can give it back; the turn reads the same snapshot,
+    // so the waking line is never part of the chain the reply keeps.
+    const before = msg.run
+    const wake = wakeStep()
+    const waking: Run = { ...before, status: 'working', steps: [...(before.steps ?? []).map((s): Step => (s.status === 'running' ? { ...s, status: 'done' } : s)), wake] }
+    this.update(msg, { run: waking })
     this.continuing.add(messageId)
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg, followUp: instruction }, { urgent: true }).finally(() => this.continuing.delete(messageId))
+    void this.startReply(agent, conv, { depth: before.depth ?? 1, existing: { ...msg, run: before }, followUp: instruction }, { urgent: true })
+      .then((m) => {
+        // It never got its place (the row went, the conversation did): the row goes back to what it
+        // was, pill and all, instead of sitting at work with nobody behind it.
+        if (m) return
+        const now = this.deps.db.message(messageId)
+        if (!now?.run || now.run.status !== 'working' || !now.run.steps?.some((s) => s.id === wake.id)) return
+        this.update(now, { run: before })
+      })
+      .finally(() => this.continuing.delete(messageId))
   }
 
   // A reply that was cut goes on in a new reply that knows what it did: its text is in the
@@ -1272,7 +1300,7 @@ export class Runner {
     const cut: string[] = []
     const pending = new Set<string>()
     for (const m of this.deps.db.messagesWithRun(['working'])) {
-      if (this.controllers.has(m.id)) continue
+      if (this.controllers.has(m.id) || this.continuing.has(m.id)) continue // a continuation on its way: it has a place, not a runner yet
       const run = m.run
       if (run?.status !== 'working' || !run.steps?.length) continue
       const first = this.orphanSeen.get(m.id)
