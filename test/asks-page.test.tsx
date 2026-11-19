@@ -2,7 +2,7 @@
 // the reply that asked it.
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Agent, Person, Question } from '../src/shared/types'
+import type { Agent, Person } from '../src/shared/types'
 import type { State } from '../src/renderer/src/store'
 
 let fake: State
@@ -12,6 +12,7 @@ vi.mock('../src/renderer/src/store', async (original) => {
 })
 const { getState } = await import('../src/renderer/src/store')
 const { AsksPage } = await import('../src/renderer/src/components/Pages')
+const { questionDrafts } = await import('../src/renderer/src/components/Conversation')
 
 const me: Person = { id: 'ana', name: 'Ana', role: 'owner', about: '' }
 const lia: Agent = { id: 'a1', name: 'Lia', handle: 'lia', role: '', color: 'sky', instructions: '', modelId: 'sonnet', effort: 'low', limit: 1_000_000, used: 0, grants: {}, memory: 'auto', computer: false, archived: false }
@@ -51,7 +52,31 @@ beforeEach(() => {
 describe('the Asks page', () => {
   it('is a rest screen when nothing is waiting', () => {
     const html = page([])
-    expect(html).toContain('Nenhuma pergunta esperando')
+    expect(html).toContain('class="rest-line"')
+    expect(html).toContain('Nada esperando você.')
+    expect(html).not.toContain('caps-title')
+  })
+
+  it('counts the waiting questions on the caps title above the cards', () => {
+    const html = page([q('q1', 'a1', 'dm1', 'Publico o post hoje?'), q('q2', 'a2', 'ch1', 'Fecho o mês assim?')])
+    expect(html).toMatch(/Perguntas · 2|Questions · 2/)
+    expect(html).toContain('class="stack-list"')
+    expect(html).toMatch(/class="[^"]*list-meta"/)
+  })
+
+  it('keeps an ask answered by someone else while I typed, with who answered it', () => {
+    questionDrafts.set('q1', 'minha resposta')
+    fake = {
+      ...fake,
+      people: [...fake.people, { ...me, id: 'bob', name: 'Bob' }],
+      conversations: [{ id: 'dm1', kind: 'dm', name: 'Lia', members: ['a1'] }] as State['conversations'],
+      inbox: { approvals: [], questions: [], answered: [{ ...q('q1', 'a1', 'dm1', 'Publico o post hoje?'), state: 'answered', answeredBy: 'bob', answeredAt: 2 }] }
+    } as State
+    const html = renderToStaticMarkup(<AsksPage />)
+    expect(html).toMatch(/Perguntas · 1|Questions · 1/)
+    expect(html).toMatch(/Respondida por Bob|Answered by Bob/)
+    expect(html).toContain('value="minha resposta"')
+    questionDrafts.delete('q1')
   })
 
   it("gathers questions asked in different conversations, which is the point", () => {
