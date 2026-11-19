@@ -505,9 +505,18 @@ export class Runner {
     setInterval(() => this.sessions.sweep(), 10 * 60_000).unref()
     // A reply whose runner died while the app stayed open: nothing will ever finish it, and the
     // channel shows a session at work for ever with no Continue (see sweepOrphans).
+    //
+    // The same tick looks again at a reply the app cut whose continuation never got its place: until
+    // that continuation is really on its way the row keeps `restartPending`, and the boot pass is not
+    // the only thing that reads it. On 20 Nov an install closed the app under a reply, the boot pass
+    // counted its one resume and queued the continuation behind the sessions the same restart had
+    // brought up; it never got a place, and with the app open all night nothing looked at the row
+    // again: the person was left reading "Interrupted" with his three tries untouched. A row whose
+    // continuation is already in flight is skipped in the pass (`continuing`), so this only re-arms
+    // the ones that ended without starting one; RECOVERY_TRIES still bounds how many times it can.
     setInterval(() => {
       const cut = this.sweepOrphans()
-      if (cut.length) void this.resumeInterrupted(cut)
+      void this.resumeInterrupted(cut.length ? cut : undefined)
     }, ORPHAN_EVERY_MS).unref()
   }
 
@@ -1308,7 +1317,11 @@ export class Runner {
     // says a word never reaches `onStart`, and without this the next boot would pick it up for ever.
     if (automatic) this.update(msg, { run: { ...msg.run, resumes: (msg.run.resumes ?? 0) + 1 } })
     this.continuing.add(messageId)
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}), onStart }, { urgent: !automatic }).finally(() => this.continuing.delete(messageId))
+    // Urgent, unless it is a reply going on by itself at its spending cap: a reply the app cut is one
+    // the person was waiting on, and at a restart it must not queue behind the sessions that came back
+    // with it (`MAX_CONCURRENT` is four; the urgent lane takes six). On 20 Nov the boot pass put it
+    // behind them, it never got a place, and the row stayed `interrupted` all night.
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, task, work: msg.run!.work, threadId: msg.threadId, ...(msg.run?.handed ? { handed: msg.run.handed } : {}), ...(autoContinued ? { autoContinued } : {}), ...(msg.run?.goal ? { goal: msg.run.goal } : {}), onStart }, { urgent: auto !== 'cap' }).finally(() => this.continuing.delete(messageId))
   }
 
   // Whether a reply that paused at its cap goes on by itself: the person didn't turn that off, it hasn't
@@ -1411,7 +1424,10 @@ export class Runner {
     for (const msg of candidates.values()) {
       const run = msg.run!
       const { restartPending: _, cutAt, ...rest } = run
-      if (this.recovering.has(msg.id)) continue
+      // Already going on from this one: the continuation is queued or at work, so a second pass over
+      // the same row would start a second reply beside it (the tick reaches here every minute, not
+      // only a restart).
+      if (this.recovering.has(msg.id) || this.continuing.has(msg.id)) continue
       // From when the app cut it, not from when it was asked: a long reply asked hours ago was still
       // going when the app closed. Rows from before the app recorded that fall back to their own time.
       const stale = Date.now() - (cutAt ?? msg.at) > RESUME_WINDOW_MS
@@ -1431,12 +1447,16 @@ export class Runner {
       this.recovering.add(msg.id)
       // Queued one by one through the scheduler, so every cut reply comes back and none waits behind
       // the pass finishing: with something done it goes on from there, with nothing it starts over.
+      // Urgent, on the same reading as the continuation it starts: the person was waiting on these
+      // replies when the app closed, and a restart brings them back with all the other sessions at
+      // once, so an ordinary place would leave them last (20 Nov: four sessions held the four places
+      // and the cut reply never got one).
       this.enqueue(async () => {
         try {
           if (canContinue(run)) await this.continueReply(msg.id, 'restart')
           else this.retry(msg.id)
         } finally { this.recovering.delete(msg.id) }
-      }, false)
+      }, true)
     }
   }
 
