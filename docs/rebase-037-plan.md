@@ -377,3 +377,27 @@ PR, using the factual wording below; add the branch's real gate results when the
 
 Source: CHANGELOG 0.2.37, "A lighter desktop app, same identity" (#525). Do not claim this on a PR
 whose rebase is blocked, skipped, or still in preparation.
+
+## Wave 9 — 0.2.40 (in progress)
+
+Apo started wave 9 after the 0.2.39 delivery. Upstream released 0.2.40 at `2c071863` with
+computer lending and agent picking on a server. The fork delta `c705e912..42121d27` was applied in
+`ingest-0240` and committed as `bf280180` on `wave9-0240`; six union conflicts were resolved in
+`package.json`, `package-lock.json`, `src/core/index.ts`, `src/main/index.ts`, `Pages.tsx` and
+`styles.css`. The fork name and app id stay; the version is 0.2.40. A missing brace in both CSS
+unions briefly broke every rule after the inserted blocks; it was repaired before the gate.
+
+Gates on the checkpoint: `npx tsc --noEmit` clean, `npm run check:settings` passed with 36 sections,
+full suite 2833 passed with the same five failures as the delivered 0.2.39 build (`chrome-close` ×2,
+`chrome-windowless` ×2, `thought-boundary`). No new regression. The 0.2.40 tag and upstream head are
+both ancestors of the checkpoint, and no upstream commit remains behind it.
+
+Wave 9 scope: rebase #411, #247, #417, #379, #305, #279 and #272 onto `2c071863`; rebase #338 and
+#332 with the requested polish (a parallel-session cap per channel, no Steer or Interrupt in Agent
+replies, a steer sub-button on working sessions, and a queued subline on prompt pills); redesign the
+Asks page on #247 to use the Approvals design system; then install, release `next-v0.2.40`, and
+resume cron `5d2a00418dc2`. The contract is `docs/wave9-contract.md`.
+
+PR #375 (delete a session from the room) is explicitly parked for a future wave. Its handoff is
+`C:/Users/theap/.hermes/data/handoffs/2026-11-19-pr-375-delete-session.md`; no worktree or branch is
+assigned to it in this wave.
