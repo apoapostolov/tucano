@@ -668,6 +668,30 @@ export function QueuedNote(): ReactNode {
   )
 }
 
+// The reply as it was written, not as the screen drew it: its own Markdown, on the clipboard, for a
+// note, a doc or another window. Beside the way to answer it, since both are about the words above.
+export function CopyMarkdown({ text }: { text: string }): ReactNode {
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<number | undefined>(undefined)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  const copy = (): void => {
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true)
+        if (timer.current) window.clearTimeout(timer.current)
+        timer.current = window.setTimeout(() => setCopied(false), 1600)
+      })
+      .catch(() => toast(L('Não deu pra copiar a resposta.', 'Could not copy the reply.')))
+  }
+  const label = L('Copiar como Markdown', 'Copy as Markdown')
+  return (
+    <button type="button" className={`msg__copy${copied ? ' is-copied' : ''}`} title={label} aria-label={label} onPointerDown={(e) => e.preventDefault()} onClick={copy}>
+      <Icon name={copied ? 'check' : 'copy'} size={16} />
+    </button>
+  )
+}
+
 // `quote`: the excerpt of this message selected in the page, for the reply button under it.
 // `replyKey`: the composer it answers in (the thread it is in, or the conversation).
 // `away`: this reply's prompt is further up the list, so the glyph under the thread button goes back to it.
@@ -1013,6 +1037,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
             )}
             {canReply && (
               <div className="msg__actions">
+                {/* A finished session's last word may be wanted elsewhere as it was written. */}
+                {message.author.kind === 'agent' && message.run?.status === 'done' && message.text.trim() && <CopyMarkdown text={message.text} />}
                 <button
                   className={`msg__replyto ${quote ? 'msg__replyto--excerpt' : ''}`}
                   title={quote ? L('Responder ao trecho', 'Reply to selection') : L('Responder mensagem', 'Reply to message')}
