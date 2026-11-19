@@ -11,7 +11,7 @@ Nada sensível acontece sem você. Quando um agente quer publicar código, coloc
 
 ## Onde decidir
 - Na própria conversa, no card do pedido.
-- Em **Aprovações** (Approvals), na barra lateral, que lista tudo o que espera você e o **Histórico** (aprovado, recusado, expirado). **Conversa** leva até lá.
+- Em **Aprovações** (Approvals), na barra lateral, que lista tudo o que espera você e o **Histórico** (aprovado, recusado, expirado). **Ver conversa** leva até lá.
 - No celular, pelo Telegram (veja **celular**).
 
 ## Os botões

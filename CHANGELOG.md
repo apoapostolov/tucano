@@ -18,7 +18,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **The pill is called Follow**, on the drawer's row and on the reply's footer line, instead of Follow Up: one word for one field.
 - **The question records in the Asks history drop the "no answer" row.** An unanswered question shows its options with none taken, which already says so; the dashed row only repeated it.
-- **The way back to a question is labelled Conversation**, in the record and on the waiting cards, instead of "See in the conversation": the destination is the label.
+- **The way back to a question is labelled See Conversation**, in the record and on the waiting cards, instead of "See in the conversation": the destination is the label.
 - **An option nobody took is a shade above its card**, not the record's own background: on the dark theme the old fill read as a black hole punched in the card.
 
 ## [0.2.41] - 2026-11-19

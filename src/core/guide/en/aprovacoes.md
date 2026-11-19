@@ -11,7 +11,7 @@ Nothing sensitive happens without you. When an agent wants to publish code, put 
 
 ## Where to decide
 - In the conversation itself, on the request's card.
-- In **Approvals**, in the sidebar, which lists everything waiting for you and the **History** (approved, refused, expired). **Conversation** takes you there.
+- In **Approvals**, in the sidebar, which lists everything waiting for you and the **History** (approved, refused, expired). **See Conversation** takes you there.
 - On your phone, through Telegram (see **celular**).
 
 ## The buttons

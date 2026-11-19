@@ -98,7 +98,7 @@ describe('a row of the asks history', () => {
     expect(html.indexOf('<ul', question)).toBeGreaterThan(question) // the options hang off the question
     expect(firstOption).toBeGreaterThan(html.indexOf('<li', question))
     expect(html).toContain('na sua DM com Lia')
-    expect(html).toContain('>Conversa<')
+    expect(html).toContain('>Ver conversa<')
   })
 
   it('draws opened questions as rounded widgets, with the record\'s own grey pill on the option the agent pointed at', () => {
