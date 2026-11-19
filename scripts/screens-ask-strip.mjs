@@ -37,10 +37,14 @@ const question = '1. Install the packed 29a650ab build now, to get today’s fiv
 const asked = (() => {
   const db = new DatabaseSync(join(data, 'tucano.db'))
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('language', JSON.stringify('en'))
-  const conv = db.prepare("SELECT id FROM conversations WHERE kind = 'dm' LIMIT 1").get()
-  if (!conv) throw new Error('the seed made no DM to ask in')
-  const agent = db.prepare('SELECT id, name FROM agents WHERE id = (SELECT agent_id FROM members WHERE conversation_id = ?) LIMIT 1').get(conv.id)
-    ?? db.prepare("SELECT id, name FROM agents WHERE handle = 'lia'").get()
+  const agent = db.prepare("SELECT id, name FROM agents WHERE handle = 'lia'").get() ?? db.prepare('SELECT id, name FROM agents LIMIT 1').get()
+  if (!agent) throw new Error('the seed made no agent to ask')
+  // A DM is made when someone opens one, so this one is planted with the reply that waits in it.
+  const owner = db.prepare("SELECT id FROM people WHERE role = 'owner' LIMIT 1").get()
+  const conv = 'strip-dm'
+  db.prepare('INSERT OR REPLACE INTO conversations (id, kind, name, created_at, owner) VALUES (?, ?, ?, ?, ?)')
+    .run(conv, 'dm', agent.id, Date.now(), owner?.id ?? null)
+  db.prepare('INSERT OR REPLACE INTO members (conversation_id, agent_id) VALUES (?, ?)').run(conv, agent.id)
   const run = {
     status: 'waiting_input',
     steps: [],
@@ -48,9 +52,9 @@ const asked = (() => {
     questions: [{ question: 'Install now, or wait for the window at 01:41?', kind: 'single', options: [{ label: 'Install now' }, { label: 'Wait for 01:41' }] }]
   }
   db.prepare('INSERT OR REPLACE INTO messages (id, conversation_id, author_kind, author_id, text, at, run) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .run('strip-ask', conv.id, 'agent', agent?.id ?? null, '', Date.now(), JSON.stringify(run))
+    .run('strip-ask', conv, 'agent', agent.id, '', Date.now(), JSON.stringify(run))
   db.close()
-  return { conv: conv.id, agent: agent?.name ?? 'Lia' }
+  return { conv, agent: agent.name }
 })()
 
 // ---------- 3. the strip as it is drawn ----------
