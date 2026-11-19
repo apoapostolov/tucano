@@ -817,6 +817,10 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
   // install every ten minutes used to bury those under a chain with no words and no way on.
   const resumable = !!message.run && canResume(message.run, message.text)
   const hasFooter = !!(message.run?.receipt || (message.run?.status === 'done' && (message.author.kind === 'agent' || (message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation))))
+  // Trying again is owed to a reply that ended badly, on the same line the other two ways on sit: it is
+  // the third thing a dead reply offers, not a banner over them. At the limit it only helps once the
+  // limit went up, and until then the way out is raising it (the button below says so).
+  const retryable = !!message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit))))
   const openMenu = (e: React.MouseEvent<HTMLElement>): void => {
     if (!canReply || (e.target as HTMLElement).closest('a, button, input, textarea, select, [role="menu"]')) return
     const selected = selectedQuote(e.currentTarget)
@@ -997,64 +1001,48 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
           </Details>
         )}
         {message.run?.status === 'paused' && !message.run.held && (
-          <>
-            <div className="note">
-              {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
-              <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', 'The ceiling per reply is set in Settings › Agents › Limits; it isn’t the agent’s monthly limit.')}</span>
-            </div>
-            <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
-              <Icon name="play" size={11} />{L('Continuar', 'Continue')}
-            </button>
-          </>
+          <div className="note">
+            {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
+            <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', 'The ceiling per reply is set in Settings › Agents › Limits; it isn’t the agent’s monthly limit.')}</span>
+          </div>
         )}
-        {/* Held by the person, not stopped by a ceiling: nothing was lost, and the pill above resumes it
-            on the same session and model. */}
+        {/* Held by the person, not stopped by a ceiling: nothing was lost, and Continue resumes it on the
+            same session and model. */}
         {message.run?.status === 'paused' && message.run.held && (
           <div className="note">{L('Em espera: você segurou esta resposta. Ela continua do ponto em que parou.', 'On hold: you held this reply. It goes on from where it stopped.')}</div>
         )}
-        {/* Any reply the app cut goes on where it stopped instead of starting over: what it read, wrote
-            and ran is in the task the new reply reads, so nothing it already did is done twice (#390).
-            It comes before Try again and before anything on the footer line below, Follow Up included:
-            it is the first thing a cut reply owes the person. A reply cut while it was still thinking
-            has nothing behind it, and still takes it — that is the person's call, not the app's. */}
-        {resumable && !hasFooter && (
-          <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
-            <Icon name="play" size={11} />{L('Continuar', 'Continue')}
-          </button>
-        )}
-        {/* At the limit, trying again only helps once the limit went up: until then, the way out is raising it.
-            With no monthly limit set, nothing is ever over it: the reply is just to be tried again. */}
-        {message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit)))) && (
-          <button className="steps__ask-pill retry msg__hire" onClick={() => retryRun(message.id)}>
-            <Icon name="back" size={11} />{L('Tentar de novo', 'Try again')}
-          </button>
-        )}
+        {/* A limit that has no room again is a wall, not a dead reply: the way out is raising it, and it is
+            the one thing on that line. With no monthly limit set, nothing is ever over it. */}
         {message.run?.status === 'limit_reached' && agent && overMonthlyLimit(agent.used, agent.limit) && (
           <button className="steps__ask-pill retry msg__hire" onClick={() => (setTab('agent', 'perfil'), navigate({ kind: 'agent', id: agent.id }))}>
             {L(`Aumentar o limite de ${agent.name}`, `Raise ${agent.name}’s limit`)}
           </button>
         )}
         {/* A request and what came back from one are posted, not replies: nothing there to keep in the wiki. */}
-        {(hasFooter || canReply) && (
+        {(hasFooter || canReply || resumable || retryable) && (
           <div className="msg__meta">
-            {hasFooter && (
-              <>
-                {/* A session that shows no answer keeps its Continue here, first in its own footer line:
-                    before Follow up, and before the numbers. A reply with a footer of its own (a receipt,
-                    a done run) used to lose the pill to that line entirely, which is how a chain with no
-                    answer ended up with no way on. */}
-                {resumable && (
-                  <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
-                    <Icon name="play" size={11} />{L('Continuar', 'Continue')}
-                  </button>
-                )}
-              </>
+            {/* The three ways on from a reply that isn't at work, on one line and in this order: Continue
+                first — a cut reply goes on where it stopped instead of starting over, since what it read,
+                wrote and ran is in the task the new reply reads (#390), and a reply cut while it was
+                still thinking takes it too, that being the person's call and not the app's — then Try
+                again, which repeats the ask from the beginning, and then Follow Up, the steer's twin for
+                a reply that ended. Try again used to sit on a line of its own above this one, which made
+                a dead reply read as a banner with two buttons under it. */}
+            {resumable && (
+              <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
+                <Icon name="play" size={11} />{L('Continuar', 'Continue')}
+              </button>
             )}
-            {/* The way on from this reply, first in its own footer line, before the numbers: it is
-                about the reply above it, not about the conversation below. It is the steer's twin, so it
-                is on every reply that isn't at work — a reply cut by an install has no receipt line of
-                its own and still takes one, which is how a cut session gets told what to do next
-                instead of only being woken by Continue (run-progress.ts, `canFollowUp`). */}
+            {retryable && (
+              <button className="steps__ask-pill retry msg__hire" onClick={() => retryRun(message.id)}>
+                <Icon name="back" size={11} />{L('Tentar de novo', 'Try again')}
+              </button>
+            )}
+            {/* Then the way on in words: the steer's twin, about the reply above it and not about the
+                conversation below. It is on every reply that isn't at work — a reply cut by an install
+                has no receipt line of its own and still takes one, which is how a cut session gets told
+                what to do next instead of only being woken by Continue (run-progress.ts,
+                `canFollowUp`). */}
             <FollowUpPill message={message} />
             {hasFooter && (
               <>

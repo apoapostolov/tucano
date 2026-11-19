@@ -93,19 +93,22 @@ describe('a reply the app cut', () => {
     expect(buttons()).toContain('Try again')
   })
 
-  // It leads the reply's own actions: before Try again, and before the footer line that carries
-  // Follow Up.
-  it('comes before Try again and before the footer line', async () => {
+  // A dead reply owes three ways on, and they are one line under it: Continue first, then Try again,
+  // then Follow Up. Try again used to sit on a band of its own above that line, which made the reply
+  // read as a banner with two buttons below it instead of one row of choices.
+  it('puts Continue, Try again and Follow Up on the row under the reply, in that order', async () => {
     fake = { ...fake, messages: { d1: [cut([step('Thought', 'done'), step('Ran npx vitest run', 'done')])] } }
     await render(<ConversationView id="d1" />)
-    const labels = [...document.querySelectorAll('button.retry')].map((b) => b.textContent?.trim())
-    expect(labels.indexOf('Continue')).toBe(0)
-    expect(labels.indexOf('Continue')).toBeLessThan(labels.indexOf('Try again'))
-    const all = [...document.querySelectorAll('button')].map((b) => b.textContent?.trim())
     const meta = document.querySelector('.msg__meta')
-    const firstInMeta = meta ? [...meta.querySelectorAll('button')].map((b) => b.textContent?.trim()) : []
-    expect(firstInMeta).not.toContain('Continue')
-    expect(all.indexOf('Continue')).toBeGreaterThanOrEqual(0)
+    expect(meta).not.toBeNull()
+    const inMeta = meta ? [...meta.querySelectorAll('button')].map((b) => b.textContent?.trim() ?? '') : []
+    const at = (label: string): number => inMeta.findIndex((t) => t.includes(label))
+    expect(at('Continue')).toBeGreaterThanOrEqual(0)
+    expect(at('Continue')).toBeLessThan(at('Try again'))
+    expect(at('Try again')).toBeLessThan(at('Follow Up'))
+    // One row: the three of them are the only pills of the reply, and none is left outside the line.
+    expect(document.querySelectorAll('.msg__meta').length).toBe(1)
+    expect([...document.querySelectorAll('button.retry')].every((b) => meta!.contains(b))).toBe(true)
   })
 
   // A session left with no answer: the app cut it, a continuation was started from the row (so the row
