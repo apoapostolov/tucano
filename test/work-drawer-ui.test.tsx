@@ -93,11 +93,12 @@ describe('the work drawer', () => {
     expect(text()).toContain('isto pode esperar')
   })
 
-  it('says on the queued pill why it has not started', async () => {
+  it('keeps a queued row to its own line, with nothing written under it', async () => {
     await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
-    const sub = document.querySelector('.work-row--queued .work-row__sub')
-    expect(sub).not.toBeNull()
-    expect(sub?.textContent?.length).toBeGreaterThan(3)
+    const row = document.querySelector('.work-row--queued')
+    expect(row?.textContent).toContain('isto pode esperar')
+    // The heading above already says it is waiting: no second line repeating it.
+    expect(document.querySelector('.work-row--queued .work-row__sub')).toBeNull()
   })
 
   it('gives each working session a steer sub-button beside its stop action', async () => {

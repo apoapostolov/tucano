@@ -3186,10 +3186,8 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                 <div className="work-row work-row--queued" key={m.id}>
                   <button className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para este pedido', 'Go to this prompt')}>
                     <Icon name="clock" size={11} />
-                    <span className="work-row__prompt">
-                      <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
-                      <span className="work-row__sub">{L('Na fila, esperando a vez', 'Queued, waiting for its turn')}</span>
-                    </span>
+                    {/* The heading above already says it is waiting: the row is the prompt alone. */}
+                    <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
                     {where(m, 24)}
                   </button>
                 </div>

@@ -796,13 +796,15 @@ export class Runner {
       // Checked per responder: mentioning two agents past the cap queues the second one too.
       const beside = mode === 'parallel' && room()
       const wait = mode === 'queue' || (mode === 'parallel' && !beside)
+      // The first answers my message as any reply does; the ones after it read what it answered.
+      const after = !!before
       const start = (): Promise<Message | undefined> =>
         // startReply takes its own place in the queue once the agent is free, so a job that only
         // launches it gives its place back at once, and one that waits keeps what it was written for.
         this.startReply(
           agent,
           conv,
-          { depth: 1, threadId: replyIn, replyTo: mine.id, trigger: mine.id, ...(goalOn ? { goal: goalOn } : {}), ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) },
+          { depth: 1, threadId: replyIn, replyTo: mine.id, ...(after ? { trigger: mine.id } : {}), ...(goalOn ? { goal: goalOn } : {}), ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) },
           // A queued prompt answers the message it was written for, never taking over an earlier one.
           { urgent: true, merge: !wait, parallel: beside }
         )

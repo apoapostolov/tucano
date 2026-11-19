@@ -148,6 +148,9 @@ describe('applied the way the screen applies it', () => {
     core = await bootCore({ server: true })
     ana = core.connect()
     await ana.call('setMyName', { name: 'Ana' })
+    // This file is about the card waiting for the click: what the Tuca proposes inside the app is
+    // not applied by itself here (that path is test/tuca-apply-now-core.test.ts's).
+    await ana.call('updateSettings', { patch: { tucaApplyNow: false } })
   }, 30_000)
   afterAll(() => {
     try { rmSync(core.dataDir, { recursive: true, force: true }) } catch {}

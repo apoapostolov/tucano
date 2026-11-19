@@ -150,7 +150,8 @@ describe('settings sections inside the 0.2.37 tabs', () => {
 
     await render('agentes')
     // Recovery, Collaboration and Skills have no card on this tab: no links to nothing. Replies has one.
-    expect(labels()).toEqual(['Permissions', 'Replies', 'Automation', 'Limits'])
+    // 0.2.41 puts Tuca's on-by-default row and the agents' browser between Permissions and Replies.
+    expect(labels()).toEqual(['Permissions', 'Tuca', 'Agents browser', 'Replies', 'Automation', 'Limits'])
 
     await render('integracoes')
     expect(labels()).toEqual(['Phone and Telegram'])

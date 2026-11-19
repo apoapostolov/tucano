@@ -46,7 +46,7 @@ it('resumes working replies when enabled, preserving progress and keeping explic
   db.saveMessage({ ...msg, run: { ...msg.run!, task: 'Original task', work: 'TASK-123', steps: [{ id: 's', label: 'Saved file', status: 'done' }] } })
   reply('stopped', 2000, 'stopped')
   reply('old-interrupted', 3000, 'interrupted')
-  expect(db.interruptStaleRuns()).toBe(1)
+  expect(db.interruptStaleRuns()).toHaveLength(1)
   await runner.resumeInterrupted()
   await runner.idle()
   expect(turns).toHaveLength(1)
@@ -120,7 +120,7 @@ it('queues all interrupted replies while paused and resumes each once', async ()
 
 it('does not restart approval waits, questions, budget pauses, failures or completed replies', async () => {
   for (const status of ['waiting_approval', 'waiting_input', 'paused', 'failed', 'done'] as const) reply(status, 1000, status)
-  expect(db.interruptStaleRuns()).toBe(0)
+  expect(db.interruptStaleRuns()).toHaveLength(0)
   await runner.resumeInterrupted()
   expect(turns).toHaveLength(0)
 })
