@@ -1625,8 +1625,12 @@ function ThreadPanel({ rootId, conv, title, members, focusId, focusKey }: { root
       {root?.conversationId === conv.id ? (
         <>
           {showSummary && <ThreadSummaryPanel root={root} replies={replies} onClose={() => setShowSummary(false)} />}
-          // The panel's own header carries the session's trash, and its right edge is the window's: a rail
-          // drawn one glyph wide past the row would overflow it, so rows here have none (rail={false}).
+          {/*
+            rail={false}, and said here rather than in a `//` line: text between two elements is JSX
+            children, so a `//` written there is painted on the panel. The header above already carries
+            this session's trash, and its right edge is the window's — a rail one glyph wide past the
+            row would hang off it.
+          */}
           <MessageList key={rootId} messages={replies} conversationId={conv.id} threadId={rootId} focus={focus} focusKey={focusKey} lead={root} rail={false} divider={divider} />
           <Composer
             conversationId={conv.id}
