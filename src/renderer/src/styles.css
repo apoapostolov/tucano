@@ -17534,6 +17534,15 @@ button.agent-card__now:hover {
   border-color: var(--accent);
   background: var(--hover);
 }
+/* A phone's row spends its width on the reply's own words: a pill that carries a glyph drops its word
+   and keeps the glyph, which is the whole of what it does (Follow, Continue, Try again, Pause, Resume).
+   The one pill with no glyph keeps its words — it has nothing else to be read by — and every dropped
+   word stays as the button's aria-label, so a screen reader still says it. */
+@media (max-width: 760px) {
+  .steps__ask-pill__word {
+    display: none;
+  }
+}
 /* The way on from a reply that stopped — Continue and Try again under a dead session: the same pill
    Follow Up is, in its dim colour, and only under the pointer. A row that ended badly reads as its
    words and its numbers until someone goes near it, and the one thing it owes them is there when they

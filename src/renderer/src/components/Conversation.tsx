@@ -1029,13 +1029,13 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
                 a reply that ended. Try again used to sit on a line of its own above this one, which made
                 a dead reply read as a banner with two buttons under it. */}
             {resumable && (
-              <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
-                <Icon name="play" size={11} />{L('Continuar', 'Continue')}
+              <button className="steps__ask-pill retry msg__hire" aria-label={L('Continuar', 'Continue')} onClick={() => continueRun(message.id)}>
+                <Icon name="play" size={11} /><span className="steps__ask-pill__word">{L('Continuar', 'Continue')}</span>
               </button>
             )}
             {retryable && (
-              <button className="steps__ask-pill retry msg__hire" onClick={() => retryRun(message.id)}>
-                <Icon name="back" size={11} />{L('Tentar de novo', 'Try again')}
+              <button className="steps__ask-pill retry msg__hire" aria-label={L('Tentar de novo', 'Try again')} onClick={() => retryRun(message.id)}>
+                <Icon name="back" size={11} /><span className="steps__ask-pill__word">{L('Tentar de novo', 'Try again')}</span>
               </button>
             )}
             {/* Then the way on in words: the steer's twin, about the reply above it and not about the
@@ -2361,7 +2361,7 @@ function HoldButton({ message, paused }: { message: Message; paused: boolean }):
         title={L('Seguir agora, na mesma sessão e no mesmo modelo', 'Resume with the same session and model')}
         aria-label={L('Retomar a resposta', 'Resume reply')}
       >
-        <Icon name="play" size={11} />{L('Retomar', 'Resume')}
+        <Icon name="play" size={11} /><span className="steps__ask-pill__word">{L('Retomar', 'Resume')}</span>
       </button>
     )
   }
@@ -2373,7 +2373,7 @@ function HoldButton({ message, paused }: { message: Message; paused: boolean }):
       title={L('Parar antes do próximo passo e esperar: a sessão e o que ele já fez ficam', 'Pause before the next step, preserving the session and completed work')}
       aria-label={L('Pausar a resposta', 'Pause reply')}
     >
-      <Icon name="pause" size={11} /> {L('Pausar', 'Pause')}
+      <Icon name="pause" size={11} /> <span className="steps__ask-pill__word">{L('Pausar', 'Pause')}</span>
     </button>
   )
 }
@@ -2437,8 +2437,8 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
   }
   return (
     <div className={`steps__ask steps__ask--${p.icon}${p.place === 'reply' ? ' steps__ask--reply' : ''}`}>
-      <button type="button" className="steps__ask-pill" aria-expanded={open} title={p.title} onClick={() => (open ? close() : setOpen(true))}>
-        <Icon name={p.icon} size={11} /> {p.label}
+      <button type="button" className="steps__ask-pill" aria-expanded={open} aria-label={p.label} title={p.title} onClick={() => (open ? close() : setOpen(true))}>
+        <Icon name={p.icon} size={11} /> <span className="steps__ask-pill__word">{p.label}</span>
       </button>
       {/* In the work drawer the field is the row's second line: one line tall, as wide as the row and
           starting where the session's name starts, with the glyph that sends at its right end. Enter

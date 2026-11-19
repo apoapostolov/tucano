@@ -71,6 +71,11 @@ const measure = () => win.evaluate(() => {
     drawer: drawer ? box(drawer) : null,
     go: go ? box(go) : null,
     text: text ? { ...box(text), ellipsized: text.scrollWidth > text.clientWidth } : null,
+    word: (() => {
+      const w = pill.querySelector('.steps__ask-pill__word')
+      return w ? { display: getComputedStyle(w).display, text: (w.textContent ?? '').trim() } : null
+    })(),
+    name: pill.getAttribute('aria-label'),
     pill: {
       ...box(pill),
       lineHeight: cs.lineHeight,
@@ -100,8 +105,12 @@ await shot('02-drawer-420')
 const oneLine = (m) => !!m && m.pill.whiteSpace === 'nowrap' && m.pill.scrollH <= m.pill.clientH + 1 && m.pill.scrollW <= m.pill.clientW + 1
 const inside = (m) => !!m && m.drawer && m.pill.right <= m.drawer.right && m.pill.x >= m.drawer.x
 const givesWay = (m) => !m || m.text === null || m.text.ellipsized || m.text.w < 900
-const ok = oneLine(wide) && inside(wide) && oneLine(narrow) && inside(narrow)
+// A phone has no room for the word: the glyph alone, named for a screen reader, inside the same drawer.
+const wordy = (m) => !!m && m.word?.display !== 'none' && m.pill.w > 55
+const glyphOnly = (m) => !!m && m.word?.display === 'none' && m.pill.w < 45 && (m.name ?? '').length > 0
+const ok = oneLine(wide) && inside(wide) && wordy(wide) && oneLine(narrow) && inside(narrow) && glyphOnly(narrow)
 console.log(`label "${wide?.pill?.label}" fits ${wide?.pill?.scrollW}x${wide?.pill?.scrollH} in ${wide?.pill?.clientW}x${wide?.pill?.clientH} at 1280, ${narrow?.pill?.scrollW}x${narrow?.pill?.scrollH} in ${narrow?.pill?.clientW}x${narrow?.pill?.clientH} at 420`)
+console.log(`the pill reads ${wide?.word?.text} (${wide?.pill?.w}px) at 1280 and ${narrow?.word === null ? 'no word' : narrow.word.display === 'none' ? 'the glyph alone' : narrow.word.text} (${narrow?.pill?.w}px) at 420, named "${narrow?.name ?? ''}"`)
 console.log(`the row's words ${
   givesWay(wide) && givesWay(narrow) ? 'are the part that gives way' : 'keep their width while the pill is squeezed'
 }`)
