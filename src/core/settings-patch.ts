@@ -29,6 +29,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   // How the quota panels draw, and which providers they draw (src/shared/quota-view.ts).
   quotaView: { kind: ['rings', 'table'], max: 20, nullable: true },
   quotaHidden: { kind: 'array', max: 1_000, nullable: true },
+  maxParallelSessions: { kind: 'number', max: 30, nullable: true },
   wikiCapture: { kind: 'boolean', max: 10, nullable: true },
   wikiEdits: { kind: ['approve', 'auto'], max: 20, nullable: true },
   wikiReview: { kind: ['weekly', 'off'], max: 20, nullable: true },

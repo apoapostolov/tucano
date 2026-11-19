@@ -65,6 +65,8 @@ import {
   MAX_AGENT_ROUTINES,
   MAX_CHAIN_DEPTH,
   chainDepthCap,
+  MAX_PARALLEL_SESSIONS,
+  maxParallelSessionsCap,
   RUN_BUDGET_PCT,
   routineCap,
   RUN_STALL_MINUTES,
@@ -4100,6 +4102,15 @@ function WorkspaceHistorySection(): ReactNode {
   )
 }
 
+// The two ways a prompt sent while a reply is running can use Enter (see `send` in
+// src/core/runs.ts). Steering and interrupting stay one key away, but are not Enter defaults.
+export const REPLY_MODES = ['parallel', 'queue'] as const satisfies readonly SendMode[]
+
+// What the card saves for the numbers: whatever was typed, the core gets whole numbers inside the
+// caps, so a hand-edited settings file can't lift either one.
+export const chainDepthPatch = (n: number): Pick<Settings, 'chainDepth'> => ({ chainDepth: chainDepthCap(n) })
+export const maxParallelSessionsPatch = (n: number): Pick<Settings, 'maxParallelSessions'> => ({ maxParallelSessions: maxParallelSessionsCap(n) })
+
 // Where skills are read from: the folder each harness on this computer keeps for itself, and the ones
 // added by hand. Every folder that's on mixes into one list, which is what a bot picks from
 // (src/core/local-skills.ts).
@@ -4553,25 +4564,36 @@ export function SettingsPage(): ReactNode {
 
         {pane('agentes') && admin && (
           <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
-            <Field
-              label={L('Um novo prompt com uma resposta em curso', 'While a reply is running')}
-              hint={L(
-                'O que o Enter faz quando o agente já está respondendo ali. Shift+Enter enfileira, Alt+Enter entrega no meio do trabalho, Shift+Alt+Enter interrompe, seja qual for o ajuste. Ctrl+Enter quebra a linha.',
-                'Enter uses this mode. Shift+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Ctrl+Enter adds a line.'
+            <div className="grid2">
+              <Field
+                label={L('Um novo prompt com uma resposta em curso', 'While a reply is running')}
+                hint={L(
+                  'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
+                  'Enter follows this choice. Ctrl+Enter queues, Alt+Enter steers the running reply, and Shift+Alt+Enter interrupts it, each just once. Shift+Enter adds a line.'
+                )}
+              >
+                <Select
+                  value={settings.sendMode ?? 'parallel'}
+                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                  options={[
+                    { value: 'parallel', label: L('Ao lado dela, em paralelo', 'Parallel replies') },
+                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') }
+                  ]}
+                  placeholder={L('Escolha', 'Pick')}
+                />
+              </Field>
+              {settings.sendMode === 'parallel' && (
+                <Field label={L('Sessões paralelas por canal', 'Parallel sessions per channel')} hint={L('As demais esperam na fila.', 'Replies past this limit wait in the queue.')}>
+                  <NumberInput
+                    aria-label={L('Sessões paralelas por canal', 'Parallel sessions per channel')}
+                    min={1}
+                    max={MAX_PARALLEL_SESSIONS}
+                    value={maxParallelSessionsCap(settings.maxParallelSessions)}
+                    onChange={(n) => updateSettings(maxParallelSessionsPatch(n))}
+                  />
+                </Field>
               )}
-            >
-              <Select
-                value={settings.sendMode ?? 'parallel'}
-                onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
-                options={[
-                  { value: 'parallel', label: L('Ao lado dela, em paralelo', 'Parallel replies') },
-                  { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') },
-                  { value: 'steer', label: L('Entregue à resposta em curso', 'Steer current reply') },
-                  { value: 'interrupt', label: L('Interrompe e começa com esta', 'Interrupt and restart') }
-                ]}
-                placeholder={L('Escolha', 'Pick')}
-              />
-            </Field>
+            </div>
           </Card>
         )}
 

@@ -37,7 +37,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'workspace-transfer', page: 'workspace', label: L('Importar e exportar', 'Import and export'), keys: [], scope: 'workspace', visible: admin },
     { id: 'workspace-backups', page: 'workspace', label: L('Backups', 'Backups'), keys: [], scope: 'workspace', visible: owner },
     { id: 'workspace-danger', page: 'workspace', label: L('Dados e exclusão', 'Data and deletion'), keys: ['retentionDays'], scope: 'workspace', visible: admin },
-    { id: 'agents-replies', page: 'agents', label: L('Respostas', 'Replies'), keys: ['sendMode', 'chainDepth'], scope: 'workspace', visible: admin },
+    { id: 'agents-replies', page: 'agents', label: L('Respostas', 'Replies'), keys: ['sendMode', 'maxParallelSessions', 'chainDepth'], scope: 'workspace', visible: admin },
     { id: 'agents-recovery', page: 'agents', label: L('Recuperação', 'Recovery'), keys: ['resumeInterrupted', 'runStallMinutes'], scope: 'workspace', visible: admin },
     { id: 'agents-permissions', page: 'agents', label: L('Permissões', 'Permissions'), keys: ['autonomy', 'actionRules', 'outsideGuard', 'approvalTtlHours'], scope: 'workspace', visible: admin },
     { id: 'agents-limits', page: 'agents', label: L('Limites', 'Limits'), keys: ['defaultLimit', 'runBudgetPct'], scope: 'workspace', visible: admin },

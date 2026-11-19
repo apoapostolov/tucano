@@ -18,6 +18,7 @@ import { Db } from '../src/core/db'
 import { fakeEngine } from '../src/core/engines/fake'
 import type { Engine, Turn } from '../src/core/engines/types'
 import { Gateway } from '../src/core/gateway'
+import { routerTurn } from '../src/core/router'
 import { Runner } from '../src/core/runs'
 import { plainCipher, Secrets } from '../src/core/secrets'
 
@@ -134,6 +135,38 @@ describe('a prompt that arrives while a reply is running', () => {
     expect(agentMessages().map((m) => m.run?.status)).toEqual(['done', 'done']) // both answered
   })
 
+  it('parallel: past the channel cap, a prompt waits in the queue until a reply ends', async () => {
+    db.saveAgent(agent())
+    db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
+    const rec: string[] = []
+    const r = runnerWith(recorded(rec))
+    await r.send('d1', 'comece, demore 1 s')
+    await r.send('d1', 'ao lado', [], undefined, undefined, { mode: 'parallel' })
+    await r.send('d1', 'na fila', [], undefined, undefined, { mode: 'parallel' })
+    expect(rec.filter((x) => x === 'start')).toHaveLength(2) // the cap is two, so the third waits
+    expect(mine().at(-1)?.sendMode).toBe('queue') // and says so in the conversation
+    expect(db.queuedMessages().map((m) => m.text)).toEqual(['na fila']) // and survives a restart
+    await r.idle()
+    expect(rec.filter((x) => x === 'start')).toHaveLength(3)
+    expect(rec.at(-1)).toBe('end') // it went after the two already there
+    expect(db.queuedMessages()).toEqual([])
+  })
+
+  it('parallel: a lower setting puts the extra prompt in the queue, and it still gets an answer', async () => {
+    settings.maxParallelSessions = 1
+    db.saveAgent(agent())
+    db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
+    const rec: string[] = []
+    const r = runnerWith(recorded(rec))
+    await r.send('d1', 'primeiro')
+    await r.send('d1', 'segundo', [], undefined, undefined, { mode: 'parallel' })
+    expect(rec).toEqual(['start'])
+    expect(mine().at(-1)?.sendMode).toBe('queue')
+    await r.idle()
+    expect(rec).toEqual(['start', 'end', 'start', 'end'])
+    expect(agentMessages().map((m) => m.run?.status)).toEqual(['done', 'done'])
+  })
+
   it('parallel: only one of the two holds the kept session, the other reads the whole conversation', async () => {
     db.saveAgent(agent())
     db.createConversation({ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] })
@@ -233,6 +266,87 @@ describe('a prompt that arrives while a reply is running', () => {
     const row = db.message(running.id)?.run?.steps.find((s) => s.kind === 'steer')
     expect(row?.input).toBe('mude de plano') // the reply's own chain carries it, in my words
     await r.idle()
+  })
+})
+
+// A channel message nobody was mentioned in, with more than one agent there, is the router's to give
+// out (`routeAndRun`). The reply it picks follows the same rule as any other: beside the reply running
+// there when the person's prompt asked for it (parallel), after it otherwise.
+describe('a channel prompt the router picks for', () => {
+  // The fake engine routes to the first agent in the channel, and takes its time on "demore N s".
+  // The router's own turn isn't a reply, so it isn't recorded.
+  const recording = (rec: string[]): Engine => {
+    const base = fakeEngine('claude', { delayMs: 1 })
+    return {
+      id: 'claude',
+      async *run(turn: Turn) {
+        if (turn.system === routerTurn('claude', '').system) return yield* base.run(turn)
+        rec.push('start')
+        try {
+          yield* base.run(turn)
+        } finally {
+          rec.push('end')
+        }
+      }
+    }
+  }
+  const channel = (): void => {
+    db.saveAgent(agent())
+    db.saveAgent({ ...agent(), id: 'a2', name: 'Nina', handle: 'nina' })
+    db.createConversation({ id: 'c1', kind: 'channel', name: 'eng', members: ['a1', 'a2'] })
+  }
+
+  it('parallel: the picked reply goes beside the reply running there, the two at once', async () => {
+    channel()
+    const rec: string[] = []
+    const r = runnerWith(recording(rec))
+    await r.send('c1', '@lia comece, demore 1 s')
+    await r.send('c1', 'e isto também', [], undefined, undefined, { mode: 'parallel' })
+    await expect.poll(() => rec.filter((x) => x === 'start').length, { timeout: 5000 }).toBe(2)
+    expect(rec.slice(0, 2)).toEqual(['start', 'start']) // it didn't wait for the first one
+    await r.idle()
+    expect(rec).toEqual(['start', 'start', 'end', 'end'])
+    expect(agentMessages().map((m) => m.run?.status)).toEqual(['done', 'done'])
+  })
+
+  it('parallel: the cap also holds for the reply the router picks', async () => {
+    settings.maxParallelSessions = 1
+    channel()
+    const rec: string[] = []
+    const r = runnerWith(recording(rec))
+    await r.send('c1', '@lia comece, demore 1 s')
+    await r.send('c1', 'e isto também', [], undefined, undefined, { mode: 'parallel' }) // the router picks Lia again
+    await expect.poll(() => rec.filter((x) => x === 'start').length, { timeout: 5000 }).toBe(1)
+    expect(mine().at(-1)?.sendMode).toBe('queue')
+    await new Promise((res) => setTimeout(res, 400)) // long enough for the router to have picked someone
+    expect(rec.filter((x) => x === 'start')).toHaveLength(1)
+    await r.idle()
+    expect(rec.filter((x) => x === 'start')).toHaveLength(2)
+  })
+
+  it('no mode: it waits for the reply running there to end, as any other reply', async () => {
+    channel()
+    const rec: string[] = []
+    const r = runnerWith(recording(rec))
+    await r.send('c1', '@lia comece, demore 1 s')
+    await r.send('c1', 'e isto também') // nobody named: the router picks Lia again
+    await new Promise((res) => setTimeout(res, 400)) // the router thought, and the reply waited
+    expect(rec).toEqual(['start'])
+    await r.idle()
+    expect(rec).toEqual(['start', 'end', 'start', 'end']) // never side by side
+    expect(agentMessages().map((m) => m.run?.status)).toEqual(['done', 'done'])
+  })
+
+  it('queue: it waits for the whole conversation to go quiet, the routed one included', async () => {
+    channel()
+    const rec: string[] = []
+    const r = runnerWith(recording(rec))
+    await r.send('c1', '@lia comece, demore 1 s')
+    await r.send('c1', 'e isto também', [], undefined, undefined, { mode: 'parallel' })
+    await r.send('c1', 'isto vem depois', [], undefined, undefined, { mode: 'queue' })
+    await r.idle()
+    expect(rec.filter((x) => x === 'start')).toHaveLength(3)
+    expect(rec.at(-1)).toBe('end') // the queued one went last, after both
   })
 })
 

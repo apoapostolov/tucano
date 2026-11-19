@@ -655,6 +655,16 @@ const NO_ATTACHED: Artifact[] = []
 // `replies`: in a timeline with threads, the replies to this message (none yet: empty).
 // `ask`: on a routine's run, the message the routine posted: a chip by the name that opens it (`askReplies`: its thread).
 // Memoized because each word an agent streams redraws the list: only the row that changed should pay for it.
+// The mark under a prompt that hasn't started: the label says it is queued, the line below why.
+export function QueuedNote(): ReactNode {
+  return (
+    <span className="tag msg__queued" title={L('Chega quando a resposta acima terminar', 'Goes when the reply above ends')}>
+      <span className="msg__queued-label">{L('Na fila', 'Queued')}</span>
+      <span className="msg__queued-sub">{L('Esperando a resposta acima terminar', 'Waiting for the reply above to finish')}</span>
+    </span>
+  )
+}
+
 // `quote`: the excerpt of this message selected in the page, for the reply button under it.
 // `replyKey`: the composer it answers in (the thread it is in, or the conversation).
 // `away`: this reply's prompt is further up the list, so the glyph under the thread button goes back to it.
@@ -803,9 +813,12 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
         {/* A prompt of mine waiting its turn behind the reply above (the mode on the message, runs.ts):
             it says so until its own reply starts, and then the mark goes. A steer isn't here: it is a
             row in the running reply's chain, not a message of mine (runs.ts, `steerIn`). */}
-        {message.sendMode === 'queue' && (
-          <span className="tag msg__queued" title={L('Chega quando a resposta acima terminar', 'Goes when the reply above ends')}>
-            {L('Na fila, esperando a resposta acima', 'Queued, waiting for the reply above')}
+        {message.sendMode === 'queue' && <QueuedNote />}
+        {/* A prompt handed into the reply above, which reads it between two tool calls (runs.ts). It's
+            said here, so a message that gets no reply of its own never looks lost. */}
+        {message.sendMode === 'steer' && (
+          <span className="tag msg__queued" title={L('A resposta acima leu isto no meio do trabalho dela', 'The reply above read this in the middle of its work')}>
+            {L('Entregue à resposta acima', 'Handed to the reply above')}
           </span>
         )}
         {/* The question, as a card under the reply: alone, mine to answer there; with a team, it says whom it's for, and who
