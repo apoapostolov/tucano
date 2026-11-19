@@ -129,9 +129,22 @@ describe('the follow up pill', () => {
     expect(document.querySelector('.steps .steps__ask')).not.toBeNull()
   })
 
-  it('is not offered for a reply that failed or was stopped: that one is tried again', async () => {
-    for (const status of ['failed', 'stopped', 'interrupted', 'waiting_input'] as const) {
+  // A steer steers the reply at work; this is the steer's twin for one that isn't. A reply the app cut
+  // (or the person stopped, or that failed, or that paused at its cap) is woken with what to do next,
+  // not only with Continue: that is the pill a cut session was missing on 19 Nov.
+  it('is offered on every reply that is not at work, and on none that is waiting on the person', async () => {
+    for (const status of ['done', 'stopped', 'interrupted', 'failed', 'paused'] as const) {
       await draw(reply(status))
+      expect(pill()?.textContent?.trim()).toBe('Seguir')
+    }
+    // Still the reply's own: one at work is steered from the chain, and a question or an approval holds
+    // the run — it isn't finished, and what the person owes it is an answer, not an instruction.
+    await draw(reply('working'))
+    expect(document.querySelector('.steps__ask--reply')).toBeNull()
+    expect(pill()?.textContent?.trim()).toBe('Orientar')
+    for (const status of ['waiting_input', 'waiting_approval', 'limit_reached'] as const) {
+      await draw(reply(status))
+      expect(document.querySelector('.steps__ask--reply')).toBeNull()
       expect(pill()).toBeNull()
     }
   })

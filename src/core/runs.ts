@@ -52,7 +52,7 @@ import { commandStep, execSummary, keyArg, maskSecrets, resultSummary } from './
 import { askMessage, askTask, byCode, wantsDm, inPlace, placeOf, CANCELAR_PEDIDO, channelNamed, codeOf, DELEGATION_TOOL_NAMES, DELEGATION_TOOLS, MAX_DELEGATIONS_PER_REPLY, MAX_OPEN_DELEGATIONS, parseAsk, PEDIR, RESPONDER_PEDIDO, returnTask, teamMember, teamSection, type Returned } from './delegations'
 import { askKind, channelsOf, entriesOf, headsOf, MAX_CHAIN, reachOf, sectorName, sectorOf } from '../shared/org'
 import type { Delegation, DelegationRef } from '../shared/types'
-import { canContinue, canResume, finishedSilently, WORKLESS_LABELS } from '../shared/run-progress'
+import { canContinue, canFollowUp, canResume, finishedSilently, WORKLESS_LABELS } from '../shared/run-progress'
 import { CONCLUIR_OBJETIVO, GOAL_MAX_TURNS, goalEnd, goalTask, goalText, sameReply, type Goal } from './goals'
 
 const refOf = (d: Delegation): DelegationRef => ({ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) })
@@ -89,8 +89,6 @@ const DELTA_FLUSH_MS = 40
 // How much thinking is worth one wake-up of the window: it is read, not parsed.
 const THOUGHT_FLUSH = 240
 const RETRYABLE: RunStatus[] = ['failed', 'stopped', 'interrupted', 'limit_reached']
-// A reply that has ended and can go on: the person asks more of it, in the same place.
-const FOLLOWABLE: RunStatus[] = ['done']
 // In the chain, the instruction a finished reply goes on with: the person's words, in a row of their
 // own, like a steer's. Not a tool call, so it doesn't wear a tool call's colours.
 const followUpStep = (instruction: string): Step => ({
@@ -1134,22 +1132,30 @@ export class Runner {
     void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg }, { urgent: true })
   }
 
-  // A finished reply goes on where it stopped, with an instruction. It isn't a message of its own and
-  // it isn't a new reply: the same row keeps working, its text and steps stay, and the session it ended
-  // with is resumed, so the new turn carries the instruction and the past comes from the cache.
+  // A reply goes on where it stopped, with an instruction. It isn't a message of its own and it isn't a
+  // new reply: the same row keeps working, its text and steps stay, and the session it ended with is
+  // resumed, so the new turn carries the instruction and the past comes from the cache.
+  //
+  // A steer is for the reply at work; this is the same thing for one that isn't (run-progress.ts):
+  // ended, cut by the app or a stop, failed, or paused at its cap. Waking a cut reply this way is
+  // Continue with words — the row goes on with what it did, and the instruction is what it does next —
+  // so both doors take one wake per row. It carries nothing extra in the turn: a cut session can't be
+  // resumed (its last turn never ended well), so `reply()` starts a new one on the whole transcript and
+  // `carried()` puts the row's own last answer with the task.
   followUp(messageId: string, text: string): void {
     const { db } = this.deps
     const instruction = text.trim()
     if (!instruction) return
     if (this.paused) return // nobody starts working while paused
     const msg = db.message(messageId)
-    if (!msg?.run || msg.author.kind !== 'agent' || !FOLLOWABLE.includes(msg.run.status)) return
+    if (!msg?.run || msg.author.kind !== 'agent' || !canFollowUp(msg.run)) return
     const agent = db.agent(msg.author.id)
     const conv = db.conversation(msg.conversationId)
     if (!agent || !conv) return
     // Already going on from this one: two turns on one row would fight over it.
-    if (this.controllers.has(msg.id)) return
-    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg, followUp: instruction }, { urgent: true })
+    if (this.controllers.has(msg.id) || this.continuing.has(messageId)) return
+    this.continuing.add(messageId)
+    void this.startReply(agent, conv, { depth: msg.run!.depth ?? 1, existing: msg, followUp: instruction }, { urgent: true }).finally(() => this.continuing.delete(messageId))
   }
 
   // A reply that was cut goes on in a new reply that knows what it did: its text is in the

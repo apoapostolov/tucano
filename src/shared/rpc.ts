@@ -51,7 +51,7 @@ export interface Api {
   pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
   resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
   retryRun(p: { messageId: string }): void
-  followUpRun(p: { messageId: string; text: string }): void // a finished reply goes on from where it stopped, in the same row
+  followUpRun(p: { messageId: string; text: string }): void // a reply that isn't at work (ended, cut, paused) goes on from where it stopped, in the same row, with what was written
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
   deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the room with its thread: the ids that went
   setAgentModels(p: { agentIds: string[]; modelId: string }): number

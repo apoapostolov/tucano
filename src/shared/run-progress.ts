@@ -36,3 +36,12 @@ export const finishedSilently = (run: Run, text: string): boolean =>
 // asked for, and `canContinue` for one that goes on by itself.
 export const canResume = (run: Run, text = ''): boolean =>
   run.status === 'paused' || CUT.includes(run.status) || finishedSilently(run, text)
+
+// Where a Follow Up is offered: the reply is not at work, and it is not waiting on the person for a
+// question or an approval either — it ended, it was cut (by the app closing, by the person's stop, by
+// an engine that failed), or it paused at its cap. A steer steers the reply at work; a follow up wakes
+// one that isn't: the same field, the same row, and the instruction is what it goes on with. The core
+// takes it from here and the window draws the pill from here, so the pill is only shown where the
+// core will really wake the reply.
+export const FOLLOWABLE: RunStatus[] = ['done', 'paused', ...CUT]
+export const canFollowUp = (run: Run): boolean => FOLLOWABLE.includes(run.status)
