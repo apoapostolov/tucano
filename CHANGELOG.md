@@ -24,6 +24,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Every question of an ask is the same width.** The record was a row of content-sized cards, so a short question shrank beside a long one and read as a leftover; the cards share the row now, and stack to one column when the window is narrow.
 - **The number sits in the middle of its answer.** The numbered square rode the first line of a wrapped answer; it centers on the whole block now, while the words keep their top edge.
 
+## [0.2.42] - 2026-11-19
+
+> **Em português:**
+> - **Corrigido:** no **Quadro**, o aviso de agente parado não desenha mais o nome do agente por cima de "parou em …".
+> - **Corrigido:** num **servidor** (Tucano Pro), o **ditado** diz onde o áudio vira texto: no servidor, não "neste computador, sem internet". E avisa que lá o modelo **Leve** é bem mais rápido.
+
 ### Fixed
 
 - **The Quadro's "stopped on" row no longer draws the agent's name over the text.** The row borrowed the chat message's class, a grid with a 34px first column, so a name like "UI Architect" spilled over "parou em …".
