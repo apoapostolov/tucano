@@ -331,6 +331,16 @@ and most earlier wave branches now report CONFLICTING until a 0.2.40 rebase. I h
 instead of claiming a compatibility that GitHub does not report. The 0.2.39 release remains the
 wave 8 target; 0.2.40 is the next backport wave.
 
+Wave 8 is delivered. The final checkpoint is `42121d27`, pushed to `origin/next` as `d557f142` with
+docs-only commits after it at `c2ff3d88`. The installed asar is 37882679 bytes with SHA-256
+`d801a303eec6b2f3607cb2f1ebb26017e0de885e32742640b2008bd10baa85ac`; doctor reports version 0.2.39,
+window `TucanoNext`, `sameAsBuild: true`, verdict `running`. The fork release is
+`next-v0.2.39` at https://github.com/apoapostolov/tucano/releases/tag/next-v0.2.39, installer
+132477054 bytes with SHA-256 `bac476b1c4198cfe8db4184fab7c401f6038696f760520c685c48e37a3766f2b`.
+GitHub's asset digest matches the local file and a ranged GET returned bytes 0-1023. A hardcoded
+server title from upstream 0.2.39 was fixed before install so the window keeps the fork name.
+Ingesting 0.2.40 is now under way in `ingest-0240`.
+
 The notification language defect is fixed in #417 at `abdf5732` and in the checkpoint at `8c79d56e`.
 The area picker was a second notice window that never called `setLang`, so it stayed in Portuguese;
 both notice windows now receive the selected language on first paint and follow later settings
