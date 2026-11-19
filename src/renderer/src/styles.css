@@ -3854,10 +3854,102 @@ body.is-resizing webview {
 .msg__reply:focus-visible {
   opacity: 1;
 }
-/* Back to the prompt this reply answers, right under the thread button: only on a reply that
-   something came in between, so the two glyphs never fight for the same corner. */
+/* Every trash is an overlay on its row: the rail, the prompt bubble's left side or the post's
+   outer rail. The header variant opts back into the row below. */
+.msg__delete {
+  position: absolute;
+  opacity: 0;
+  color: var(--text-2);
+  transition: var(--transition-ui);
+}
+.msg__delete.is-armed {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+/* The trash rides the same sticky rail, one row under the thread button. The way back to the
+   prompt takes the row after it, so the three glyphs share one column and never cover each other. */
+.msg__anchor-pin .msg__delete {
+  position: absolute;
+  top: 28px;
+  right: -24px;
+  opacity: 0;
+  color: var(--text-2);
+  transition: var(--transition-ui);
+}
+.msg__anchor-pin--alone .msg__delete {
+  top: 4px;
+}
+.msg:hover .msg__delete,
+.msg__delete:focus-visible,
+.msg__delete.is-armed {
+  opacity: 1;
+}
+/* Back to the prompt this reply answers, right under the trash. */
 .msg__reply--up {
   top: 28px;
+}
+.msg__anchor-pin .msg__reply--up {
+  top: 52px;
+  right: -24px;
+}
+.msg__anchor-pin--alone .msg__reply--up {
+  top: 28px;
+  right: -24px;
+}
+/* In the thread's own header the trash sits in the row, beside summary and close. */
+.msg__delete--head {
+  position: static;
+  opacity: 1;
+}
+/* A routine's post has no run to ride: its trash sits on the outer rail, under the thread button. */
+.msg__delete--post {
+  top: 28px;
+  right: -24px;
+}
+/* My own prompt carries the pencil, the trash and the thread button on the free space to its left.
+   A tall prompt stands them in one column; a short one fans them out on the same first line. */
+.msg__edit {
+  position: absolute;
+  top: 6px;
+  right: calc(100% + 32px);
+  color: var(--text-2);
+  opacity: 0;
+  transition: var(--transition-ui);
+}
+.msg--me .msg__delete--prompt {
+  top: 6px;
+  right: calc(100% + 58px);
+}
+.msg--me.is-left-stack .msg__edit {
+  top: 30px;
+  right: calc(100% + 6px);
+}
+.msg--me.is-left-stack .msg__delete--prompt {
+  top: 54px;
+  right: calc(100% + 6px);
+}
+.msg:hover .msg__edit,
+.msg__edit:focus-visible,
+.msg:hover .msg__delete--prompt,
+.msg__delete--prompt:focus-visible {
+  opacity: 1;
+}
+.msg__edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 4px;
+  width: 100%;
+  max-width: 100%;
+}
+.msg__edit-box textarea {
+  box-sizing: border-box;
+  resize: none;
+  min-height: 62px;
+}
+.msg__edit-actions {
+  display: flex;
+  gap: 8px;
 }
 @media (hover: none) {
   .msg__reply {

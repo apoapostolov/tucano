@@ -2064,7 +2064,7 @@ export function AskedRow({
       <button type="button" className="history-row__line" onClick={onToggle} aria-expanded={open}>
         {agent ? <AgentAvatar agent={agent} size={20} still /> : <span className="history-row__noone" />}
         <span className="history-row__what">
-          <span className="grow" title={line}>
+          <span className="grow truncate" title={line}>
             {line}
           </span>
           <span className="history-row__who">{agent?.name ?? L('Agente', 'Agent')}</span>
