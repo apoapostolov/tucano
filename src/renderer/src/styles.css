@@ -17745,3 +17745,10 @@ button.agent-card__now:hover {
 .saved-logins .hint {
   margin: 0;
 }
+/* The settings section rail wraps instead of running past the panel: at 900 px its nine sections
+   measure 913 px inside a 570 px box, and a flex row that cannot wrap leaves the last of them
+   outside it. Nothing scrolls, because the row has no scroll container. */
+.settings-sections {
+  flex-wrap: wrap;
+}
+
