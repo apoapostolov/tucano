@@ -146,7 +146,7 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     expect(labels()).toEqual(['Context', 'Quotas', 'Dictation', 'Notifications', 'Conversation', 'Updates', 'Import and export', 'Backups', 'Data and deletion'])
 
     await render('modelos')
-    expect(labels()).toEqual(['Agent models', 'Runtimes', 'Accounts', 'Classifiers', 'Router', 'Classifier Uses', 'Memory'])
+    expect(labels()).toEqual(['Agent models', 'Session names', 'Runtimes', 'Accounts', 'Classifiers', 'Router', 'Classifier Uses', 'Memory'])
 
     await render('agentes')
     // Recovery, Collaboration and Skills have no card on this tab: no links to nothing. Replies has one.

@@ -11,10 +11,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ### Changed
 
 - **Steer comes before the x on a running reply's row in the work drawer.** Steering a reply that is working is what a person does far more often than stopping it, and the x was the first thing under the pointer at the row's end. The row now reads: the prompt, **Steer**, then the x that stops it.
+- **The reasoning block is only the reasoning: no label line and no fold.** The line that said "Thinking" or "Thought" over the text, with the chevron that folded it, cost a row above every reply's reasoning and hid the thing the block exists for. It is the dim text alone now, as the steps above it are rows and nothing else, scrolling at the size set in Settings, and it fades out on its last line only while it is still arriving.
 
 ### Fixed
 
-- **The reasoning block's size setting takes effect: 6, 12 or 18 lines.** All three sizes drew six, because a fixed `max-height` on the text inside the block — the six lines it was before the setting existed — outranked the block's own height. The block is the one that scrolls now, as the reading-position code has always driven it, with the label staying in view while the reasoning runs under it, and a finished reply still opens in full.
+- **A route whose model's subscription is used up no longer ends the reply.** With hard work on a Codex or Claude tier and that window spent, routing handed the reply to a model that could only answer "you hit your limit", and the tier below never got it: the session didn't start at all. A spent window (Codex's own, from its app-server; Claude's, from the last reply) is now a reason to walk one step further down the chain, and the line over the reply says which limit it was and when it frees up.
+- **The reasoning block's size setting takes effect: 6, 12 or 18 lines.** All three sizes drew six, because a fixed `max-height` on the text inside the block — the six lines it was before the setting existed — outranked the block's own height. The block is the one that scrolls now, as the reading-position code has always driven it, and a finished reply still opens in full.
 - **The reasoning block is as wide as the steps above it.** The block's text sat 4 px in from a step's row and ended 10 px short of it, so the reasoning read as a narrower column than the chain it belongs to. The block takes the chain's own column now, and the scrollbar no longer takes 10 px out of it while it streams: the last line fades instead.
 
 ## [0.2.40] - 2026-11-18
