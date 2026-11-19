@@ -889,6 +889,12 @@ function createWindow(): BrowserWindow {
     else win.show()
   })
   mainWindow = win
+  // The renderer's page is still titled upstream's 'Tucano'. The window is named after this app:
+  // the document title never renames it, and servers.ts sets it again when a server is on screen.
+  win.webContents.on('page-title-updated', (event) => {
+    event.preventDefault()
+    win.setTitle(NAME)
+  })
   // A server on screen keeps the window's size (servers.ts), and comes back in a window made again.
   win.on('resize', () => servers.place())
   win.webContents.once('did-finish-load', () => servers.place())
