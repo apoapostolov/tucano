@@ -82,11 +82,11 @@ export function installProblems(programs, { releasedWasInstalled = false } = {})
   const mine = join(programs, IDENTITY.installDir)
   const released = join(programs, IDENTITY.releasedDir)
   if (!existsSync(join(mine, IDENTITY.exe))) problems.push(`${join(mine, IDENTITY.exe)} is missing: the install did not land in TucanoNext's own folder`)
-  if (existsSync(join(released, IDENTITY.exe)) && existsSync(join(mine, IDENTITY.releasedExe))) {
+  if (existsSync(join(mine, IDENTITY.releasedExe))) {
     problems.push(`${join(mine, IDENTITY.releasedExe)} exists: a released-app executable was installed into TucanoNext's folder, and its uninstaller would take that app's shortcuts`)
   }
-  if (releasedWasInstalled && !existsSync(join(released, IDENTITY.exe))) {
-    problems.push(`${join(released, IDENTITY.exe)} is gone: this install replaced the released Tucano, which has to be reinstalled from its own setup`)
+  if (releasedWasInstalled && !existsSync(join(released, IDENTITY.releasedExe))) {
+    problems.push(`${join(released, IDENTITY.releasedExe)} is gone: this install replaced the released Tucano, which has to be reinstalled from its own setup`)
   }
   return problems
 }
