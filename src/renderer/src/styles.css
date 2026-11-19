@@ -2312,7 +2312,16 @@ h3 {
 .work-row--done .work-row__text {
   color: var(--text-2);
 }
+/* A row's glyphs answer the pointer in the app's own orange, which is what says "this opens or
+   starts something". Red is kept for the presses that destroy: the x that stops a reply, the x that
+   takes a prompt back and the trash that removes a finished row — nothing else in a row turns red. */
 .work-row .icon-btn:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.work-row .work-row__stop:hover,
+.work-row .work-row__drop:hover,
+.work-row .work-row__remove:hover {
   color: var(--danger);
   background: var(--danger-soft);
 }
