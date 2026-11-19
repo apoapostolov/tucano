@@ -21,7 +21,9 @@ vi.mock('../src/renderer/src/store', async (original) => {
     ...real,
     useStore: <T,>(select: (s: State) => T): T => select(fake),
     stopRun: (id: string): void => void stopped.push(id),
-    openThread: (rootId: string): void => void stopped.push(`thread:${rootId}`)
+    openThread: (rootId: string): void => void stopped.push(`thread:${rootId}`),
+    startQueued: (id: string): void => void stopped.push(`start:${id}`),
+    reorderQueued: (conversationId: string, ids: string[]): void => void stopped.push(`order:${conversationId}:${ids.join(',')}`)
   }
 })
 const { getState } = await import('../src/renderer/src/store')
@@ -116,6 +118,43 @@ describe('the work drawer', () => {
     const order = [...row.querySelectorAll('button')].map((b) => b.className)
     expect(order).toEqual(['work-row__go', 'steps__ask-pill', 'icon-btn icon-btn--sm work-row__thread-btn', 'icon-btn icon-btn--sm work-row__stop'])
     expect(document.querySelector('.work-row__thread-btn')!.textContent).toBe('') // no label, no pill
+  })
+
+  it('draws the queue in the order it will run, not the order it was written', async () => {
+    const conv = nextConv()
+    await render(conv, [
+      said('m1', 'primeiro pedido', 1),
+      { ...said('m2', 'isto vem primeiro', 3), sendMode: 'queue', queuePos: 0 },
+      { ...said('m3', 'isto vem depois', 5), sendMode: 'queue', queuePos: 1 },
+      reply('r1', 'm1')
+    ])
+    const rows = [...document.querySelectorAll('.work-row--queued .work-row__text')].map((r) => r.textContent)
+    expect(rows).toEqual(['isto vem primeiro', 'isto vem depois'])
+  })
+
+  it('moves a queued prompt with its grip, and sends the order it was dropped in', async () => {
+    const conv = nextConv()
+    await render(conv, [
+      said('m1', 'primeiro pedido', 1),
+      { ...said('m2', 'um', 3), sendMode: 'queue' },
+      { ...said('m3', 'dois', 5), sendMode: 'queue' },
+      reply('r1', 'm1')
+    ])
+    const grips = [...document.querySelectorAll('.work-row--queued .work-row__grip')]
+    const rows = [...document.querySelectorAll('.work-row--queued')]
+    expect(grips).toHaveLength(2)
+    const data = new Map<string, string>()
+    const transfer = { effectAllowed: '', setData: (k: string, v: string) => void data.set(k, v), getData: (k: string) => data.get(k) ?? '' }
+    await act(async () => grips[1]!.dispatchEvent(Object.assign(new window.Event('dragstart', { bubbles: true }), { dataTransfer: transfer }) as Event))
+    await act(async () => rows[0]!.dispatchEvent(Object.assign(new window.Event('drop', { bubbles: true, cancelable: true }), { dataTransfer: transfer }) as Event))
+    // Three before two: the order the drawer shows now, and the one the core is told to run.
+    expect(stopped).toContain(`order:${conv}:m3,m2`)
+  })
+
+  it('starts a queued prompt now from its row, without waiting for a slot', async () => {
+    await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
+    await act(async () => button('Começar este pedido agora').click())
+    expect(stopped).toContain('start:m2')
   })
 
   it('gives each working session a steer sub-button beside its stop action', async () => {

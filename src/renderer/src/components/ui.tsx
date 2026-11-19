@@ -139,6 +139,8 @@ const PATHS: Record<string, ReactNode> = {
     </>
   ),
   thread: <path d="M4 5h16v11H10l-4 4v-4H4V5ZM8 9h8M8 12h5" />,
+  // Six dots: the handle a person holds to move a row in a list (the work drawer's queue).
+  grip: <path d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01" />,
   ask: <path d="M4 5h16v11H10l-4 4v-4H4V5ZM10 8.6a2 2 0 0 1 3.9.6c0 1.4-1.9 1.7-1.9 3M12 14.2h.01" />
 }
 

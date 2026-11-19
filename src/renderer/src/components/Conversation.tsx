@@ -104,6 +104,8 @@ import { canEditChannel,
   confirmQuestion,
   personById,
   teamMode,
+  startQueued,
+  reorderQueued,
   type Person
 } from '../store'
 import { askWay } from './OrgSectors'
@@ -656,12 +658,12 @@ const NO_ATTACHED: Artifact[] = []
 // `replies`: in a timeline with threads, the replies to this message (none yet: empty).
 // `ask`: on a routine's run, the message the routine posted: a chip by the name that opens it (`askReplies`: its thread).
 // Memoized because each word an agent streams redraws the list: only the row that changed should pay for it.
-// The mark under a prompt that hasn't started: the label says it is queued, the line below why.
+// The mark on a prompt that hasn't started: one dim caps line at the foot of the prompt's own bubble,
+// saying it is queued and why. Not a pill of its own under the message, and no second line.
 export function QueuedNote(): ReactNode {
   return (
-    <span className="tag msg__queued" title={L('Chega quando a resposta acima terminar', 'Goes when the reply above ends')}>
-      <span className="msg__queued-label">{L('Na fila', 'Queued')}</span>
-      <span className="msg__queued-sub">{L('Esperando a resposta acima terminar', 'Waiting for the reply above to finish')}</span>
+    <span className="msg__queued-line" title={L('Chega quando a resposta acima terminar', 'Goes when the reply above ends')}>
+      {L('Na fila · esperando a resposta acima terminar', 'Queued · waiting for the reply above to finish')}
     </span>
   )
 }
@@ -906,6 +908,9 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
             ) : (
               <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(text)}</MessageMarkdown>
             )}
+            {/* A prompt of mine waiting its turn (the mode on the message, runs.ts): it says so at the
+                foot of its own bubble, until its own reply starts and the mark goes. */}
+            {message.sendMode === 'queue' && <QueuedNote />}
           </div>
         ) : null}
         {attached.length > 0 && (
@@ -918,7 +923,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
         {/* A prompt of mine waiting its turn behind the reply above (the mode on the message, runs.ts):
             it says so until its own reply starts, and then the mark goes. A steer isn't here: it is a
             row in the running reply's chain, not a message of mine (runs.ts, `steerIn`). */}
-        {message.sendMode === 'queue' && <QueuedNote />}
+        {message.sendMode === 'queue' && !text && <QueuedNote />}
         {/* A prompt handed into the reply above, which reads it between two tool calls (runs.ts). It's
             said here, so a message that gets no reply of its own never looks lost. */}
         {message.sendMode === 'steer' && (
@@ -3069,9 +3074,17 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
   const messages = useStore((s) => messagesIn(s, conversationId))
   const remember = drawerFor(conversationId)
   const running = messages.filter((m) => ids.includes(m.id))
-  const queued = messages.filter((m) => m.sendMode === 'queue')
+  // In the order it will run in: the place a person dragged the rows into (runs.ts, `reorderQueued`),
+  // and after those the order they were written in.
+  const queued = messages
+    .filter((m) => m.sendMode === 'queue')
+    .sort((a, b) => (a.queuePos ?? Number.MAX_SAFE_INTEGER) - (b.queuePos ?? Number.MAX_SAFE_INTEGER) || a.at - b.at)
   const busy = queued.length > 0 || running.length > 1
   const [open, setOpen] = useState<boolean>(remember.open ?? busy)
+  // The queued row being dragged, and the one it would land on: the grip is the handle, and the row it
+  // is dropped on takes its place in the queue the core runs (runs.ts, `reorderQueued`).
+  const [dragged, setDragged] = useState<string | null>(null)
+  const [over, setOver] = useState<string | null>(null)
   const [ended, setEnded] = useState<string[]>(remember.done)
   const oneLine = (text: string, max: number): string => {
     const flat = text.replace(/\s+/g, ' ').trim()
@@ -3129,6 +3142,17 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
     if (over.length) keep([...remember.done, ...over])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [working])
+  // A queued prompt put before or after another: the whole queue goes in its new order, so the row it
+  // was dropped on keeps its place and everything else keeps its own.
+  const moveQueued = (from: string, to: string): void => {
+    const order = queued.map((m) => m.id)
+    const at = order.indexOf(from)
+    const into = order.indexOf(to)
+    if (at < 0 || into < 0 || at === into) return
+    const next = [...order]
+    next.splice(into, 0, ...next.splice(at, 1))
+    reorderQueued(conversationId, next)
+  }
   const finished = ended.map((id) => messages.find((m) => m.id === id)).filter((m): m is Message => !!m?.run && ENDED.includes(m.run.status))
   const now = useNow(running.length > 0)
   if (!running.length && !queued.length && !finished.length) return null
@@ -3193,7 +3217,52 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
             <>
               <div className="work-drawer__group">{L('Na fila', 'Queued')}</div>
               {queued.map((m) => (
-                <div className="work-row work-row--queued" key={m.id}>
+                <div
+                  className={`work-row work-row--queued ${over === m.id && dragged !== m.id ? 'is-over' : ''}`}
+                  key={m.id}
+                  onDragOver={(e) => {
+                    if (!dragged || dragged === m.id) return
+                    e.preventDefault() // a row is a place to drop one: the browser drops nothing it wasn't told about
+                    if (over !== m.id) setOver(m.id)
+                  }}
+                  onDragLeave={() => setOver((was) => (was === m.id ? null : was))}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    const from = e.dataTransfer?.getData('text/plain') || dragged
+                    setOver(null)
+                    setDragged(null)
+                    if (from) moveQueued(from, m.id)
+                  }}
+                >
+                  {/* The handle: dragged, it moves this prompt up or down the queue; the up and down
+                      arrows do the same from the keyboard. Off the jump button, so a drag never opens
+                      the message instead. */}
+                  <span
+                    className="work-row__grip"
+                    role="button"
+                    tabIndex={0}
+                    draggable
+                    title={L('Arraste para mudar a ordem da fila', 'Drag to change the order of the queue')}
+                    aria-label={L('Mudar a ordem deste pedido na fila', 'Move this prompt in the queue')}
+                    onDragStart={(e) => {
+                      setDragged(m.id)
+                      e.dataTransfer.effectAllowed = 'move'
+                      e.dataTransfer.setData('text/plain', m.id)
+                    }}
+                    onDragEnd={() => {
+                      setDragged(null)
+                      setOver(null)
+                    }}
+                    onKeyDown={(e) => {
+                      const at = queued.findIndex((q) => q.id === m.id)
+                      const to = e.key === 'ArrowUp' ? at - 1 : e.key === 'ArrowDown' ? at + 1 : -1
+                      if (to < 0 || to >= queued.length) return
+                      e.preventDefault()
+                      moveQueued(m.id, queued[to]!.id)
+                    }}
+                  >
+                    <Icon name="grip" size={11} />
+                  </span>
                   <button className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para este pedido', 'Go to this prompt')}>
                     <Icon name="clock" size={11} />
                     {/* The heading above already says it is waiting: the row is the prompt alone. */}
@@ -3206,6 +3275,16 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                     onClick={() => openThread(threadOf(m))}
                   >
                     <Icon name="thread" size={12} />
+                  </button>
+                  {/* Past the cap it would wait for a slot: pressing this sends it now, which is what
+                      asking for it means (runs.ts, `startQueued`). */}
+                  <button
+                    className="icon-btn icon-btn--sm work-row__start"
+                    title={L('Começar este pedido agora', 'Start this prompt now')}
+                    aria-label={L('Começar este pedido agora', 'Start this prompt now')}
+                    onClick={() => startQueued(m.id)}
+                  >
+                    <Icon name="play" size={11} />
                   </button>
                 </div>
               ))}

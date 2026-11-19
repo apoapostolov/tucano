@@ -1489,21 +1489,23 @@ h3 {
   color: var(--text-3);
   font-size: 11.5px;
 }
-/* A prompt of mine waiting its turn behind the reply above: the label says queued, the line under it why. */
+/* A prompt of mine handed into the reply above (runs.ts, `steerIn`): a tag under it. */
 .msg__queued {
   display: block;
   margin-top: 4px;
   color: var(--text-3);
 }
-.msg__queued-label {
+/* A prompt of mine waiting its turn behind the reply above: one dim full-caps line at the foot of its
+   own bubble, where the prompt is, and not a pill under the message. */
+.msg__queued-line {
   display: block;
+  margin-top: 6px;
+  color: var(--text-3);
+  font-size: 10.5px;
   font-weight: 600;
-}
-.msg__queued-sub {
-  display: block;
-  margin-top: 2px;
-  font-size: 11px;
-  font-style: italic;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .md > :first-child {
   margin-top: 0;
@@ -2126,6 +2128,39 @@ h3 {
 }
 .work-row--queued .work-row__text {
   color: var(--text-2);
+}
+/* The handle a person drags to move a queued prompt: dim until the row is under the pointer. */
+.work-row__grip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 3px 1px;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: grab;
+}
+.work-row:hover .work-row__grip {
+  color: var(--text-2);
+}
+.work-row__grip:hover {
+  color: var(--text-2);
+  background: var(--hover);
+}
+.work-row__grip:active {
+  cursor: grabbing;
+}
+.work-row__grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* The row the prompt being dragged would land on: a line where it will go, not a filled row. */
+.work-row--queued.is-over {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+/* Starting a queued prompt now: the one row action that adds work rather than ending it. */
+.work-row__start:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 /* A working session carries its steer pill. */
 .work-row__steer .steps__ask {

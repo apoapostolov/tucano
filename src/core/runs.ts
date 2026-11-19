@@ -928,6 +928,7 @@ export class Runner {
       if (at < 0) continue
       const [entry] = waiting.splice(at, 1)
       if (!waiting.length) this.convWaiting.delete(conversationId)
+      if (entry?.queued) this.unmark(entry.queued)
       if (entry?.launch) return void entry.launch(true)
       return this.startIn(conversationId, entry!.job, entry!.queued, entry!.direct)
     }
@@ -958,17 +959,20 @@ export class Runner {
   // A prompt goes out (now, or once the one before it let go): the mark a queued one kept for a restart
   // drops in the same step, so the app never starts it twice. From here `execute` counts it as running.
   private startIn(conversationId: string, job: () => Promise<unknown>, queued?: Message, direct = false): void {
-    if (queued?.sendMode) {
-      this.update(queued, { sendMode: undefined })
-      // The place a person gave it in the queue is spent with the mark: what waits after it starts from
-      // the order it was written in.
-      if (queued.queuePos !== undefined) {
-        this.deps.db.setQueuePos(queued.id, null)
-        queued.queuePos = undefined
-      }
-    }
+    if (queued) this.unmark(queued)
     if (direct) return void job().catch((e: unknown) => console.error('[runner]', e))
     void this.enqueue(job, true)
+  }
+
+  // The mark a queued prompt kept while it waited goes the moment its reply starts, so the app never
+  // starts it twice and its row leaves the drawer. The place a person gave it is spent with the mark:
+  // what waits after it starts from the order it was written in.
+  private unmark(queued: Message): void {
+    if (queued.sendMode) this.update(queued, { sendMode: undefined })
+    if (queued.queuePos !== undefined) {
+      this.deps.db.setQueuePos(queued.id, null)
+      queued.queuePos = undefined
+    }
   }
 
   // A reply ended there: a slot is free, and what was waiting for one goes (drainIn).

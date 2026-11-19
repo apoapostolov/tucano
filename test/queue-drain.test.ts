@@ -92,6 +92,21 @@ describe('the queue past the cap', () => {
     expect(db.messages().filter((m) => m.author.kind === 'agent').map((m) => m.run?.status)).toEqual(['done', 'done', 'done'])
   })
 
+  it('starts one at once when a person presses Start on its row, cap or no cap', async () => {
+    settings.maxParallelSessions = 1
+    await send('um')
+    await send('dois')
+    expect(started).toEqual(['um'])
+    const waiting = db.messages().filter((m) => m.sendMode === 'queue')
+    expect(waiting).toHaveLength(1)
+    runner.startQueued(waiting[0]!.id) // the play on its row in the drawer: it goes now, beside what runs
+    await expect.poll(() => started).toEqual(['um', 'dois'])
+    expect(db.messages().filter((m) => m.sendMode === 'queue')).toHaveLength(0)
+    release('um')
+    release('dois')
+    await runner.idle()
+  })
+
   it('follows the order a person puts the queue in, and keeps it for a restart', async () => {
     settings.maxParallelSessions = 1
     await send('um')
