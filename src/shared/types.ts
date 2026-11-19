@@ -194,6 +194,7 @@ export interface Run {
   steps: Step[]
   endedAt?: number // when this reply ended, however it ended: where the conversation shows it (saidAt)
   restartPending?: boolean // interrupted at shutdown, still eligible for startup recovery
+  cutAt?: number // when the app cut it at startup; a run cut long ago is left for the person
   receipt?: Receipt
   approvalId?: string
   outside?: boolean // it read something from outside (a connector's answer, a page, an app, the web, a trigger's event): what goes out after asks first, with the guard on

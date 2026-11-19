@@ -61,6 +61,7 @@ it('resumes working replies when enabled, preserving progress and keeping explic
 })
 
 it('leaves replies interrupted when recovery is disabled, without replaying them on a later start', async () => {
+  settings.autoContinue = false // 0.2.41 resumes a cut reply by itself unless that is off
   settings.resumeInterrupted = true
   reply('running', 1000, 'working')
   db.interruptStaleRuns()
@@ -74,6 +75,7 @@ it('leaves replies interrupted when recovery is disabled, without replaying them
 })
 
 it('does not resume by default or replay skipped work after enabling recovery', async () => {
+  settings.autoContinue = false // the case the switch exists for: auto-continue off
   reply('running', 1000, 'working')
   db.interruptStaleRuns()
   await runner.resumeInterrupted()
@@ -85,6 +87,7 @@ it('does not resume by default or replay skipped work after enabling recovery', 
 })
 
 it('uses the Continue rule: thinking alone is not recovered, failed tool work is', async () => {
+  settings.autoContinue = false // Recovery's own rule, without 0.2.41 auto-continue on top
   settings.resumeInterrupted = true
   reply('thinking', 1000, 'working')
   reply('failed-tool', 2000, 'working')
@@ -132,6 +135,48 @@ it('does not recover an archived agent', async () => {
   db.saveAgent({ ...db.agent('a')!, archived: true })
   await runner.resumeInterrupted()
   expect(turns).toHaveLength(0)
+})
+
+it('brings back every cut reply, each exactly once, with auto-continue and with Recovery', async () => {
+  // What a shutdown leaves behind: several sessions working at once, in their own conversations.
+  // On 19 Nov the startup pass and the Recovery pass read the same rows, and one session came back
+  // out of six: the first pass marked the reply done, so the second found nothing for it.
+  const others = ['b', 'c', 'd']
+  for (const id of others) {
+    db.saveAgent({ ...db.agent('a')!, id, handle: id, name: id.toUpperCase() })
+    db.createConversation({ id: `dm-${id}`, kind: 'dm', name: id, members: [id] })
+  }
+  for (const [i, id] of ['a', ...others].entries()) {
+    const conv = id === 'a' ? 'dm' : `dm-${id}`
+    db.saveMessage({ id: `ask-${id}`, conversationId: conv, author: { kind: 'person', id: db.ownerId() }, text: `Request ${id}`, at: 1000 + i })
+    db.saveMessage({ id: `cut-${id}`, conversationId: conv, author: { kind: 'agent', id }, text: `Partial ${id}`, at: 1001 + i, run: { status: 'working', steps: [{ id: `s-${id}`, label: 'Read file', status: 'done' }] } })
+  }
+  expect(db.interruptStaleRuns()).toHaveLength(4)
+
+  // Both switches on: the person's Recovery and the default auto-continue, read by one pass.
+  settings.resumeInterrupted = true
+  await runner.resumeInterrupted()
+  await runner.resumeInterrupted() // startup reaches it twice; the second pass must not start them again
+  await runner.idle()
+  expect(turns).toHaveLength(4)
+  for (const id of ['a', ...others]) {
+    expect(db.message(`cut-${id}`)?.run?.status).toBe('done')
+    expect(turns.filter((t) => t.prompt.includes(`Partial ${id}`)).length).toBeLessThanOrEqual(1)
+  }
+  // Each one went on in a new reply of its own conversation: four sessions, four replies.
+  expect(db.messagesWithRun(['working']).every((m) => m.id.startsWith('cut-'))).toBe(true)
+
+  // And with auto-continue off but Recovery on, the same four come back, once each.
+  turns.length = 0
+  for (const id of ['a', ...others]) {
+    const conv = id === 'a' ? 'dm' : `dm-${id}`
+    db.saveMessage({ id: `cut2-${id}`, conversationId: conv, author: { kind: 'agent', id }, text: `Again ${id}`, at: 2000, run: { status: 'working', steps: [{ id: `s2-${id}`, label: 'Read file', status: 'done' }] } })
+  }
+  db.interruptStaleRuns()
+  settings.autoContinue = false
+  await runner.resumeInterrupted()
+  await runner.idle()
+  expect(turns).toHaveLength(4)
 })
 
 afterEach(async () => { await runner.idle(); db.close() })
