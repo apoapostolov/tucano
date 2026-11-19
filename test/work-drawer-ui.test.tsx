@@ -20,7 +20,8 @@ vi.mock('../src/renderer/src/store', async (original) => {
   return {
     ...real,
     useStore: <T,>(select: (s: State) => T): T => select(fake),
-    stopRun: (id: string): void => void stopped.push(id)
+    stopRun: (id: string): void => void stopped.push(id),
+    openThread: (rootId: string): void => void stopped.push(`thread:${rootId}`)
   }
 })
 const { getState } = await import('../src/renderer/src/store')
@@ -46,14 +47,22 @@ let root: Root
 const render = async (conversationId: string, messages: Message[]): Promise<void> => {
   fake = { ...getState(), ready: true, you: 'ana', people: [{ id: 'ana', name: 'Ana', role: 'owner', about: '' }], messages: { [conversationId]: messages } } as State
   await act(async () =>
-    root.render(<WorkDrawer key={conversationId} conversationId={conversationId} onJump={(id, threadId) => void stopped.push(`jump:${id}${threadId ? `@${threadId}` : ''}`)} />)
+    root.render(
+      <WorkDrawer
+        key={conversationId}
+        conversationId={conversationId}
+        onJump={(id, threadId) => void stopped.push(`jump:${id}${threadId ? `@${threadId}` : ''}`)}
+      />
+    )
   )
 }
 // A message inside a thread: `threadId` is the id of the message that started it.
 const inThread = (m: Message, threadId: string): Message => ({ ...m, threadId })
 const text = (): string => document.body.textContent ?? ''
 const button = (label: string): HTMLElement => {
-  const hit = [...document.querySelectorAll('button')].find((b) => b.getAttribute('title') === label || b.textContent?.trim() === label)
+  const hit = [...document.querySelectorAll('button')].find(
+    (b) => b.getAttribute('title') === label || b.textContent?.trim() === label || (b.classList.contains('work-drawer__head') && !!b.textContent?.includes(label))
+  )
   if (!hit) throw new Error(`no button "${label}": ${[...document.querySelectorAll('button')].map((b) => b.getAttribute('title') ?? b.textContent).join(' | ')}`)
   return hit as HTMLElement
 }
@@ -93,12 +102,20 @@ describe('the work drawer', () => {
     expect(text()).toContain('isto pode esperar')
   })
 
-  it('keeps a queued row to its own line, with nothing written under it', async () => {
+  it('keeps a queued prompt on one line: the clock and the words, no second line under them', async () => {
     await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
-    const row = document.querySelector('.work-row--queued')
-    expect(row?.textContent).toContain('isto pode esperar')
-    // The heading above already says it is waiting: no second line repeating it.
-    expect(document.querySelector('.work-row--queued .work-row__sub')).toBeNull()
+    const row = document.querySelector('.work-row--queued')!
+    expect(row.querySelector('.work-row__sub')).toBeNull()
+    expect(row.textContent).toBe('isto pode esperar') // the clock glyph is an svg, the words are the line
+  })
+
+  it('gives every row a thread button, the glyph alone, between the steer pill and the x', async () => {
+    await render(nextConv(), [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await act(async () => button('1 respondendo').click())
+    const row = document.querySelector('.work-row')!
+    const order = [...row.querySelectorAll('button')].map((b) => b.className)
+    expect(order).toEqual(['work-row__go', 'steps__ask-pill', 'icon-btn icon-btn--sm work-row__thread-btn', 'icon-btn icon-btn--sm work-row__stop'])
+    expect(document.querySelector('.work-row__thread-btn')!.textContent).toBe('') // no label, no pill
   })
 
   it('gives each working session a steer sub-button beside its stop action', async () => {
@@ -194,9 +211,12 @@ describe('the work drawer', () => {
     expect(text()).toContain('2 respondendo') // the one outside, and the one in the thread
     expect(text()).toContain('primeiro pedido')
     expect(text()).toContain('segue o anexo')
-    const chips = document.querySelectorAll('.work-row__thread')
-    expect(chips.length).toBe(1) // only the row that lives in a thread carries one
-    expect(chips[0]!.textContent).toContain('a thread do orçamento') // the thread, in its own words
+    // A thread button on each row — the one outside opens the thread it starts, the one inside opens
+    // hers — and the pill that used to say which is gone with it, so the row stays one line.
+    expect(document.querySelectorAll('.work-row__thread-btn').length).toBe(2)
+    expect(document.querySelectorAll('.work-row__thread').length).toBe(0)
+    const inThreadBtn = [...document.querySelectorAll('.work-row')].find((r) => r.textContent?.includes('segue o anexo'))!.querySelector('.work-row__thread-btn') as HTMLElement
+    expect(inThreadBtn.getAttribute('title')).toContain('a thread do orçamento') // named in the tooltip
     // Pressing it jumps into the thread, not to a message in the room.
     const go = [...document.querySelectorAll('.work-row__go')].find((b) => b.textContent?.includes('segue o anexo')) as HTMLElement
     await act(async () => go.click())
@@ -219,7 +239,7 @@ describe('the work drawer', () => {
     await render(conv, messages('done'))
     expect(text()).toContain('1 terminada')
     await act(async () => button('1 terminada').click())
-    expect(document.querySelectorAll('.work-row--done .work-row__thread').length).toBe(1)
+    expect(document.querySelectorAll('.work-row--done .work-row__thread-btn').length).toBe(1)
     await act(async () => button('Ir para esta resposta').click())
     expect(stopped).toEqual(['jump:r2@t1'])
   })
@@ -229,7 +249,7 @@ describe('the work drawer', () => {
     await render(conv, [said('t1', 'a thread do orçamento', 1), inThread({ ...said('t2', 'isto pode esperar', 2), sendMode: 'queue' }, 't1')])
     expect(text()).toContain('1 na fila')
     expect(text()).toContain('isto pode esperar')
-    expect(document.querySelectorAll('.work-row__thread').length).toBe(1)
+    expect(document.querySelectorAll('.work-row__thread-btn').length).toBe(1)
     const go = [...document.querySelectorAll('.work-row__go')].find((b) => b.textContent?.includes('isto pode esperar')) as HTMLElement
     await act(async () => go.click())
     expect(stopped).toEqual(['jump:t2@t1'])

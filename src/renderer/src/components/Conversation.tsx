@@ -3080,16 +3080,14 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
   // Which thread a row belongs to: the message that started it, in its own words. Nothing outside
   // threads has one, and those rows say nothing about threads.
   const threadRoot = (m: Message): Message | undefined => (m.threadId ? messages.find((x) => x.id === m.threadId) : undefined)
-  const where = (m: Message, max: number): ReactNode => {
+  // Which thread a row opens, by its root: a reply that lives in a thread opens that one, and a reply
+  // outside any opens the thread its own answers start. The button says which in its tooltip, in the
+  // thread's own words, so a long title never widens the row or pushes it onto a second line.
+  const threadOf = (m: Message): string => m.threadId ?? m.id
+  const into = (m: Message): string => {
     const root = threadRoot(m)
-    if (!root) return null
-    const label = oneLine(root.text, max) || L('numa thread', 'in a thread')
-    return (
-      <span className="work-row__thread" title={L(`Numa thread desta conversa: ${oneLine(root.text, 120) || 'sem texto'}`, `In a thread here: ${oneLine(root.text, 120) || 'no text'}`)}>
-        <Icon name="thread" size={10} />
-        <span className="work-row__thread-text">{label}</span>
-      </span>
-    )
+    if (!root) return L('Abrir a thread desta resposta', 'Open this reply’s thread')
+    return L(`Abrir a thread: ${oneLine(root.text, 60) || 'sem texto'}`, `Open the thread: ${oneLine(root.text, 60) || 'no text'}`)
   }
   // What it says about a reply: the prompt it answers, not its own words.
   const asked = (m: Message): string => {
@@ -3132,6 +3130,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [working])
   const finished = ended.map((id) => messages.find((m) => m.id === id)).filter((m): m is Message => !!m?.run && ENDED.includes(m.run.status))
+  const now = useNow(running.length > 0)
   if (!running.length && !queued.length && !finished.length) return null
   const counts = [
     running.length > 0 ? L(`${running.length} respondendo`, `${running.length} replying`) : '',
@@ -3145,7 +3144,10 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
       <button className="work-drawer__head" onClick={() => paint(!open)} aria-expanded={open}>
         <Icon name="layers" size={13} />
         <span className="work-drawer__count">{counts}</span>
-        <Icon name={open ? 'down' : 'up'} size={13} />
+        <span className="work-drawer__more">{open ? L('Fechar', 'Close') : L('Ver', 'Show')}</span>
+        <span className={`work-drawer__caret ${open ? 'is-open' : ''}`}>
+          <Icon name="caret" size={12} />
+        </span>
       </button>
       {open && (
         <div className="work-drawer__list">
@@ -3154,8 +3156,8 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
               <button className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para esta resposta', 'Go to this reply')}>
                 <span className="work-row__dot" aria-hidden />
                 {what(m)}
-                {where(m, 24)}
               </button>
+              <span className="work-row__meta">{duration(Math.max(0, now - m.at))}</span>
               {/* Steering first, stopping after it: what a person does to a running reply is say how
                   to go on far more often than kill it, and the x at the row's end is the last thing
                   under the pointer rather than the first. */}
@@ -3169,6 +3171,14 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], undefined, 'steer', m.id)}
                 />
               </div>
+              <button
+                className="icon-btn icon-btn--sm work-row__thread-btn"
+                title={into(m)}
+                aria-label={L('Abrir a thread desta resposta', 'Open this reply’s thread')}
+                onClick={() => openThread(threadOf(m))}
+              >
+                <Icon name="thread" size={12} />
+              </button>
               <button
                 className="icon-btn icon-btn--sm work-row__stop"
                 title={L('Parar esta resposta', 'Stop this reply')}
@@ -3188,7 +3198,14 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                     <Icon name="clock" size={11} />
                     {/* The heading above already says it is waiting: the row is the prompt alone. */}
                     <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
-                    {where(m, 24)}
+                  </button>
+                  <button
+                    className="icon-btn icon-btn--sm work-row__thread-btn"
+                    title={into(m)}
+                    aria-label={L('Abrir a thread deste pedido', 'Open this prompt’s thread')}
+                    onClick={() => openThread(threadOf(m))}
+                  >
+                    <Icon name="thread" size={12} />
                   </button>
                 </div>
               ))}
@@ -3206,7 +3223,15 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                         <Icon name={how.icon} size={11} />
                       </span>
                       {what(m)}
-                      {where(m, 24)}
+                    </button>
+                    <span className="work-row__meta">{how.said}</span>
+                    <button
+                      className="icon-btn icon-btn--sm work-row__thread-btn"
+                      title={into(m)}
+                      aria-label={L('Abrir a thread desta resposta', 'Open this reply’s thread')}
+                      onClick={() => openThread(threadOf(m))}
+                    >
+                      <Icon name="thread" size={12} />
                     </button>
                     <button
                       className="icon-btn icon-btn--sm work-row__remove"
