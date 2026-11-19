@@ -57,4 +57,6 @@ it('sits left of the way to answer it, in the footer of a finished reply only', 
   expect(css).toMatch(/\.msg__copy\s*\{[^}]*color:\s*var\(--text-3\)/)
   expect(css).toMatch(/\.msg__copy\s*\{[^}]*border:\s*0/)
   expect(css).toMatch(/\.msg__copy:hover,[\s\S]{0,80}\.msg__copy\.is-copied\s*\{[^}]*color:\s*var\(--text\)/)
+  // Two borderless targets touching read as one, so the footer keeps a small air between them.
+  expect(css).toMatch(/\.msg__meta \.msg__actions\s*\{[^}]*gap:\s*6px/)
 })

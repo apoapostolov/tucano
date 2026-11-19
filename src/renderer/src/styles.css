@@ -3933,6 +3933,9 @@ body.is-resizing webview {
 }
 /* The reply-to icon belongs to the footer line, at its right end, not on a row of its own. */
 .msg__meta .msg__actions {
+  /* A glyph's worth of air between the words copied and the way to answer them: two borderless
+     targets side by side read as one if they touch. */
+  gap: 6px;
   margin: 0 0 0 auto;
 }
 .msg__meta .msg__replyto {
