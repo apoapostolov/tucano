@@ -1,6 +1,7 @@
 // Renderer state. Everything except the current view comes from the core and
 // is kept in sync by its events; actions go to the core over RPC.
 import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { ThoughtCache, type RetainedThought } from './thoughts'
 import { L, setLang } from '../../shared/lang'
 import type { Answer } from '../../shared/questions'
 import type { HermesPreview } from '../../shared/hermes-import'
@@ -54,6 +55,7 @@ import {
   type Trigger,
   type ImageUpload,
   type FileUpload,
+  type SendMode,
   type Os,
   type LocalInfo,
   type VoiceModelId,
@@ -478,6 +480,50 @@ function stream(id: string, text: string): void {
 }
 
 export const liveText = (id: string): string | undefined => live.get(id)
+
+// What the model is thinking, streamed apart from the reply: kept here, in memory, because it is
+// something to watch as it goes and not part of what the agent said. `streamThought` is what a
+// `thinking` core event feeds (only when `showThinking` is on): the event itself comes from the
+// engine layer, which 0.2.37 does not emit yet (src/core/engines/types.ts).
+const thoughtListeners = new Map<string, Set<() => void>>()
+const thoughts = new ThoughtCache((id) => wake(thoughtListeners, id))
+
+export function streamThought(id: string, text: string): void {
+  thoughts.append(id, text)
+}
+
+export const liveThought = (id: string): string | undefined => thoughts.get(id)
+
+// The thinking as it is now, woken as it arrives. `every`: wake at most that often (ms).
+export function useLiveThought(id: string, every = 0): string | undefined {
+  return useLiveThoughtState(id, every)?.text
+}
+
+// The reasoning as it stands, with where in the stream it starts (the cache drops what came before
+// when a reply reasons for longer than it keeps).
+export function useLiveThoughtState(id: string, every = 0): RetainedThought | undefined {
+  const subscribe = useCallback(
+    (l: () => void) => {
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const off = listen(thoughtListeners, id, () => {
+        if (!every) return l()
+        if (timer) return
+        timer = setTimeout(() => {
+          timer = undefined
+          l()
+        }, every)
+      })
+      return () => {
+        if (timer) clearTimeout(timer)
+        off()
+      }
+    },
+    [id, every]
+  )
+  // No thoughts before the window exists: a reply drawn to markup (a test, a server-side first
+  // frame) has none, and asking for them there would throw instead of drawing the steps.
+  return useSyncExternalStore(subscribe, () => thoughts.snapshot(id), () => undefined)
+}
 
 // The message's text as it is now. `every`: wake at most that often (ms), for what is costly to draw.
 export function useLiveText(m: Message, every = 0): string {
@@ -972,11 +1018,13 @@ export const markRead = (id: string): void => { void call('markRead', { conversa
 // comes back from the core (a while at most, so one that never does doesn't open a later one).
 let openNext: { conversationId: string; until: number } | null = null
 // `threadId`: a reply in the thread that message started.
-export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = []): void => {
+// `threadId`: a reply in the thread that message started. `mode: 'steer'` hands it to the reply
+// `steerTo` (what is running there) at its next tool call instead of starting a message of its own.
+export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = [], mode?: SendMode, steerTo?: string): void => {
   if (!(text.trim() || images.length || files.length)) return
   const threads = !threadId && state.conversations.find((c) => c.id === conversationId)?.threads
   openNext = threads ? { conversationId, until: Date.now() + 15_000 } : null
-  void fire(L('Não consegui enviar a mensagem.', "I couldn't send the message."), 'sendMessage', { conversationId, text, ...(images.length ? { images } : {}), ...(files.length ? { files } : {}), ...(threadId ? { threadId } : {}) })
+  void fire(L('Não consegui enviar a mensagem.', "I couldn't send the message."), 'sendMessage', { conversationId, text, ...(images.length ? { images } : {}), ...(files.length ? { files } : {}), ...(threadId ? { threadId } : {}), ...(mode ? { mode } : {}), ...(steerTo ? { steerTo } : {}) })
 }
 
 export const answerDecision = (messageId: string, index: number, answer: Answer | null): void =>
@@ -995,6 +1043,24 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 }
 
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
+// Pausing, resuming and going on from a reply are named here and answered by the core's table
+// (src/core/index.ts registers the method, src/core/policy-people.ts who may call it). They are sent
+// by name because that table is not part of this change: a core that doesn't know one refuses it, and
+// the person hears it, instead of the button quietly doing nothing.
+const askCore = (failed: string, method: 'pauseRun' | 'resumeRun' | 'followUpRun', params: { messageId: string; text?: string }): void => {
+  const send = call as unknown as (m: string, p: unknown) => Promise<void>
+  void send(method, params).catch((e: unknown) => {
+    if (!state.coreDown) toast(`${failed} ${e instanceof Error && e.message ? e.message : L('Tente de novo.', 'Try again.')}`)
+  })
+}
+// A reply put on hold stops before its next tool call or turn, keeping its session and text, and
+// goes on when released, without another model taking over.
+export const pauseRun = (messageId: string): void => askCore(L('Não consegui pausar a resposta.', "I couldn't pause the reply."), 'pauseRun', { messageId })
+export const resumeRun = (messageId: string): void => askCore(L('Não consegui retomar a resposta.', "I couldn't resume the reply."), 'resumeRun', { messageId })
+// The reply goes on from where it ended, in the same row and the same session, with what the person
+// asked for as its next step instead of as another message in the conversation.
+export const followUpRun = (messageId: string, text: string): void =>
+  askCore(L('Não consegui seguir com essa resposta.', "I couldn't go on from that reply."), 'followUpRun', { messageId, text })
 export const retryRun = (messageId: string): void => void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })
 

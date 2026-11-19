@@ -5614,6 +5614,35 @@ table.csv th {
   font-weight: 600;
   border-color: var(--accent);
 }
+/* Section rail under a settings tab: same line, same weight and same width as the tabs above it. */
+.tabs--sections {
+  position: sticky;
+  top: var(--settings-nav-top, 0px);
+  z-index: 2;
+  margin: -18px 0 18px;
+  padding-top: 0;
+}
+.tabs--sections > a {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  margin-bottom: -1px;
+  font-size: 13.5px;
+  line-height: 1.2;
+  color: var(--text-2);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+.tabs--sections > a:hover {
+  color: var(--text);
+}
+.tabs--sections > a[aria-current='location'] {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
 
 /* archived agents */
 .archived-banner {
@@ -8733,6 +8762,11 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .voice-pop__hide { justify-self: start; font-size: 12px; color: var(--text-3); }
 .voice-setup { display: grid; gap: 10px; justify-items: start; }
 .voice-setup__choices, .choices { display: grid; gap: 6px; width: 100%; }
+/* The two dictation model choices sit side by side until the card gets narrow. */
+.voice-setup__choices { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+/* Workspace name and the name agents use share one line, each with its own label. */
+.settings-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.settings-pair > .field { min-width: 0; margin-bottom: 0; }
 .voice-choice, .choice { display: grid; gap: 2px; width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); font: inherit; font-size: 13px; color: var(--text); text-align: left; cursor: pointer; }
 .voice-choice small, .choice small { color: var(--text-2); font-size: 12px; }
 .voice-choice:hover, .choice:hover { border-color: var(--border-strong); }
@@ -8741,12 +8775,16 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .voice-setup__bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.25s; }
 .voice-setup__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .voice-on { display: grid; gap: 8px; }
+.voice-setup__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%; }
+.voice-setup__actions > .row { margin: 0; }
 .voice-on p { margin: 0; display: flex; align-items: center; gap: 6px; }
 /* The card doesn't space its children: the model's line, the microphone and Avançado get a gap here. */
 .voice-prefs { display: grid; gap: 14px; }
 /* Closed, the folded part keeps no room: the gap only between what shows when it's open. */
-.voice-advanced[open] { display: grid; gap: 10px; }
-.voice-advanced summary { cursor: pointer; }
+.voice-prefs__row { display: flex; align-items: center; gap: 14px; }
+.voice-advanced__toggle { margin-left: auto; border: 0; background: none; padding: 0; cursor: pointer; }
+.voice-advanced__toggle::before { content: "› "; }
+.voice-advanced__body { display: grid; gap: 10px; }
 .voice-pop > .btn { justify-self: start; }
 .voice-btn.is-recording { animation: voice-pulse 1.6s ease-in-out infinite; }
 @keyframes voice-pulse { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--danger) 22%, transparent); } }
@@ -15383,5 +15421,423 @@ button.agent-card__now:hover {
   }
   .lrow--field .lrow__key {
     width: 84px;
+  }
+}
+
+
+/* ---------- the chain: what a reply is doing, what it is thinking, and the way on from it ----------
+   The fork's send/steer/follow-up and steps UI, on 0.2.37's own components: the line, the list, the
+   handle that folds it, the reasoning under it, and the pill that acts on a reply that is running.
+   Properties here are the base's own, with the layout they need to shrink and ellipsize added. */
+
+/* The reply's footer line holds the follow up pill first, then the numbers: one row, centred, so a
+   22 px pill and 12 px text share a band instead of hanging from a text baseline. */
+.msg__meta {
+  align-items: center;
+  row-gap: 6px;
+}
+
+.steps__header {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.steps__toggle {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px 3px 7px;
+  margin-left: -7px;
+  border-radius: 8px;
+  color: var(--text-3);
+  transition: var(--transition-ui);
+}
+
+.steps__toggle:hover {
+  background: var(--hover);
+  color: var(--text-2);
+}
+
+.steps__chev {
+  display: inline-flex;
+  flex: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+/* Done: the label crossfades from the shimmer to the count, the chevron comes back. */
+.steps__chev,
+.steps__summary,
+.steps__failed {
+  animation: fade var(--dur-base) var(--ease-out) backwards;
+}
+
+.steps.is-open .steps__chev {
+  transform: rotate(90deg);
+}
+
+/* Finished: the pulse becomes a green check, with a small bounce. */
+.steps__done {
+  display: inline-flex;
+  color: var(--ok);
+  --pop-scale: 0.5;
+  --pop-y: 0;
+  animation: pop var(--dur-enter) var(--ease-spring) backwards;
+}
+
+.steps__pulse,
+.steps__done {
+  flex: none;
+}
+
+.steps__activity,
+.steps__summary,
+.steps__now {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.steps__now {
+  flex: 0 1 320px;
+  min-width: 3ch;
+  max-width: 320px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.steps__toggle:has(.steps__now) .steps__activity {
+  min-width: 4ch;
+  max-width: 40%;
+}
+
+/* The line beside the steps is a handle: a double-click on it folds them, from wherever the run has
+   scrolled to. Its hit area is 18 px over a 2 px line, centred on it, and it stops short of the step
+   icons (the list's own padding), so nothing a person reads is under it. */
+.steps__body {
+  position: relative;
+}
+
+.steps__rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  /* Above the list: it animates in with `rise`, and an animated transform makes a stacking context
+     of its own, which would otherwise sit over the handle and eat the double-click. */
+  z-index: 1;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+/* Hovering or focusing the handle lights the line it sits on, so it reads as something to press. */
+.steps__rail:hover,
+.steps__rail:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+
+.steps__rail:hover + .steps__list,
+.steps__rail:focus-visible + .steps__list {
+  border-left-color: var(--accent);
+}
+
+/* The latest few (Settings › General): a window that keeps itself at the bottom, the older steps
+   fading into the top edge instead of pushing the new ones off the message. */
+.steps--latest .steps__list {
+  max-height: 232px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+}
+
+/* The three ways a reply can show its steps (Settings › General, and an agent's own page):
+   four buttons on a wide window, two lines of two on a narrow one. */
+.steps-pick {
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.steps-pick button {
+  flex: 1 1 auto;
+}
+
+/* The number under the choices, only while the window is the chosen one. */
+.steps-keep {
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.steps-keep input {
+  width: 72px;
+}
+
+.steps__earlier {
+  padding: 2px 0 4px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.step--fading {
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* The pill under the chain: a steer while the agent works, a follow up once the reply has ended.
+   Small, dim, out of the way until it's wanted, and lined up with the steps' own rail above it. */
+.steps__ask {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px 3px;
+  padding-left: 14px;
+}
+
+/* Under the thinking block the pill is the last thing in the chain, so it keeps a gap from the box above
+   it instead of sitting on the box's border. */
+.thought + .steps__ask {
+  margin-top: 6px;
+}
+
+/* The follow up pill rides the reply's own footer — the line that fades in under a finished answer,
+   first in it, before the receipt. So it comes in with that line: a reply that has ended shows its
+   answer, not a button, and a hover (or a tab to it) brings the way to go on with the numbers. */
+.msg__meta .steps__ask--reply {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.msg:hover .msg__meta .steps__ask--reply,
+.msg__meta .steps__ask--reply:focus-within,
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  opacity: 1;
+}
+
+/* Open, the field needs the row: the pill keeps its place and the receipt goes under it. */
+.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
+  flex: 1 1 100%;
+}
+
+/* The reply's last row while it is at work: the pause beside the steer pill. Both say something about
+   a reply that is running; under the thinking block the row keeps a gap from the box above it, as the
+   steer pill alone did. */
+.steps__hold {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 4px 3px;
+  padding-left: 14px;
+}
+
+.thought + .steps__hold {
+  margin-top: 6px;
+}
+
+.steps__hold .steps__ask {
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+/* Open, only the field takes the row: Pause and the steer pill keep the row they are on, and the field
+   goes under the two of them, from the chain's left edge to its right one. The wrapper is dissolved so
+   its pill and its field are the row's own items: left whole, the field's box took the row and carried
+   the pill down with it, which read as a wrap. Left to itself the note took the width of the textarea's
+   own twenty columns — 200 px, a phone's field, in a 600 px chain. */
+.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) {
+  display: contents;
+}
+
+.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) .steps__ask-note {
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: none;
+}
+
+.steps__hold .steps__ask-pill[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* A paused reply: letting it go on is the one thing to do there, so it reads as the choice. */
+.steps__ask-pill--go {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.steps__ask-pill {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  transition: var(--transition-ui);
+}
+
+.steps__ask-pill:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--hover);
+}
+
+.steps__ask-note {
+  display: grid;
+  gap: 8px;
+  max-width: 520px;
+}
+
+.steps__ask-note textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+}
+
+.steps__ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* What the person steered, in the chain: a call's own row, carrying their words whole. */
+.step--steer .step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Their words, not a tool's arguments: the same row, in the font people read in. */
+.step--steer .step__input {
+  font-family: var(--font);
+  font-size: 12.5px;
+}
+
+/* A follow up, in the chain: the instruction a finished reply goes on with, not a tool call. */
+.step--followup {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.step--followup .step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.step__said {
+  flex-basis: 100%;
+  padding-left: 26px; /* under the label, past the icon */
+  color: var(--text-3);
+  font-size: 11.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
+   arrives, so a long reply can be studied while it is being written. */
+.thought {
+  /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
+     border, so the rail runs unbroken from the steps into the reasoning under them. Without the
+     3px the thought's line stood a hair to the left of the one above it, and the two read as one
+     line drawn twice. */
+  margin: 6px 0 0 3px;
+  /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
+     than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
+     lines, plus the label and the padding around the text. The plain rule is the middle size, so a
+     copy that predates the setting looks the way it always did. */
+  --thought-lines: 12;
+  max-height: calc(var(--thought-lines) * 1.55em + 34px);
+  overflow-y: auto;
+  /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar on
+     the block whenever a line of reasoning had nowhere to wrap. */
+  overflow-x: hidden;
+  padding: 8px 10px;
+  border-left: 2px solid var(--border);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+}
+
+.thought--sm {
+  --thought-lines: 6;
+}
+
+.thought--md {
+  --thought-lines: 12;
+}
+
+.thought--lg {
+  --thought-lines: 18;
+}
+
+.thought__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thought__head .thought__label { flex-shrink: 0; }
+
+.thought__last { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
+
+.thought__head:focus-visible { outline: 2px solid var(--text-3); outline-offset: 2px; }
+
+.thought:not(.is-open) { overflow: visible; }
+
+.thought__label {
+  font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+
+.thought__text {
+  /* A path or an address in the reasoning has no space to break at: it wraps onto the next line
+     instead of running past the box and asking for a sideways scroll, the rule `.md` already has. */
+  overflow-wrap: anywhere;
+  opacity: 0.85;
+}
+
+/* The question still waiting, right above the field it will be answered in: it takes the composer's
+   own column, so the strip lines up with the box under it instead of the window's edges. */
+.ask-strip-wrap {
+  flex: none;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+@media (max-width: 720px) {
+  .ask-strip-wrap {
+    padding: 0 14px;
   }
 }

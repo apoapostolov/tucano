@@ -77,6 +77,29 @@ const legacy: Readonly<Record<string, string>> = {
   integracoes: 'connections-phone', pessoas: 'workspace-people', atividade: 'workspace-activity', servidores: 'connections-servers'
 }
 
+// The tab bar is older than this structure. `geral` carries the app's own sections and the
+// workspace's cards, and Pessoas, Atividade and Servidores kept tabs of their own, so one page's
+// sections can spread over several tabs. Each tab names the sections whose cards it shows, in the
+// order they read on screen. A section whose card hasn't been written yet stays out of these lists:
+// the strip never shows a link to nothing and the nav drops any section the pane doesn't render.
+const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
+  geral: ['app-appearance', 'workspace-context', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
+  modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'knowledge-memory'],
+  agentes: ['agents-permissions', 'agents-automation', 'agents-limits'],
+  integracoes: ['connections-phone'],
+  pessoas: ['workspace-people'],
+  atividade: ['workspace-activity'],
+  servidores: ['connections-servers']
+}
+
+// The sections of one tab, in its reading order, each one still owned — label, keys and access —
+// by the structure above.
+export function settingsTabStructure(tab: string, sections: readonly SettingsSection[]): readonly SettingsSection[] {
+  return (tabSections[tab] ?? [])
+    .map(id => sections.find(section => section.id === id))
+    .filter((section): section is SettingsSection => section !== undefined)
+}
+
 export function settingsDestination(requested: string | undefined, sections: readonly SettingsSection[]) {
   const available = sections.filter(section => section.visible)
   const destination = legacy[requested ?? ''] ?? requested

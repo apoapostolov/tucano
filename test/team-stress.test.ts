@@ -679,7 +679,7 @@ describe('a question two people answer (21)', () => {
 
   it('the page keeps what was typed when the answer fails', () => {
     const src = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'components', 'Conversation.tsx'), 'utf8')
-    expect(src).toMatch(/answerQuestion\(id, text\.trim\(\)\)\.then\(\n\s+\(\) => setText\(''\),\n\s+\(e: unknown\) => \(setError/)
+    expect(src).toMatch(/answerQuestion\(id, text\.trim\(\)\)\.then\(\r?\n\s+\(\) => setText\(''\),\r?\n\s+\(e: unknown\) => \(setError/)
     expect(src).toContain("{text.trim() && (")
   })
 })

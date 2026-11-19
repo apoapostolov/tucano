@@ -98,6 +98,8 @@ export interface Agent {
   folders?: LentFolder[] // Mac folders lent to that computer (spec §13, M5.1); changed only through lendFolder/folderAction
   archived: boolean
   kind?: 'tuca' // the agent that builds the others: it proposes, the person creates
+  // How this agent's replies show their steps: over the workspace's setting; unset: follow it.
+  steps?: StepsMode
   owner?: string // the person who gets its approvals: whoever created it (the Tucano's owner for older agents)
   reportsTo?: string // the agent it answers to (src/shared/org.ts): that one, and whoever is above it, may hand it work in its own channel; unset: no one
   sectorName?: string // on a sector's head (src/shared/org.ts headsOf): the sector's name; unset: "Setor de <name>"
@@ -130,6 +132,7 @@ export interface Conversation {
   name: string // channel name, or agent id for a DM
   topic?: string
   members: string[] // agent ids
+  mentionOnly?: string[] // agents of a channel in mention mode: they read it, and answer only when mentioned
   summary?: string // what the conversation covered before its recent messages
   summaryUntil?: number // `at` of the last message the summary covers
   summaryAt?: number
@@ -162,6 +165,9 @@ export interface Step {
   output?: string // what came back, in a few words ("120 rows")
   status: StepStatus
   ms?: number
+  // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran,
+  // between two calls; `followup` is the instruction a finished reply goes on with (runs.ts).
+  kind?: 'steer' | 'followup'
 }
 
 export interface Receipt {
@@ -202,6 +208,7 @@ export interface Run {
   routineIds?: string[] // routines scheduled or changed with `agendar_rotina` in this reply
   browser?: boolean // used its browser in this reply (the message links to the live view)
   budget?: number // 'paused': the per-reply budget it reached, in counted tokens
+  held?: true // 'paused' by the person: it waits before its next tool call or turn, keeping its session and what it did; not a ceiling
   task?: string // what this reply was asked beyond the conversation; kept only while it can be tried again or go on
   work?: string // the piece of work it counts toward, e.g. the issue "OAB-65" (spec §20)
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
@@ -398,11 +405,18 @@ export interface Question {
 // A question from someone else's DM comes without where it was asked (they see the question only).
 export interface Inbox {
   approvals: Approval[]
-  // With the decisions asked (ask_user's options) and what was answered on the card so far.
-  questions: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[]
-  answered?: (Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string; decisions?: Decision[]; answers?: (Answer | null)[] })[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
+  questions: InboxQuestion[]
+  answered?: InboxQuestion[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
   proposals?: InboxProposal[] // admins: what a member asked to apply (agents and teams are theirs)
 }
+
+// A question as one person's page shows it: without where it was asked when they can't see that
+// conversation (someone else's DM: they get the question only).
+export type AskEntry = Omit<Question, 'conversationId' | 'threadId'> & { conversationId?: string; threadId?: string }
+
+// A question in the inbox: with the decisions asked (ask_user's options), what was answered on the
+// card so far, and, when a classifier is on, the option it suggests for each decision.
+export type InboxQuestion = AskEntry & { decisions?: Decision[]; answers?: (Answer | null)[]; recommended?: (number | null)[] }
 
 // A Tuca card a member couldn't apply, sent to the admins: the card alone, not the DM it came from.
 export interface InboxProposal {
