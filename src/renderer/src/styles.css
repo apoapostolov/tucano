@@ -17464,7 +17464,10 @@ button.agent-card__now:hover {
     opacity: 1;
   }
 }
-/* In the footer line it sits beside Follow Up, which carries no top margin of its own. */
+/* The three ways on from a dead reply share the one row under it, in this order: Continue, then Try
+   again, then Follow Up. Try again used to sit on a band of its own above that row, which read as a
+   banner with two buttons under it; now the row is the reply's whole answer to "what now". None of
+   them carries a top margin here: the row has the air, the pill doesn't. */
 .msg__meta .msg__hire {
   margin-top: 0;
 }
