@@ -101,7 +101,7 @@ describe('a row of the asks history', () => {
     expect(html).toContain('Ver na conversa')
   })
 
-  it('draws opened questions as rounded widgets with numbered options and the recommended tag', () => {
+  it('draws opened questions as rounded widgets, with a star on the option the agent pointed at', () => {
     const q = asked({
       decisions: [{ question: 'Publico o post hoje?', options: [{ label: 'Sim, publico' }, { label: 'Não, espero' }] }],
       recommended: [0]
@@ -110,9 +110,12 @@ describe('a row of the asks history', () => {
     expect(html).toContain('history-question')
     expect(html).toContain('history-question__number')
     expect(html).toContain('>1</span>')
-    expect(html).toContain('Recomendado')
-    // The tag is the record's own: grey, not the accent pill the working card carries.
-    expect(html).toContain('history-question__pill')
+    // The pick is a star, not the word: the mark says it, and the word survives only as its name.
+    expect(html).toContain('history-question__star')
+    expect(html).toContain('aria-label="Recomendado"')
+    expect(html).not.toContain('>Recomendado<')
+    // No pill of any kind around it, and never the working card's accent pill.
+    expect(html).not.toContain('history-question__pill')
     expect(html).not.toContain('ask-option__pill')
   })
 

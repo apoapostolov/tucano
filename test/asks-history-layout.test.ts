@@ -26,7 +26,7 @@ const ASK = (answered: boolean): string => `
                   <span class="history-question__option${answered ? '' : ' is-recommended'}">
                     <span class="history-question__number">1</span>
                     <span class="history-question__label">Sim, publico</span>
-                    ${answered ? '' : '<span class="history-question__pill">Recomendado</span>'}
+                    ${answered ? '' : '<span class="history-question__star"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.4l2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.8-5.4 2.8 1-6L3.3 9.8l6-.9L12 3.4Z"/></svg></span>'}
                   </span>
                   <span class="history-question__option${answered ? ' is-answered' : ''}">
                     <span class="history-question__number">2</span>
@@ -108,12 +108,13 @@ it.skipIf(skip)('keeps the accent out of the finished ask', async () => {
     await p.setContent(page(ASK(false)))
     const seen = await p.evaluate(() => {
       const accent = getComputedStyle(document.getElementById('pacc')!).backgroundColor
-      const pill = getComputedStyle(document.querySelector('.history-question__pill')!)
+      const star = getComputedStyle(document.querySelector('.history-question__star')!)
       const number = getComputedStyle(document.querySelector('.history-question__option.is-recommended .history-question__number')!)
-      return { accent, pillBorder: pill.borderTopColor, pillText: pill.color, numberBg: number.backgroundColor, numberText: number.color }
+      return { accent, starBorder: star.borderTopWidth, starColor: star.color, numberBg: number.backgroundColor, numberText: number.color }
     })
-    expect(seen.pillBorder).not.toBe(seen.accent)
-    expect(seen.pillText).not.toBe(seen.accent)
+    // The mark carries no pill around it any more, and its grey is the record's, never the accent.
+    expect(seen.starBorder).toBe('0px')
+    expect(seen.starColor).not.toBe(seen.accent)
     expect(seen.numberBg).not.toBe(seen.accent)
     expect(seen.numberText).not.toBe(seen.accent)
   } finally {

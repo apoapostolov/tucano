@@ -2107,7 +2107,11 @@ export function AskedRow({
                               <span className="history-question__number">{j + 1}</span>
                               <span className="history-question__label">{option.label}</span>
                               {option.description && <span className="history-question__detail">{option.description}</span>}
-                              {q.recommended?.[i] === j && <span className="history-question__pill">{L('Recomendado', 'Recommended')}</span>}
+                              {q.recommended?.[i] === j && (
+                                <span className="history-question__star" role="img" title={L('Recomendado', 'Recommended')} aria-label={L('Recomendado', 'Recommended')}>
+                                  <Icon name="star" size={11} />
+                                </span>
+                              )}
                             </span>
                           ))}
                           {answer?.other && (
