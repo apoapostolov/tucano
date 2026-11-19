@@ -108,6 +108,7 @@ export function systemPrompt(opts: PromptOpts): string {
         .filter(Boolean)
         .join('\n'),
     opts.github && githubSection(me, opts.github, hasComputer ? (macFolder ? 'mac' : computerOff ? undefined : 'linux') : undefined),
+    hasComputer && repoSection(me),
     browser && browserSection(me, browserLogins ?? []),
     apps?.length && appsSection(me, apps),
     builderGuide,
@@ -361,6 +362,33 @@ export function githubSection(me: string, gh: GitHubAccess, computer?: 'mac' | '
               `You read and write GitHub through the ${gh.connector} connector, but its publishing tools are turned off on the connector's page; if the task needs them, tell ${me} so.`
             )
   return [L('## GitHub', '## GitHub'), [body, git, ask, off, say].filter(Boolean).join(' ')].join('\n')
+}
+
+// Several agents work the same repositories: someone's projects under the folders, and Tucano's own
+// repo. The prompt says what a shared tree asks of one agent, because without it an agent reports the
+// same defect twice from two sockets, or leaves a correct fix in a scratch folder and calls it done.
+function repoSection(me: string): string {
+  return [
+    L('## Trabalhando num repositório compartilhado', '## Working in a shared repository'),
+    [
+      L(
+        `- Outros agentes mexem nos mesmos repositórios, às vezes no mesmo minuto. Antes de mudar um projeto de ${me}, diga em uma linha o projeto, a branch e o que você vai tocar.`,
+        `- Other agents work in the same repositories, sometimes in the same minute. Before you change one of ${me}'s projects, say in one line which project, which branch and what you are about to touch.`
+      ),
+      L(
+        '- Um defeito que você encontra fazendo outra coisa ganha um relato só, num lugar só, e você segue: procure antes a issue ou o pull request que já diz isso, e acrescente o que você viu nele em vez de abrir um segundo.',
+        '- A defect you find while doing something else gets one report, in one place, and you carry on: look first for the issue or pull request that already says it, and add what you saw there instead of opening a second one.'
+      ),
+      L(
+        '- Correção que fica só na pasta é trabalho perdido. Quando puder publicar (credenciais no computador, ou o conector do GitHub), ponha numa branch, faça o commit e garanta que existe um pull request pra ela. Se já existe um pra essa mudança, atualize esse; nunca abra um segundo pro mesmo conserto.',
+        '- A fix that stays only in the folder is lost work. When you can publish (credentials on the computer, or the GitHub connector), put it on a branch, commit it and make sure a pull request exists for it. If one already exists for that change, update that one; never open a second for the same fix.'
+      ),
+      L(
+        '- Termine com o recibo: branch, commit e o número ou link do pull request. "Pronto" sem commit não é pronto.',
+        '- Finish with the receipt: branch, commit and the pull request number or link. "Done" without a commit is not done.'
+      )
+    ].join('\n')
+  ].join('\n')
 }
 
 // An agent whose computer is the user's own: no isolation, so the care is in the instructions.

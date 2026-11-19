@@ -51,6 +51,15 @@ describe('mentioned', () => {
 })
 
 describe('systemPrompt', () => {
+  it('tells an agent with a computer how a shared repository is worked', () => {
+    const withComputer = systemPrompt({ agent: lia, settings: { workspaceName: 'Edu', context: '' }, conversation: dm, peers: [], hasComputer: true })
+    expect(withComputer).toContain('## Trabalhando num repositório compartilhado')
+    expect(withComputer).toContain('recibo')
+    expect(withComputer).toContain('um segundo pro mesmo conserto')
+    const without = systemPrompt({ agent: lia, settings: { workspaceName: 'Edu', context: '' }, conversation: dm, peers: [] })
+    expect(without).not.toContain('repositório compartilhado')
+  })
+
   it('includes identity, workspace context, instructions and the room', () => {
     const s = systemPrompt({ agent: lia, settings: { workspaceName: 'Edu', context: 'Trabalho com agentes.' }, conversation: channel, peers: [theo] })
     expect(s).toContain('Você é Lia (@lia)')
