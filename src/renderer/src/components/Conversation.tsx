@@ -2412,7 +2412,7 @@ export function FollowUpPill({ message }: { message: Message }): ReactNode {
     <PillPrompt
       icon="down"
       place="reply"
-      label={L('Seguir', 'Follow Up')}
+      label={L('Seguir', 'Follow')}
       title={L('Dizer como esta resposta segue agora', 'Say how this reply goes on now')}
       aria={L('O que mais esta resposta deve fazer', 'What more this reply should do')}
       placeholder={L('O que mais?', 'What next?')}
@@ -3456,7 +3456,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                       <div className="work-row__follow">
                         <PillPrompt
                           icon="down"
-                          label={L('Seguir', 'Follow Up')}
+                          label={L('Seguir', 'Follow')}
                           title={L('Dizer como esta resposta segue agora', 'Say how this reply goes on now')}
                           aria={L('O que mais esta resposta deve fazer', 'What more this reply should do')}
                           place="row"

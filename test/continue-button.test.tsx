@@ -105,7 +105,7 @@ describe('a reply the app cut', () => {
     const at = (label: string): number => inMeta.findIndex((t) => t.includes(label))
     expect(at('Continue')).toBeGreaterThanOrEqual(0)
     expect(at('Continue')).toBeLessThan(at('Try again'))
-    expect(at('Try again')).toBeLessThan(at('Follow Up'))
+    expect(at('Try again')).toBeLessThan(at('Follow'))
     // One row: the three of them are the only pills of the reply, and none is left outside the line.
     expect(document.querySelectorAll('.msg__meta').length).toBe(1)
     expect([...document.querySelectorAll('button.retry')].every((b) => meta!.contains(b))).toBe(true)
@@ -124,7 +124,7 @@ describe('a reply the app cut', () => {
     const meta = document.querySelector('.msg__meta')
     const inMeta = meta ? [...meta.querySelectorAll('button')].map((b) => b.textContent?.trim() ?? '') : []
     expect(inMeta).toContain('Continue')
-    expect(inMeta.indexOf('Continue')).toBeLessThan(inMeta.findIndex((t) => t === 'Follow Up' || t === 'Seguir'))
+    expect(inMeta.indexOf('Continue')).toBeLessThan(inMeta.findIndex((t) => t === 'Follow' || t === 'Seguir'))
     const button = [...document.querySelectorAll('button.retry')].find((b) => b.textContent?.trim() === 'Continue')
     await act(async () => (button as unknown as { click: () => void }).click())
     expect(continueRun).toHaveBeenCalledWith('m3')

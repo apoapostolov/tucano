@@ -12,6 +12,11 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **The question waiting on you reads as one line above the field.** The strip that keeps an unanswered question next to the composer lost its box and its rules in the 0.2.39 rebase, so the agent's name, the question, the count and **Answer** ran together as loose text in the column. It is a bordered line again, with the question on one ellipsized line and the way back at its end.
 - **The app keeps its own name on its window.** A page title from upstream renamed the window **Tucano** after the app had named it TucanoNext, which made the fork read as the released app beside it.
+- **The pill on a finished reply keeps its width.** It was a shrinkable flex item with a breakable label, so a long session name squeezed **Follow** over two lines inside a 22px box. The pill is now fixed and its label never breaks, so the row's own words are what shorten.
+
+### Changed
+
+- **The pill is called Follow**, on the drawer's row and on the reply's footer line, instead of Follow Up: one word for one field.
 
 ## [0.2.41] - 2026-11-19
 

@@ -2229,7 +2229,7 @@ h3 {
   padding: 0;
 }
 /* The pill keeps the width its words ask for, and the row's own text gives way instead: a shrinkable
-   pill broke "Follow Up" over two lines as soon as a session's name grew, and a pill cut in half
+   pill broke "Follow" over two lines as soon as a session's name grew, and a pill cut in half
    reads as two controls. Nothing in a row may shrink it — the words are what shorten. */
 .work-row__follow {
   flex: none;
