@@ -30,7 +30,7 @@ describe('settings placement', () => {
     expect(report.tabs).toBe(7)
     expect(report.renderedSections).toBe(25)
     expect(report.panes).toEqual(['agentes', 'atividade', 'geral', 'integracoes', 'modelos', 'pessoas', 'servidores'])
-    expect(report.unownedCards).toEqual(['Talk to the people who make Tucano', 'Sidebar', 'Recovery', 'Agents’ browser', 'Skill folders'])
+    expect(report.unownedCards).toEqual(['Talk to the people who make Tucano', 'Sidebar', 'Recovery', 'Browser Use', 'Skill folders'])
   })
 
   it('fails when a declared section loses its anchor', () => {
@@ -86,7 +86,7 @@ describe('settings placement', () => {
   })
 
   it('fails when two sections claim the same setting', () => {
-    const files = broken(STRUCTURE, "keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden']", "keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'theme']")
+    const files = broken(STRUCTURE, "keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'sectorOrder']", "keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'theme']")
     expect(failures(files)).toContain('theme is owned by both app-appearance and app-sidebar')
   })
 })

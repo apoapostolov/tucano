@@ -238,9 +238,9 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     expect(card('Agent models')!.closest('[data-settings-section]')?.getAttribute('id')).toBe('settings-models-agents')
 
     await render('agentes')
-    expect(cards()).toEqual(expect.arrayContaining(['Autonomy', 'Agents’ browser', 'Routines', 'Limits']))
+    expect(cards()).toEqual(expect.arrayContaining(['Autonomy', 'Browser Use', 'Routines', 'Limits']))
     // The browser card has no section of its own; it stays, without a link.
-    expect(card('Agents’ browser')!.closest('[data-settings-section]')).toBeNull()
+    expect(card('Browser Use')!.closest('[data-settings-section]')).toBeNull()
 
     await render('integracoes')
     expect(card('Phone (Telegram)')!.closest('[data-settings-section]')?.getAttribute('data-settings-section')).toBe('connections-phone')

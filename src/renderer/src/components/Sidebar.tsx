@@ -511,6 +511,7 @@ export function Sidebar(): ReactNode {
         )}
         {(byIds(available.filter((i) => i !== 'tuca').map((i) => ({ id: i })), moveBefore(available.map((i) => ({ id: i })), settings.navOrder, '')).map((x) => x.id) as TopItem[]).map((item) => {
           const sortProps = navSort.rowProps(item)
+          if (!shows(item) && !back(item)) return null
           if (item === 'asks' && !showAsks) return null
           if (item === 'approvals' && !showApprovals) return null
           return (

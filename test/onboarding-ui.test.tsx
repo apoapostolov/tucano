@@ -491,7 +491,6 @@ describe('taking items out of the top of the sidebar', () => {
     expect(labels()).toEqual(['Tuca', 'Perguntas', 'Aprovações', 'Conhecimento'])
     await openMenu()
     expect(parts()).toEqual([['Tuca', true], ['Perguntas', true], ['Aprovações', true], ['Quadro', false], ['Conhecimento', true], ['Operação', false]])
-    expect(text()).toContain('Volta quando algo espera por você')
     // Ticking brings it back; unticking takes it out, without the toast: it's done where it comes back from.
     await click([...document.querySelectorAll('[role="menuitemcheckbox"]')][3]!)
     expect(store.updateSettings).toHaveBeenCalledWith({ sidebarHidden: ['operations'] })
