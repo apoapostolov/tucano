@@ -159,7 +159,46 @@ describe('the work drawer', () => {
     expect(last.className).toContain('work-row__drop')
     expect(last.querySelector('svg path')?.getAttribute('d')).toBe('M6 6l12 12M18 6 6 18') // the same x
     await act(async () => button('Tirar este pedido da fila').click())
+    await act(async () => button('Clique de novo para tirar da fila').click())
     expect(stopped).toEqual(['drop:m2'])
+  })
+
+  // Every x in the drawer is a two-press glyph: a list of live sessions is too easy to hit by
+  // accident for one click to stop a reply or take a prompt back (Apo, 20 Nov).
+  it('arms a stop red on the first press, and only the second press stops the reply', async () => {
+    await render(nextConv(), [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await act(async () => button('1 respondendo').click())
+    const stop = document.querySelector('.work-row__stop')!
+    await act(async () => (stop as HTMLElement).click())
+    expect(stopped).toEqual([]) // nothing stopped yet
+    expect(stop.className).toContain('is-armed') // and it says so in red (styles.css, .work-row__stop.is-armed)
+    expect(stop.getAttribute('title')).toBe('Clique de novo para parar')
+    await act(async () => (stop as HTMLElement).click())
+    expect(stopped).toEqual(['r1'])
+    expect(stop.className).not.toContain('is-armed')
+  })
+
+  it('arms a queued prompt’s x before it takes the prompt back', async () => {
+    await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
+    const drop = document.querySelector('.work-row__drop')!
+    await act(async () => (drop as HTMLElement).click())
+    expect(stopped).toEqual([])
+    expect(drop.className).toContain('is-armed')
+    await act(async () => (drop as HTMLElement).click())
+    expect(stopped).toEqual(['drop:m2'])
+  })
+
+  it('arms the trash on a finished row before it takes the row off the list', async () => {
+    const conv = nextConv()
+    await render(conv, [said('m1', 'corrige o login', 1), reply('r1', 'm1')])
+    await render(conv, [said('m1', 'corrige o login', 1), reply('r1', 'm1', 'done')])
+    await act(async () => button('1 terminada').click())
+    const remove = document.querySelector('.work-row__remove')!
+    await act(async () => (remove as HTMLElement).click())
+    expect(text()).toContain('corrige o login') // still listed after one press
+    expect(remove.className).toContain('is-armed')
+    await act(async () => (remove as HTMLElement).click())
+    expect(text()).not.toContain('corrige o login')
   })
 
   it('starts a queued prompt now from its row, without waiting for a slot', async () => {
@@ -178,6 +217,7 @@ describe('the work drawer', () => {
   it('stops one reply and jumps to another, without touching the rest', async () => {
     await render(nextConv(), [said('m1', 'primeiro pedido', 1), said('m2', 'segundo pedido', 3), reply('r1', 'm1'), reply('r2', 'm2')])
     await act(async () => button('Parar esta resposta').click())
+    await act(async () => button('Clique de novo para parar').click())
     expect(stopped).toEqual(['r1']) // the first stop glyph, for the first reply
     await act(async () => button('Ir para esta resposta').click())
     expect(stopped).toEqual(['r1', 'jump:r1'])
@@ -234,6 +274,7 @@ describe('the work drawer', () => {
     await act(async () => button('1 terminada').click())
     const trash = button('Tirar da lista')
     expect(trash.querySelector('svg path')?.getAttribute('d')).toContain('M4 7h16')
+    await act(async () => trash.click())
     await act(async () => trash.click())
     expect(text()).toBe('')
     expect(document.querySelector('.work-drawer')).toBeNull()
@@ -292,6 +333,7 @@ describe('the work drawer', () => {
     expect(text()).toContain('1 respondendo')
     await act(async () => button('1 respondendo').click())
     await act(async () => button('Parar esta resposta').click())
+    await act(async () => button('Clique de novo para parar').click())
     expect(stopped).toEqual(['r2'])
   })
 

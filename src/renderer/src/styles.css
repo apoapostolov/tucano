@@ -2180,6 +2180,15 @@ h3 {
 .work-row--queued .work-row__text {
   color: var(--text-2);
 }
+/* A destructive glyph in the drawer arms before it acts, exactly as a row's trash does: the first
+   press turns it red and says what the second does, the second stops the reply, takes the prompt
+   back or takes the row off the list (Conversation.tsx, `ArmedGlyph`). */
+.work-row__stop.is-armed,
+.work-row__drop.is-armed,
+.work-row__remove.is-armed {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
 /* The handle a person drags to move a queued prompt: dim until the row is under the pointer. */
 .work-row__grip {
   display: inline-flex;

@@ -1097,6 +1097,61 @@ function AskedFromHere({ message }: { message: Message }): ReactNode {
 // disarms it, so a stray second press cannot take a session. The same control rides the thread's
 // header, where it closes the panel with the session it removed.
 const DELETE_ARM_MS = 4000
+
+// A glyph that stops or deletes takes two presses from anywhere in the app: the first only arms it
+// (it turns red and says what the second does), the second acts. Arming is spent by DELETE_ARM_MS of
+// quiet, by a press somewhere else, and by Escape, so a stale red button never sits waiting to be
+// finished by a click meant for something else. Same shape as the row trash below, one gesture.
+const useArmed = (act: () => void): [boolean, () => void] => {
+  const [armed, setArmed] = useState(false)
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), DELETE_ARM_MS)
+    const away = (e: MouseEvent): void => {
+      if (!(e.target instanceof Element && e.target.closest('.is-armed'))) setArmed(false)
+    }
+    const escape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setArmed(false)
+    }
+    window.addEventListener('mousedown', away)
+    window.addEventListener('keydown', escape)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('mousedown', away)
+      window.removeEventListener('keydown', escape)
+    }
+  }, [armed])
+  const press = (): void => {
+    if (!armed) return setArmed(true)
+    setArmed(false)
+    act()
+  }
+  return [armed, press]
+}
+
+// The drawer's destructive glyph: the x on a running reply (stop it), the x on a queued prompt (take
+// it back) and the trash on a finished row (take it off the list). One press arms it red, the next
+// acts — what a stray click in a list of live sessions could otherwise do on its own.
+function ArmedGlyph({ name, glyph, said, next, onConfirm }: {
+  name: IconName
+  glyph: string
+  said: string
+  next: string
+  onConfirm: () => void
+}): ReactNode {
+  const [armed, press] = useArmed(onConfirm)
+  return (
+    <button
+      className={`icon-btn icon-btn--sm ${glyph} ${armed ? 'is-armed' : ''}`}
+      title={armed ? next : said}
+      aria-label={armed ? next : said}
+      aria-pressed={armed}
+      onClick={press}
+    >
+      <Icon name={name} size={12} />
+    </button>
+  )
+}
 export function DeleteSession({ message, where = 'corner' }: { message: Message; where?: 'corner' | 'head' | 'post' | 'prompt' }): ReactNode {
   const [armed, setArmed] = useState(false)
   const head = where === 'head'
@@ -3281,14 +3336,13 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
               >
                 <Icon name="thread" size={12} />
               </button>
-              <button
-                className="icon-btn icon-btn--sm work-row__stop"
-                title={L('Parar esta resposta', 'Stop this reply')}
-                aria-label={L('Parar esta resposta', 'Stop this reply')}
-                onClick={() => stopRun(m.id)}
-              >
-                <Icon name="x" size={12} />
-              </button>
+              <ArmedGlyph
+                name="x"
+                glyph="work-row__stop"
+                said={L('Parar esta resposta', 'Stop this reply')}
+                next={L('Clique de novo para parar', 'Click again to stop')}
+                onConfirm={() => stopRun(m.id)}
+              />
             </div>
           ))}
           {queued.length > 0 && (
@@ -3367,14 +3421,13 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   {/* Taking the prompt back before it went: it never runs, and the message goes with
                       its row, so the pill it put in the conversation goes too (runs.ts, `dropQueued`).
                       The x sits at the row's end, where a running session carries its stop. */}
-                  <button
-                    className="icon-btn icon-btn--sm work-row__drop"
-                    title={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
-                    aria-label={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
-                    onClick={() => dropQueued(m.id)}
-                  >
-                    <Icon name="x" size={12} />
-                  </button>
+                  <ArmedGlyph
+                    name="x"
+                    glyph="work-row__drop"
+                    said={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
+                    next={L('Clique de novo para tirar da fila', 'Click again to take it out')}
+                    onConfirm={() => dropQueued(m.id)}
+                  />
                 </div>
               ))}
             </>
@@ -3420,14 +3473,13 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                     >
                       <Icon name="thread" size={12} />
                     </button>
-                    <button
-                      className="icon-btn icon-btn--sm work-row__remove"
-                      title={L('Tirar da lista', 'Remove from the list')}
-                      aria-label={L('Tirar da lista', 'Remove from the list')}
-                      onClick={() => keep(remember.done.filter((x) => x !== m.id))}
-                    >
-                      <Icon name="trash" size={12} />
-                    </button>
+                    <ArmedGlyph
+                      name="trash"
+                      glyph="work-row__remove"
+                      said={L('Tirar da lista', 'Remove from the list')}
+                      next={L('Clique de novo para tirar da lista', 'Click again to remove it')}
+                      onConfirm={() => keep(remember.done.filter((x) => x !== m.id))}
+                    />
                   </div>
                 )
               })}
