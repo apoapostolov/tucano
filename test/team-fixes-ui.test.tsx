@@ -132,15 +132,23 @@ describe('the words and the layout a person reads (round 2, 13)', () => {
     expect(html).toContain('class="history-row__what"')
   })
 
-  it('the asks table reserves one width for the state pill and one for the date', async () => {
+  it('the asks history uses the approvals history row instead of its own table', async () => {
     const { readFileSync } = await import('node:fs')
     const { join } = await import('node:path')
     const css = readFileSync(join(import.meta.dirname, '..', 'src', 'renderer', 'src', 'styles.css'), 'utf8')
-    // One pair of widths for the table, centred inside the cell: without them each row's label
-    // width moved the column by a few pixels and the dates never lined up.
-    expect(css).toMatch(/\.ask-row__head \{[^}]*--ask-state: 96px;[^}]*--ask-when: 104px;/)
-    expect(css).toMatch(/\.ask-row__state \{[^}]*flex: 0 0 var\(--ask-state\);[^}]*justify-content: center;/)
-    expect(css).toMatch(/\.ask-row__when \{[^}]*flex: 0 0 var\(--ask-when\);[^}]*text-align: center;/)
+    expect(css).not.toContain('.ask-row')
+    const { AskedRow } = await import('../src/renderer/src/components/Pages')
+    const html = renderToStaticMarkup(
+      <AskedRow
+        q={{ id: 'q1', agentId: 'a1', text: 'Publico o post hoje?', askedTo: 'ana', requestedBy: 'ana', state: 'answered', answeredBy: 'ana', deadlineAt: 0, createdAt: 1 } as never}
+        place="na sua DM com Lia"
+        open={false}
+        onToggle={() => {}}
+      />
+    )
+    expect(html).toContain('class="history-row history-row--approved')
+    expect(html).toContain('class="history-row__line"')
+    expect(html).toContain('class="history-row__state"')
   })
 
   it("a removed person's browser reads that they no longer have access, and nothing about the Tucano", async () => {

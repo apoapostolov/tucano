@@ -1879,6 +1879,37 @@ export function Field({ label, hint, error, group, children }: { label: string; 
 
 // ---------- Asks ----------
 
+// Where a question was asked, plus the way back to that conversation: the same line an approval
+// carries, with room for the ask's own actions (dismiss) on the Asks page.
+function AskWhere({ conversationId, agentId, at, actions }: { conversationId?: string; agentId: string; at: number; actions?: ReactNode }): ReactNode {
+  const conversations = useStore((s) => s.conversations)
+  const agents = useStore((s) => s.agents)
+  const conv = conversations.find((c) => c.id === conversationId)
+  const who = agents.find((x) => x.id === agentId)?.name
+  const where = !conv
+    ? L('numa conversa que você não vê', "in a conversation you don't see")
+    : conv.kind === 'channel'
+      ? L(`em #${conv.name}`, `in #${conv.name}`)
+      : who
+        ? L(`na sua DM com ${who}`, `in your DM with ${who}`)
+        : L('na sua DM', 'in your DM')
+  return (
+    <div className="row row--between small muted list-meta">
+      <span>
+        {where} · {time(at)}
+      </span>
+      <span className="row">
+        {conv && (
+          <button className="link" onClick={() => navigate({ kind: 'conversation', id: conv.id })}>
+            {L('Ver na conversa', 'See in the conversation')}
+          </button>
+        )}
+        {actions}
+      </span>
+    </div>
+  )
+}
+
 // Every agent's question to the person, in one place, the way Approvals gathers the approvals:
 // without it a question only exists as a card inside the reply that made it, which in a long
 // session is pages up (see the placement issue) or on a DM nobody opened.
@@ -1894,9 +1925,12 @@ export function AsksPage(): ReactNode {
   const [opened, setOpened] = useState<string | null>(null)
   const [past, setPast] = useState<AskEntry[]>([])
   const questions = inbox.questions
+  // Answered by someone else while this person was typing: keep it here with what they wrote,
+  // the same way the team inbox does.
+  const gone = (inbox.answered ?? []).filter((q) => questionDrafts.get(q.id)?.trim() && !questions.some((x) => x.id === q.id))
+  const waiting = [...questions.map((q) => ({ q, done: false })), ...gone.map((q) => ({ q, done: true }))]
   // What left the list: answered and closed asks, newest first. Reloaded when the open ones change,
   // which is exactly when one of them moved down here.
-  const open = questions.length
   useEffect(() => {
     let live = true
     questionsHistory(30).then(
@@ -1906,7 +1940,7 @@ export function AsksPage(): ReactNode {
     return () => {
       live = false
     }
-  }, [open])
+  }, [questions.length])
   const where = (conversationId: string | undefined, agentId: string): string => {
     const conv = conversations.find((c) => c.id === conversationId)
     const who = agents.find((x) => x.id === agentId)?.name
@@ -1914,85 +1948,77 @@ export function AsksPage(): ReactNode {
     if (conv.kind === 'channel') return L(`em #${conv.name}`, `in #${conv.name}`)
     return who ? L(`na sua DM com ${who}`, `in your DM with ${who}`) : L('na sua DM', 'in your DM')
   }
+  const dismissActions = (id: string): ReactNode =>
+    dropping === id ? (
+      <>
+        <span>{L('Deixar sem resposta?', 'Leave it unanswered?')}</span>
+        <button
+          className="link"
+          onClick={() => {
+            setDropping(null)
+            dismissQuestion(id)
+          }}
+        >
+          {L('Sim, dispensar', 'Yes, dismiss')}
+        </button>
+        <button className="link" onClick={() => setDropping(null)}>
+          {L('Manter', 'Keep it')}
+        </button>
+      </>
+    ) : (
+      <button className="link" onClick={() => setDropping(id)} title={L('Dispensa a pergunta sem resposta; o agente segue.', 'Dismiss without answering; the agent continues.')}>
+        {L('Dispensar', 'Dismiss')}
+      </button>
+    )
 
   return (
-    <Page
-      title={L('Perguntas', 'Asks')}
-      subtitle={L('O que os agentes perguntaram a você e ainda espera resposta, de todos eles, num lugar só.', 'What the agents asked you and is still waiting for an answer, from all of them, in one place.')}
-    >
-      {questions.length === 0 ? (
-        <div className="empty empty--rest">
-          <SleepingToucan />
-          <p>{L('Nenhuma pergunta esperando.', 'No questions waiting.')}</p>
-          <p className="muted">{L('Quando um agente precisar de uma decisão sua, a pergunta aparece aqui e na conversa.', 'When an agent needs a decision from you, the question shows up here and in the conversation.')}</p>
-        </div>
-      ) : (
-        <div className="stack-list">
-          {questions.map((q) => (
-            <div key={q.id}>
-              <div className="row row--between small muted list-meta">
-                <span>
-                  {where(q.conversationId, q.agentId)} · {time(q.createdAt)}
-                </span>
-                <span className="row">
-                  {q.conversationId && conversations.some((c) => c.id === q.conversationId) && (
-                    <button className="link" onClick={() => navigate({ kind: 'conversation', id: q.conversationId! })}>
-                      {L('Ver na conversa', 'See in the conversation')}
-                    </button>
-                  )}
-                  {dropping === q.id ? (
-                    <>
-                      <span>{L('Deixar sem resposta?', 'Leave it unanswered?')}</span>
-                      <button className="link" onClick={() => (setDropping(null), dismissQuestion(q.id))}>
-                        {L('Sim, dispensar', 'Yes, dismiss')}
-                      </button>
-                      <button className="link" onClick={() => setDropping(null)}>
-                        {L('Manter', 'Keep it')}
-                      </button>
-                    </>
-                  ) : (
-                    <button className="link" onClick={() => setDropping(q.id)} title={L('Some perguntas não precisam de resposta: esta some daqui, fecha, e o agente segue sem ela.', "Some questions don't need an answer: this one leaves the page, closes, and the agent goes on without it.")}>
-                      {L('Dispensar', 'Dismiss')}
-                    </button>
-                  )}
-                </span>
-              </div>
-              <QuestionCard
-                id={q.id}
-                agentName={agents.find((x) => x.id === q.agentId)?.name}
-                askedTo={q.askedTo}
-                question={q.text}
-                {...(q.decisions ? { decisions: q.decisions, ...(q.answers ? { answers: q.answers } : {}) } : {})}
-                answered={false}
-                inbox
-              />
-            </div>
-          ))}
-        </div>
-      )}
-      {past.length > 0 && (
+    <Page title={L('Perguntas', 'Asks')} subtitle={L('As perguntas dos agentes que esperam sua resposta, em um só lugar.', 'The agents’ questions waiting for your answer, in one place.')}>
+      {waiting.length === 0 && <NothingWaiting why={L('Quando um agente fizer uma pergunta, ela aparece aqui e na conversa.', 'When an agent asks you something, it appears here and in the conversation.')} />}
+      {waiting.length > 0 && (
         <>
-          <h3 className="section-title">{L('Histórico', 'History')}</h3>
-          <div className="table">
-            {past.map((q) => (
-              <AskedRow
-                key={q.id}
-                q={q}
-                place={where(q.conversationId, q.agentId)}
-                open={opened === q.id}
-                onToggle={() => setOpened(opened === q.id ? null : q.id)}
-              />
+          <div className="caps-title">{L(`Perguntas · ${waiting.length}`, `Questions · ${waiting.length}`)}</div>
+          <div className="stack-list">
+            {waiting.map(({ q, done }) => (
+              <div key={q.id}>
+                <AskWhere conversationId={q.conversationId} agentId={q.agentId} at={q.createdAt} actions={done ? undefined : dismissActions(q.id)} />
+                <QuestionCard
+                  id={q.id}
+                  agentName={agents.find((x) => x.id === q.agentId)?.name}
+                  askedTo={q.askedTo}
+                  question={q.text}
+                  {...(q.decisions ? { decisions: q.decisions, ...(q.answers ? { answers: q.answers } : {}) } : {})}
+                  answered={done}
+                  {...(q.answeredBy ? { answeredBy: q.answeredBy } : {})}
+                  inbox
+                />
+              </div>
             ))}
           </div>
         </>
+      )}
+      {past.length > 0 && (
+        <section className="approvals-history">
+          <div className="caps-title">
+            <span className="grow">{L('Histórico', 'History')}</span>
+          </div>
+          {past.map((q) => (
+            <AskedRow
+              key={q.id}
+              q={q}
+              place={where(q.conversationId, q.agentId)}
+              open={opened === q.id}
+              onToggle={() => setOpened(opened === q.id ? null : q.id)}
+            />
+          ))}
+        </section>
       )}
     </Page>
   )
 }
 
-// One answered or closed ask, in the same table the approvals keep their history in: the agent, the
-// ask flattened to a single line, how it ended, when. Clicking the row opens the ask itself, which
-// is stored as numbered lines whose options sit behind pipes and reads as a wall of text unshaped.
+// One answered or closed ask, in the approvals' history rows: the agent, the ask flattened to a
+// single line, how it ended, when. Clicking the row opens the ask itself, which is stored as
+// numbered lines whose options sit behind pipes and reads as a wall of text unshaped.
 const askSummary = (text: string): string =>
   parseQuestionsText(text)
     .map((q) => q.question)
@@ -2023,6 +2049,7 @@ export function AskedRow({
   const you = useStore((s) => s.you)
   const people = useStore((s) => s.people)
   const by = q.answeredBy ? people.find((p) => p.id === q.answeredBy) : undefined
+  const there = useStore((s) => s.conversations.some((c) => c.id === q.conversationId))
   const ended =
     q.state !== 'answered'
       ? L('sem resposta', 'no answer')
@@ -2033,25 +2060,34 @@ export function AskedRow({
           : L('respondida', 'answered')
   const line = askSummary(q.text)
   return (
-    <div className="ask-row">
-      <button type="button" className="table__row table__row--btn ask-row__head" onClick={onToggle} aria-expanded={open}>
-        {agent && <AgentAvatar agent={agent} size={22} />}
-        <span className="ask-row__text" title={line}>
-          {line}
+    <div className={`history-row ${q.state === 'answered' ? 'history-row--approved' : ''} ${open ? 'is-open' : ''}`}>
+      <button type="button" className="history-row__line" onClick={onToggle} aria-expanded={open}>
+        {agent ? <AgentAvatar agent={agent} size={20} still /> : <span className="history-row__noone" />}
+        <span className="history-row__what">
+          <span className="grow" title={line}>
+            {line}
+          </span>
+          <span className="history-row__who">{agent?.name ?? L('Agente', 'Agent')}</span>
         </span>
-        <span className={`tag ask-row__state ${q.state === 'answered' ? 'tag--ok' : ''}`}>{ended}</span>
-        <span className="muted small ask-row__when">{time(q.answeredAt ?? q.createdAt)}</span>
-        <span className={`ask-row__chev ${open ? 'is-open' : ''}`}>
-          <Icon name="chevron" size={12} />
-        </span>
+        <span className="history-row__at">{time(q.answeredAt ?? q.createdAt)}</span>
+        <span className="history-row__state">{ended}</span>
       </button>
       {open && (
-        <div className="ask-row__body">
-          <Markdown remarkPlugins={[remarkGfm]}>{askMarkdown(q.text)}</Markdown>
-          <span className="hint">
-            {agent?.name ?? L('O agente', 'The agent')} · {place} · {time(q.createdAt)}
-          </span>
-        </div>
+        <ul className="history-row__more">
+          <li>
+            <div className="grow">
+              <Markdown remarkPlugins={[remarkGfm]}>{askMarkdown(q.text)}</Markdown>
+              <span className="hint">
+                {place} · {time(q.createdAt)}
+              </span>
+            </div>
+            {there && (
+              <button className="link link--quiet" onClick={() => navigate({ kind: 'conversation', id: q.conversationId! })}>
+                {L('Ver na conversa', 'See in the conversation')}
+              </button>
+            )}
+          </li>
+        </ul>
       )}
     </div>
   )
@@ -2275,28 +2311,6 @@ function ApprovalHistory({ approvals }: { approvals: Approval[] }): ReactNode {
         </div>
       ))}
     </section>
-  )
-}
-
-// Where an ask was asked, with the way back to it: a channel, a DM, or a conversation this person
-// can't see (someone else's DM: they get the question only). The same line the approvals carry.
-function AskWhere({ conversationId, agentId, at }: { conversationId: string | undefined; agentId: string; at: number }): ReactNode {
-  const conversations = useStore((s) => s.conversations)
-  const agents = useStore((s) => s.agents)
-  const conv = conversations.find((c) => c.id === conversationId)
-  const who = agents.find((x) => x.id === agentId)?.name
-  const where = conv?.kind === 'channel' ? L(`em #${conv.name}`, `in #${conv.name}`) : conv ? (who ? L(`na sua DM com ${who}`, `in your DM with ${who}`) : L('na sua DM', 'in your DM')) : L('numa conversa que você não vê', "in a conversation you don't see")
-  return (
-    <div className="row row--between small muted list-meta">
-      <span>
-        {where} · {time(at)}
-      </span>
-      {conv && (
-        <button className="link" onClick={() => navigate({ kind: 'conversation', id: conv.id })}>
-          {L('Ver na conversa', 'See in the conversation')}
-        </button>
-      )}
-    </div>
   )
 }
 
