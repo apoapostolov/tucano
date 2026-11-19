@@ -100,3 +100,25 @@ it('stops picking a reply up by itself after three tries, and leaves the Continu
   expect(run.status).toBe('interrupted')
   expect(run.restartPending).toBeUndefined()
 })
+
+it("a person's Continue starts the count over: the reply it goes on in gets its own three tries", async () => {
+  const now = Date.now()
+  stuck('spent', now)
+  const first = db.message('spent')!
+  db.saveMessage({ ...first, run: { ...first.run!, resumes: 3 } })
+  runner.sweepOrphans(now)
+  const cut = runner.sweepOrphans(now + 61_000)
+  await runner.resumeInterrupted(cut)
+  await runner.idle()
+  expect(turns).toHaveLength(0) // spent by itself: nothing goes on until the person asks
+  // The person presses Continue: a new reply goes on from what the row did.
+  await runner.continue('spent')
+  await runner.idle()
+  expect(turns).toHaveLength(1)
+  const after = db.messages().filter((m) => m.conversationId === 'dm-a' && m.author.kind === 'agent' && m.id !== 'spent')
+  expect(after).toHaveLength(1)
+  // The allowance belongs to the reply, not to the session: this one spent none of it, so a cut of it
+  // is picked up by itself again. A person's click is a fresh start, not a row marked for ever.
+  expect(after[0]!.run!.resumes ?? 0).toBe(0)
+})
+
