@@ -1000,8 +1000,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
               {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
               <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', 'The ceiling per reply is set in Settings › Agents › Limits; it isn’t the agent’s monthly limit.')}</span>
             </div>
-            <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
-              {L('Continuar', 'Continue')}
+            <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
+              <Icon name="play" size={11} />{L('Continuar', 'Continue')}
             </button>
           </>
         )}
@@ -1016,19 +1016,19 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
             it is the first thing a cut reply owes the person. A reply cut while it was still thinking
             has nothing behind it, and still takes it — that is the person's call, not the app's. */}
         {resumable && !hasFooter && (
-          <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
-            {L('Continuar', 'Continue')}
+          <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
+            <Icon name="play" size={11} />{L('Continuar', 'Continue')}
           </button>
         )}
         {/* At the limit, trying again only helps once the limit went up: until then, the way out is raising it.
             With no monthly limit set, nothing is ever over it: the reply is just to be tried again. */}
         {message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit)))) && (
-          <button className="btn btn--xs retry" onClick={() => retryRun(message.id)}>
-            {L('Tentar de novo', 'Try again')}
+          <button className="steps__ask-pill retry msg__hire" onClick={() => retryRun(message.id)}>
+            <Icon name="back" size={11} />{L('Tentar de novo', 'Try again')}
           </button>
         )}
         {message.run?.status === 'limit_reached' && agent && overMonthlyLimit(agent.used, agent.limit) && (
-          <button className="btn btn--xs retry" onClick={() => (setTab('agent', 'perfil'), navigate({ kind: 'agent', id: agent.id }))}>
+          <button className="steps__ask-pill retry msg__hire" onClick={() => (setTab('agent', 'perfil'), navigate({ kind: 'agent', id: agent.id }))}>
             {L(`Aumentar o limite de ${agent.name}`, `Raise ${agent.name}’s limit`)}
           </button>
         )}
@@ -1042,8 +1042,8 @@ const MessageRow = memo(function MessageRow({ message, grouped, away, replies, a
                     a done run) used to lose the pill to that line entirely, which is how a chain with no
                     answer ended up with no way on. */}
                 {resumable && (
-                  <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
-                    {L('Continuar', 'Continue')}
+                  <button className="steps__ask-pill retry msg__hire" onClick={() => continueRun(message.id)}>
+                    <Icon name="play" size={11} />{L('Continuar', 'Continue')}
                   </button>
                 )}
                 {/* The way on from this reply, first in its own footer line, before the numbers: it is
@@ -2303,7 +2303,7 @@ function HoldButton({ message, paused }: { message: Message; paused: boolean }):
         title={L('Seguir agora, na mesma sessão e no mesmo modelo', 'Resume with the same session and model')}
         aria-label={L('Retomar a resposta', 'Resume reply')}
       >
-        <Icon name="play" size={11} /> {L('Retomar', 'Resume')}
+        <Icon name="play" size={11} />{L('Retomar', 'Resume')}
       </button>
     )
   }

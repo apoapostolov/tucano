@@ -17377,6 +17377,28 @@ button.agent-card__now:hover {
   border-color: var(--accent);
   background: var(--hover);
 }
+/* The way on from a reply that stopped — Continue and Try again under a dead session: the same pill
+   Follow Up is, in its dim colour, and only under the pointer. A row that ended badly reads as its
+   words and its numbers until someone goes near it, and the one thing it owes them is there when they
+   do. It keeps its space while hidden, so nothing below it jumps when it appears. */
+.msg__hire {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.msg:hover .msg__hire,
+.msg:focus-within .msg__hire {
+  opacity: 1;
+}
+/* A touch screen has no pointer to hover with: there, the pill is simply there. */
+@media (hover: none) {
+  .msg__hire {
+    opacity: 1;
+  }
+}
+/* In the footer line it sits beside Follow Up, which carries no top margin of its own. */
+.msg__meta .msg__hire {
+  margin-top: 0;
+}
 
 .steps__ask-note {
   display: grid;

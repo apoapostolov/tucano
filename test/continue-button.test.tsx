@@ -156,4 +156,19 @@ describe('a reply the app cut', () => {
     // And it is not the same thing as trying again from the beginning.
     expect(retryRun).not.toHaveBeenCalled()
   })
+
+  // A row that ended badly is its words and its numbers until the pointer goes near it: the way on
+  // wears Follow Up's pill, in its dim colour, and the row reveals it on hover (styles.css .msg__hire).
+  it('wears the Follow Up pill, dim, and the row shows it on hover', async () => {
+    fake = { ...fake, messages: { d1: [cut([step('Thought', 'done'), step('Ran npx vitest run', 'done')])] } }
+    await render(<ConversationView id="d1" />)
+    const pills = [...document.querySelectorAll('button.retry')]
+    expect(pills.length).toBeGreaterThan(1)
+    for (const pill of pills) {
+      expect(pill.classList.contains('steps__ask-pill')).toBe(true)
+      expect(pill.classList.contains('msg__hire')).toBe(true)
+      // and none of them still the old square button it was
+      expect(pill.className).not.toContain('btn--xs')
+    }
+  })
 })
