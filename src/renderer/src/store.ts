@@ -1143,6 +1143,8 @@ export const stopRun = (messageId: string): void => void fire(L('Não consegui p
 // order a person drags the rows into is what the queue runs in.
 export const startQueued = (messageId: string): void => void fire(L('Não consegui começar este pedido agora.', "I couldn't start that prompt now."), 'startQueued', { messageId })
 export const reorderQueued = (conversationId: string, ids: string[]): void => void fire(L('Não consegui guardar a ordem da fila.', "I couldn't keep the queue's order."), 'reorderQueued', { conversationId, ids })
+// Taking a prompt back out of the queue: it never runs, and its message goes with its row.
+export const dropQueued = (messageId: string): void => void fire(L('Não consegui tirar este pedido da fila.', "I couldn't take that prompt out of the queue."), 'dropQueued', { messageId })
 // Pausing, resuming and going on from a reply are named here and answered by the core's table
 // (src/core/index.ts registers the method, src/core/policy-people.ts who may call it). They are sent
 // by name because that table is not part of this change: a core that doesn't know one refuses it, and

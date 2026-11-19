@@ -18,6 +18,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   stopRun: { messageId: 's' },
   startQueued: { messageId: 's' },
   reorderQueued: { conversationId: 's', ids: 'S' },
+  dropQueued: { messageId: 's' },
   pauseRun: { messageId: 's' },
   resumeRun: { messageId: 's' },
   retryRun: { messageId: 's' },

@@ -23,7 +23,8 @@ vi.mock('../src/renderer/src/store', async (original) => {
     stopRun: (id: string): void => void stopped.push(id),
     openThread: (rootId: string): void => void stopped.push(`thread:${rootId}`),
     startQueued: (id: string): void => void stopped.push(`start:${id}`),
-    reorderQueued: (conversationId: string, ids: string[]): void => void stopped.push(`order:${conversationId}:${ids.join(',')}`)
+    reorderQueued: (conversationId: string, ids: string[]): void => void stopped.push(`order:${conversationId}:${ids.join(',')}`),
+    dropQueued: (id: string): void => void stopped.push(`drop:${id}`)
   }
 })
 const { getState } = await import('../src/renderer/src/store')
@@ -149,6 +150,16 @@ describe('the work drawer', () => {
     await act(async () => rows[0]!.dispatchEvent(Object.assign(new window.Event('drop', { bubbles: true, cancelable: true }), { dataTransfer: transfer }) as Event))
     // Three before two: the order the drawer shows now, and the one the core is told to run.
     expect(stopped).toContain(`order:${conv}:m3,m2`)
+  })
+
+  it('takes a queued prompt back with an x at the end of its row, like the stop on a running one', async () => {
+    await render(nextConv(), [said('m1', 'primeiro pedido', 1), { ...said('m2', 'isto pode esperar', 3), sendMode: 'queue' }, reply('r1', 'm1')])
+    const row = document.querySelector('.work-row--queued')!
+    const last = [...row.querySelectorAll('button')].at(-1)!
+    expect(last.className).toContain('work-row__drop')
+    expect(last.querySelector('svg path')?.getAttribute('d')).toBe('M6 6l12 12M18 6 6 18') // the same x
+    await act(async () => button('Tirar este pedido da fila').click())
+    expect(stopped).toEqual(['drop:m2'])
   })
 
   it('starts a queued prompt now from its row, without waiting for a slot', async () => {

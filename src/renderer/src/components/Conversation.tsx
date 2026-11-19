@@ -66,6 +66,7 @@ import { canEditChannel,
   pauseRun,
   resumeRun,
   followUpRun,
+  dropQueued,
   deleteMessage,
   updateSettings,
   typing,
@@ -2402,6 +2403,7 @@ function PillPrompt(p: { icon: IconName; label: string; title: string; aria: str
       {open && p.place === 'row' && (
         <div className="steps__ask-note steps__ask-note--row">
           <input
+            type="text"
             aria-label={p.aria}
             placeholder={p.placeholder}
             value={note}
@@ -3374,6 +3376,17 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   >
                     <Icon name="play" size={11} />
                   </button>
+                  {/* Taking the prompt back before it went: it never runs, and the message goes with
+                      its row, so the pill it put in the conversation goes too (runs.ts, `dropQueued`).
+                      The x sits at the row's end, where a running session carries its stop. */}
+                  <button
+                    className="icon-btn icon-btn--sm work-row__drop"
+                    title={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
+                    aria-label={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
+                    onClick={() => dropQueued(m.id)}
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
                 </div>
               ))}
             </>
@@ -3392,6 +3405,23 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                       {what(m)}
                     </button>
                     <span className="work-row__meta">{how.said}</span>
+                    {/* The pill a working row carries, for a reply that isn't at work any more: it says
+                        how this one goes on, in the row it already owns, instead of turning into another
+                        message (src/core/runs.ts, `followUp`). A reply stopped at the plan's limit has
+                        nothing to go on with, so it alone keeps no pill. */}
+                    {m.run && canFollowUp(m.run) && (
+                      <div className="work-row__follow">
+                        <PillPrompt
+                          icon="down"
+                          label={L('Seguir', 'Follow Up')}
+                          title={L('Dizer como esta resposta segue agora', 'Say how this reply goes on now')}
+                          aria={L('O que mais esta resposta deve fazer', 'What more this reply should do')}
+                          place="row"
+                          placeholder={L('O que mais?', 'What next?')}
+                          onSend={(text) => followUpRun(m.id, text)}
+                        />
+                      </div>
+                    )}
                     <button
                       className="icon-btn icon-btn--sm work-row__thread-btn"
                       title={into(m)}

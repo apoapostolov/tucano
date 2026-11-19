@@ -2023,6 +2023,17 @@ const api: Handlers = {
     if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
     runner.reorderQueued(conversationId, ids)
   },
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes, and the message goes with it — the row and the pill it already put in the
+  // conversation are one message, so both leave in the same step (runs.ts, `dropQueued`).
+  dropQueued: ({ messageId }, ctx) => {
+    const m = db.message(messageId)
+    if (!m) return
+    reach(ctx, m.conversationId)
+    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
+    if (!own) manage(ctx, m.conversationId) // someone else's prompt in a channel: only whoever runs it
+    runner.dropQueued(messageId)
+  },
 
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.

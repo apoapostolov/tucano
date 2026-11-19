@@ -48,6 +48,7 @@ export interface Api {
   stopRun(p: { messageId: string }): void
   startQueued(p: { messageId: string }): void // a prompt waiting in the queue starts now, cap or no cap
   reorderQueued(p: { conversationId: string; ids: string[] }): void // the order the queue runs in, as a person put it in the drawer
+  dropQueued(p: { messageId: string }): void // a prompt waiting in the queue is taken back: its row leaves the drawer and its message leaves the room
   pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
   resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
   retryRun(p: { messageId: string }): void

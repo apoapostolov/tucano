@@ -1014,6 +1014,23 @@ export class Runner {
     if (!waiting.length) this.convWaiting.delete(conversationId)
   }
 
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes first, so nothing starts it afterwards, and then the message itself — the row in
+  // the drawer and the pill it already put in the conversation are one message, so both leave in the
+  // same step. A started prompt carries no queue mark, and is left alone here.
+  dropQueued(messageId: string): void {
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const at = waiting.findIndex((w) => w.queued?.id === messageId)
+      if (at < 0) continue
+      waiting.splice(at, 1)
+      if (!waiting.length) this.convWaiting.delete(conversationId)
+    }
+    const m = this.deps.db.message(messageId)
+    if (!m || m.sendMode !== 'queue') return
+    this.deps.db.deleteMessage(messageId)
+    this.deps.emit({ type: 'message_removed', id: messageId, conversationId: m.conversationId })
+  }
+
   // The order a person gave the queue in the drawer (Conversation.tsx, `reorderQueued` in rpc.ts): the
   // place is kept on each message, so a restart reads the same order, and the jobs waiting here take it
   // now. Any prompt the list leaves out keeps the order it was written in, after the ones moved.

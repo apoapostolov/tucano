@@ -2213,12 +2213,14 @@ h3 {
   color: var(--accent);
   background: var(--accent-soft);
 }
-/* A working session carries its steer pill. */
-.work-row__steer .steps__ask {
+/* A working session carries its steer pill, a finished one the follow up at the same place. */
+.work-row__steer .steps__ask,
+.work-row__follow .steps__ask {
   margin: 0;
   padding: 0;
 }
-.work-row__steer .steps__ask-pill {
+.work-row__steer .steps__ask-pill,
+.work-row__follow .steps__ask-pill {
   padding: 2px 6px;
   font-size: 11px;
 }
@@ -2236,7 +2238,9 @@ h3 {
 /* The wrapper and its inner grid dissolve, so the pill keeps the row it was on and the field becomes
    the row's own second line (the trick the chain's Pause row uses, .steps__hold). */
 .work-row:has(.steps__ask-note--row) > .work-row__steer,
-.work-row:has(.steps__ask-note--row) > .work-row__steer > .steps__ask {
+.work-row:has(.steps__ask-note--row) > .work-row__steer > .steps__ask,
+.work-row:has(.steps__ask-note--row) > .work-row__follow,
+.work-row:has(.steps__ask-note--row) > .work-row__follow > .steps__ask {
   display: contents;
 }
 /* The name starts 19px into the row — the go button's 6px of padding, the 6px dot and its 7px gap —
@@ -2245,6 +2249,11 @@ h3 {
   grid-column: 1 / -1;
   grid-row: 2;
   margin-left: 19px;
+}
+/* A finished row's name starts past a state glyph a size bigger than the working dot — 6px of
+   padding, 11px of glyph, its 7px gap — so its field starts 24px in, where that name starts. */
+.work-row--done:has(.steps__ask-note--row) .steps__ask-note--row {
+  margin-left: 24px;
 }
 /* Two classes: it is a .steps__ask-note too, and that one is a grid of a field over its buttons —
    here the field and its glyph are one line, so this rule has to outrank it. */
