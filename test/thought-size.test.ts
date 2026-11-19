@@ -9,6 +9,8 @@
 //     edge to the chain's right edge, not 10 px in from each side.
 //   - the name over it is one dim line in full caps, starting on the block's own text edge, with nothing
 //     to click and no background of its own: the header the refactor removed came back as the word only.
+//   - the scrollbar is the window's own vertical one, in a column of its own past the text: it never
+//     eats into the reasoning's width, and it never turns sideways.
 import { existsSync, readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
@@ -59,6 +61,10 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
           textBox: { l: Math.round(rect(text).left), r: Math.round(rect(text).right) },
           rowBox: { l: Math.round(rect(row).left), r: Math.round(rect(row).right) },
           blockBox: { l: Math.round(rect(thought).left), r: Math.round(rect(thought).right) },
+          // The bar's own column: what the block takes past its content, and whether it ever runs sideways.
+          bar: thought.offsetWidth - thought.clientWidth - parseFloat(getComputedStyle(thought).borderLeftWidth),
+          sideways: thought.scrollWidth - thought.clientWidth,
+          gutter: getComputedStyle(thought).scrollbarGutter,
           listBox: { l: Math.round(rect(list).left), r: Math.round(rect(list).right) },
           head: (() => {
             const head = document.querySelector('.thought__head')!
@@ -81,9 +87,14 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
       expect({ size, lines: m.lines, shown: Math.round(m.textHeight / LINE_HEIGHT) }).toEqual({ size, lines: String(LINES[size]), shown: LINES[size] })
       // It really is longer than what it shows, so the count above is a cap and not the whole text.
       expect(m.hidden).toBeGreaterThan(LINE_HEIGHT * 2)
-      // The same column as the steps' own rows, and the same box as the chain's list.
+      // The same column as the steps' own rows — and it stays that column whether or not the block
+      // scrolls, because the bar's space is reserved rather than taken from the text.
       expect({ size, ...m.textBox }).toEqual({ size, ...m.rowBox })
-      expect({ size, ...m.blockBox }).toEqual({ size, ...m.listBox })
+      // The block starts where the chain's list starts and takes the bar's 10px past its right edge,
+      // so the text ends on the row's edge and the bar sits outside it.
+      expect({ size, left: m.blockBox.l, right: m.blockBox.r - 10 }).toEqual({ size, left: m.listBox.l, right: m.listBox.r })
+      // A real vertical scrollbar from the window's own styling, and never a sideways one.
+      expect({ size, bar: m.bar, gutter: m.gutter, sideways: m.sideways }).toEqual({ size, bar: 10, gutter: 'stable', sideways: 0 })
       // The name over it: full caps, small, on the block's own text edge, in a line of its own above it.
       expect({ size, text: m.head.text, left: m.head.left, transform: m.head.transform, font: m.head.size }).toEqual({
         size,
@@ -101,6 +112,37 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
         blockBg: 'rgba(0, 0, 0, 0)'
       })
     }
+  } finally {
+    await browser.close()
+  }
+})
+
+it.skipIf(!existsSync(chromium.executablePath()))('keeps the reasoning column still when there is nothing to scroll', async () => {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    await page.setViewportSize({ width: 1280, height: 880 })
+    const measure = async (body: string) => {
+      await page.setContent(markup('lg').replace(LONG, body))
+      return page.evaluate(() => {
+        const t = document.querySelector('.thought')!
+        const text = document.querySelector('.thought__text')!
+        const r = (el: Element) => el.getBoundingClientRect()
+        return {
+          text: [Math.round(r(text).left), Math.round(r(text).right)],
+          hidden: t.scrollHeight - t.clientHeight,
+          height: t.offsetHeight
+        }
+      })
+    }
+    const short = await measure('one line of it, and done')
+    const long = await measure(LONG)
+    // Nothing to scroll: the block is its text, with no bar drawn.
+    expect(short.hidden).toBe(0)
+    expect(short.height).toBeLessThan(long.height)
+    // And the text keeps the very same column it has while the bar is up: the gutter is reserved,
+    // so the reasoning does not narrow the moment a long thought starts to scroll.
+    expect(short.text).toEqual(long.text)
   } finally {
     await browser.close()
   }

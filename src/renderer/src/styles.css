@@ -17298,16 +17298,21 @@ button.agent-card__now:hover {
      window — the same width. At 10px a side the reasoning read a hair narrower than the steps above
      it, which is what it looked like. */
   padding: 8px 0 8px 14px;
+  /* The scrollbar has a column of its own, past the text and never out of it: `::-webkit-scrollbar`
+     is 10px, so the block's box takes those 10px beyond the chain's column (`margin-right`) and the
+     text keeps ending where a step's row ends. `stable` reserves it whether or not the bar shows, so
+     the reasoning does not narrow the moment it starts to scroll. */
+  margin-right: -10px;
+  scrollbar-gutter: stable;
   border-left: 2px solid var(--border);
   border-radius: 0 8px 8px 0;
   color: var(--text-3);
   font-size: 12px;
   line-height: 1.55;
   white-space: pre-wrap;
-  /* No bar of its own: a visible one took 10px out of the text while it streamed, so the reasoning
-     ended short of where a step's row ends — the same narrow column in another shape. The fade on
-     the last line says there is more under it. */
-  scrollbar-width: none;
+  /* The bar is the window's own — the global 10px thumb, dim, rounded — and it sits in the column
+     reserved above instead of over the reasoning. Only when the block is shorter than what it holds
+     does it appear; dragged no shorter than its text, it is not drawn at all. */
 }
 
 /* The size is a setting, so it rides on the block as data-size rather than as a class: the class
