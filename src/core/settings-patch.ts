@@ -50,6 +50,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   openAtLogin: { kind: 'boolean', max: 10, nullable: true },
   resumeInterrupted: { kind: 'boolean', max: 10 },
   runBudgetPct: { kind: 'number', max: 30, nullable: true },
+  autoContinue: { kind: 'boolean', max: 10, nullable: true },
   runStallMinutes: { kind: 'number', max: 30, nullable: true },
   chainDepth: { kind: 'number', max: 30, nullable: true },
   teamUpDays: { kind: 'number', max: 30, nullable: true },
@@ -79,7 +80,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   lastImageFolder: { kind: 'string', max: 4_096, nullable: true },
   notice: { kind: 'object', max: 500, nullable: true },
   sidebarHidden: { kind: 'array', max: 500, nullable: true },
-  surveys: { kind: 'boolean', max: 10, nullable: true }
+  surveys: { kind: 'boolean', max: 10, nullable: true },
+  tucaApplyNow: { kind: 'boolean', max: 10, nullable: true }
 }
 
 const fits = (kind: Kind, v: unknown): boolean =>
