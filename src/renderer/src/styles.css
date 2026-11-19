@@ -17713,6 +17713,52 @@ button.agent-card__now:hover {
   }
 }
 
+/* The strip itself: one line, the question in the middle and the way back at its end, so a long
+   reply never leaves the person scrolling to find what is waiting on them. */
+.ask-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-2);
+  text-align: left;
+  font-size: 13px;
+}
+.ask-strip:hover {
+  border-color: var(--border-strong);
+}
+.ask-strip .icon {
+  color: var(--accent);
+  flex: none;
+}
+.ask-strip__who {
+  flex: none;
+  font-weight: 600;
+  color: var(--text);
+}
+.ask-strip__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ask-strip__count {
+  flex: none;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.ask-strip__go {
+  flex: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* Where a cleared history starts: the rows before it are still stored (receipts, approvals) and out
    of the screen, so the conversation says where it begins instead of pretending it always was empty. */
 .messages__cleared {

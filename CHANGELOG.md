@@ -8,6 +8,11 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **Copy a finished reply as Markdown.** A glyph left of **Reply to message**, in the footer of a reply that ended, puts the answer on the clipboard as it was written — tables, lists, code and all — instead of the text the screen drew from it. It turns into a check for a moment after the press, and a copy that fails says so.
 
+### Fixed
+
+- **The question waiting on you reads as one line above the field.** The strip that keeps an unanswered question next to the composer lost its box and its rules in the 0.2.39 rebase, so the agent's name, the question, the count and **Answer** ran together as loose text in the column. It is a bordered line again, with the question on one ellipsized line and the way back at its end.
+- **The app keeps its own name on its window.** A page title from upstream renamed the window **Tucano** after the app had named it TucanoNext, which made the fork read as the released app beside it.
+
 ## [0.2.41] - 2026-11-19
 
 > **Em português:**
