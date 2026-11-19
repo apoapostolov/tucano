@@ -17,6 +17,7 @@ const REPLY = (wide: boolean): string => `
       </div>
       <div class="receipt"><button class="receipt__line">Sonnet · 6.4k tokens · 5s</button></div>
       <span class="wiki-keep"><button class="link">Keep in the wiki</button></span>
+      <div class="msg__actions"><button class="msg__replyto">Reply</button></div>
     </div>
   </div></article>`
 
@@ -41,7 +42,11 @@ it.skipIf(!existsSync(chromium.executablePath()))('puts the Follow Up pill on th
     expect(receipt.right).toBeLessThanOrEqual(keep.left + 1)
     // And first in the line, not somewhere after the numbers.
     const order = await page.locator('.msg__meta > *').evaluateAll((els) => els.map((el) => el.className.split(' ')[0]))
-    expect(order).toEqual(['steps__ask', 'receipt', 'wiki-keep'])
+    expect(order).toEqual(['steps__ask', 'receipt', 'wiki-keep', 'msg__actions'])
+    const actions = await box('.msg__meta .msg__actions')
+    const meta = await box('.msg__meta')
+    expect(actions.right).toBeCloseTo(meta.right, 0)
+    expect(keep.right).toBeLessThanOrEqual(actions.left)
 
     // It comes in with the line it sits on: gone until the reply is hovered, there while hovered.
     expect(await page.locator('.steps__ask--reply').evaluate((el) => getComputedStyle(el).opacity)).toBe('0')

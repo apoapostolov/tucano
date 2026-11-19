@@ -76,7 +76,7 @@ export function readingBody(opts: { prompt: string; history?: string; roles: Rec
         type: 'choice',
         instructions: L(
           'Que tipo de trabalho o `pedido` pede? Julgue o trabalho que a pessoa quer feito, não o assunto que ela menciona. Leia `conversa` quando o pedido for uma continuação curta que só faz sentido no contexto. Escolha o mais próximo mesmo quando estiver em dúvida.',
-          'Which kind of work does `pedido` ask for? Judge the work the person wants done, not the topic they mention. Read `conversa` when the request is a short follow-up that only makes sense in context. Pick the closest kind even when in doubt.'
+          'Which kind of work does the request ask for? Judge the work the person wants done, not the topic they mention. Read the conversation when the request is a short follow-up that only makes sense in context. Pick the closest kind even when in doubt.'
         ),
         criteria
       },

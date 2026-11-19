@@ -3790,9 +3790,38 @@ body.is-resizing webview {
   column-gap: 14px;
   margin-top: 4px;
 }
-.msg__meta .receipt,
-.msg__meta .wiki-keep {
-  margin: 0;
+        {/* A request and what came back from one are posted, not replies: nothing there to keep in the wiki. */}
+        {(message.run?.receipt || (message.run?.status === 'done' && (message.author.kind === 'agent' || (message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)))) && (
+          <div className="msg__meta">
+            {/* The way on from this reply, first in its own footer line, before the numbers: it is
+                about the reply above it, not about the conversation below. */}
+            <FollowUpPill message={message} />
+            {message.run?.receipt && <ReceiptLine receipt={message.run.receipt} />}
+            {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
+          </div>
+        )}
+        {away && message.run?.replyTo && <PromptJump id={message.run.replyTo} />}
+        {message.author.kind === 'person' && !message.threadId && <AskedFromHere message={message} />}
+        {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
+        {/* The routine's message had a thread of its own: still there, under the reply that carries it. */}
+        {ask && !!askReplies?.length && <ThreadLink message={ask} replies={askReplies} noReply />}
+        {canReply && (
+          <div className="msg__actions">
+            <button
+              className={`msg__replyto ${quote ? 'msg__replyto--excerpt' : ''}`}
+              title={quote ? L('Responder ao trecho', 'Reply to selection') : L('Responder mensagem', 'Reply to message')}
+              aria-label={quote ? L('Responder ao trecho', 'Reply to selection') : L('Responder mensagem', 'Reply to message')}
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() => startReply(message, quote, replyKey)}
+            >
+              <Icon name="reply" size={16} />
+              {quote && <span>{L('Responder ao trecho', 'Reply to selection')}</span>}
+            </button>
+          </div>
+        )}
+/* The reply-to icon belongs to the footer line, at its right end, not on a row of its own. */
+.msg__meta .msg__actions {
+  margin: 0 0 0 auto;
 }
 
 /* The message whose thread is open on the side, lit, so the two sides read as one. */
