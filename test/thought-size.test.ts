@@ -46,7 +46,7 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
     for (const size of ['sm', 'md', 'lg'] as const) {
       await page.setContent(markup(size))
       const m = await page.evaluate(() => {
-        const thought = document.querySelector('.thought')!
+        const thought = document.querySelector<HTMLElement>('.thought')!
         const text = document.querySelector('.thought__text')!
         const row = document.querySelector('.step')!
         const list = document.querySelector('.steps__list')!
@@ -125,7 +125,7 @@ it.skipIf(!existsSync(chromium.executablePath()))('keeps the reasoning column st
     const measure = async (body: string) => {
       await page.setContent(markup('lg').replace(LONG, body))
       return page.evaluate(() => {
-        const t = document.querySelector('.thought')!
+        const t = document.querySelector<HTMLElement>('.thought')!
         const text = document.querySelector('.thought__text')!
         const r = (el: Element) => el.getBoundingClientRect()
         return {
