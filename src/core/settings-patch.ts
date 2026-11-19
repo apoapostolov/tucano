@@ -20,6 +20,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   navOrder: { kind: 'array', max: 100_000, nullable: true },
   navHidden: { kind: 'array', max: 100_000, nullable: true },
   agentOrder: { kind: 'array', max: 100_000, nullable: true },
+  sectorOrder: { kind: 'array', max: 100_000, nullable: true },
   orgLayout: { kind: 'object', max: 100_000, nullable: true },
   browserJev: { kind: 'boolean', max: 10, nullable: true },
   jevRecommend: { kind: 'boolean', max: 10, nullable: true }, // legacy migration key: the recommend job is what the UI writes

@@ -23,16 +23,17 @@ describe('the way back to a reply’s prompt', () => {
     expect(promptAway(said('r', 'p'))).toBe(true)
   })
 
-  it('stays away when the reply has no prompt of its own', () => {
-    // A routine's run, or one an agent started for another: nothing above to go back to.
-    expect(promptAway(said('r'))).toBe(false)
+  it('turns into a down arrow after the jump, to return to the old position', () => {
+    const html = renderToStaticMarkup(<PromptJump back onClick={() => {}} />)
+    expect(html).toContain('msg__reply--down')
+    expect(html).toContain('aria-label="Voltar aonde estava"')
   })
 
   it('is a small button in the message’s corner that says where it goes', () => {
-    const html = renderToStaticMarkup(<PromptJump id="p" />)
+    const html = renderToStaticMarkup(<PromptJump onClick={() => {}} />)
     expect(html).toContain('msg__reply')
     expect(html).toContain('msg__reply--up')
-    expect(html).toContain('aria-label="Ir para o pedido que esta resposta responde"')
+    expect(html).toContain('aria-label="Ir para o começo desta sessão"')
     expect(html).toContain('<svg')
   })
 })

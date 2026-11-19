@@ -25,7 +25,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
   return [
     { id: 'app-appearance', page: 'app', label: L('Aparência', 'Appearance'), keys: ['theme', 'language', 'clock'], scope: 'mixed', visible: true },
     { id: 'app-conversation', page: 'app', label: L('Conversa', 'Conversation'), keys: ['stepsOpen', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'replyShortcut'], scope: 'personal', visible: true },
-    { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden'], scope: 'mixed', visible: true },
+    { id: 'app-sidebar', page: 'app', label: L('Barra lateral', 'Sidebar'), keys: ['hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'sectorOrder'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'app', label: L('Notificações', 'Notifications'), keys: ['sounds', 'notice'], scope: 'personal', visible: true },
     { id: 'app-quotas', page: 'app', label: L('Cotas', 'Quotas'), keys: ['quotaView', 'quotaHidden'], scope: 'personal', visible: admin },
     { id: 'app-dictation', page: 'app', label: L('Ditado', 'Dictation'), keys: ['voice'], scope: 'mixed', visible: admin },

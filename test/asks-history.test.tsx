@@ -101,6 +101,18 @@ describe('a row of the asks history', () => {
     expect(html).toContain('Ver na conversa')
   })
 
+  it('draws opened questions as rounded widgets with numbered options and the recommended pill', () => {
+    const q = asked({
+      decisions: [{ question: 'Publico o post hoje?', options: [{ label: 'Sim, publico' }, { label: 'Não, espero' }] }],
+      recommended: [0]
+    } as never)
+    const html = row(true, q)
+    expect(html).toContain('history-question')
+    expect(html).toContain('history-question__number') 
+    expect(html).toContain('>1</span>')
+    expect(html).toContain('Recomendado')
+  })
+
   it('says how it ended: by you, by someone else, or with no answer at all', () => {
     expect(row(false)).toContain('por você')
     expect(row(false, asked({ answeredBy: undefined, state: 'closed' }))).toContain('sem resposta')

@@ -647,6 +647,7 @@ export interface Settings {
   surveys?: boolean // the owner sees the small surveys in the sidebar's foot (core/feedback.ts); unset: on
   dmOrder?: string[] // the person's order for the direct messages, by conversation id
   agentOrder?: string[] // the person's order for the agents, by agent id
+  sectorOrder?: string[] // the person's order for the sectors in the agents list, by head id
   navOrder?: string[] // the person's order for the sidebar's own screens (Approvals, Wiki…), by row id
   navHidden?: string[] // the screens this person put under the sidebar's line, by row id: out of the way, not forgotten
   jevRecommend?: boolean // legacy: the recommended option used to be one switch, now the `recommend` classifier job; read only when migrating (classifierJobsOf)

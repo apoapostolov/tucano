@@ -18,7 +18,7 @@ export const UNOWNED_CARDS = [
   { card: 'Talk to the people who make Tucano', reason: 'feedback and surveys: app chrome, no tab of its own' },
   { card: 'Sidebar', reason: 'hide-empty toggles: app-sidebar is declared but has no card in a tab yet' },
   { card: 'Recovery', reason: 'agents-recovery is declared and stays out of the tabs until its card has an anchor' },
-  { card: 'Agents’ browser', reason: 'the click classifier job: no section declared yet' },
+  { card: 'Browser Use', reason: 'the click classifier job: no section declared yet' },
   { card: 'Skill folders', reason: 'agents-skills is declared but no tab lists it yet' }
 ];
 
