@@ -69,8 +69,8 @@ The measurements and before/after captures are added in the validation report. B
 | 388 | How you call and recognize the agent in chat. | The agent’s name and appearance in chat. | Name the control or outcome directly. |
 | 345 | Takes it out of the sidebar and it stops replying; you can reactivate it | Hide this agent and stop its replies. You can reactivate it. | Name the control or outcome directly. |
 | 685 | See in Memory | Open Memory | Name the control or outcome directly. |
-| 1250 | See in the conversation | View in conversation | Name the control or outcome directly. |
-| 1303 | See in the conversation | View in conversation | Name the control or outcome directly. |
+| 1250 | See in the conversation | Conversation | Name the destination, not the act of looking at it. |
+| 1303 | See in the conversation | Conversation | Name the destination, not the act of looking at it. |
 | 1345 | Requests for an admin to apply | Requests for an admin | Name the control or outcome directly. |
 | 1362 | You asked, waiting on someone else | Your pending requests | Name the control or outcome directly. |
 | 2473 | How Tucano looks to you. It changes only for you. | These appearance settings apply only to you. | Keep behavior and scope; remove repeated instructions. |
