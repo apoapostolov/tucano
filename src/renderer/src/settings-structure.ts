@@ -45,6 +45,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
     { id: 'models-agents', page: 'models', label: L('Modelos dos agentes', 'Agent models'), keys: [], scope: 'workspace', visible: admin },
+    { id: 'models-session-names', page: 'models', label: L('Nomes das sessões', 'Session names'), keys: ['sessionNameModel'], scope: 'workspace', visible: admin },
     { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'models', label: L('Contas', 'Accounts'), keys: ['accounts'], scope: 'mixed', visible: admin },
     { id: 'models-classifiers', page: 'models', label: L('Classificadores', 'Classifiers'), keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'routerModel', 'jevNextSteps'], scope: 'workspace', visible: admin },
@@ -87,7 +88,7 @@ const legacy: Readonly<Record<string, string>> = {
 // the strip never shows a link to nothing and the nav drops any section the pane doesn't render.
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
-  modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
+  modelos: ['models-agents', 'models-session-names', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
   agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits'],
   integracoes: ['connections-phone'],
   pessoas: ['workspace-people'],

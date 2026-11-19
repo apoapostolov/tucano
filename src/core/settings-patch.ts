@@ -14,6 +14,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   // it rides in every snapshot, and a setup bigger than this is a mistake, not an intent.
   routing: { kind: 'object', max: 80_000, nullable: true },
   memoryModel: { kind: 'string', max: 200 },
+  sessionNameModel: { kind: 'string', max: 200, nullable: true },
   voice: { kind: 'object', max: 10_000, nullable: true },
   channelLayout: { kind: 'object', max: 500_000, nullable: true },
   dmOrder: { kind: 'array', max: 100_000, nullable: true },
