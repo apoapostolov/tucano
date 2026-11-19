@@ -99,6 +99,14 @@ describe("an agent's row in the sidebar", () => {
     expect(row('Lia').querySelectorAll('.working-dots i')).toHaveLength(3)
   })
 
+  it('puts the working dots before the badge that says it runs on this computer', async () => {
+    await render({ agents: [agent({ computer: true, computerKind: 'mac' })], conversations: [dm({})], messages: { d1: [msg('m1', 'd1', 'a1', 'working')] } })
+    const order = [...row('Lia').children].map((x) => x.className)
+    // What changes while it works reads first; the machine badge, which never moves, after it.
+    expect(order.findIndex((c) => c.includes('working-dots'))).toBeGreaterThan(-1)
+    expect(order.findIndex((c) => c.includes('working-dots'))).toBeLessThan(order.findIndex((c) => c.includes('nav-item__mac'))!)
+  })
+
   it('an agent with no role shows just its name', async () => {
     await render({ agents: [agent({ role: '' })], conversations: [dm({})] })
     expect(row('Lia').querySelector('.nav-item__role')!.textContent).toBe('')

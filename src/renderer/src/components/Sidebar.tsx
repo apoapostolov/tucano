@@ -750,13 +750,15 @@ const AgentRow = memo(function AgentRow({ id, dm, unread, owner }: { id: string;
         <AgentAvatar agent={agent} size={18} busy={working} />
         <span className="nav-item__label">{agent.name}</span>
         <RoleMeta role={agent.role} owner={owner} />
+        {/* What the agent is doing comes first, its machine after: the dot (or the shield) is the only
+            thing on the row that changes while it works, so it reads before the badge that never moves. */}
+        {waits > 0 ? <WaitingPill count={waits} title={waiting} /> : <WorkingDots working={working} />}
         {agent.computer && agent.computerKind === 'mac' && (
           <span className="nav-item__mac" title={L('Roda no seu computador', 'Runs on your computer')}>
             <Icon name="laptop" size={12} />
           </span>
         )}
         {pct !== undefined && pct >= 0.8 && <span className={`dot ${pct >= 1 ? 'dot--danger' : 'dot--warn'}`} title={pct >= 1 ? L('Bateu o limite do mês', 'Hit the monthly limit') : L('Já usou mais de 80% do limite', 'Over 80% of the limit used')} />}
-        {waits > 0 ? <WaitingPill count={waits} title={waiting} /> : <WorkingDots working={working} />}
         {unread ? (
           <span key={unread} className="badge badge--soft">
             {unread}
