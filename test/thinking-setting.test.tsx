@@ -36,14 +36,17 @@ describe("the model's thinking on screen", () => {
     expect(drawn()).toBe('')
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
     const html = drawn()
-    expect(html).toContain('class="thought is-open is-working"')
-    expect(html).toContain('Pensando')
+    expect(html).toContain('class="thought is-working"')
+    expect(html).not.toContain('Pensando')
     expect(html).toContain('o pedido tem duas partes')
   })
 
-  it('once the reply ends it is kept, said in the past', () => {
+  it('once the reply ends it is kept whole, with nothing said over it', () => {
     fake = { ...fake, settings: { ...fake.settings, showThinking: true } }
-    expect(renderToStaticMarkup(<Thought message={message} working={false} />)).toContain('Pensou')
+    const html = renderToStaticMarkup(<Thought message={message} working={false} />)
+    expect(html).toContain('o pedido tem duas partes')
+    expect(html).not.toContain('Pensou')
+    expect(html).not.toContain('thought__head')
   })
 
   it('is nothing at all while the model has thought nothing yet', () => {

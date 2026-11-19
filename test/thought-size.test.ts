@@ -27,10 +27,7 @@ const markup = (size: keyof typeof LINES): string => `
           <li class="step step--tool step--running"><span class="step__icon"></span><span class="step__label">Reading the two last commits</span></li>
         </ol>
       </div>
-      <div class="thought is-open is-working" data-size="${size}">
-        <button type="button" class="thought__head" aria-expanded="true">
-          <span aria-hidden="true">▾</span><span class="thought__label">Thinking</span>
-        </button>
+      <div class="thought is-working" data-size="${size}">
         <div class="thought__text">${LONG}</div>
       </div>
     </div>
@@ -48,13 +45,12 @@ it.skipIf(!existsSync(chromium.executablePath()))('shows 6, 12 or 18 lines befor
         const text = document.querySelector('.thought__text')!
         const row = document.querySelector('.step')!
         const list = document.querySelector('.steps__list')!
-        const head = document.querySelector('.thought__head')!
         const rect = (el: Element) => el.getBoundingClientRect()
         // The block scrolls; the text inside it is the content. What it shows is the block's height,
-        // less the label and the padding around the text.
+        // less the padding around the text: there is no header over it any more.
         const padding = parseFloat(getComputedStyle(thought).paddingTop) + parseFloat(getComputedStyle(thought).paddingBottom)
         return {
-          textHeight: thought.clientHeight - head.getBoundingClientRect().height - padding,
+          textHeight: thought.clientHeight - padding,
           hidden: thought.scrollHeight - thought.clientHeight,
           lines: getComputedStyle(thought).getPropertyValue('--thought-lines').trim(),
           textBox: { l: Math.round(rect(text).left), r: Math.round(rect(text).right) },

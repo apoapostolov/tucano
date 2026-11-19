@@ -1,4 +1,4 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useContext, useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import type { Message } from '../../../shared/types'
 import { L } from '../../../shared/lang'
 import { useStore, useLiveThoughtState } from '../store'
@@ -27,8 +27,6 @@ export function Thought({ message, working }: { message: Message; working: boole
   const size = useStore((s) => s.settings?.thinkingSize ?? 'md')
   const retained = useLiveThoughtState(message.id, 140)
   const thought = retained?.text
-  const [asked, setAsked] = useState<boolean | null>(null)
-  const open = asked ?? working
   const origin = useRef(retained?.start ?? 0)
   const currentStart = useRef(0)
   currentStart.current = retained?.start ?? 0
@@ -102,7 +100,7 @@ export function Thought({ message, working }: { message: Message; working: boole
   // writes cannot resume following; only moving back to the actual end releases the hold.
   useLayoutEffect(() => {
     const el = box.current
-    if (!el || !on || !thought || !open) {
+    if (!el || !on || !thought) {
       reading.forget(heldElement.current)
       heldElement.current = null
       unpin()
@@ -129,12 +127,11 @@ export function Thought({ message, working }: { message: Message; working: boole
   return (
     <div
       ref={box}
-      className={`thought${open ? ' is-open' : ''}${working ? ' is-working' : ''}`}
+      className={`thought${working ? ' is-working' : ''}`}
       data-size={size}
       style={{ overflowAnchor: 'none' }}
       aria-label={L('O que o agente está pensando', 'What the agent is thinking')}
       onScroll={(e) => {
-        if (!open) return
         const el = e.currentTarget
         if (written.current !== null && Math.abs(el.scrollTop - written.current) < 1) return
         gesture.current = 0
@@ -151,7 +148,6 @@ export function Thought({ message, working }: { message: Message; working: boole
       onTouchStart={() => { gesture.current = Date.now() + 250 }}
       onKeyDown={() => { gesture.current = Date.now() + 250 }}
       onWheel={(e) => {
-        if (!open) return
         gesture.current = Date.now() + 250
         if (e.deltaY < 0) {
           follow.current = false
@@ -164,28 +160,11 @@ export function Thought({ message, working }: { message: Message; working: boole
         }
       }}
     >
-      <button
-        type="button"
-        className="thought__head"
-        aria-expanded={open}
-        title={open ? L('Recolher o que ele pensou', 'Fold what it thought') : L('Ler o que ele pensou', 'Read what it thought')}
-        onClick={() => {
-          setAsked(!open)
-          if (open) releaseList()
-          follow.current = true
-        }}
-      >
-        <span aria-hidden="true">{open ? '▾' : '▸'}</span>
-        <span className="thought__label">{working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}</span>
-        {!open && <span className="thought__last">{thought.trimEnd().split(/\r?\n/).filter((line) => line.trim()).pop()}</span>}
-      </button>
-      {open && (
-        <div className="thought__text">
-          {thought}
-          {/* The line it is writing: the stream's end, while the reply works. */}
-          {working && <span className="thought__caret" aria-hidden="true" />}
-        </div>
-      )}
+      <div className="thought__text">
+        {thought}
+        {/* The line it is writing: the stream's end, while the reply works. */}
+        {working && <span className="thought__caret" aria-hidden="true" />}
+      </div>
     </div>
   )
 }

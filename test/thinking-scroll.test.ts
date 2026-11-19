@@ -19,10 +19,7 @@ const markup = (working: boolean): string => `
         <div class="msg__body">
           <div class="msg__head"><span class="msg__author">Tuca</span></div>
           <div class="steps is-open${working ? ' is-working' : ''}">
-            <div class="thought is-open${working ? ' is-working' : ''}">
-              <button type="button" class="thought__head" aria-expanded="true">
-                <span class="thought__label">${working ? 'Thinking' : 'Thought'}</span>
-              </button>
+            <div class="thought${working ? ' is-working' : ''}">
               <div class="thought__text">${`Checking ${LONG} before the next step, because the word has to be whole.`}</div>
             </div>
           </div>

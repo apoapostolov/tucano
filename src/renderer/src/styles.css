@@ -14160,89 +14160,6 @@ button.agent-card__now:hover {
   .node-log__summary { grid-column: 1 / -1; }
 }
 
-/* What the model is thinking, apart from what it said: dim, small, under the steps it belongs to
-   and above anything the reply offers at its bottom. Open and scrolling itself while it arrives, so
-   a long reply can be studied while it is being written; folded to the line it is on once it is over,
-   and, opened again, read in full in the page instead of a box inside a box. */
-.thought {
-  /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
-     border, so the rail runs unbroken from the steps into the reasoning under them. Without the
-     3px the thought's line stood a hair to the left of the one above it, and the two read as one
-     line drawn twice. */
-  margin: 6px 0 0 3px;
-  padding-left: 8px;
-  border-left: 2px solid var(--border);
-  border-radius: 0 6px 6px 0;
-  color: var(--text-3);
-  font-size: 12px;
-  line-height: 1.55;
-}
-.thought__head {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
-  min-width: 0;
-  padding: 1px 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.thought__head:hover {
-  color: var(--text-2);
-}
-.thought__head svg {
-  flex-shrink: 0;
-  opacity: 0.55;
-  transition: transform var(--dur-base) var(--ease-out);
-}
-.thought__head[aria-expanded='true'] svg {
-  transform: rotate(90deg);
-}
-.thought__label {
-  flex-shrink: 0;
-  font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-.thought__last {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  opacity: 0.8;
-}
-.thought__text {
-  padding: 1px 0 2px;
-  white-space: pre-wrap;
-  /* The newest line never sits against the edge of the box: it fades in from the bottom, which is
-     what says the reasoning goes on under it now that no scrollbar does. */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent 100%);
-  /* A path or an address in the model's thinking has no space to break at: it wraps onto the next
-     line instead of pushing the column wider and leaving a horizontal scrollbar in a thread. */
-  overflow-wrap: anywhere;
-  opacity: 0.85;
-}
-/* The block is the one that scrolls, the way Thought.tsx drives it: it holds the reading place and
-   follows the stream on this element, not on the text inside. Left to scroll itself, the text kept a
-   fixed six lines and the block's own height never applied — every size looked the same. */
-.thought:not(.is-working) {
-  max-height: none;
-  overflow: visible;
-}
-/* A cursor on the line it is writing: it is arriving now, not read back later. */
-.thought__caret {
-  display: inline-block;
-  width: 5px;
-  height: 11px;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: currentColor;
-  animation: thought-caret 1.1s steps(1, end) infinite;
-}
 @keyframes thought-caret {
   0%,
   49% {
@@ -17341,7 +17258,8 @@ button.agent-card__now:hover {
 }
 
 /* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
-   arrives, so a long reply can be studied while it is being written. */
+   arrives, so a long reply can be studied while it is being written. No header and no fold: the
+   block is the reasoning and nothing else, which is how the steps' own line reads. */
 .thought {
   /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
      border, so the rail runs unbroken from the steps into the reasoning under them. Without the
@@ -17350,10 +17268,10 @@ button.agent-card__now:hover {
   margin: 6px 0 0 3px;
   /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
      than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
-     lines, plus the label and the padding around the text. The plain rule is the middle size, so a
-     copy that predates the setting looks the way it always did. */
+     lines, plus the 8px of padding above and below the text. The plain rule is the middle size, so
+     a copy that predates the setting looks the way it always did. */
   --thought-lines: 12;
-  max-height: calc(var(--thought-lines) * 1.55em + 34px);
+  max-height: calc(var(--thought-lines) * 1.55em + 16px);
   overflow-y: auto;
   /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar on
      the block whenever a line of reasoning had nowhere to wrap. */
@@ -17389,47 +17307,28 @@ button.agent-card__now:hover {
   --thought-lines: 18;
 }
 
-.thought__head {
-  /* The label and the fold stay in view while the reasoning scrolls under them. It takes the message
-     surface, which is what the block sits on, so nothing shows through it. */
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: var(--bg);
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.thought__head .thought__label { flex-shrink: 0; }
-
-.thought__last { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
-
-.thought__head:focus-visible { outline: 2px solid var(--text-3); outline-offset: 2px; }
-
-.thought:not(.is-open) { overflow: visible; }
-
-.thought__label {
-  font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-3);
-  opacity: 0.7;
-  margin-bottom: 3px;
-}
-
 .thought__text {
   /* A path or an address in the reasoning has no space to break at: it wraps onto the next line
      instead of running past the box and asking for a sideways scroll, the rule `.md` already has. */
   overflow-wrap: anywhere;
   opacity: 0.85;
+}
+/* While it is arriving the newest line fades out at the bottom edge: the reasoning goes on under it
+   now that no scrollbar says so. Read back once the reply is over, nothing fades — the end is the
+   end, and a dimmed last line there reads as one cut off. */
+.thought.is-working .thought__text {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent 100%);
+}
+
+/* A cursor on the line it is writing: it is arriving now, not read back later. */
+.thought__caret {
+  display: inline-block;
+  width: 5px;
+  height: 11px;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: thought-caret 1.1s steps(1, end) infinite;
 }
 
 /* The question still waiting, right above the field it will be answered in: it takes the composer's

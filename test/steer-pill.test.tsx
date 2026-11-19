@@ -107,18 +107,16 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 }
 
 describe('the steer pill', () => {
-  it('folds reasoning independently of remembered steps while keeping steering and pause reachable', async () => {
+  it('folds the steps alone, leaving the reasoning whole and steering and pause reachable', async () => {
     const message = reply('working')
     await drawChain(message)
-    const head = (): HTMLElement => document.querySelector<HTMLElement>('.thought__head')!
-    await act(async () => head().click())
-    expect(head().getAttribute('aria-expanded')).toBe('false')
-    expect(document.querySelector('.steps__list')).not.toBeNull()
+    // The reasoning has no fold of its own: no header, no chevron, and it stays whole while the steps fold.
+    expect(document.querySelector('.thought__head')).toBeNull()
+    expect(document.querySelector('.thought')).not.toBeNull()
     await act(async () => document.querySelector<HTMLElement>('.steps__toggle')!.click())
     expect(viewSettings.folded.length).toBe(1)
-    await act(async () => head().click())
-    expect(head().getAttribute('aria-expanded')).toBe('true')
     expect(document.querySelector('.steps__list')).toBeNull()
+    expect(document.querySelector('.thought')).not.toBeNull()
     expect(document.querySelector('.steps__hold button[aria-label="Pausar a resposta"]')).not.toBeNull()
     await act(async () => pill()!.click())
     await type('Continue with the synthetic fixture')
@@ -127,7 +125,6 @@ describe('the steer pill', () => {
     await act(async () => root.render(null))
     await drawChain(message)
     expect(document.querySelector('.steps__list')).toBeNull()
-    expect(head().getAttribute('aria-expanded')).toBe('true')
   })
 
   it('sits under the thinking block, never above it', async () => {
