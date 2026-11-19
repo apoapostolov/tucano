@@ -3256,17 +3256,16 @@ h3 {
 }
 /* Jev's pick: an accent pill, quiet enough to sit next to a label. It never takes the tick. */
 /* A finished ask, drawn as the widgets its card used: one grey card per question, side by side when
-   the agent asked one after another and wrapping when they don't fit. No accent anywhere in here —
-   this is the record of a question that is over, not the question itself. */
+   they fit and wrapping when they don't. Every card is the same width — a column grid, not a row of
+   content-sized boxes — so two questions never read as one important card and one leftover. No accent
+   anywhere in here: this is the record of a question that is over, not the question itself. */
 .history-questions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  align-items: start;
   gap: 8px;
 }
 .history-question {
-  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
   padding: 9px 11px 10px;

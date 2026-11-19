@@ -73,6 +73,27 @@ const band = (a: { top: number; bottom: number }, b: { top: number; bottom: numb
 
 const skip = !existsSync(chromium.executablePath())
 
+it.skipIf(skip)('draws every question of one ask at the same width, however long its own text is', async () => {
+  const browser = await chromium.launch({ headless: true })
+  try {
+    for (const width of [1280, 420]) {
+      const p = await browser.newPage({ viewport: { width, height: 800 } })
+      // The first question is short and the second is long: content-sized cards would differ.
+      await p.setContent(page(ASK({ long: true, short: true })))
+      const seen = await p.evaluate(() => ({
+        cards: [...document.querySelectorAll('.history-question')].map((el) => +el.getBoundingClientRect().width.toFixed(2)),
+        overflow: document.documentElement.scrollWidth - window.innerWidth
+      }))
+      expect(seen.cards.length).toBe(2)
+      expect(Math.abs(seen.cards[0]! - seen.cards[1]!)).toBeLessThanOrEqual(0.5)
+      expect(seen.overflow).toBe(0)
+      await p.close()
+    }
+  } finally {
+    await browser.close()
+  }
+})
+
 it.skipIf(skip)('puts the questions of one ask on a single row of widgets', async () => {
   const browser = await chromium.launch({ headless: true })
   try {
