@@ -4541,7 +4541,7 @@ export function SettingsPage(): ReactNode {
                 className="effort-select--inline"
                 label={L('Esforço de raciocínio', 'Reasoning effort')}
                 value={settings.sessionNameEffort ?? 'low'}
-                onChange={(sessionNameEffort) => updateSettings({ sessionNameEffort })}
+                onChange={(sessionNameEffort) => { if (sessionNameEffort) updateSettings({ sessionNameEffort }) }}
               />
             </div>
           </Card>
@@ -4615,7 +4615,7 @@ export function SettingsPage(): ReactNode {
                 className="effort-select--inline"
                 label={L('Esforço de raciocínio', 'Reasoning effort')}
                 value={settings.routerEffort ?? 'low'}
-                onChange={(routerEffort) => updateSettings({ routerEffort })}
+                onChange={(routerEffort) => { if (routerEffort) updateSettings({ routerEffort }) }}
               />
               </div>
               <span className="key-row__glyph" aria-hidden="true" />
@@ -4753,7 +4753,7 @@ export function SettingsPage(): ReactNode {
                   className="effort-select--inline"
                   label={L('Esforço de raciocínio', 'Reasoning effort')}
                   value={settings.memoryEffort ?? 'low'}
-                  onChange={(memoryEffort) => updateSettings({ memoryEffort })}
+                  onChange={(memoryEffort) => { if (memoryEffort) updateSettings({ memoryEffort }) }}
                 />
               </div>
               <Field label={L('O que ele aprende sobre você', 'What it learns about you')} hint={L('Só conta o que você disse, nunca o que um agente supôs.', 'Only what you said counts, never what an agent assumed.')}>

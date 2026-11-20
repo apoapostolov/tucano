@@ -27,6 +27,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Corrigido:** o botão direito volta a abrir o menu na linha de um agente que está dentro de um setor.
 > - **Mudou:** no menu de um canal, **Mover para cima** e **Mover para baixo** têm a seta que aponta o lado pra onde a linha anda.
 > - **Novo:** o **esforço de raciocínio** aparece onde o modelo é escolhido. Onde o harness e o modelo dividem a linha, o nível fecha a linha e o harness cede a largura que o nome curto dele não precisa (Claude, Codex, OpenCode, Pi); onde as escolhas ficam uma embaixo da outra, o nível vai embaixo do modelo. Isso vale em Configurações → Modelos — o modelo do roteador, o da memória e o dos nomes das sessões —, em Modelos dos agentes, por agente e na alteração em lote, e na página do agente. Roteador, memória e nomes das sessões têm cada um o nível próprio, e o do agente agora vai junto com o modelo, numa chamada só. Os modelos do Cursor já trazem o nível no nome (`…-high`, `…-xhigh`), então ali ele não aparece. Todos leem os mesmos quatro nomes de uma lista só — Baixo, Médio, Alto e Máximo —, a que os cards do Tuca já ofereciam. Nada escolhido continua em **Baixo**, como antes.
+> - **Mudou:** na **alteração em lote** de Modelos dos agentes, o **esforço de raciocínio** tem **Manter** na própria lista, pra voltar atrás depois de escolher um nível; e escolher só um nível, sem modelo, aplica esse nível a todos os selecionados, cada agente ficando com o modelo que já tinha.
 
 ### Original Changes
 
@@ -46,6 +47,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 ### Changed
 
+- **A bulk change can move only the thinking level.** In Agent models' bulk change, the reasoning-effort pick carries **Keep** in its own list, so a level already picked can be given back instead of only being what an untouched control shows; and a level picked with no model applies to every selected agent, each keeping its own model, instead of the button waiting for a model.
 - **The pill is called Follow**, on the drawer's row and on the reply's footer line, instead of Follow Up: one word for one field.
 - **The question records in the Asks history drop the "no answer" row.** An unanswered question shows its options with none taken, which already says so; the dashed row only repeated it.
 - **The way back to a question is labelled See Conversation**, in the record and on the waiting cards, instead of "See in the conversation": the destination is the label.
