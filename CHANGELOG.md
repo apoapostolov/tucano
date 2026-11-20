@@ -24,6 +24,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Every question of an ask is the same width.** The record was a row of content-sized cards, so a short question shrank beside a long one and read as a leftover; the cards share the row now, and stack to one column when the window is narrow.
 - **The number sits in the middle of its answer.** The numbered square rode the first line of a wrapped answer; it centers on the whole block now, while the words keep their top edge.
 
+## [0.2.43] - 2026-11-19
+
 > **Em português:**
 > - **Corrigido:** numa resposta, os passos mostram uma linha **Pensando**, não duas, quando o agente roda ferramentas ao mesmo tempo.
 > - **Corrigido:** um **card** que um agente propõe (time, agente, canal, rotina) é aplicado uma vez só: não volta pra **Criar** enquanto a resposta continua, e um segundo clique não cria os agentes de novo.
