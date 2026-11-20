@@ -88,6 +88,21 @@ try {
   assert.ok(channelItems.length > 0, 'a right click on a channel opens its menu')
 
   const theoRow = win.locator('.sidebar .agent-row', { has: win.locator('.nav-item__label', { hasText: 'Theo' }) }).first()
+
+  // At rest the row's own cells end where a channel's do: the machine badge is the row's last cell, not
+  // parked a gear's width short of its end. Read before the pointer comes near, or the hover state
+  // measured is the hover state.
+  const padRight = await theoRow.evaluate((row) => parseFloat(getComputedStyle(row.querySelector('.nav-item')).paddingRight))
+  const channelPad = await win.locator('.sidebar .channel-row .nav-item').first().evaluate((n) => parseFloat(getComputedStyle(n).paddingRight))
+  const rest = await rowCells(win, 'Theo')
+  console.log(`at rest: ${rest.cells.map((c) => `${c.cls} ${c.x}–${c.right}`).join(' | ')}`)
+  const mac = rest.cells.find((c) => c.cls.includes('nav-item__mac'))
+  assert.ok(mac, 'the machine badge is on the row')
+  assert.equal(mac.right, rest.row.right - padRight, "the machine badge ends at the row's own edge")
+  assert.equal(rest.cells[rest.cells.length - 1].cls.includes('nav-item__mac'), true, 'the machine badge is the last cell')
+  assert.equal(padRight, channelPad, 'at rest the row keeps no room for the gear, where a channel keeps none either')
+  await theoRow.screenshot({ path: join(output, '04-row-rest.png') })
+
   const agentItems = await rightClick(win, theoRow, "an agent's row")
   console.log(`agent row: ${agentItems.length} entries — ${agentItems.join(' | ')}`)
   await win.screenshot({ path: join(output, '02-agent-menu.png') })
@@ -100,6 +115,27 @@ try {
     row?.click()
   })
   await win.waitForSelector('.composer__field textarea', { timeout: 20000 })
+
+  // With the pointer on the row, the gear's room opens and both icons sit in it: the machine badge moves
+  // left with the rest of the row's cells and the gear is drawn after it, no cell on top of another.
+  await theoRow.hover()
+  await win.waitForTimeout(300)
+  const hover = await rowCells(win, 'Theo')
+  const hoverMac = hover.cells.find((c) => c.cls.includes('nav-item__mac'))
+  const hoverGear = await theoRow.evaluate((row) => {
+    const g = row.querySelector(':scope > .agent-row__gear').getBoundingClientRect()
+    return { x: Math.round(g.x), opacity: getComputedStyle(row.querySelector(':scope > .agent-row__gear')).opacity }
+  })
+  const hoverPad = await theoRow.evaluate((row) => parseFloat(getComputedStyle(row.querySelector('.nav-item')).paddingRight))
+  console.log(`on hover: badge ${hoverMac?.x}–${hoverMac?.right}, gear ${hoverGear.x}–${hoverGear.x + 20}, opacity ${hoverGear.opacity}, padding ${hoverPad}`)
+  assert.equal(hoverGear.opacity, '1', 'the gear is drawn on hover')
+  assert.ok(hoverPad > padRight, 'the gear takes room on hover')
+  assert.equal(hoverMac?.right, hover.row.right - hoverPad, "the badge ends where the row's cells make way")
+  assert.ok(hoverMac.right < rest.row.right - padRight, 'the badge moved left of where it sits at rest')
+  assert.ok(hoverMac.right <= hoverGear.x, 'the badge makes room for the gear instead of sitting under it')
+  // Last, because a screenshot brings the row into view and that drops the pointer off it.
+  await theoRow.screenshot({ path: join(output, '05-row-hover.png') })
+  await win.mouse.move(0, 0)
   // The fake engine answers this at once, so the row carries the dots only while the reply runs and then
   // for the 1500 ms they stay green and fade. A first read taken after that fade says "the row never
   // worked" about a row that did, which is a slow harness, not a defect: sample every 80 ms from the
