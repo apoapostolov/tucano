@@ -25,6 +25,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Corrigido:** uma resposta cortada pelo fechamento do app volta a andar **na hora**, e um **Continuar** seu não gasta as três tentativas automáticas.
 > - **Corrigido:** a faixa da pergunta esperando resposta voltou a ser uma linha com borda acima do campo, e o app mantém o próprio nome na janela.
 > - **Corrigido:** o botão direito volta a abrir o menu na linha de um agente que está dentro de um setor.
+> - **Mudou:** no menu de um canal, **Mover para cima** e **Mover para baixo** têm a seta que aponta o lado pra onde a linha anda.
 
 ### Original Changes
 
@@ -58,6 +59,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **A finished row in the drawer says how it ended in its glyph alone**, so the Follow pill has the line to itself instead of wrapping under a label.
 - **Steering a working reply opens its field on the row's own second line**, from the session's name to the send glyph at the row's end, and the drawer's thread is a bare icon between Steer and the x.
 - **An agent's row keeps one order again, and ends where a channel's does.** The fork had moved the working dots to the front of the row, so the month's-limit dot and the unread count slid right every time an agent started working; upstream's own fix then kept the gear's room open all the time, so the laptop badge — and the working dots before it — stopped a gear's width short of the row's end. The row is drawn upstream's way, with the badge as its last cell at the row's own edge, and the gear's room opens only while the pointer is on the row or it has focus, as it did before the ingest.
+- **A channel's menu shows an arrow on Move up and on Move down.** The two steps were the only items in the menu without a glyph, sitting under a separator beside a gear and a trash; each now wears the icon set's own arrow, and up points up.
 
 ### Fixed
 
