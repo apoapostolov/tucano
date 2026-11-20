@@ -9510,12 +9510,14 @@ kbd {
 .channel-row.is-picked,
 .top-row.is-picked,
 .agent-row.is-picked,
+.agent-row-drag.is-picked,
 .agent-sector__head.is-picked {
   opacity: 0.55;
 }
 .channel-row.is-over::before,
 .top-row.is-over::before,
 .agent-row.is-over::before,
+.agent-row-drag.is-over::before,
 .agent-sector__head.is-over::before,
 .nav-drop.is-over::before,
 .agent-sector__drop.is-over::before {
@@ -9531,6 +9533,7 @@ kbd {
 .channel-row,
 .top-row,
 .agent-row,
+.agent-row-drag,
 .agent-sector__head,
 .nav-drop,
 .agent-sector__drop {

@@ -624,7 +624,7 @@ export function Sidebar(): ReactNode {
                 />
               ))
             : teamAgentsShown.map((a) => (
-                <div key={a.id} className={`agent-row${agentsSort.picked === a.id ? ' is-picked' : ''}${agentsSort.over === a.id && agentsSort.picked !== a.id ? ' is-over' : ''}`} {...agentsSort.rowProps(a.id)}>
+                <div key={a.id} className={`agent-row-drag${agentsSort.picked === a.id ? ' is-picked' : ''}${agentsSort.over === a.id && agentsSort.picked !== a.id ? ' is-over' : ''}`} {...agentsSort.rowProps(a.id)}>
                   {agentRow(a)}
                 </div>
               ))}
@@ -679,7 +679,7 @@ function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDro
           {renderAgent?.(a)}
         </div>
       ))}
-      {open && children}
+      {children}
       {open && agents && <div className="agent-sector__drop" {...bots.zoneProps(`end:${id}`)} />}
     </div>
   )

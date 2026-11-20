@@ -22,7 +22,7 @@ vi.mock('../src/renderer/src/components/Conversation', () => ({
   questionDrafts: () => ({}),
   toolWords: () => []
 }))
-vi.mock('../src/renderer/src/components/VoiceSetup', () => ({ VOICE_CHOICES: (): unknown[] => [], useVoice: () => null, VoiceSetup: () => null }))
+vi.mock('../src/renderer/src/components/VoiceSetup', () => ({ VOICE_CHOICES: (): unknown[] => [], VOICE_WHERE: (): string => '', useVoice: () => null, VoiceSetup: () => null }))
 vi.mock('../src/renderer/src/components/Update', () => ({ UpdateSettings: () => null }))
 
 let fake: State

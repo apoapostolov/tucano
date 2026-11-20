@@ -34,7 +34,7 @@ vi.mock('../src/renderer/src/components/Conversation', () => ({
   questionDrafts: () => ({}),
   toolWords: () => []
 }))
-vi.mock('../src/renderer/src/components/VoiceSetup', () => ({ VOICE_CHOICES: (): unknown[] => [], useVoice: () => null, VoiceSetup: () => null }))
+vi.mock('../src/renderer/src/components/VoiceSetup', () => ({ VOICE_CHOICES: (): unknown[] => [], VOICE_WHERE: (): string => '', useVoice: () => null, VoiceSetup: () => null }))
 vi.mock('../src/renderer/src/components/Update', () => ({ UpdateSettings: () => null }))
 
 // Scroll geometry, the same shape the settings-navigation test drives the layout with: the page
