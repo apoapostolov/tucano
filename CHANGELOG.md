@@ -2,17 +2,43 @@
 
 What changed in each version of Tucano. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org) (while in 0.x, a minor version may change things). Each section is also the release's notes on GitHub, which is what the app's "What's new" link opens.
 
-## [0.2.42] - 2026-11-20
+Each version is written in two parts. **Original Changes** is what the version carries from upstream [Tucano](https://github.com/eduwxyz/tucano) — its own notes, as they come; **Added**, **Changed** and **Fixed** are what TucanoNext built on top of that base in the period between one ingest and the next. The fork keeps upstream's version number, so a version's fork part covers the whole period since the previous ingest, however many ingests a day it holds. Versions before 0.2.39 predate the split and are kept as they were written.
+
+## [0.2.43] - 2026-11-20
+
+> **Em português:**
+> - **Corrigido:** numa resposta, os passos mostram uma linha **Pensando**, não duas, quando o agente roda ferramentas ao mesmo tempo.
+> - **Corrigido:** um **card** que um agente propõe (time, agente, canal, rotina) é aplicado uma vez só: não volta pra **Criar** enquanto a resposta continua, e um segundo clique não cria os agentes de novo.
+> - **Corrigido:** na barra lateral, os agentes **arquivados** ficam num grupo que começa fechado, e o notebook na linha de um agente não pula mais.
+> - **Corrigido:** numa **wiki** em inglês, uma página nova não abre mais com uma linha em negrito "tipo: … criada: … atualizada: …". As propriedades da página ficam no idioma do Tucano (`type`, `created`, `updated` em inglês), e um bloco de propriedades que o curador escreva no texto vira propriedade, não texto.
+> - **Corrigido:** os **arquivos** que os agentes mandam podem ser baixados, também num servidor (Tucano Pro), e salvos com **Salvar…** no desktop.
+> - **Novo:** copiar uma resposta terminada como **Markdown**, no ícone à esquerda de Responder à mensagem.
+> - **Novo:** **Seguir** numa resposta que já terminou — no rodapé ou numa linha da gaveta — abre um campo de uma linha: o que você escrever acorda a mesma sessão, que continua com isso em vez de começar de novo. Vale pra qualquer resposta que não está trabalhando: terminada, pausada, parada, com falha ou cortada por um reinício.
+> - **Novo:** um **x** numa pergunta que está na fila tira ela de verdade: ela não responde quando a vez chega. E as perguntas da fila podem ser arrastadas pra trocar de lugar.
+> - **Mudou:** **Continuar**, **Tentar de novo** e **Seguir** dividem a mesma linha do rodapé, nessa ordem, e a etiqueta chama-se **Seguir**.
+> - **Mudou:** na **wiki**, a taxonomia, a busca, as configurações e o **Nova página** sobem pra linha de abas do hub, acima do fio, e o quadro começa no fio, sem uma segunda borda.
+> - **Mudou:** na **história das perguntas**, cada pergunta aparece com os widgets do cartão que a pediu. A resposta recomendada volta a ser a etiqueta no fim da resposta — e a resposta quebra em várias linhas até ela, sem passar da borda do cartão.
+> - **Mudou:** parar uma resposta, tirar uma pergunta da fila e apagar uma linha pedem dois cliques: o primeiro arma, o segundo confirma, e um clique perdido não mata mais uma resposta viva.
+> - **Mudou:** o ponteiro acende em laranja em todos os ícones; só os três que destroem ficam vermelhos.
+> - **Mudou:** uma linha terminada da gaveta diz como terminou no próprio ícone, e sobra espaço pra etiqueta **Seguir** caber na linha.
+> - **Mudou:** na barra lateral, o indicador de trabalho vem antes do notebook que diz em que computador o agente roda.
+> - **Corrigido:** uma resposta cortada pelo fechamento do app volta a andar **na hora**, e um **Continuar** seu não gasta as três tentativas automáticas.
+> - **Corrigido:** a faixa da pergunta esperando resposta voltou a ser uma linha com borda acima do campo, e o app mantém o próprio nome na janela.
+
+### Original Changes
+
+- **A reply's steps show one "Thinking" row, not two.** Engines run tool calls side by side (Pi, Codex and Claude Code all do). The second call to start closed the first one's row as "Thought", hiding the command it was running, and each call added its own "Thinking" row when it ended, so two rows spun and stopped together. A tool starting now closes only the "Thinking" row, and the row comes back once the last call running beside it ends.
+- **A card an agent proposes is applied once.** A team, agent, channel or routine card applied while the agent's reply was still working went back to **Create team** (or **Create**, **Apply**) as the reply went on, because the reply saved its own copy of the message over the card; a second click made the same agents again. The reply now keeps what was done with its cards, an agent proposing the same team again in that reply is told it already exists, and the core refuses to apply a card twice even if its message lost that it was applied (and puts the card back as it was). A reply tried again keeps the cards that were already applied.
+- **Archived agents fold away under "Archived" in the sidebar.** An archived agent with a DM was drawn above the "Archived" entry, mixed with the last sector's agents, and couldn't be hidden. "Archived" is now a group like a sector: closed until you open it, remembered when you do, with its agents below it (each opens its DM, or its page when there's none) and "Reactivate…" at the end.
+- **The laptop on an agent's row stays in one place.** It sat before the working dots, the unread count and the gear, so it jumped left whenever the agent started working or you hovered the row. It's now the row's last item, with the gear's room kept, and what comes and goes shows before it.
+- **A wiki page in an English workspace no longer opens with "tipo: … criada: … atualizada: …" in bold.** Tucano wrote a page's frontmatter keys in Portuguese whatever the language, and the curator, having seen them, wrote that block into a new page's text, where it rendered as a rule and a heading. The keys now follow the workspace's language (`type`, `created`, `updated` in English; a page that has them in the other language keeps its own), a frontmatter block at the top of a page's text is taken out of the text and into the page's properties, and the curator is told its text is the body only.
+- **Files the agents send can be saved, on a server too.** A card for a file in a reply only had Open, and in a browser a .docx (or anything a browser can't show) opened an empty panel, so on Tucano Pro there was no way to get it. Every file and image an agent sends now has **Download** in the browser (on the card, in the panel and in the image viewer), served by the server under the file's real name to whoever can see the conversation; a file a browser can't show downloads on a click. On the desktop, Open stays and **Save…** sits beside it.
 
 ### Added
 
 - **Copy a finished reply as Markdown.** A glyph left of **Reply to message**, in the footer of a reply that ended, puts the answer on the clipboard as it was written — tables, lists, code and all — instead of the text the screen drew from it. It turns into a check for a moment after the press, and a copy that fails says so.
-
-### Fixed
-
-- **The question waiting on you reads as one line above the field.** The strip that keeps an unanswered question next to the composer lost its box and its rules in the 0.2.39 rebase, so the agent's name, the question, the count and **Answer** ran together as loose text in the column. It is a bordered line again, with the question on one ellipsized line and the way back at its end.
-- **The app keeps its own name on its window.** A page title from upstream renamed the window **Tucano** after the app had named it TucanoNext, which made the fork read as the released app beside it.
-- **The pill on a finished reply keeps its width.** It was a shrinkable flex item with a breakable label, so a long session name squeezed **Follow** over two lines inside a 22px box. The pill is now fixed and its label never breaks, so the row's own words are what shorten.
+- **Follow a reply that already finished.** The pill on a finished row of the work drawer, and the one on the reply's own footer, opens a one-line field under the row: what you write wakes that same session and it goes on with your instruction instead of starting over. It is there on any reply that is not working — finished, paused, stopped, failed or cut by a restart.
+- **A queued prompt can be moved up.** A prompt waiting for its place picks up and lands between the others, and the queue drains from the first prompt you sent as places free.
 
 ### Changed
 
@@ -23,24 +49,23 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **The question card's options sit a shade above the card too.** They were filled with the card's own colour, which read as rows cut out of it, and the hover replaced the fill with an overlay that came out darker than rest. Both states use the same raise as the record now, one step further up on hover.
 - **Every question of an ask is the same width.** The record was a row of content-sized cards, so a short question shrank beside a long one and read as a leftover; the cards share the row now, and stack to one column when the window is narrow.
 - **The number sits in the middle of its answer.** The numbered square rode the first line of a wrapped answer; it centers on the whole block now, while the words keep their top edge.
-
-## [0.2.43] - 2026-11-19
-
-> **Em português:**
-> - **Corrigido:** numa resposta, os passos mostram uma linha **Pensando**, não duas, quando o agente roda ferramentas ao mesmo tempo.
-> - **Corrigido:** um **card** que um agente propõe (time, agente, canal, rotina) é aplicado uma vez só: não volta pra **Criar** enquanto a resposta continua, e um segundo clique não cria os agentes de novo.
-> - **Corrigido:** na barra lateral, os agentes **arquivados** ficam num grupo que começa fechado, e o notebook na linha de um agente não pula mais.
-> - **Corrigido:** numa **wiki** em inglês, uma página nova não abre mais com uma linha em negrito "tipo: … criada: … atualizada: …". As propriedades da página ficam no idioma do Tucano (`type`, `created`, `updated` em inglês), e um bloco de propriedades que o curador escreva no texto vira propriedade, não texto.
-> - **Corrigido:** os **arquivos** que os agentes mandam podem ser baixados, também num servidor (Tucano Pro), e salvos com **Salvar…** no desktop.
+- **The Wiki's controls sit in the hub's own tab row, above the hairline.** Taxonomy, search, settings and **New page** moved out of the sheet's head into the row beside Memory · Wiki · Skills, and the canvas now starts at the line itself instead of under a second border.
+- **Continue, Try again and Follow share one row.** Try again sat above the two pills, on a band of its own, so a cut reply read as two separate offers. The three now sit side by side in the footer, in that order, in the same shape.
+- **Stopping a reply, taking a queued prompt back and deleting a row take two presses.** The first press arms the glyph, the second acts, and anything else disarms it — a stray click can no longer kill a live reply.
+- **The recommended answer is a pill at the end of the answer again, and a long answer wraps to it.** Each question's answer breaks over as many lines as it needs, with the recommended pill closing the answer where it ends instead of sitting at the right edge of a single line; nothing is drawn past the record's own edge, borders included.
+- **The pointer lights the row's orange everywhere it isn't destroying something.** Steer, the thread, Follow and the copy glyph hover in the accent colour; red is kept for the three that destroy: the x that stops a reply, the x that takes a queued prompt back, and the trash that removes a row.
+- **A finished row in the drawer says how it ended in its glyph alone**, so the Follow pill has the line to itself instead of wrapping under a label.
+- **The working dots come before the laptop.** A row reads the mark that changes first, then the badge that says which computer it runs on, so the row stops reshuffling the moment an agent starts waiting on you.
+- **Steering a working reply opens its field on the row's own second line**, from the session's name to the send glyph at the row's end, and the drawer's thread is a bare icon between Steer and the x.
 
 ### Fixed
 
-- **A reply's steps show one "Thinking" row, not two.** Engines run tool calls side by side (Pi, Codex and Claude Code all do). The second call to start closed the first one's row as "Thought", hiding the command it was running, and each call added its own "Thinking" row when it ended, so two rows spun and stopped together. A tool starting now closes only the "Thinking" row, and the row comes back once the last call running beside it ends.
-- **A card an agent proposes is applied once.** A team, agent, channel or routine card applied while the agent's reply was still working went back to **Create team** (or **Create**, **Apply**) as the reply went on, because the reply saved its own copy of the message over the card; a second click made the same agents again. The reply now keeps what was done with its cards, an agent proposing the same team again in that reply is told it already exists, and the core refuses to apply a card twice even if its message lost that it was applied (and puts the card back as it was). A reply tried again keeps the cards that were already applied.
-- **Archived agents fold away under "Archived" in the sidebar.** An archived agent with a DM was drawn above the "Archived" entry, mixed with the last sector's agents, and couldn't be hidden. "Archived" is now a group like a sector: closed until you open it, remembered when you do, with its agents below it (each opens its DM, or its page when there's none) and "Reactivate…" at the end.
-- **The laptop on an agent's row stays in one place.** It sat before the working dots, the unread count and the gear, so it jumped left whenever the agent started working or you hovered the row. It's now the row's last item, with the gear's room kept, and what comes and goes shows before it.
-- **A wiki page in an English workspace no longer opens with "tipo: … criada: … atualizada: …" in bold.** Tucano wrote a page's frontmatter keys in Portuguese whatever the language, and the curator, having seen them, wrote that block into a new page's text, where it rendered as a rule and a heading. The keys now follow the workspace's language (`type`, `created`, `updated` in English; a page that has them in the other language keeps its own), a frontmatter block at the top of a page's text is taken out of the text and into the page's properties, and the curator is told its text is the body only.
-- **Files the agents send can be saved, on a server too.** A card for a file in a reply only had Open, and in a browser a .docx (or anything a browser can't show) opened an empty panel, so on Tucano Pro there was no way to get it. Every file and image an agent sends now has **Download** in the browser (on the card, in the panel and in the image viewer), served by the server under the file's real name to whoever can see the conversation; a file a browser can't show downloads on a click. On the desktop, Open stays and **Save…** sits beside it.
+- **The question waiting on you reads as one line above the field.** The strip that keeps an unanswered question next to the composer lost its box and its rules in the 0.2.39 rebase, so the agent's name, the question, the count and **Answer** ran together as loose text in the column. It is a bordered line again, with the question on one ellipsized line and the way back at its end.
+- **The app keeps its own name on its window.** A page title from upstream renamed the window **Tucano** after the app had named it TucanoNext, which made the fork read as the released app beside it.
+- **The pill on a finished reply keeps its width.** It was a shrinkable flex item with a breakable label, so a long session name squeezed **Follow** over two lines inside a 22px box. The pill is now fixed and its label never breaks, so the row's own words are what shorten.
+- **A reply the app cut gets its place back at once.** The recovery pass and the continuation it starts now take the urgent lane ahead of ordinary work, the sixty-second sweep looks at a row still waiting to be taken again while the app stays open, and a row already in flight is never started twice. A **Continue** you press is not one of the three automatic tries: the count belongs to the reply, so the one it starts begins with all three.
+- **A queued prompt you take back never answers afterwards.** Deleting it with its x dropped it from the view and left it in the queue, so it ran when a place freed.
+- **The settings section rail wraps instead of running past the panel** when a section's name is long.
 
 ## [0.2.42] - 2026-11-19
 
@@ -48,7 +73,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > - **Corrigido:** no **Quadro**, o aviso de agente parado não desenha mais o nome do agente por cima de "parou em …".
 > - **Corrigido:** num **servidor** (Tucano Pro), o **ditado** diz onde o áudio vira texto: no servidor, não "neste computador, sem internet". E avisa que lá o modelo **Leve** é bem mais rápido.
 
-### Fixed
+### Original Changes
 
 - **The Quadro's "stopped on" row no longer draws the agent's name over the text.** The row borrowed the chat message's class, a grid with a 34px first column, so a name like "UI Architect" spilled over "parou em …".
 - **Dictation on a server says where the audio becomes text.** Settings and the microphone's balloon said "on this computer, offline" on Tucano Pro too, where it's the server, on shared processors: the Recommended model took 47 s for 8 s of speech there and the Light one 9 s, so a person waiting gave up. On a server they now say it runs on the server, and that the Light model is much faster there.
@@ -64,30 +89,32 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > - **Mudou:** o navegador do agente só aparece grande no chat enquanto tem algo pra ver.
 > - **Corrigido:** uma pergunta de um pedido que chegou até você fecha onde quer que você responda, e dá pra acrescentar algo a um pedido ainda em andamento.
 
-### Added
+### Original Changes
 
 - **Goals: `/objetivo …` (or `/goal …`) in a channel.** The agents there work on it by themselves, passing the turn to each other with @ (build, review, fix, review again), past the usual replies in a row, until one of them calls `concluir_objetivo` with the result. Each reply is told the goal and how many replies are left. It stops by itself, with a line in the channel saying why, at 12 replies, when an agent says the same as before, when a reply neither passes the turn nor ends it, or when a reply fails, is stopped or hits its limit. A goal lives in memory: if the app closes, it ends there. (#556)
 - **Keep going on its own.** A reply that pauses at its per-reply limit while getting somewhere (a tool call went through) goes on by itself, up to 2 times in a row, when the month still has room for another reply that size; after that it waits for **Continue**. When the app opens again, replies cut off by it closing go on by themselves, unless the workspace is paused (they wait for it to resume) or it was more than 12 hours ago. Settings › Agents › Limits › **Keep going on its own**, on by default. (#556, part of #389)
 - **An agent's browser downloads files, posts them in the chat and signs in.** Downloads go to a folder of the agent's own, up to 20 MB each; `navegador_anexar` posts one in the conversation. An admin saves **Saved logins** on the agent's page, kept in the system keychain (or as a 1Password reference): `navegador_login` fills them in without the model ever seeing the password, only on the exact address saved and only over HTTPS (http just on localhost), and the password is masked in snapshots and screenshots. For a verification code, the agent reads the connected email or asks you. (#556)
-- **Each session is named as it starts.** A small model reads the request and answers with two to five words — "Session names", "App icon on macOS" — one call, in the background, so the reply never waits for it. The name sits on the reply's head line beside the agent's name, and it is the name a thread carries in its header. The model is picked in **Settings › Models › Nomes das sessões**, between the agents' models and the runtimes; with nothing picked it uses the memory's model.
-
-### Changed
-
 - **Tuca's changes inside the app go in at once, with Undo.** What Tuca proposes for agents, teams, channels and routines, or an agent's name, role, instructions, model, effort and web access, applies as soon as Tuca finishes replying, with the same checks as before, and its card gets **Undo** for 24 hours. Undo says why when it's no longer safe (the agent already worked, it was edited since, the channel has messages). Connector access, the monthly limit and anything the person couldn't apply themselves still wait for **Apply**. Settings › Agents › Tuca turns it off. (#556)
 - **Agents work together without an org chart.** Agents in no team and with no lead know each other as colleagues and can ask each other with `pedir`, with no setup. Several agents called in one message, or routed to one, answer one after another, each reading what the ones before said. Agents are told to do what they can decide instead of asking, and to ask one question, with their recommendation, when they must. (#554)
 - **An agent's browser is big in the chat only while there's something to watch:** while the reply using it is working or waiting on an approval, or while a person has taken over. Otherwise it's the small card, which opens the browser on the side. (#552)
 - **More for a request still under way.** `pedir` with `continuar` adds to a request that's still being worked, in its thread, instead of opening a second one. (#551)
+- **A question taken up from a request closes wherever it's answered.** Answering it in the request's thread now also closes the one the agent took to the person, so it no longer stays open for good with a second badge in the sidebar. (#551)
+
+### Added
+
+- **Each session is named as it starts.** A small model reads the request and answers with two to five words — "Session names", "App icon on macOS" — one call, in the background, so the reply never waits for it. The name sits on the reply's head line beside the agent's name, and it is the name a thread carries in its header. The model is picked in **Settings › Models › Nomes das sessões**, between the agents' models and the runtimes; with nothing picked it uses the memory's model.
+
+### Changed
+
 - **TucanoNext carries upstream 0.2.41.** The fork keeps its own additions on the new base: session names, steering before the x in the work drawer, the reasoning block as the reasoning alone, and routing that walks past a subscription whose window is spent.
 - **Steer comes before the x on a running reply's row in the work drawer.** Steering a reply that is working is what a person does far more often than stopping it, and the x was the first thing under the pointer at the row's end. The row now reads: the prompt, **Steer**, then the x that stops it.
 - **The reasoning block: one dim line naming it, no fold, and a scrollbar of the window's own.** The chevron that folded the block is gone, and so is the chrome row it lived in: what came back is the word alone — small, dim, in full caps — over the text, with no background and nothing to click. The block scrolls in the same dim vertical bar every other window uses, in a column of its own past the text, so the reasoning still ends where a step's row ends and starts scrolling without narrowing; a thought that fits is drawn with no bar at all.
 
 ### Fixed
 
-- **A question taken up from a request closes wherever it's answered.** Answering it in the request's thread now also closes the one the agent took to the person, so it no longer stays open for good with a second badge in the sidebar. (#551)
 - **A route whose model's subscription is used up no longer ends the reply.** With hard work on a Codex or Claude tier and that window spent, routing handed the reply to a model that could only answer "you hit your limit", and the tier below never got it: the session didn't start at all. A spent window (Codex's own, from its app-server; Claude's, from the last reply) is now a reason to walk one step further down the chain, and the line over the reply says which limit it was and when it frees up.
 - **The reasoning block's size setting takes effect: 6, 12 or 18 lines.** All three sizes drew six, because a fixed `max-height` on the text inside the block — the six lines it was before the setting existed — outranked the block's own height. The block is the one that scrolls now, as the reading-position code has always driven it, and a finished reply still opens in full.
 - **The reasoning block is as wide as the steps above it.** The block's text sat 4 px in from a step's row and ended 10 px short of it, so the reasoning read as a narrower column than the chain it belongs to. The block takes the chain's own column now, and the scrollbar no longer takes 10 px out of it while it streams: the last line fades instead.
-
 
 ## [0.2.40] - 2026-11-18
 
@@ -97,23 +124,29 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > - **Mudou:** quem emprestou o computador escolhe os agentes que o usam mesmo sem ser admin do servidor, já que um agente só alcança esse computador quando trabalha pra essa pessoa.
 > - **Mudou:** no servidor, o cartão **Computador** de um agente chama de **O servidor** o que antes dizia "Este computador", mostra o seu computador emprestado com **Dar acesso** e **Tirar o acesso**, e um **Linux isolado** sem Docker oferece **Trocar pra Nenhum** em vez de "verificar de novo".
 
+### Original Changes
+
+- **Lending your computer to a server takes two clicks.** Turning on Settings › Servers › Let this server use this computer asks for the first folder when none is lent, and the row under the switch shows the folders lent and **Pick the agents**, which brings the server on screen at Connectors. There, **Your computer** comes first: each computer you lent, whether it's connected, every agent on its own switch and **Give all of them access**. The computer's window in Connectors has the same switches. In a browser with nothing lent, it says what to open on the computer. (#549)
+- **Whoever lent a computer picks its agents, admin or not.** An agent reaches a lent computer only when it works for that person, so they may give it to the agents they see, or take it away, without being an admin of the server. An admin still may too. Other connectors stay an admin's. (#549)
+- **An agent's Computer card, on a server, says what is the server's and what is yours.** "This computer" reads "The server", and its confirmation says the commands run on the server. **Your computer** shows the computer you lent, whether it's connected and whether this agent uses it, with **Give access** and **Take access away**. An isolated Linux on a server without Docker says it can't run there and offers **Switch to None**, instead of asking to check again. (#549)
+
 ### Changed
 
 - **Sidebar rows reorder by hold and drop, and session navigation returns home.** Channels, sector folders, the agents inside them and the sidebar's own sections pick up with a press and land in a visible drop position. The way back from a long reply appears only once its start scrolls away, jumps to that start, then turns into a down arrow that returns to the old position. The browser setting is now Browser Use with a two-option selector, and opened Asks history rows show rounded question widgets with numbered options and the recommended pill.
 - **The session trash is back on the rail and in the thread header.** The 0.2.37 overhaul dropped the whole feature; it is rebuilt here. Thread, trash and way back sit in one rail column, 24 px apart, instead of covering each other. Two presses arm and confirm a deletion, and the prompt's pencil edit came back with it.
 - **TucanoNext carries wave 9 on upstream 0.2.40.** Agent replies cap working sessions per channel at two by default, and prompts past the cap wait in the queue with a visible reason. Steer is a sub-button on working sessions, while stopping a session keeps its existing action. The Asks page uses the Approvals layout, and the rebased reply, asks, notification, classifier, quota, listen and mention features stay on the current base.
-- **Lending your computer to a server takes two clicks.** Turning on Settings › Servers › Let this server use this computer asks for the first folder when none is lent, and the row under the switch shows the folders lent and **Pick the agents**, which brings the server on screen at Connectors. There, **Your computer** comes first: each computer you lent, whether it's connected, every agent on its own switch and **Give all of them access**. The computer's window in Connectors has the same switches. In a browser with nothing lent, it says what to open on the computer. (#549)
-- **Whoever lent a computer picks its agents, admin or not.** An agent reaches a lent computer only when it works for that person, so they may give it to the agents they see, or take it away, without being an admin of the server. An admin still may too. Other connectors stay an admin's. (#549)
-- **An agent's Computer card, on a server, says what is the server's and what is yours.** "This computer" reads "The server", and its confirmation says the commands run on the server. **Your computer** shows the computer you lent, whether it's connected and whether this agent uses it, with **Give access** and **Take access away**. An isolated Linux on a server without Docker says it can't run there and offers **Switch to None**, instead of asking to check again. (#549)
 
 ## [0.2.39] - 2026-11-18
 
 > **Em português:**
 > - **Corrigido:** o uso do mês de um agente no **Antigravity** não fica mais negativo (como "−2003590 de 2 mi"), e o limite mensal dele volta a valer. Algumas respostas do Antigravity contam o cache à parte da entrada, e a conta subtraía o cache como se estivesse dentro. Os recibos antigos também passam a contar certo.
 
-### Fixed
+### Original Changes
 
 - **An Antigravity agent's month no longer goes negative.** Tokens count as input − 90% of cache reads + output, which assumes the input counts the cache reads in. Some Antigravity runs report more cache reads than input, so the month showed as "−2003590 of 2M" and the agent's monthly limit never fired. More cache reads than input now means they came apart: the input counts whole and the cache a tenth, in every total, so receipts already saved read right too; new ones from Antigravity add the cache reads to the input. Agents that were past their limit without it showing now stop at it, and say it can be raised on their page. (#547)
+
+### Fixed
+
 - **TucanoNext takes upstream 0.2.39.** The quota strip, the hover cards and an agent's page follow the counted-token fix in it (#547), so an Antigravity receipt whose cache reads exceed its input no longer shows a negative month in the strip either.
 
 ## [0.2.38] - 2026-11-18
