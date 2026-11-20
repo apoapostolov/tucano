@@ -4,6 +4,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.2.42] - 2026-11-20
+
 ### Added
 
 - **Copy a finished reply as Markdown.** A glyph left of **Reply to message**, in the footer of a reply that ended, puts the answer on the clipboard as it was written — tables, lists, code and all — instead of the text the screen drew from it. It turns into a check for a moment after the press, and a copy that fails says so.
@@ -20,6 +22,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **The question records in the Asks history drop the "no answer" row.** An unanswered question shows its options with none taken, which already says so; the dashed row only repeated it.
 - **The way back to a question is labelled See Conversation**, in the record and on the waiting cards, instead of "See in the conversation": the destination is the label.
 - **An option nobody took is a shade above its card**, not the record's own background: on the dark theme the old fill read as a black hole punched in the card.
+- **Every question of an ask is the same width.** The record was a row of content-sized cards, so a short question shrank beside a long one and read as a leftover; the cards share the row now, and stack to one column when the window is narrow.
+- **The number sits in the middle of its answer.** The numbered square rode the first line of a wrapped answer; it centers on the whole block now, while the words keep their top edge.
 
 ## [0.2.41] - 2026-11-19
 
