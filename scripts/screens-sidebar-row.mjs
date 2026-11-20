@@ -100,14 +100,27 @@ try {
     row?.click()
   })
   await win.waitForSelector('.composer__field textarea', { timeout: 20000 })
-  await win.fill('.composer__field textarea', 'Liste três métricas que valem acompanhar num time pequeno.')
-  await win.press('.composer__field textarea', 'Enter')
-  const deadline = Date.now() + 20000
+  // The fake engine answers this at once, so the row carries the dots only while the reply runs and then
+  // for the 1500 ms they stay green and fade. A first read taken after that fade says "the row never
+  // worked" about a row that did, which is a slow harness, not a defect: sample every 80 ms from the
+  // moment the press lands, and send once more if the press itself never started a reply.
+  const sendOnce = async () => {
+    await win.fill('.composer__field textarea', 'Liste três métricas que valem acompanhar num time pequeno.')
+    await win.press('.composer__field textarea', 'Enter')
+  }
+  const rowAtWork = async (ms) => {
+    const until = Date.now() + ms
+    for (; Date.now() < until; ) {
+      const drawn = await rowCells(win, 'Theo')
+      if (drawn?.cells.some((c) => c.cls.includes('working-dots') || c.cls.includes('waiting-pill'))) return drawn
+      await win.waitForTimeout(80)
+    }
+    return null
+  }
   let cells = null
-  for (; Date.now() < deadline; ) {
-    cells = await rowCells(win, 'Theo')
-    if (cells?.cells.some((c) => c.cls.includes('working-dots') || c.cls.includes('waiting-pill'))) break
-    await win.waitForTimeout(250)
+  for (let attempt = 0; attempt < 2 && !cells; attempt++) {
+    await sendOnce()
+    cells = await rowAtWork(15000)
   }
   console.log(JSON.stringify(cells, null, 1))
   assert.ok(cells, 'the row is on screen')
