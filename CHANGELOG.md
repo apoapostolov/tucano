@@ -21,6 +21,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Mudou:** parar uma resposta, tirar uma pergunta da fila e apagar uma linha pedem dois cliques: o primeiro arma, o segundo confirma, e um clique perdido não mata mais uma resposta viva.
 > - **Mudou:** o ponteiro acende em laranja em todos os ícones; só os três que destroem ficam vermelhos.
 > - **Mudou:** uma linha terminada da gaveta diz como terminou no próprio ícone, e sobra espaço pra etiqueta **Seguir** caber na linha.
+> - **Mudou:** na barra lateral, a linha de um agente volta à ordem do Tucano: primeiro o ponto do limite do mês, depois o que muda sozinho (o trabalho, ou o escudo de espera), depois as não lidas, e o notebook por último.
 > - **Corrigido:** uma resposta cortada pelo fechamento do app volta a andar **na hora**, e um **Continuar** seu não gasta as três tentativas automáticas.
 > - **Corrigido:** a faixa da pergunta esperando resposta voltou a ser uma linha com borda acima do campo, e o app mantém o próprio nome na janela.
 > - **Corrigido:** o botão direito volta a abrir o menu na linha de um agente que está dentro de um setor.
@@ -56,6 +57,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **The pointer lights the row's orange everywhere it isn't destroying something.** Steer, the thread, Follow and the copy glyph hover in the accent colour; red is kept for the three that destroy: the x that stops a reply, the x that takes a queued prompt back, and the trash that removes a row.
 - **A finished row in the drawer says how it ended in its glyph alone**, so the Follow pill has the line to itself instead of wrapping under a label.
 - **Steering a working reply opens its field on the row's own second line**, from the session's name to the send glyph at the row's end, and the drawer's thread is a bare icon between Steer and the x.
+- **An agent's row keeps one order again.** The fork had moved the working dots to the front of the row, so the month's-limit dot and the unread count slid right every time an agent started working. The row is drawn upstream's way: the month's-limit dot first, then what comes and goes — the working dots, or the waiting shield — then the unread count, and the badge naming the computer last.
 
 ### Fixed
 
