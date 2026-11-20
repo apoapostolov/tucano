@@ -47,6 +47,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 ### Changed
 
+- **A routine that's off keeps its place in the week.** Turning a routine off made it leave the timetable, so the week stopped showing when it would run and there was nothing there to turn back on. It now stays at its times, dimmed and in monochrome, and its own panel still turns it back on; only a routine that was deleted leaves the timetable.
 - **A bulk change can move only the thinking level.** In Agent models' bulk change, the reasoning-effort pick carries **Keep** in its own list, so a level already picked can be given back instead of only being what an untouched control shows; and a level picked with no model applies to every selected agent, each keeping its own model, instead of the button waiting for a model.
 - **The pill is called Follow**, on the drawer's row and on the reply's footer line, instead of Follow Up: one word for one field.
 - **The question records in the Asks history drop the "no answer" row.** An unanswered question shows its options with none taken, which already says so; the dashed row only repeated it.
