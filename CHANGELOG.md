@@ -4,6 +4,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Changed
+
+- **The question card's options sit a shade above the card**, the same raise the finished record uses, and pointing at one lifts it further instead of replacing its fill with an overlay that read darker than rest.
+
 ## [0.2.42] - 2026-11-20
 
 ### Added

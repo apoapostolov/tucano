@@ -3175,7 +3175,10 @@ h3 {
   padding: 1px 4px;
   border-radius: 4px;
 }
-/* An option: a row to pick, with its number (the key), its label and a tick when chosen. */
+/* An option: a row to pick, with its number (the key), its label and a tick when chosen. It sits a
+   shade above its card, the same raise the finished record uses: on the card's own colour it read as a
+   hole cut through it, and the hover used to replace the fill with a translucent overlay, which made
+   the row darker than at rest. */
 .ask-options {
   display: flex;
   flex-direction: column;
@@ -3190,7 +3193,7 @@ h3 {
   padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--text) 7%, var(--panel));
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -3199,7 +3202,7 @@ h3 {
 }
 .ask-option:hover,
 .ask-option.is-focus {
-  background: var(--hover);
+  background: color-mix(in srgb, var(--text) 12%, var(--panel));
   border-color: var(--border-strong);
 }
 .ask-option:focus-visible,
