@@ -2,12 +2,6 @@
 
 What changed in each version of Tucano. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org) (while in 0.x, a minor version may change things). Each section is also the release's notes on GitHub, which is what the app's "What's new" link opens.
 
-## [Unreleased]
-
-### Changed
-
-- **The question card's options sit a shade above the card**, the same raise the finished record uses, and pointing at one lifts it further instead of replacing its fill with an overlay that read darker than rest.
-
 ## [0.2.42] - 2026-11-20
 
 ### Added
@@ -26,6 +20,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **The question records in the Asks history drop the "no answer" row.** An unanswered question shows its options with none taken, which already says so; the dashed row only repeated it.
 - **The way back to a question is labelled See Conversation**, in the record and on the waiting cards, instead of "See in the conversation": the destination is the label.
 - **An option nobody took is a shade above its card**, not the record's own background: on the dark theme the old fill read as a black hole punched in the card.
+- **The question card's options sit a shade above the card too.** They were filled with the card's own colour, which read as rows cut out of it, and the hover replaced the fill with an overlay that came out darker than rest. Both states use the same raise as the record now, one step further up on hover.
 - **Every question of an ask is the same width.** The record was a row of content-sized cards, so a short question shrank beside a long one and read as a leftover; the cards share the row now, and stack to one column when the window is narrow.
 - **The number sits in the middle of its answer.** The numbered square rode the first line of a wrapped answer; it centers on the whole block now, while the words keep their top edge.
 
