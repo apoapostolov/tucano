@@ -613,6 +613,7 @@ export interface Settings {
   context: string
   engines: Record<EngineId, EngineStatus>
   routerModel: string // a model id, or 'jev' for the classifier chosen in Settings › Classifiers (falls back to Haiku)
+  routerEffort?: Effort // how hard the router thinks: who answers a message in a channel; unset: low
   routing?: RoutingConfig // Settings › Routing: pools, role chains and the switch that turns routing on (src/shared/routing.ts)
   jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core); kept for installs from before Settings › Classifiers
   classifiers?: ClassifierConfig[] // Settings › Classifiers: the model pairs that answer typed questions, one key each
@@ -627,7 +628,9 @@ export interface Settings {
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
 
   memoryModel: string // summarizes conversations and extracts memories
+  memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model
+  sessionNameEffort?: Effort // how hard the session namer thinks; unset: low, as it ran before the key existed
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
   sendMode?: SendMode // what Enter does while a reply is running: beside it, two replies at once (the default), after it, into it, or stopping it
   maxParallelSessions?: number // replies that may run at once in one channel when sendMode is parallel; default DEFAULT_MAX_PARALLEL_SESSIONS
@@ -963,7 +966,11 @@ const effort = (id: Effort, pt: string, en: string): { id: Effort; label: string
   }
 })
 
+// The thinking levels, in one list everywhere they're picked (an agent's page, Settings → Models,
+// what the Tuca proposes): the same four names, the same order.
 export const EFFORTS: { id: Effort; label: string }[] = [effort('low', 'Baixo', 'Low'), effort('medium', 'Médio', 'Medium'), effort('high', 'Alto', 'High'), effort('xhigh', 'Máximo', 'Max')]
+export const EFFORT_IDS: Effort[] = EFFORTS.map((e) => e.id)
+export const isEffort = (v: unknown): v is Effort => EFFORTS.some((e) => e.id === v)
 
 // A model the app doesn't list, by the name a company gateway gives it: kept as "<engine>:<name>".
 export const customModel = (engine: EngineId, name: string): string => `${engine}:${name.trim()}`

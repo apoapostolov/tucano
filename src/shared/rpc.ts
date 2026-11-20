@@ -56,7 +56,7 @@ export interface Api {
   followUpRun(p: { messageId: string; text: string }): void // a reply that isn't at work (ended, cut, paused) goes on from where it stopped, in the same row, with what was written
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
   deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the room with its thread: the ids that went
-  setAgentModels(p: { agentIds: string[]; modelId: string }): number
+  setAgentModels(p: { agentIds: string[]; modelId: string; effort?: string }): number
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string
   renameChannel(p: { id: string; name: string }): void // throws a message when the name is taken

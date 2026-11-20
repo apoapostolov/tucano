@@ -6,9 +6,14 @@ import { join } from 'node:path'
 import { L } from '../shared/lang'
 import type { CoreEvent } from '../shared/rpc'
 import { cleanTitle, titledAlready } from '../shared/titles'
-import { modelInfo, usable, type EngineId, type Message, type Settings } from '../shared/types'
+import { modelInfo, usable, type Effort, type EngineId, type Message, type Settings } from '../shared/types'
 import type { Db } from './db'
 import type { Engine } from './engines/types'
+import { memoryEffort } from './memory'
+
+// How hard the small model thinks when it names a session, from Settings › Models › Session names.
+// Low unless the person raised it: that is the level the call has always used.
+export const sessionNameEffort = (s: { sessionNameEffort?: Effort }): Effort => s.sessionNameEffort ?? 'low'
 
 export const titleSystem = (): string =>
   L(
@@ -69,7 +74,7 @@ export class Titles {
     mkdirSync(cwd, { recursive: true })
     const started = Date.now()
     let text = ''
-    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort: 'low', system: sessionNameSystem(), prompt: about.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
+    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort: sessionNameEffort(settings), system: sessionNameSystem(), prompt: about.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
       if (ev.type === 'text') text += ev.delta
       else if (ev.type === 'done') {
         text = ev.text || text
@@ -99,7 +104,7 @@ export class Titles {
     mkdirSync(cwd, { recursive: true })
     const started = Date.now()
     let text = ''
-    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort: 'low', system: titleSystem(), prompt: m.text.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
+    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort: memoryEffort(settings), system: titleSystem(), prompt: m.text.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
       if (ev.type === 'text') text += ev.delta
       else if (ev.type === 'done') {
         text = ev.text || text
