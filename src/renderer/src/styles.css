@@ -15421,10 +15421,10 @@ button.agent-card__now:hover {
   background: var(--hover);
   color: var(--text);
 }
-/* Room for the gear on hover. A row with the laptop (last in it) keeps that room always, so the gear coming doesn't push the laptop. */
+/* Room for the gear on hover: the row's own cells make way then, so at rest they end where a channel's
+   do, laptop or no laptop. */
 .agent-row:hover > .nav-item,
-.agent-row:focus-within > .nav-item,
-.agent-row:has(.nav-item__mac) > .nav-item {
+.agent-row:focus-within > .nav-item {
   padding-right: 32px;
 }
 .agent-row__gear {
@@ -15440,6 +15440,8 @@ button.agent-card__now:hover {
   opacity: 1;
   pointer-events: auto;
 }
+/* The laptop is the row's own last cell, so it ends where a channel's cells end and only makes way, with
+   the rest, for the gear's room on hover. */
 .agent-row .nav-item__mac {
   color: var(--text-3);
 }
