@@ -32,6 +32,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
         run: |
+          # A fork without the webhook secret has nothing to post; say so instead of failing.
+          if [ -z "$DISCORD_RELEASE_WEBHOOK" ]; then
+            echo 'DISCORD_RELEASE_WEBHOOK is not set for this repository: nothing to post.'
+            exit 0
+          fi
           # By hand, the release comes from gh by its tag; on a release, from the event.
           if [ -n "$TAG" ]; then unset GITHUB_EVENT_PATH; fi
           node scripts/discord-release.mjs

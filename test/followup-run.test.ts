@@ -255,8 +255,9 @@ describe('a reply that goes on from where it stopped', () => {
 
     r.followUp(first.id, 'agora a segunda parte')
     // What the app does every minute: a row at work with steps and no runner is taken as dead. The row
-    // that is only waiting its place is not dead, and cutting it would wake it a second time.
-    await wait(30)
+    // that is only waiting its place is not dead, and cutting it would wake it a second time. Read it
+    // here, with no turn between: a fixed wait raced the turn on a fast runner and read it already done.
+    expect(db.message(first.id)!.run?.status).toBe('working')
     expect(r.sweepOrphans(Date.now() + 5 * 60_000)).toEqual([])
     expect(db.message(first.id)!.run?.status).toBe('working')
     await r.idle()
