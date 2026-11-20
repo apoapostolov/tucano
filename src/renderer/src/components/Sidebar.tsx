@@ -318,8 +318,9 @@ export function Sidebar(): ReactNode {
   for (const c of dms) if (!dmOf.has(c.name) || c.owner === you) dmOf.set(c.name, c)
   const teamAgents = agents.filter(isTeam)
   const teamAgentsShown = byIds(teamAgents, moveBefore(teamAgents, settings.agentOrder, ''))
-  // An archived agent leaves the list, but a DM with it stays reachable, quietly, at the end.
-  const archivedWithDm = agents.filter((a) => a.archived && a.kind !== 'tuca' && dmOf.has(a.id))
+  // An archived agent leaves the list for a group at its end, folded until opened: its row opens the DM
+  // with it, or its page when there's none.
+  const archived = agents.filter((a) => a.archived && a.kind !== 'tuca')
   const groups = useMemo(() => groupAgents(agents, settings.sectorOrder, settings.agentOrder), [agents, settings.sectorOrder, settings.agentOrder])
   const [menu, setMenu] = useState<MenuState>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
@@ -627,13 +628,14 @@ export function Sidebar(): ReactNode {
                   {agentRow(a)}
                 </div>
               ))}
-          {archivedWithDm.map(agentRow)}
-          {agents.some((a) => a.archived) && (
-            <button className="nav-item nav-item--quiet" onClick={() => openDialog({ kind: 'archived' })}>
-              <Icon name="layers" />
-              <span className="nav-item__label">{L('Arquivados', 'Archived')}</span>
-              <span className="nav-item__meta">{agents.filter((a) => a.archived).length}</span>
-            </button>
+          {archived.length > 0 && (
+            <SectorGroup id="archived" label={L('Arquivados', 'Archived')} startFolded count={archived.length} unread={unreadIn(archived.map((a) => dmOf.get(a.id) ?? {}))} dms={archived.map((a) => dmOf.get(a.id)?.id ?? '').join(' ')}>
+              {archived.map(agentRow)}
+              <button className="nav-item nav-item--quiet agent-sector__more" onClick={() => openDialog({ kind: 'archived' })}>
+                <Icon name="layers" />
+                <span className="nav-item__label">{L('Reativar…', 'Reactivate…')}</span>
+              </button>
+            </SectorGroup>
           )}
         </Section>
       </nav>
@@ -652,9 +654,11 @@ export function Sidebar(): ReactNode {
 
 // A sector folds like a channel group (Fold.tsx). Folded, it still says how many agents it has, how
 // many messages are new in it and how many things wait on me there. `dms`: its DMs' ids, as a string.
-function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDrop, onNudge, sort }: { id: string; label: string; count: number; unread: number; dms: string; agents: Agent[]; renderAgent: (a: Agent) => ReactNode; onDrop: (id: string, before: string) => void; onNudge: (id: string, by: -1 | 1) => void; sort?: HoldReorder }): ReactNode {
-  const { open, toggle } = useFold(`sector:${id}`)
-  const bots = useHoldReorder({ group: `sector:${id}`, onDrop, onNudge })
+// A sector folds like a channel group (Fold.tsx). The archived agents are one too, folded until
+// opened (`startFolded`).
+function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDrop, onNudge, sort, startFolded, children }: { id: string; label: string; count: number; unread: number; dms: string; agents?: Agent[]; renderAgent?: (a: Agent) => ReactNode; onDrop?: (id: string, before: string) => void; onNudge?: (id: string, by: -1 | 1) => void; sort?: HoldReorder; startFolded?: boolean; children?: ReactNode }): ReactNode {
+  const { open, toggle } = useFold(`sector:${id}`, startFolded)
+  const bots = useHoldReorder({ group: `sector:${id}`, onDrop: onDrop ?? (() => {}), onNudge: onNudge ?? (() => {}) })
   const waiting = useStore((s) => waitingTotal(s, dms.split(' ')))
   return (
     <div className={`agent-sector ${open ? '' : 'is-folded'}`}>
@@ -670,12 +674,13 @@ function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDro
           </span>
         )}
       </div>
-      {open && agents.map((a) => (
+      {open && agents?.map((a) => (
         <div key={a.id} className={`agent-row ${bots.picked === a.id ? 'is-picked' : ''} ${bots.over === a.id && bots.picked !== a.id ? 'is-over' : ''}`} {...bots.rowProps(a.id)}>
-          {renderAgent(a)}
+          {renderAgent?.(a)}
         </div>
       ))}
-      {open && <div className="agent-sector__drop" {...bots.zoneProps(`end:${id}`)} />}
+      {open && children}
+      {open && agents && <div className="agent-sector__drop" {...bots.zoneProps(`end:${id}`)} />}
     </div>
   )
 }
@@ -732,8 +737,9 @@ function RoleMeta({ role, owner }: { role: string; owner?: string }): ReactNode 
 
 // An agent's row: it opens its DM (made the first time), and is lit there and on the agent's page.
 // Unread makes the name bold with a count; working shows three dots; waiting on me, a shield with how
-// many. The role and the gear (the agent's page) show on hover or focus. `owner`: with a team, whose
-// agent it is (its approvals go to them), when it isn't mine.
+// many; the laptop (it runs on this computer) stays last, in one place. The role and the gear (the
+// agent's page) show on hover or focus. `owner`: with a team, whose agent it is (its approvals go to
+// them), when it isn't mine.
 const AgentRow = memo(function AgentRow({ id, dm, unread, owner }: { id: string; dm?: string; unread?: number; owner?: string }): ReactNode {
   const agent = useStore((s) => agentById(s, id))
   const active = useStore((s) => (s.view?.kind === 'conversation' && !!dm && s.view.id === dm) || (s.view?.kind === 'agent' && s.view.id === id))
@@ -746,24 +752,25 @@ const AgentRow = memo(function AgentRow({ id, dm, unread, owner }: { id: string;
   const settingsLabel = L(`Ajustes de ${agent.name}`, `${agent.name}'s settings`)
   return (
     <>
-      <button className={`nav-item ${active ? 'is-active' : ''} ${unread ? 'is-unread' : ''}`} onClick={() => (dm ? navigate({ kind: 'conversation', id: dm }) : void openDm(id))}>
+      <button className={`nav-item ${active ? 'is-active' : ''} ${unread ? 'is-unread' : ''}`} onClick={() => (dm ? navigate({ kind: 'conversation', id: dm }) : agent.archived ? navigate({ kind: 'agent', id }) : void openDm(id))}>
         <AgentAvatar agent={agent} size={18} busy={working} />
         <span className="nav-item__label">{agent.name}</span>
         <RoleMeta role={agent.role} owner={owner} />
         {/* What the agent is doing comes first, its machine after: the dot (or the shield) is the only
             thing on the row that changes while it works, so it reads before the badge that never moves. */}
         {waits > 0 ? <WaitingPill count={waits} title={waiting} /> : <WorkingDots working={working} />}
-        {agent.computer && agent.computerKind === 'mac' && (
-          <span className="nav-item__mac" title={L('Roda no seu computador', 'Runs on your computer')}>
-            <Icon name="laptop" size={12} />
-          </span>
-        )}
         {pct !== undefined && pct >= 0.8 && <span className={`dot ${pct >= 1 ? 'dot--danger' : 'dot--warn'}`} title={pct >= 1 ? L('Bateu o limite do mês', 'Hit the monthly limit') : L('Já usou mais de 80% do limite', 'Over 80% of the limit used')} />}
         {unread ? (
           <span key={unread} className="badge badge--soft">
             {unread}
           </span>
         ) : null}
+        {/* Last, so what comes and goes (working, waiting, unread) shows before it and it never moves. */}
+        {agent.computer && agent.computerKind === 'mac' && (
+          <span className="nav-item__mac" title={L('Roda no seu computador', 'Runs on your computer')}>
+            <Icon name="laptop" size={12} />
+          </span>
+        )}
       </button>
       <button className="icon-btn icon-btn--sm agent-row__gear" title={settingsLabel} aria-label={settingsLabel} onClick={() => navigate({ kind: 'agent', id })}>
         <Glyph name="sliders" size={14} />
