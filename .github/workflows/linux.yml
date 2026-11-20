@@ -63,7 +63,8 @@ jobs:
       - run: ls -la dist-linux && cat dist-linux/latest-linux*.yml
       - name: The version is the release's
         if: env.TAG != ''
-        run: test "v$(node -p "require('./package.json').version")" = "$TAG"
+        # The fork tags next-v0.2.42; upstream tags v0.2.42. Both name the same version.
+        run: test "v$(node -p "require('./package.json').version")" = "${TAG#next-}"
       - name: Attach to the release
         if: env.TAG != ''
         run: gh release upload "$TAG" dist-linux/tucano-linux-*.deb dist-linux/tucano-linux-*.AppImage dist-linux/latest-linux*.yml --clobber

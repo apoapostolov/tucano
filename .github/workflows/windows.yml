@@ -48,28 +48,36 @@ jobs:
       - name: Build the installer
         run: npx electron-builder --win nsis --x64 --publish never --config.directories.output=dist-win
       - run: ls -la dist-win && cat dist-win/latest.yml
-      # Installs it the way people will (install.ps1 says what went wrong, but never fails
-      # the PowerShell it runs in: its output tells).
-      - name: Install with install.ps1
+      # Installs it the way people will, and checks the app is really there. Not through
+      # install.ps1: that script is upstream and looks for a Tucano.exe in the installed apps,
+      # while this fork packages as tucanonext-setup-<version>.exe and installs TucanoNext.exe
+      # (package.json, build.nsis and productName).
+      - name: Install it and check the app is there
         shell: pwsh
         run: |
-          $env:TUCANO_EXE = (Resolve-Path dist-win/tucano-win-x64.exe).Path
-          $out = ./install.ps1 *>&1 | Out-String
-          $out
-          if ($out -notmatch 'Installed in (.+Tucano\.exe)') { throw 'install.ps1 failed' }
-          if (-not (Test-Path $Matches[1].Trim())) { throw "No $($Matches[1])" }
+          $setup = (Resolve-Path dist-win/*.exe | Select-Object -First 1).Path
+          Write-Host "Installing $setup"
+          $p = Start-Process -FilePath $setup -ArgumentList "/S" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "installer stopped with $($p.ExitCode)" }
+          $programs = Join-Path $env:LOCALAPPDATA "Programs"
+          $app = Get-ChildItem $programs -Recurse -Filter "Tucano*.exe" -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike "Uninstall*" } | Select-Object -First 1
+          if (-not $app) { throw "the installer finished but left no Tucano exe in your Programs folder" }
+          Write-Host "Installed in $($app.FullName)"
       - name: The version is the release's
         if: env.TAG != ''
-        run: test "v$(node -p "require('./package.json').version")" = "$TAG"
+        # The fork tags next-v0.2.42; upstream tags v0.2.42. Both name the same version.
+        run: test "v$(node -p "require('./package.json').version")" = "${TAG#next-}"
       - name: Attach to the release
         if: env.TAG != ''
-        run: gh release upload "$TAG" dist-win/tucano-win-x64.exe dist-win/tucano-win-x64.exe.blockmap dist-win/latest.yml --clobber
+        run: gh release upload "$TAG" dist-win/*.exe dist-win/*.exe.blockmap dist-win/latest.yml --clobber
       - name: Keep the files of a test build
         if: env.TAG == ''
         uses: actions/upload-artifact@v7
         with:
           name: tucano-win-x64
           path: |
-            dist-win/tucano-win-x64.exe*
+            dist-win/*.exe
+            dist-win/*.exe.blockmap
             dist-win/latest.yml
           retention-days: 3
