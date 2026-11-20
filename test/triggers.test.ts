@@ -186,7 +186,7 @@ describe('trying a failed routine run again by hand', () => {
   }
   const failedReply = () => db.messages().find((m) => m.author.kind === 'agent')!
 
-  it('keeps the event, and forgets it once the reply is done', async () => {
+  it('keeps the event, and keeps the request a finished reply answered', async () => {
     failingOnce()
     const r = create({ kind: 'webhook', token: '' })
     routines.webhook((db.routine(r.id)!.trigger as { token: string }).token, 'Build falhou: DADO-DO-EVENTO')
@@ -198,7 +198,10 @@ describe('trying a failed routine run again by hand', () => {
     await settle()
     expect(turns[0]!.prompt).toContain('DADO-DO-EVENTO')
     expect(db.message(failed.id)!.run).toMatchObject({ status: 'done' })
-    expect(db.message(failed.id)!.run!.task).toBeUndefined()
+    // The task stays after the reply ends: a Try again or a Follow up on a finished reply builds its
+    // next turn from it, and a trigger's event lives nowhere else (53eed80d: "don't forget what a reply
+    // was asked"). What the reply was asked is what the event is.
+    expect(db.message(failed.id)!.run!.task).toContain('DADO-DO-EVENTO')
   })
 
   it('a paused run goes on with its event too', async () => {

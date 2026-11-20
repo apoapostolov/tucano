@@ -319,8 +319,16 @@ describe('usage alert', () => {
     await r.idle()
     const alerts = db.messages().filter((m) => m.author.kind === 'system' && m.text.includes('do limite do mês'))
     expect(alerts).toHaveLength(1)
-    expect(alerts[0]!.text).toMatch(/\*\*Lia\*\* já usou 8\d% do limite do mês \(\d+ mil de 10 mil tokens\)/)
-    expect(notes.filter((n) => n.includes('limite'))).toEqual([expect.stringMatching(/^Lia usou 8\d% do limite do mês$/)])
+    // The percentage is read out of the alert and checked against the rule, not guessed from a token
+    // count: the fake engine's prompt decides what a turn spends, so a seeded 7,900 can cross the
+    // threshold at 81% or at 91% and still be right. What must hold is that it fired once, that it says
+    // a share of this agent's ceiling, and that the notification repeats the message's own number.
+    const pct = Number(/já usou (\d+)% do limite do mês/.exec(alerts[0]!.text)?.[1])
+    expect(pct).toBeGreaterThanOrEqual(80)
+    expect(pct).toBeLessThan(100)
+    expect(alerts[0]!.text).toMatch(/\(\d+ mil de 10 mil tokens\). Dá pra aumentar na página dele\.$/)
+    expect(db.usedThisMonth('a1')).toBeGreaterThanOrEqual(8_000)
+    expect(notes.filter((n) => n.includes('limite'))).toEqual([`Lia usou ${pct}% do limite do mês`])
   })
 })
 

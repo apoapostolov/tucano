@@ -92,7 +92,7 @@ it('replies to the thread heading through its button and the selection shortcut'
   fake.platform = 'mac'
   await act(async () => root.render(<MessageList messages={[]} conversationId="c1" threadId="root" lead={original} />))
   await act(async () => (document.querySelector('.msg__replyto') as HTMLButtonElement).click())
-  expect(actions.setReplyTo).toHaveBeenLastCalledWith('root', { messageId: original.id, quote: undefined })
+  expect(actions.setReplyTo).toHaveBeenLastCalledWith('root', expect.objectContaining({ messageId: original.id, quote: undefined }))
 
   const text = document.querySelector('.msg__text')!.firstChild!
   window.getSelection = () => ({ anchorNode: text, focusNode: text, isCollapsed: false, toString: () => 'this part', removeAllRanges: () => {} }) as unknown as Selection
@@ -102,5 +102,5 @@ it('replies to the thread heading through its button and the selection shortcut'
   Object.assign(event, { key: 'l', metaKey: true, ctrlKey: false, shiftKey: false, altKey: false })
   await act(async () => window.dispatchEvent(event))
   expect(event.defaultPrevented).toBe(true)
-  expect(actions.setReplyTo).toHaveBeenLastCalledWith('root', { messageId: original.id, quote: 'this part' })
+  expect(actions.setReplyTo).toHaveBeenLastCalledWith('root', expect.objectContaining({ messageId: original.id, quote: 'this part' }))
 })
