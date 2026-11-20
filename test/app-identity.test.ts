@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error The identity gate is JavaScript, executed directly by Node.
-import { IDENTITY, identityProblems, installProblems } from '../scripts/lib/identity.mjs'
+import { IDENTITY, identityProblems, installProblems, shortcutProblems } from '../scripts/lib/identity.mjs'
 
 const root = join(import.meta.dirname, '..')
 const source = (file: string): string => readFileSync(join(root, file), 'utf8')
@@ -81,5 +81,31 @@ describe('app identity', () => {
     mkdirSync(join(programs, IDENTITY.releasedDir), { recursive: true })
     writeFileSync(join(programs, IDENTITY.releasedDir, IDENTITY.releasedExe), '')
     expect(installProblems(programs, { releasedWasInstalled: true }).join('\n')).toMatch(/released-app executable was installed into TucanoNext's folder/)
+  })
+
+  // A .lnk keeps its target as text inside the binary, which is what the gate reads: the fixture writes
+  // that text the way Windows does, as UTF-16.
+  const shortcut = (dir: string, name: string, target: string, extra = ''): string => {
+    const path = join(dir, name)
+    writeFileSync(path, Buffer.from(`\u0001\u0000\u0000\u0000${target}\u0000${extra}`, 'utf16le'))
+    return path
+  }
+
+  it('reads each shortcut by the app it belongs to, and passes a healthy pair', () => {
+    const programs = mkdtempSync(join(tmpdir(), 'tucano-links-'))
+    const desktop = mkdtempSync(join(tmpdir(), 'tucano-desktop-'))
+    shortcut(programs, 'TucanoNext.lnk', 'C:\\Users\\x\\AppData\\Local\\Programs\\tucanonext\\TucanoNext.exe', 'dev.tucano.next')
+    shortcut(programs, 'Tucano.lnk', 'C:\\Users\\x\\AppData\\Local\\Programs\\tucano\\Tucano.exe', 'dev.tucano.app')
+    expect(shortcutProblems([programs, desktop])).toEqual([])
+  })
+
+  it('catches a fork shortcut that opens the released app, and a released one the fork took over', () => {
+    const programs = mkdtempSync(join(tmpdir(), 'tucano-links-'))
+    shortcut(programs, 'TucanoNext.lnk', 'C:\\Users\\x\\AppData\\Local\\Programs\\tucano\\Tucano.exe', 'dev.tucano.app')
+    shortcut(programs, 'Tucano.lnk', 'C:\\Users\\x\\AppData\\Local\\Programs\\tucanonext\\TucanoNext.exe')
+    const problems = shortcutProblems([programs]).join('\n')
+    expect(problems).toMatch(/TucanoNext\.lnk does not open Programs\\tucanonext\\TucanoNext\.exe/)
+    expect(problems).toMatch(/carries the released app's id dev\.tucano\.app/)
+    expect(problems).toMatch(/Tucano\.lnk no longer opens the released app's Tucano\.exe|Tucano\.lnk opens the fork's TucanoNext\.exe/)
   })
 })

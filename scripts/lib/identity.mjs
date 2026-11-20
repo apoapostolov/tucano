@@ -10,7 +10,7 @@
 // read this file instead of spelling the names again.
 //
 //   node scripts/lib/identity.mjs [root]     exit 0 when the checkout is TucanoNext, 1 with every reason
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -87,6 +87,54 @@ export function installProblems(programs, { releasedWasInstalled = false } = {})
   }
   if (releasedWasInstalled && !existsSync(join(released, IDENTITY.releasedExe))) {
     problems.push(`${join(released, IDENTITY.releasedExe)} is gone: this install replaced the released Tucano, which has to be reinstalled from its own setup`)
+  }
+  return problems
+}
+
+// Shortcuts are the last mile of identity, and the one an install can leave behind: the build lands in
+// its own folder, the app starts under its own name, and the icon the person double-clicks still opens
+// the other app. A .lnk stores its target as text inside the binary, so it is read here rather than
+// through the shell, which is slow and awkward on this host. Both encodings are searched because a
+// shortcut written by an older installer can carry the path as ANSI.
+const decodeShortcut = (path) => {
+  const bytes = readFileSync(path)
+  return `${bytes.toString('utf16le')}\n${bytes.toString('latin1')}`.replace(/\//g, '\\').toLowerCase()
+}
+
+// `dirs` are the folders a shortcut may live in: the Start menu, its app subfolder, and the desktop.
+export function shortcutProblems(dirs) {
+  const problems = []
+  const seen = new Set()
+  for (const dir of dirs) {
+    if (!dir || !existsSync(dir)) continue
+    for (const name of readdirSync(dir)) {
+      if (!/\.lnk$/i.test(name) || !/tucano/i.test(name)) continue
+      const path = join(dir, name)
+      if (seen.has(path)) continue
+      seen.add(path)
+      const text = decodeShortcut(path)
+      // `\tucano\` needs the separator, so it cannot match inside `\tucanonext\`.
+      if (/next/i.test(name)) {
+        if (!text.includes('\\tucanonext\\tucanonext.exe')) {
+          problems.push(`${path} does not open Programs\\tucanonext\\TucanoNext.exe: the fork's own shortcut points somewhere else`)
+        }
+        if (text.includes('\\tucano\\tucano.exe')) {
+          problems.push(`${path} opens the released app's Tucano.exe: this install rewrote the fork's shortcut`)
+        }
+        // The AUMID rides in the shortcut. Its absence is not a fault (the app sets its own at launch),
+        // but the released app's id in it would group this build under the other app's taskbar button.
+        if (text.includes('dev.tucano.app')) {
+          problems.push(`${path} carries the released app's id dev.tucano.app, so its taskbar button and notifications belong to Tucano`)
+        }
+      } else {
+        if (!text.includes('\\tucano\\tucano.exe')) {
+          problems.push(`${path} no longer opens the released app's Tucano.exe: this fork's install took its shortcut over`)
+        }
+        if (text.includes('\\tucanonext\\')) {
+          problems.push(`${path} opens the fork's TucanoNext.exe, and the released app's shortcut has to stay the released app's`)
+        }
+      }
+    }
   }
   return problems
 }

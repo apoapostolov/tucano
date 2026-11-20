@@ -19,7 +19,7 @@ import { closeSync, existsSync, lstatSync, openSync, readFileSync, readSync, sta
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { dailyLaunch } from './self-build-launch.mjs'
-import { IDENTITY, identityProblems, installProblems } from './lib/identity.mjs'
+import { IDENTITY, identityProblems, installProblems, shortcutProblems } from './lib/identity.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const NAME = 'TucanoNext'
@@ -239,6 +239,11 @@ function install() {
   if (!existsSync(installedExe())) throw stop(`${installedExe()} was not installed`, 'install')
   const misplaced = installProblems(programs, { releasedWasInstalled })
   if (misplaced.length) throw stop(`the install went to the wrong place:\n  - ${misplaced.join('\n  - ')}`, 'install')
+  // The icon the person double-clicks is the last place an install can betray the identity: the build
+  // can be right and the shortcut stale from an older installer.
+  const roaming = join(process.env['APPDATA'] ?? '', 'Microsoft', 'Windows', 'Start Menu', 'Programs')
+  const shortcuts = shortcutProblems([roaming, join(roaming, 'Tucano'), join(roaming, 'TucanoNext'), join(process.env['USERPROFILE'] ?? '', 'Desktop')])
+  if (shortcuts.length) throw stop(`the shortcuts disagree with the build:\n  - ${shortcuts.join('\n  - ')}`, 'install')
   // The installer copies; the bytes on disk are what prove it copied this build and not an older one.
   if (sha256(builtAsar()) !== sha256(installedAsar())) throw stop('the installed app.asar is not the one just built', 'install')
 }
