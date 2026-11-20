@@ -99,12 +99,28 @@ describe("an agent's row in the sidebar", () => {
     expect(row('Lia').querySelectorAll('.working-dots i')).toHaveLength(3)
   })
 
-  it('puts the working dots before the badge that says it runs on this computer', async () => {
-    await render({ agents: [agent({ computer: true, computerKind: 'mac' })], conversations: [dm({})], messages: { d1: [msg('m1', 'd1', 'a1', 'working')] } })
+  it('puts the working dots after the monthly-limit dot and before the badge that says it runs on this computer', async () => {
+    await render({ agents: [agent({ computer: true, computerKind: 'mac', used: 900, limit: 1000 })], conversations: [dm({})], messages: { d1: [msg('m1', 'd1', 'a1', 'working')] } })
     const order = [...row('Lia').children].map((x) => x.className)
-    // What changes while it works reads first; the machine badge, which never moves, after it.
-    expect(order.findIndex((c) => c.includes('working-dots'))).toBeGreaterThan(-1)
-    expect(order.findIndex((c) => c.includes('working-dots'))).toBeLessThan(order.findIndex((c) => c.includes('nav-item__mac'))!)
+    // The limit dot is the row's first fixed cell; what comes and goes (working, waiting, unread) reads
+    // after it, and the machine badge stays last.
+    expect(order.findIndex((c) => c.includes('working-dots'))).toBeGreaterThan(order.findIndex((c) => c === 'dot dot--warn'))
+    expect(order.findIndex((c) => c.includes('working-dots'))).toBeLessThan(order.findIndex((c) => c.includes('nav-item__mac')))
+    expect(order[order.length - 1]).toContain('nav-item__mac')
+  })
+
+  it('keeps a right click on an agent inside a sector', async () => {
+    // A sector: Theo answers to Lia, so the list is grouped and each row is drawn by the group.
+    await render({ agents: [agent({}), agent({ id: 'a2', name: 'Theo', handle: 'theo', reportsTo: 'a1' })], conversations: [dm({})] })
+    const sector = section('Agentes').querySelector('.agent-sector')!
+    const theo = [...sector.querySelectorAll('.agent-row')].find((r) => r.textContent?.includes('Theo'))!
+    const right = new window.Event('contextmenu', { bubbles: true })
+    Object.assign(right, { clientX: 20, clientY: 40 })
+    await act(async () => void theo.dispatchEvent(right))
+    const items = [...document.querySelectorAll('.menu [role="menuitem"], .menu .menu__item')].map((x) => (x.textContent ?? '').trim())
+    // The row's own menu: message it, edit it, archive it — however the workspace names them.
+    expect(items).toHaveLength(3)
+    expect(items.join(' ')).toMatch(/mensagem|message/i)
   })
 
   it('an agent with no role shows just its name', async () => {

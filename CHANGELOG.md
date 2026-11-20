@@ -21,9 +21,10 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Mudou:** parar uma resposta, tirar uma pergunta da fila e apagar uma linha pedem dois cliques: o primeiro arma, o segundo confirma, e um clique perdido não mata mais uma resposta viva.
 > - **Mudou:** o ponteiro acende em laranja em todos os ícones; só os três que destroem ficam vermelhos.
 > - **Mudou:** uma linha terminada da gaveta diz como terminou no próprio ícone, e sobra espaço pra etiqueta **Seguir** caber na linha.
-> - **Mudou:** na barra lateral, o indicador de trabalho vem antes do notebook que diz em que computador o agente roda.
+> - **Mudou:** na barra lateral, a linha de um agente volta à ordem do Tucano: primeiro o ponto do limite do mês, depois o que muda sozinho (o trabalho, ou o escudo de espera), depois as não lidas, e o notebook por último.
 > - **Corrigido:** uma resposta cortada pelo fechamento do app volta a andar **na hora**, e um **Continuar** seu não gasta as três tentativas automáticas.
 > - **Corrigido:** a faixa da pergunta esperando resposta voltou a ser uma linha com borda acima do campo, e o app mantém o próprio nome na janela.
+> - **Corrigido:** o botão direito volta a abrir o menu na linha de um agente que está dentro de um setor.
 
 ### Original Changes
 
@@ -55,8 +56,8 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **The recommended answer is a pill at the end of the answer again, and a long answer wraps to it.** Each question's answer breaks over as many lines as it needs, with the recommended pill closing the answer where it ends instead of sitting at the right edge of a single line; nothing is drawn past the record's own edge, borders included.
 - **The pointer lights the row's orange everywhere it isn't destroying something.** Steer, the thread, Follow and the copy glyph hover in the accent colour; red is kept for the three that destroy: the x that stops a reply, the x that takes a queued prompt back, and the trash that removes a row.
 - **A finished row in the drawer says how it ended in its glyph alone**, so the Follow pill has the line to itself instead of wrapping under a label.
-- **The working dots come before the laptop.** A row reads the mark that changes first, then the badge that says which computer it runs on, so the row stops reshuffling the moment an agent starts waiting on you.
 - **Steering a working reply opens its field on the row's own second line**, from the session's name to the send glyph at the row's end, and the drawer's thread is a bare icon between Steer and the x.
+- **An agent's row keeps one order again.** The fork had moved the working dots to the front of the row, so the month's-limit dot and the unread count slid right every time an agent started working. The row is drawn upstream's way: the month's-limit dot first, then what comes and goes — the working dots, or the waiting shield — then the unread count, and the badge naming the computer last.
 
 ### Fixed
 
@@ -66,6 +67,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **A reply the app cut gets its place back at once.** The recovery pass and the continuation it starts now take the urgent lane ahead of ordinary work, the sixty-second sweep looks at a row still waiting to be taken again while the app stays open, and a row already in flight is never started twice. A **Continue** you press is not one of the three automatic tries: the count belongs to the reply, so the one it starts begins with all three.
 - **A queued prompt you take back never answers afterwards.** Deleting it with its x dropped it from the view and left it in the queue, so it ran when a place freed.
 - **The settings section rail wraps instead of running past the panel** when a section's name is long.
+- **A right click works on an agent's row inside a sector.** With teams, the agents list is drawn by sector, and each row went through the group that draws it without carrying its menu, so the right click on an agent did nothing while it still worked on a channel above it. The row takes its menu back — message it, edit it, archive it — inside a sector as in a flat list.
 
 ## [0.2.42] - 2026-11-19
 
