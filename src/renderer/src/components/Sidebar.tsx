@@ -618,6 +618,7 @@ export function Sidebar(): ReactNode {
                   dms={g.agents.map((a) => dmOf.get(a.id)?.id ?? '').join(' ')}
                   agents={g.agents}
                   renderAgent={(a) => <AgentRow id={a.id} dm={dmOf.get(a.id)?.id} unread={dmOf.get(a.id)?.unread} owner={team && a.owner !== you ? personById({ people }, a.owner)?.name : undefined} />}
+                  onRowMenu={(e, a) => open(e, agentMenu(a, dmOf.get(a.id)))}
                   onDrop={(id, before) => saveList('agentOrder', moveBefore(teamAgents, settings.agentOrder, id, before === `end:${g.id}` ? undefined : before))}
                   onNudge={(id, by) => saveList('agentOrder', nudge(teamAgents, settings.agentOrder, id, by))}
                   sort={sectorSort}
@@ -656,7 +657,7 @@ export function Sidebar(): ReactNode {
 // many messages are new in it and how many things wait on me there. `dms`: its DMs' ids, as a string.
 // A sector folds like a channel group (Fold.tsx). The archived agents are one too, folded until
 // opened (`startFolded`).
-function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDrop, onNudge, sort, startFolded, children }: { id: string; label: string; count: number; unread: number; dms: string; agents?: Agent[]; renderAgent?: (a: Agent) => ReactNode; onDrop?: (id: string, before: string) => void; onNudge?: (id: string, by: -1 | 1) => void; sort?: HoldReorder; startFolded?: boolean; children?: ReactNode }): ReactNode {
+function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onRowMenu, onDrop, onNudge, sort, startFolded, children }: { id: string; label: string; count: number; unread: number; dms: string; agents?: Agent[]; renderAgent?: (a: Agent) => ReactNode; onRowMenu?: (e: React.MouseEvent, a: Agent) => void; onDrop?: (id: string, before: string) => void; onNudge?: (id: string, by: -1 | 1) => void; sort?: HoldReorder; startFolded?: boolean; children?: ReactNode }): ReactNode {
   const { open, toggle } = useFold(`sector:${id}`, startFolded)
   const bots = useHoldReorder({ group: `sector:${id}`, onDrop: onDrop ?? (() => {}), onNudge: onNudge ?? (() => {}) })
   const waiting = useStore((s) => waitingTotal(s, dms.split(' ')))
@@ -675,7 +676,7 @@ function SectorGroup({ id, label, count, unread, dms, agents, renderAgent, onDro
         )}
       </div>
       {open && agents?.map((a) => (
-        <div key={a.id} className={`agent-row ${bots.picked === a.id ? 'is-picked' : ''} ${bots.over === a.id && bots.picked !== a.id ? 'is-over' : ''}`} {...bots.rowProps(a.id)}>
+        <div key={a.id} className={`agent-row ${bots.picked === a.id ? 'is-picked' : ''} ${bots.over === a.id && bots.picked !== a.id ? 'is-over' : ''}`} {...bots.rowProps(a.id)} onContextMenu={(e) => onRowMenu?.(e, a)}>
           {renderAgent?.(a)}
         </div>
       ))}
@@ -756,10 +757,8 @@ const AgentRow = memo(function AgentRow({ id, dm, unread, owner }: { id: string;
         <AgentAvatar agent={agent} size={18} busy={working} />
         <span className="nav-item__label">{agent.name}</span>
         <RoleMeta role={agent.role} owner={owner} />
-        {/* What the agent is doing comes first, its machine after: the dot (or the shield) is the only
-            thing on the row that changes while it works, so it reads before the badge that never moves. */}
-        {waits > 0 ? <WaitingPill count={waits} title={waiting} /> : <WorkingDots working={working} />}
         {pct !== undefined && pct >= 0.8 && <span className={`dot ${pct >= 1 ? 'dot--danger' : 'dot--warn'}`} title={pct >= 1 ? L('Bateu o limite do mês', 'Hit the monthly limit') : L('Já usou mais de 80% do limite', 'Over 80% of the limit used')} />}
+        {waits > 0 ? <WaitingPill count={waits} title={waiting} /> : <WorkingDots working={working} />}
         {unread ? (
           <span key={unread} className="badge badge--soft">
             {unread}
