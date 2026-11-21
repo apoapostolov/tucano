@@ -3,6 +3,7 @@
 import { timeOpts } from '../../../shared/clock'
 import { L, locale } from '../../../shared/lang'
 import { quotaView, visibleQuotas } from '../../../shared/quota-view'
+import { windowNow } from '../../../shared/quota-window'
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { agentById, amAdmin, countedTokens, ENGINES, isTeam, loadQuotas, refreshQuotas, loadUsage, messageById, modelInfo, navigate, receipts, useStore, type Agent, type EngineId, type EngineStatus, type ProviderQuota, type CodexQuota, type Quota, type QuotasSnapshot, type QuotaWindow, type UsageReport } from '../store'
 import { Sheet } from './Pages'
@@ -28,6 +29,12 @@ const shortTime = (at: number): string => {
   const d = new Date(at)
   const hm = d.toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' }))
   return d.toDateString() === new Date().toDateString() ? hm : `${d.toLocaleDateString(locale(), { day: '2-digit', month: '2-digit' })} ${hm}`
+}
+
+// When a window that's over started over: the time today, the date before that.
+const resetAt = (at: number): string => {
+  const today = new Date(at).toDateString() === new Date().toDateString()
+  return today ? L(`zerou às ${shortTime(at)}`, `reset at ${shortTime(at)}`) : L(`zerou em ${shortTime(at)}`, `reset on ${shortTime(at)}`)
 }
 
 // The app's own turns go under one name; agents keep theirs.
@@ -247,9 +254,49 @@ const usedShare = (w: QuotaWindow): number => {
   return left === undefined ? 0 : 1 - left
 }
 
-// One window as a ring: the used part painted along the circle, the rest left as its track.
-function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt?: number } }): ReactNode {
-  const pct = Math.min(1, Math.max(0, w.utilization))
+// ---------- the Codex subscription ----------
+
+// Its windows, as Codex told when this page asked: how many and how long depends on the plan.
+function CodexQuota(): ReactNode {
+  const q = useStore((s) => s.settings.codexQuota)
+  if (!q?.windows.length) return null
+  const at = new Date(q.at).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })
+  const plan = q.plan ? ` ${cap(q.plan)}` : ''
+  return (
+    <section className="read-group">
+      <h2>
+        {L(`Sua assinatura do Codex${plan}`, `Your Codex${plan} subscription`)}<span>{L(`segundo o Codex às ${at}`, `per Codex at ${at}`)}</span>
+      </h2>
+      <div className="usage-quota">
+        {q.windows.map((w) => (
+          <Ring key={w.minutes} label={windowLabel(w.minutes)} w={w} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+const windowLabel = (minutes: number): string =>
+  minutes === 10_080
+    ? L('Semana', 'Week')
+    : minutes === 1440
+      ? L('Dia', 'Day')
+      : minutes % 1440 === 0
+      ? L(`Janela de ${minutes / 1440} dias`, `${minutes / 1440}-day window`)
+      : minutes % 60 === 0
+        ? L(`Janela de ${minutes / 60} horas`, `${minutes / 60}-hour window`)
+        : L(`Janela de ${minutes} min`, `${minutes}-minute window`)
+
+function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt: number } }): ReactNode {
+  // Draw again when the window resets, so a page left open doesn't keep the old window's share.
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const left = w.resetsAt - Date.now()
+    if (left <= 0 || left > 2 ** 31 - 1) return
+    const t = setTimeout(() => tick((n) => n + 1), left + 1000)
+    return () => clearTimeout(t)
+  }, [w.resetsAt])
+  const { used: pct, reset } = windowNow(w)
   const r = 22
   const c = 2 * Math.PI * r
   const tone = pct >= 0.9 ? 'is-danger' : pct >= 0.7 ? 'is-warn' : ''
@@ -262,7 +309,7 @@ function Ring({ label, w }: { label: string; w: { utilization: number; resetsAt?
       <div>
         <span className="muted small">{label}</span>
         <strong>{L(`${Math.round(pct * 100)}% usado`, `${Math.round(pct * 100)}% used`)}</strong>
-        {w.resetsAt ? <span className="muted small">{L('zera', 'resets')} {until(w.resetsAt)}</span> : null}
+        <span className="muted small">{reset ? resetAt(w.resetsAt) : `${L('zera', 'resets')} ${until(w.resetsAt)}`}</span>
       </div>
     </div>
   )
@@ -486,7 +533,7 @@ function ProviderRings({ p }: { p: ProviderQuota }): ReactNode {
       ) : (
         <div className="usage-quota">
           {windows.map((r) => (
-            <Ring key={r.key} label={r.label()} w={{ utilization: usedShare(p[r.key]!), resetsAt: p[r.key]!.resetsAt }} />
+            <Ring key={r.key} label={r.label()} w={{ utilization: usedShare(p[r.key]!), resetsAt: p[r.key]!.resetsAt ?? 0 }} />
           ))}
         </div>
       )}

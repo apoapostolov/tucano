@@ -100,6 +100,7 @@ export const NEEDS: Record<Method, Need> = {
   followUpRun: 'anyone',
   continueRun: 'anyone',
   deleteMessage: 'anyone', // a conversation one can reach; a channel's own rules decide more
+  continueJob: 'anyone',
   createChannel: 'anyone',
   renameChannel: 'anyone',
   setTopic: 'anyone',
@@ -132,6 +133,7 @@ export const NEEDS: Record<Method, Need> = {
   editThreadSummary: 'anyone',
   summarizeThreadNow: 'anyone',
   setWikiCapture: 'anyone',
+  setProactive: 'anyone',
   setThreads: 'anyone',
   decideApproval: 'target',
   addMemory: 'target',
@@ -148,9 +150,18 @@ export const NEEDS: Record<Method, Need> = {
   survey: 'owner', // one answer per install: the owner's
   answerSurvey: 'owner',
   updateSettings: 'target', // personal preferences, anyone; the rest, admins
-  browserLogins: 'admin', // the logins saved for an agent's browser, like a connector's token
-  saveBrowserLogin: 'admin',
-  removeBrowserLogin: 'admin',
+  // The Cofre: each person has their own keys; the team's are checked inside (src/core/vault.ts: only an admin changes them).
+  vaultKeys: 'anyone',
+  vaultUses: 'anyone',
+  saveVaultKey: 'anyone',
+  removeVaultKey: 'anyone',
+  setVaultKeyAgent: 'anyone',
+  importVaultKeys: 'anyone',
+  vaultLogins: 'anyone',
+  saveVaultLogin: 'anyone',
+  removeVaultLogin: 'anyone',
+  setVaultLoginAgent: 'anyone',
+  answerKeyRequest: 'anyone', // anyone who sees the card's conversation (checked inside)
   browserAction: 'target', // a browser working for a conversation one sees; otherwise admins
   browserInput: 'target',
   // the team's knowledge: anyone reads and writes pages; the curator's decisions and the wiki's place are the admins'
@@ -211,6 +222,7 @@ export const NEEDS: Record<Method, Need> = {
   setAgentModels: 'admin',
   saveAgent: 'admin',
   archiveAgent: 'admin',
+  deleteAgent: 'admin',
   createFromDraft: 'admin',
   computerAction: 'target', // looking again at its state, anyone who sees the agent; the rest, admins (admitComputer)
   stopService: 'admin',
@@ -304,6 +316,12 @@ export const NEEDS: Record<Method, Need> = {
   myDevices: 'anyone', // one's own
   setPush: 'anyone', // one's own device's (ctx.device)
   removeDevice: 'anyone', // one's own (the core looks only among theirs)
+  harnessKeys: 'anyone', // one's own harness keys (src/core/mcp.ts): each acts as its person
+  createHarnessKey: 'anyone',
+  removeHarnessKey: 'anyone',
+  mcpInfo: 'anyone',
+  connectHarness: 'owner', // the desktop's: its config files are the owner's
+  harnessNoticeSeen: 'anyone',
   removePerson: 'target',
   setRole: 'target',
   setPersonAccess: 'target', // the admins change members' (the owner, admins' too: always everything)

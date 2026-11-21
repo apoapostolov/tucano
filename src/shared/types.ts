@@ -103,6 +103,7 @@ export interface Agent {
   folders?: LentFolder[] // Mac folders lent to that computer (spec §13, M5.1); changed only through lendFolder/folderAction
   retentionDays?: number // how long its history is kept: its replies and its own DMs; unset: the Tucano's period, and 0 keeps everything
   archived: boolean
+  deleted?: true // deleted for good (deleteAgent): always archived too; only its name and look stay, for the messages it wrote
   kind?: 'tuca' // the agent that builds the others: it proposes, the person creates
   // How this agent's replies show their steps: over the workspace's setting; unset: follow it.
   steps?: StepsMode
@@ -111,6 +112,7 @@ export interface Agent {
   sectorName?: string // on a sector's head (src/shared/org.ts headsOf): the sector's name; unset: "Setor de <name>"
   sectorDoes?: string // on a sector's head: what the sector handles, in one line, read by the other heads
   entry?: boolean // the person chose it as an entry point (src/shared/org.ts entriesOf): it answers to no agent, is in no sector, and the teams below it are sectors
+  proactive?: boolean // false: the router never calls it in on its own when something is its to do (src/core/router.ts chimeIn); on unless false
 }
 
 // One of the person's apps given to an agent, by the name the system shows.
@@ -149,6 +151,7 @@ export interface Conversation {
   clearedAt?: number // the person cleared the history: earlier messages stay in the rows (costs, approvals) and out of the screen and the next turns
   owner?: string // a DM's person: one DM per agent and person, and only they read it
   createdBy?: string // a channel's maker: they (and admins) rename it, change its topic and its agents
+  proactive?: boolean // false: no agent is called in here on its own, only who is mentioned or picked; on unless false
 }
 
 // "Lançamento do App" → "lancamento-do-app": lowercase, no accents, hyphens.
@@ -171,6 +174,7 @@ export interface Step {
   error?: string // why it failed, in the tool's own words
   input?: string // what the call asked, the argument that says it (the SQL, the path), as it was sent
   output?: string // what came back, in a few words ("120 rows")
+  keys?: string[] // the Cofre's keys the command used, by name (src/core/vault.ts)
   status: StepStatus
   ms?: number
   // Not a tool call: something the person wrote. `steer` was handed to the reply while it ran,
@@ -219,11 +223,13 @@ export interface Run {
   routineIds?: string[] // routines scheduled or changed with `agendar_rotina` in this reply
   browser?: boolean // used its browser in this reply (the message links to the live view)
   budget?: number // 'paused': the per-reply budget it reached, in counted tokens
-  goal?: string // the goal it works on: the message that set it (src/core/goals.ts)
+  job?: string // the job it is part of: what a message set off, until it's done (src/core/jobs.ts)
   autoContinued?: number // how many times in a row the work went on by itself to get to this reply (AUTO_CONTINUES caps it)
   held?: true // 'paused' by the person: it waits before its next tool call or turn, keeping its session and what it did; not a ceiling
   route?: RouteTrace // what smart routing decided for this reply, drawn as the thin line over it
   sessionName?: string // what this reply's session is called, named once by a cheap model when it starts (src/core/titles.ts)
+  retryAt?: number // 'failed' on something that passes (a network, a plan's window, a computer off): when it tries again by itself
+  retries?: number // how many times it already tried again by itself
   task?: string // what this reply was asked beyond the conversation; kept only while it can be tried again or go on
   work?: string // the piece of work it counts toward, e.g. the issue "OAB-65" (spec §20)
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
@@ -447,6 +453,7 @@ export interface Inbox {
   questions: InboxQuestion[]
   answered?: InboxQuestion[] // to me, answered by someone else a moment ago (the page keeps what I was typing)
   proposals?: InboxProposal[] // admins: what a member asked to apply (agents and teams are theirs)
+  harness?: { name: string; text: string; at: number }[] // what my harnesses changed over MCP since I last looked ("Claude Code criou 3 agentes")
 }
 
 // A question in the inbox: with the decisions asked (ask_user's options), what was answered on the
@@ -517,6 +524,8 @@ export interface Message {
   // drawer (runs.ts, reorderQueued). Unset: the order it was written in, which is what a queue starts
   // as. Kept in the database like `sendMode`, so a restart reads the same order.
   queuePos?: number
+  via?: string // a person's message a harness sent over MCP: the harness key's name ("Claude Code"). The agent reads it; the screens don't show it
+  stop?: { job: string } // the note left where a job stopped on its brakes (src/core/jobs.ts): it carries Continuar
 }
 
 // When a message was said: a reply when it ended, anything else when it was written. `at` stays when it
@@ -653,7 +662,6 @@ export interface Settings {
   runBudgetPct?: number // per reply, % of the agent's monthly limit before it pauses; default RUN_BUDGET_PCT
   autoContinue?: boolean // a reply that paused at its cap while it was getting somewhere, or that the app cut when it closed, goes on by itself (default on)
   runStallMinutes?: number // without any sign of life; default RUN_STALL_MINUTES
-  chainDepth?: number // agent replies in a row from one human message; default CHAIN_DEPTH
   telegram?: TelegramInfo // computed: the phone bot (spec §19)
   paused?: boolean // "Pausar tudo": no agent starts working, no routine runs
   quietHours?: { from: string; to: string } | null // "HH:MM": routines and triggers wait, and run late when it ends; null: off
@@ -773,13 +781,6 @@ export interface BrowserReply {
   point?: { x: number; y: number } // where it just clicked or typed, as a fraction of the viewport
 }
 
-// A login the person saved for an agent's browser, as their page lists it: never the password.
-export interface SavedLogin {
-  origin: string // https://conta.example.com: the only place it's typed
-  username: string
-  onePassword?: boolean // the password is a 1Password reference, read when it's typed
-}
-
 // An agent's browser as the side panel shows it (spec §24): the last frame and what it did.
 export interface BrowserView {
   agentId: string
@@ -866,8 +867,13 @@ export const MAX_AGENT_ROUTINES = 10
 export const routineCap = (n: number | undefined): number => (Number.isFinite(n) ? Math.max(1, Math.round(n as number)) : MAX_AGENT_ROUTINES)
 
 export const RUN_BUDGET_PCT = 10 // past this share of the month, the reply pauses and asks to continue
-export const AUTO_CONTINUES = 2 // times in a row a reply that paused while getting somewhere goes on by itself before it waits for you
+export const AUTO_CONTINUES = 10 // times in a row a reply that paused while getting somewhere goes on by itself: a backstop, since each time it must have moved
 export const RUN_STALL_MINUTES = 20 // no text, no tokens, no tool finishing: stuck
+
+export const DEFAULT_MAX_PARALLEL_SESSIONS = 2 // one reply beside the one already running; further prompts wait in the queue
+export const MAX_PARALLEL_SESSIONS = 8
+// A whole number from 1 to MAX_PARALLEL_SESSIONS, whatever reached the core.
+export const maxParallelSessionsCap = (n: number | undefined): number => (Number.isFinite(n) ? Math.min(MAX_PARALLEL_SESSIONS, Math.max(1, Math.round(n as number))) : DEFAULT_MAX_PARALLEL_SESSIONS)
 export const REPEAT_WARN = 3 // the same call with the same result: the agent is told to change course
 export const REPEAT_STOP = 5 // ...and then the reply stops
 export const ERRORS_STOP = 8 // tool calls failing in a row
@@ -876,14 +882,6 @@ export const SAME_TOOL_STOP = 60 // ...and past it, that tool is refused for the
 export const SLEEPS_FREE = 1 // commands that start by sleeping 20 s or more: the first runs, the next ones are refused
 export const SLEEPS_STOP = 4 // refused sleeps in a reply before it stops
 export const PENDING_WAIT_MINUTES = 5 // a connector result still running (a SQL statement) is awaited by the app this long
-export const CHAIN_DEPTH = 3 // agent replies chained from one human message before Tucano stops them
-export const MAX_CHAIN_DEPTH = 10
-// Agents mentioning each other can't loop and burn tokens with nobody watching: a whole number from 1 to MAX_CHAIN_DEPTH, whatever reached the core.
-export const chainDepthCap = (n: number | undefined): number => (Number.isFinite(n) ? Math.min(MAX_CHAIN_DEPTH, Math.max(1, Math.round(n as number))) : CHAIN_DEPTH)
-export const DEFAULT_MAX_PARALLEL_SESSIONS = 2 // one reply beside the one already running; further prompts wait in the queue
-export const MAX_PARALLEL_SESSIONS = 8
-// A whole number from 1 to MAX_PARALLEL_SESSIONS, whatever reached the core.
-export const maxParallelSessionsCap = (n: number | undefined): number => (Number.isFinite(n) ? Math.min(MAX_PARALLEL_SESSIONS, Math.max(1, Math.round(n as number))) : DEFAULT_MAX_PARALLEL_SESSIONS)
 
 // What a reply counts against limits: a token read from the cache costs about a
 // tenth of a new one, so it counts a tenth. The input counts the cache reads in; more cache reads than

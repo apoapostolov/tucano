@@ -7,6 +7,7 @@ import { ConversationView } from './components/Conversation'
 import { Lightbox } from './components/Lightbox'
 import { ImageMenu } from './components/ImageMenu'
 import { AgentPage, ApprovalsPage, AsksPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { VaultPage } from './components/Vault'
 import { UsagePage } from './components/Usage'
 import { MemoryPage } from './components/Memory'
 import { WikiView } from './components/Wiki'
@@ -111,6 +112,7 @@ export function App(): ReactNode {
         {view.kind === 'asks' && <AsksPage />}
         {view.kind === 'approvals' && <ApprovalsPage />}
         {view.kind === 'connectors' && <ConnectorsPage />}
+        {view.kind === 'vault' && <VaultPage tab={view.tab} />}
         {/* Conhecimento and Operação: one header with tabs over the page (Hubs.tsx). */}
         {tab && (
           <Hub tab={tab}>

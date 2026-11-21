@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { L } from '../../../shared/lang'
-import { answerLabel, draftAnswer, firstUnanswered, isAnswered, isRecommended, MAX_QUESTION_LENGTH, questionsOf, type Answer, type AnswerDraft, type Decision } from '../../../shared/questions'
+import { answerLabel, draftAnswer, firstUnanswered, isAnswered, isRecommended, MAX_QUESTION_LENGTH, questionsOf, recommendedAnswers, type Answer, type AnswerDraft, type Decision } from '../../../shared/questions'
 import { answerDecision, submitDecisions, type Message } from '../store'
 import { Icon } from './ui'
 import { decisionKey } from './decision-keys'
@@ -102,7 +102,7 @@ function Asked({ questions, recommended }: { questions: Decision[]; recommended?
               {q.options.map((o, j) => (
                 <span key={j} className="ask-list__option">
                   <span className="ask-chip">{o.label}</span>
-                  {recommended?.[i] === j && <Recommended />}
+                  {(recommended?.[i] === j || o.recommended) && <Recommended />}
                 </span>
               ))}
             </span>
@@ -155,6 +155,18 @@ function Answering({ id, questions, saved, badge, byline, recommended, extra, on
     if (onSend) return onSend()
     setSending(true)
     void submitDecisions(id).finally(() => setSending(false)) // it failed if the card is still here: it can go again
+  }
+
+  // Every decision with the option the agent recommends, sent at once. Only when each one has such an option.
+  const autoRecommended = recommendedAnswers(questions)
+  const goRecommended = (): void => {
+    if (!autoRecommended || sending) return
+    autoRecommended.forEach((a, i) => {
+      drafts.delete(draftKey(id, i))
+      answerDecision(id, i, a)
+    })
+    setAnswers(autoRecommended)
+    send()
   }
 
   const commit = (index: number, answer: Answer | null): void => {
@@ -218,6 +230,13 @@ function Answering({ id, questions, saved, badge, byline, recommended, extra, on
         <Review takeFocus={engaged} questions={questions} answers={answers} onEdit={(i) => (setEngaged(true), setStep(i))} onSend={send} sending={sending} />
       ) : (
         <DecisionStep key={step} draftId={draftKey(id, step)} question={questions[step]!} answer={answers[step] ?? null} recommended={recommended?.[step] ?? null} last={questions.length === 1} takeFocus={engaged} onAnswer={(a) => commit(step, a)} />
+      )}
+      {autoRecommended && (
+        <div className="ask__recommend">
+          <button className="btn btn--sm" disabled={sending} onClick={goRecommended}>
+            <Icon name="check" size={12} /> {L('Pode seguir com a recomendação', 'Go with the recommendation')}
+          </button>
+        </div>
       )}
       {extra}
     </section>
@@ -307,7 +326,7 @@ function DecisionStep({ draftId, question, answer, recommended, last, takeFocus,
                     <span className="ask-option__label">
                       {o.label}
                       {/* The option's own wording says so, when Jev hasn't picked one for this decision. */}
-                      {recommended !== i && isRecommended(o) && <span className="tag tag--agent ask-option__rec">{L('recomendado', 'recommended')}</span>}
+                      {recommended !== i && (o.recommended || isRecommended(o)) && <span className="tag tag--agent ask-option__rec">{L('recomendado', 'recommended')}</span>}
                     </span>
                     {recommended === i && <Recommended />}
                   </span>

@@ -1827,6 +1827,18 @@ h3 {
   display: block;
   cursor: text;
 }
+.step__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--text-2);
+  background: var(--panel-2, rgba(127, 127, 127, 0.12));
+}
 .step__ms {
   margin-left: auto;
   flex-shrink: 0;
@@ -3404,6 +3416,20 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+.ask-option__tag {
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+.ask-chip .ask-option__tag {
+  margin-left: 4px;
+  font-size: 10.5px;
+  padding: 0 5px;
+}
+/* "Pode seguir com a recomendação": the agent's recommended option on every decision, in one click. */
+.ask__recommend {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
 }
 .ask-option__detail {
   font-size: 12px;
@@ -4112,6 +4138,28 @@ body.is-resizing webview {
 .system-line > .muted {
   margin-left: auto;
   flex-shrink: 0;
+}
+/* Where a piece of work stopped: the whole note, a few lines, and Continuar under it. */
+.system-line--stop {
+  align-items: flex-start;
+}
+.system-line--stop > .icon {
+  margin-top: 3px;
+}
+.system-line__body {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+.system-line__body p,
+.system-line__body ul {
+  margin: 0 0 6px;
+}
+.system-line__body ul {
+  padding-left: 18px;
+}
+.system-line__body .retry {
+  margin-top: 2px;
 }
 
 /* A reply's receipt and "Guardar na wiki", on one quiet line that shows on hover. */
@@ -6198,6 +6246,10 @@ table.csv th {
 }
 .menu__item:hover .icon {
   color: var(--accent-text);
+}
+.menu__check {
+  margin-left: auto;
+  display: inline-flex;
 }
 .menu__item.is-danger {
   color: var(--danger);
@@ -15489,6 +15541,26 @@ button.agent-card__now:hover {
 .agent-row.is-archived > .nav-item {
   opacity: 0.6;
 }
+.agent-row.is-deleted .nav-item__label,
+.msg__author.is-deleted {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-3);
+}
+.msg__face.is-deleted {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.composer-off {
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  text-align: center;
+}
+.member .member__delete {
+  color: var(--danger);
+}
 .nav-item > .nav-item__mac,
 .nav-item > .dot,
 .nav-item > .waiting-pill,
@@ -18023,24 +18095,146 @@ button.agent-card__now:hover {
 }
 
 /* The logins saved for an agent's browser, in its browser card. */
-.saved-logins {
+/* An agent's page: the Cofre's logins, under its browser's switch. */
+.lrow--stack {
   display: grid;
   gap: 8px;
+  align-items: start;
 }
-.saved-logins__row {
-  display: flex;
+
+/* The card pedir_chave leaves in the chat: paste into the Cofre, or give one already there. */
+.key-request__form {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.key-request__form input[type='password'],
+.key-request__form input:not([type]) {
+  width: 100%;
+}
+.key-request__saved {
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  margin-top: 6px;
 }
-.saved-logins__site {
-  overflow-wrap: anywhere;
+
+/* Configurações › Harnesses: the snippet to paste into a harness, and a row of buttons that wraps. */
+.row--wrap {
+  flex-wrap: wrap;
 }
-.saved-logins__form {
-  display: grid;
+.harness-snippet {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--code-bg);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+}
+
+/* ---------- the Cofre (components/Vault.tsx) ---------- */
+.vault-keys,
+.vault-log,
+.vault-import__lines {
+  margin-top: 12px;
+}
+.vault-key__main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.vault-key__name {
+  font: 600 13px/1.4 var(--mono);
+}
+.vault-key__hint {
+  font-family: var(--mono);
+}
+.vault-key__note {
+  flex-basis: 100%;
+}
+.vault-key__agents {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.vault-key__used,
+.vault-log__at {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.vault-drawer {
+  margin-top: 20px;
+}
+.vault-drawer__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.vault-drawer__head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.vault-drawer__head .link {
+  margin-left: auto;
+}
+.vault-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.vault-editor__agents {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
-.saved-logins .hint {
+.vault-editor__agents .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.vault-editor__agents .chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.vault-editor__agents .chip:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}
+.vault-editor__agents .chip:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.vault-editor__agents .chip.is-on .muted {
+  color: inherit;
+  opacity: 0.8;
+}
+.vault-import__text {
+  width: 100%;
+  font: 12.5px/1.5 var(--mono);
+}
+.vault-agent .hint {
+  margin-top: 8px;
+}
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 28px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--text-2);
+}
+.empty-card p {
+  max-width: 460px;
   margin: 0;
 }
 /* The settings section rail wraps instead of running past the panel: at 900 px its nine sections
@@ -18050,3 +18244,11 @@ button.agent-card__now:hover {
   flex-wrap: wrap;
 }
 
+@media (max-width: 640px) {
+  .vault-key {
+    flex-wrap: wrap;
+  }
+  .vault-key__used {
+    display: none;
+  }
+}

@@ -320,7 +320,8 @@ export function Sidebar(): ReactNode {
   const teamAgentsShown = byIds(teamAgents, moveBefore(teamAgents, settings.agentOrder, ''))
   // An archived agent leaves the list for a group at its end, folded until opened: its row opens the DM
   // with it, or its page when there's none.
-  const archived = agents.filter((a) => a.archived && a.kind !== 'tuca')
+  // A deleted one stays only while there's a DM with it to read (like Slack), its name struck out.
+  const archived = agents.filter((a) => a.archived && a.kind !== 'tuca' && (!a.deleted || dmOf.has(a.id)))
   const groups = useMemo(() => groupAgents(agents, settings.sectorOrder, settings.agentOrder), [agents, settings.sectorOrder, settings.agentOrder])
   const [menu, setMenu] = useState<MenuState>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
@@ -397,11 +398,18 @@ export function Sidebar(): ReactNode {
         if (ok) void clearHistory(id)
       })
   })
+  // In a channel, an agent may join on its own when something is its to do (the core says who and why).
+  const proactiveItem = (id: string, on: boolean): MenuItem => ({
+    label: L('Agentes entram sozinhos', 'Agents join on their own'),
+    icon: 'spark',
+    checked: on,
+    onClick: () => void call('setProactive', { conversationId: id, on: !on })
+  })
   const channelMenu = (c: (typeof channels)[number]): MenuItem[] => [
     ...(canEditChannel({ people, you }, c) ? [{ label: L('Adicionar ou remover agentes…', 'Add or remove agents…'), icon: 'users' as const, onClick: () => openDialog({ kind: 'members', id: c.id }) }] : []),
     { label: L('Configurações do canal…', 'Channel settings…'), icon: 'gear', onClick: () => openDialog({ kind: 'settings', id: c.id }) },
     ...(c.unread ? [{ label: L('Marcar como lido', 'Mark as read'), icon: 'check' as const, onClick: () => markRead(c.id) }] : []),
-    ...(canEditChannel({ people, you }, c) ? [wikiItem(c.id, c.wikiCapture !== false)] : []),
+    ...(canEditChannel({ people, you }, c) ? [wikiItem(c.id, c.wikiCapture !== false), proactiveItem(c.id, c.proactive !== false)] : []),
     ...channelMenuRest(c)
   ]
   const channelMenuRest = (c: (typeof channels)[number]): MenuItem[] => [
@@ -432,7 +440,7 @@ export function Sidebar(): ReactNode {
     }
   ]
   // One menu for an agent's row: what the DM's menu had and what the agent's had.
-  const agentMenu = (agent: Agent, dm: Conversation | undefined): MenuItem[] => [
+  const agentMenu = (agent: Agent, dm: Conversation | undefined): MenuItem[] => agent.deleted ? (dm ? dmMenu(dm, agent.name) : []) : [
     { label: L('Mandar mensagem', 'Send a message'), icon: 'send', onClick: () => void openDm(agent.id) },
     admin && !agent.archived
       ? { label: L('Editar', 'Edit'), icon: 'edit', onClick: () => navigate({ kind: 'agent', id: agent.id }) }
@@ -479,7 +487,7 @@ export function Sidebar(): ReactNode {
   const agentRow = (a: Agent): ReactNode => {
     const dm = dmOf.get(a.id)
     return (
-      <div key={a.id} className={`agent-row ${a.archived ? 'is-archived' : ''}`} onContextMenu={(e) => open(e, agentMenu(a, dm))}>
+      <div key={a.id} className={`agent-row ${a.archived ? 'is-archived' : ''} ${a.deleted ? 'is-deleted' : ''}`} onContextMenu={(e) => open(e, agentMenu(a, dm))}>
         <AgentRow id={a.id} dm={dm?.id} unread={dm?.unread} owner={team && a.owner !== you ? personById({ people }, a.owner)?.name : undefined} />
       </div>
     )
@@ -771,9 +779,11 @@ const AgentRow = memo(function AgentRow({ id, dm, unread, owner }: { id: string;
           </span>
         )}
       </button>
-      <button className="icon-btn icon-btn--sm agent-row__gear" title={settingsLabel} aria-label={settingsLabel} onClick={() => navigate({ kind: 'agent', id })}>
-        <Glyph name="sliders" size={14} />
-      </button>
+      {!agent.deleted && (
+        <button className="icon-btn icon-btn--sm agent-row__gear" title={settingsLabel} aria-label={settingsLabel} onClick={() => navigate({ kind: 'agent', id })}>
+          <Glyph name="sliders" size={14} />
+        </button>
+      )}
     </>
   )
 })

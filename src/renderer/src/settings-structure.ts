@@ -32,12 +32,13 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'app-startup', page: 'app', label: L('Inicialização', 'Startup'), keys: ['openAtLogin', 'launchMinimized'], scope: 'computer', visible: admin },
     { id: 'app-updates', page: 'app', label: L('Atualizações', 'Updates'), keys: [], scope: 'computer', visible: admin },
     { id: 'workspace-context', page: 'workspace', label: L('Contexto', 'Context'), keys: ['workspaceLabel', 'workspaceName', 'context', 'onboarding'], scope: 'workspace', visible: admin },
+    { id: 'workspace-harnesses', page: 'workspace', label: L('Harnesses', 'Harnesses'), keys: [], scope: 'workspace', visible: admin },
     { id: 'workspace-people', page: 'workspace', label: L('Pessoas', 'People'), keys: [], scope: 'mixed', visible: team },
     { id: 'workspace-activity', page: 'workspace', label: L('Atividade', 'Activity'), keys: [], scope: 'workspace', visible: team && admin },
     { id: 'workspace-transfer', page: 'workspace', label: L('Importar e exportar', 'Import and export'), keys: [], scope: 'workspace', visible: admin },
     { id: 'workspace-backups', page: 'workspace', label: L('Backups', 'Backups'), keys: [], scope: 'workspace', visible: owner },
     { id: 'workspace-danger', page: 'workspace', label: L('Dados e exclusão', 'Data and deletion'), keys: ['retentionDays'], scope: 'workspace', visible: admin },
-    { id: 'agents-replies', page: 'agents', label: L('Respostas', 'Replies'), keys: ['sendMode', 'maxParallelSessions', 'chainDepth'], scope: 'workspace', visible: admin },
+    { id: 'agents-replies', page: 'agents', label: L('Respostas', 'Replies'), keys: ['sendMode', 'maxParallelSessions'], scope: 'workspace', visible: admin },
     { id: 'agents-recovery', page: 'agents', label: L('Recuperação', 'Recovery'), keys: ['resumeInterrupted', 'runStallMinutes'], scope: 'workspace', visible: admin },
     { id: 'agents-permissions', page: 'agents', label: L('Permissões', 'Permissions'), keys: ['autonomy', 'actionRules', 'outsideGuard', 'approvalTtlHours'], scope: 'workspace', visible: admin },
     { id: 'agents-limits', page: 'agents', label: L('Limites', 'Limits'), keys: ['defaultLimit', 'runBudgetPct', 'autoContinue'], scope: 'workspace', visible: admin },
@@ -89,7 +90,7 @@ const legacy: Readonly<Record<string, string>> = {
 // order they read on screen. A section whose card hasn't been written yet stays out of these lists:
 // the strip never shows a link to nothing and the nav drops any section the pane doesn't render.
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
-  geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
+  geral: ['app-appearance', 'workspace-context', 'workspace-harnesses', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
   modelos: ['models-agents', 'models-session-names', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
   agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser'],
   integracoes: ['connections-phone'],

@@ -19,7 +19,6 @@ export const GENERAL_SETTINGS = [
   'runBudgetPct',
   'autoContinue',
   'runStallMinutes',
-  'chainDepth',
   'resumeInterrupted',
   'teamUpDays',
   'actionRules',
