@@ -6,6 +6,10 @@ not justify ambiguous fragments, missing consequences or unfamiliar abbreviation
 
 ## Draft in context
 
+Preserve approved wording when integrating upstream changes. Use the tracked
+[copy registry and restoration helper](copy-overrides.md) after merges and before pushing.
+Register reviewed additions after checking their meaning and rendered layout.
+
 Before implementing a feature, list its new labels, hints, buttons, states and errors. Put
 each string beside the control it describes. For replacements, retain the old/new comparison
 in the PR or proposal. Read the surrounding screen once to catch repeated explanations and

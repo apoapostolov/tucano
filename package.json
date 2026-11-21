@@ -23,7 +23,10 @@
     "release": "sh scripts/release.sh",
     "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-placement.test.ts test/settings-navigation.test.tsx",
     "check:copy": "node scripts/check-english-copy.mjs --source",
-    "check:copy:render": "node scripts/check-english-copy.mjs"
+    "check:copy:render": "node scripts/check-english-copy.mjs",
+    "check:copy:approved": "node scripts/maintain-english-copy.mjs check",
+    "fix:copy": "node scripts/maintain-english-copy.mjs apply",
+    "test:copy-overrides": "node scripts/test-copy-overrides.mjs"
   },
   "devDependencies": {
     "@babel/parser": "7.29.9",

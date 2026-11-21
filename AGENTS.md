@@ -79,6 +79,17 @@ Changes confined to agent instructions, documentation or development-only script
 content/diff review and the affected tool checks; they do not require rebuilding or reinstalling
 an unchanged packaged app.
 
+After merging upstream or resolving copy conflicts, run `npm run check:copy:approved` and use
+`npm run fix:copy` to restore recorded English regressions. Review unfamiliar variants;
+never add them to the registry merely to pass the check. Run the check before pushing and
+on the verified pushed head. During ingestion, use `check --base PRE_MERGE_SHA` to expose
+unregistered changes. Keep the tracked registry and editorial review current as described
+in [Preserve reviewed English](docs/copy-overrides.md). The registry is on `next` but its gate is
+not yet wired into the build/install helper or a push trigger, because it still reports the
+reviewed wording that lives on the open copy PRs; wire both once `npm run check:copy:approved`
+passes here. `npm run check:copy` stays the Portuguese-leak source pass; the two checks answer
+different questions.
+
 ## Plan and moderate settings placement
 
 Settings placement is a product decision made before adding a control. Follow the maintained

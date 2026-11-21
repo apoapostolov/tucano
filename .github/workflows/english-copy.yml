@@ -1,0 +1,25 @@
+name: Approved English
+
+# Manual until next matches the registry: today the check reports the reviewed wording
+# that still lives on the open copy PRs, so a push trigger would go red on every commit.
+# Add `push: branches: [next]` on the day `npm run check:copy:approved` passes on next.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  approved-copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:copy-overrides
+      # The registry check, not the Portuguese-leak source pass that check:copy runs on next.
+      - run: npm run check:copy:approved
