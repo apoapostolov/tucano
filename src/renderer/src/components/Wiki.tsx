@@ -19,6 +19,7 @@ import { AgentAvatar, Icon, type IconName } from './ui'
 import { screenOf } from '../../../shared/screens'
 import { isTeam, wikiAccess } from '../../../shared/types'
 import { Select } from './Select'
+import { SectionStrip } from './SectionStrip'
 
 const DEFAULT_KINDS = (): string[] => [L('Pessoa', 'Person'), L('Projeto', 'Project'), L('Assunto', 'Topic'), L('Decisão', 'Decision')]
 const CODE = /```[\s\S]*?```|`[^`\n]*`/g
@@ -1099,6 +1100,15 @@ function WikiSearch({ pages, onClose }: { pages: WikiPageInfo[]; onClose: () => 
 
 // ---------- settings ----------
 
+// The wiki's settings groups, in the order they read: what the curator keeps, what the resolver
+// does, where the files live, and how to bring an existing vault in. The strip above them walks these.
+export const WIKI_SETTINGS_SECTIONS = (): { id: string; label: string }[] => [
+  { id: 'wiki-curator', label: L('O curador', 'The curator') },
+  { id: 'wiki-resolver', label: L('O resolvedor', 'Resolver') },
+  { id: 'wiki-folder', label: L('A pasta', 'The folder') },
+  { id: 'wiki-import', label: L('Trazer o que você já tem', 'Bring what you already have') }
+]
+
 function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null; onClose: () => void; onImport: () => void }): ReactNode {
   const s = useStore((st) => st.settings)
   const capture = s.wikiCapture !== false
@@ -1123,7 +1133,9 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           </button>
         </header>
 
-        <section>
+        <SectionStrip sections={WIKI_SETTINGS_SECTIONS()} label={L('Seções dos ajustes da wiki', 'Wiki settings sections')} />
+
+        <section id="settings-wiki-curator" data-settings-section="wiki-curator" tabIndex={-1}>
           <h4>{L('O curador', 'The curator')}</h4>
           <div className="wk-setting">
             <span>
@@ -1155,7 +1167,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           </div>
         </section>
 
-        <section>
+        <section id="settings-wiki-resolver" data-settings-section="wiki-resolver" tabIndex={-1}>
           <h4>{L('O resolvedor', 'Resolver')}</h4>
           <div className="wk-setting">
             <span>
@@ -1182,7 +1194,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           )}
         </section>
 
-        <section>
+        <section id="settings-wiki-folder" data-settings-section="wiki-folder" tabIndex={-1}>
           <h4>{L('A pasta', 'The folder')}</h4>
           <code className="wk-folder" title={dir}>
             <Icon name="folder" size={14} />
@@ -1224,7 +1236,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           <GitSync dir={dir} onDir={setDir} />
         </section>
 
-        <section>
+        <section id="settings-wiki-import" data-settings-section="wiki-import" tabIndex={-1}>
           <h4>{L('Trazer o que você já tem', 'Bring what you already have')}</h4>
           <div className="wk-setting">
             <span>

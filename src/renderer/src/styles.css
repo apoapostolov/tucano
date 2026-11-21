@@ -9766,6 +9766,26 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 /* settings */
 .wk-settings { width: min(560px, 94vw); display: grid; gap: 4px; padding: 22px 24px 24px; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow-lg), 0 0 0 1px var(--border); animation: pop var(--dur-base) var(--ease-out) both; max-height: 88vh; overflow-y: auto; }
 .wk-settings header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+/* The wiki's settings are a modal that scrolls its own box: the strip sticks at that box's top, and
+   the box keeps room under its last group so that group can reach the line like every other one. */
+.wk-settings > .settings-sections {
+  top: 0;
+  margin: 0 0 0;
+  padding-top: 0;
+}
+/* The row's own link padding would inset the first label from the dialog's title; the underline and
+   the divider that closes the row stay where the sections' own hairline runs. */
+.wk-settings > .settings-sections > a:first-child {
+  padding-left: 0;
+}
+/* The row's own hairline already closes it: the first group under it keeps no second one. */
+.wk-settings > .settings-sections + section {
+  border-top: 0;
+  padding-top: 6px;
+}
+.wk-settings {
+  padding-bottom: calc(24px + var(--settings-tail, 0px));
+}
 .wk-settings h2 { margin: 0; font-size: 19px; }
 .wk-settings section { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--border); }
 .wk-settings h4 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
