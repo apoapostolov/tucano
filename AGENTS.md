@@ -811,11 +811,12 @@ other half, and they belong to the same session.
 
 | Feature | Issue | PR |
 | --- | --- | --- |
-| Settings organization and maintained placement rules | | 446 |
+| Settings organization and maintained placement rules | | 605 |
 | English labels and hints across Settings and Wiki | 409 | 410 |
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |
+| Skills dialogs: English copy, and the batch test's Windows ceiling | | 608 |
 | Thinking streamed as dim live text | 235, 452 | 245 |
 | Pause a working reply, and resume it where it stopped | 455 | 457 |
 | Model-facing language in an English workspace | 242 | 310 |
@@ -843,7 +844,7 @@ other half, and they belong to the same session.
 | Jev marks the option it would pick | 285 | 284 |
 | Route each reply by what Jev reads (pools and roles) | | 333 |
 | Classifiers section | 378 | 379 |
-| Classifiers on all six jobs | 378 | 383 |
+| Classifiers on the listening and smart-routing jobs | 378 | 609 |
 | Next steps card, all ticked | 297 | 298 |
 | Next steps: nothing ticked, and the job that picks them | 384 | 385 |
 | Wiki: hand a missing page to an agent | 255 | 258 |
