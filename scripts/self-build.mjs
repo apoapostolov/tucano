@@ -190,8 +190,9 @@ function typecheck() {
 
 // The English window must not show Portuguese, and the check for it is a second of reading the source.
 // It runs before every build and install, on its own: --no-typecheck skips the slow passes, never this one.
+// Its last line goes into the report, so the record of an install says the check ran and what it found.
 function copyGate() {
-  run('node scripts/check-english-copy.mjs --source', 'typecheck')
+  return run('node scripts/check-english-copy.mjs --source', 'typecheck').trim().split('\n').pop()
 }
 
 function build() {
@@ -317,7 +318,7 @@ try {
   if (command === 'doctor') {
     Object.assign(report, doctor(flags.has('--fix')))
   } else if (command === 'build' || command === 'install') {
-    copyGate()
+    report.copy = copyGate()
     if (!flags.has('--no-typecheck')) typecheck()
     build()
     pack()
