@@ -28,6 +28,9 @@ In a Tucano with people, the Vault has two drawers:
 ## Importing a .env
 **Import .env** shows each line before saving it: new, already there (the value changes only if you tick it), or not going in. No imported key is given to any agent.
 
+## Importing the browser's saved passwords
+**Import CSV** takes the file Chrome or Firefox exports. Chrome (Settings › Passwords › Export) writes `Chrome Passwords.csv`; Firefox (about:logins › ⋯ › Export Logins) writes `logins.csv`. The app opens the system's file dialog, reads the columns by name, and shows every row before saving: new, already saved (same site and username; its password changes only if you tick it), or left out with the reason, such as an `android://` address or an entry the browser keeps for itself. Each row becomes a login on its site's exact address, and no login goes to an agent until you give it one. The CSV is read where it sits and not copied anywhere: it is still an unencrypted copy of every password, so delete it once the import is done.
+
 ## In connectors
 A connector's variable may point at a team key: `cofre:STRIPE_KEY`. Change it in the Vault and the connector picks it up next time.
 

@@ -23,6 +23,9 @@ contextBridge.exposeInMainWorld('tucano', {
   },
   connect: (): void => ipcRenderer.send('core:connect'),
   pickFolder: (o?: { start?: string; hidden?: boolean }): Promise<string | null> => ipcRenderer.invoke('pick-folder', o) as Promise<string | null>,
+  // The Cofre's import: the file is chosen and read here, so the page only gets the text of a file the
+  // person picked.
+  pickLoginsCsv: (): Promise<{ name: string; text: string } | null> => ipcRenderer.invoke('pick-logins-csv') as Promise<{ name: string; text: string } | null>,
   // A picture right-clicked in a conversation: saved where the person says, or into the clipboard.
   image: {
     save: (

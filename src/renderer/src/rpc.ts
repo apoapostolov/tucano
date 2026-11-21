@@ -22,6 +22,7 @@ declare global {
       }
       connect: () => void
       pickFolder: (o?: { start?: string; hidden?: boolean }) => Promise<string | null> // start: from the home folder
+      pickLoginsCsv?: () => Promise<{ name: string; text: string } | null> // desktop only: a browser's exported passwords, read here
       // desktop only: a right-clicked picture, saved where the person says or put in the clipboard.
       // `dir` without `dialog` is the one click into the last folder; `dialog` opens the system's.
       image?: {

@@ -8,6 +8,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 > **Em português:**
 > - **Novo:** o **Cofre**, no pé da barra lateral. Guarda chaves de API e logins de sites que os agentes usam sem nunca ver. Uma chave entra só no comando que a pede e aparece como `[cofre:NOME]` no que ele imprime. Um login é digitado pelo app só no site exato. Cada chave pode pedir aprovação a cada uso. Num time, há as do time e as suas. Tem importação de `.env`, e cada uso fica no registro.
+> - **Novo:** **Importar CSV** no Cofre traz as senhas que o Chrome e o Firefox já guardam: o app abre o seletor de arquivos, mostra cada linha antes de guardar e não libera nenhuma pra agente.
 > - **Novo:** quando falta uma chave ou um login, o agente pede no chat. Qualquer pessoa da conversa cola no card, e vai direto pro Cofre, sem passar pela conversa. Os logins salvos na página do agente passam pro Cofre.
 > - **Novo:** o seu **harness** (Claude Code, Codex, Cursor…) monta o Tucano e conversa com os agentes **por MCP**. Fica em Configurações › Harnesses.
 > - **Novo:** um agente arquivado pode ser **excluído de vez**. O que ele escreveu fica na conversa com o nome riscado, como no Slack.
@@ -34,6 +35,10 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 
 - **Usage and limits no longer shows a subscription window that already reset as full.** Claude Code and Codex report their windows only when a reply runs, so a report of 100% taken just before the five hours ended stayed on the page as "100% used, resets now" until the next reply, while claude.ai already showed 0%. A window whose reset time has passed now shows 0% and when it reset, and a page left open redraws when the window resets.
+
+### Added
+
+- **The Vault imports a browser's saved passwords.** **Import CSV** on the Logins tab opens the system's file dialog and reads Chrome's `Chrome Passwords.csv` and Firefox's `logins.csv`, the columns matched by name, with every row shown before anything is saved: new, already saved (same site and username, its password replaced only when ticked), or left out with the reason, such as an `android://` address, an entry the browser keeps for itself or a plain-http site. Each row becomes a login on its site's exact address, given to no agent, and the file is read where it is rather than copied into the app.
 
 ### Changed
 
