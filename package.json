@@ -21,7 +21,9 @@
     "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
     "install-app": "npm run dist && sh scripts/install-app.sh",
     "release": "sh scripts/release.sh",
-    "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-placement.test.ts test/settings-navigation.test.tsx"
+    "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-placement.test.ts test/settings-navigation.test.tsx",
+    "check:copy": "node scripts/check-english-copy.mjs --source",
+    "check:copy:render": "node scripts/check-english-copy.mjs"
   },
   "devDependencies": {
     "@babel/parser": "7.29.9",

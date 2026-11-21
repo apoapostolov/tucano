@@ -188,6 +188,12 @@ function typecheck() {
   if (flags.has('--test')) run('npx vitest run', 'typecheck')
 }
 
+// The English window must not show Portuguese, and the check for it is a second of reading the source.
+// It runs before every build and install, on its own: --no-typecheck skips the slow passes, never this one.
+function copyGate() {
+  run('node scripts/check-english-copy.mjs --source', 'typecheck')
+}
+
 function build() {
   run('npx electron-vite build', 'build')
   if (!existsSync(join(ROOT, 'out', 'main', 'index.js'))) throw stop('out/main/index.js was not written', 'build')
@@ -311,6 +317,7 @@ try {
   if (command === 'doctor') {
     Object.assign(report, doctor(flags.has('--fix')))
   } else if (command === 'build' || command === 'install') {
+    copyGate()
     if (!flags.has('--no-typecheck')) typecheck()
     build()
     pack()

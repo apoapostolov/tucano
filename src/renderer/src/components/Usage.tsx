@@ -479,7 +479,7 @@ export function Quotas(): ReactNode {
       {cols.length === 0 ? (
         <p className="muted small">
           {list.length > 0
-            ? L('Todas as cotas estão ocultas. Marque em Configurações › Cotas os provedores que você quer ver.', 'Every quota is hidden. Tick the providers you want to see in Settings › Cotas.')
+            ? L('Todas as cotas estão ocultas. Marque em Configurações › Cotas os provedores que você quer ver.', 'Every quota is hidden. Tick the providers you want to see in Settings › Quotas.')
             : L(
                 'Nenhum login encontrado para pedir cota. Entre no Claude Code, no Codex ou no OpenCode, ou configure um provedor no Pi ou no Hermes, e ele aparece aqui.',
                 'No login found to ask for a quota. Sign in to Claude Code, Codex or OpenCode, or set up a provider in Pi or Hermes, and it shows up here.'
