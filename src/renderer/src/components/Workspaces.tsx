@@ -166,9 +166,9 @@ export function WorkspaceMenu(): ReactNode {
   )
 }
 
-// The sidebar's foot: Conectores by name (it's what a new person needs to find) with what needs them
-// there, the Cofre under it (what the agents may reach outside, both), and Configurações as the gear
-// everyone looks for in this corner.
+// The sidebar's foot: Enviar feedback, Conectores by name (it's what a new person needs to find) with
+// what needs them there, and the Cofre under it (what the agents may reach outside, both) as three rows
+// of one shape, and Configurações as the gear everyone looks for in this corner.
 export function SidebarFoot(): ReactNode {
   const platform = useStore((s) => s.platform)
   const hint = useStore(connectorsHint)
@@ -190,15 +190,15 @@ export function SidebarFoot(): ReactNode {
         <span className="grow">{L('Conectores', 'Connectors')}</span>
         {hint ? <span className="ws-dot" aria-label={hint} /> : fresh ? <span className="nav-item__new">{L('NOVO', 'NEW')}</span> : null}
       </button>
-    <div className="sidebar__tools">
       <button className={`sidebar__tool ${onVault ? 'is-active' : ''}`} onClick={() => navigate({ kind: 'vault' })}>
         <Icon name="key" size={15} />
-        <span className="grow">{L('Cofre', 'Cofre')}</span>
+        <span className="grow">{L('Cofre', 'Vault')}</span>
       </button>
-      <button className={`icon-btn sidebar__gear ${onSettings ? 'is-active' : ''}`} title={L(`Configurações (${shortcut(platform, ',')})`, `Settings (${shortcut(platform, ',')})`)} aria-label={L('Configurações', 'Settings')} onClick={() => navigate({ kind: 'settings' })}>
-        <Icon name="gear" size={16} />
-      </button>
-    </div>
+      <div className="sidebar__tools">
+        <button className={`icon-btn sidebar__gear ${onSettings ? 'is-active' : ''}`} title={L(`Configurações (${shortcut(platform, ',')})`, `Settings (${shortcut(platform, ',')})`)} aria-label={L('Configurações', 'Settings')} onClick={() => navigate({ kind: 'settings' })}>
+          <Icon name="gear" size={16} />
+        </button>
+      </div>
     </div>
   )
 }

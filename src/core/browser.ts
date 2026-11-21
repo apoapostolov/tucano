@@ -126,7 +126,7 @@ export const browserTools = (): ToolDef[] => {
       name: LOGIN,
       description: L(
         'Preenche o login do Cofre deste site: o app digita o usuário e a senha nos campos que você indicar pelo número, sem você ver a senha. Só funciona nos sites com login liberado pra você, no endereço exato. Depois, clique no botão de entrar.',
-        'Fills in the Cofre’s login for this site: the app types the username and the password into the fields you point to by number, without you seeing the password. Only works on sites with a login given to you, at the exact address. Then click the sign-in button.'
+        'Fills in the Vault’s login for this site: the app types the username and the password into the fields you point to by number, without you seeing the password. Only works on sites with a login given to you, at the exact address. Then click the sign-in button.'
       ),
       inputSchema: {
         type: 'object',
@@ -663,12 +663,12 @@ export class Browser {
     const origin = pageOrigin(page.url)
     const sites = this.loginSites(id, ctx.personId)
     if (!origin || !sites.includes(origin)) {
-      const saved = sites.length ? L(`Há login no Cofre só pra: ${sites.join(', ')}.`, `There's a login in the Cofre only for: ${sites.join(', ')}.`) : L('Nenhum login do Cofre foi liberado pra você.', 'No login in the Cofre was given to you.')
+      const saved = sites.length ? L(`Há login no Cofre só pra: ${sites.join(', ')}.`, `There's a login in the Vault only for: ${sites.join(', ')}.`) : L('Nenhum login do Cofre foi liberado pra você.', 'No login in the Vault was given to you.')
       return {
         result: textResult(
           L(
             `Não há login no Cofre pra ${origin ?? 'esta página'}. ${saved} Pra entrar aqui, peça o login com pedir_chave (site), ou use ask_user pedindo pra ${this.deps.me()} assumir o navegador.`,
-            `There's no login in the Cofre for ${origin ?? 'this page'}. ${saved} To sign in here, ask for the login with pedir_chave (site), or use ask_user asking ${this.deps.me()} to take the browser over.`
+            `There's no login in the Vault for ${origin ?? 'this page'}. ${saved} To sign in here, ask for the login with pedir_chave (site), or use ask_user asking ${this.deps.me()} to take the browser over.`
           ),
           true
         )
@@ -684,7 +684,7 @@ export class Browser {
     const els = page.elements ?? []
     for (const ref of [user, pass]) if (ref !== undefined && !els.some((e) => e.ref === ref)) return { result: textResult(L(`Não existe o elemento #${ref} na página. Leia a página de novo.`, `There's no element #${ref} on the page. Read the page again.`), true) }
     const login = await this.deps.logins?.loginFor(id, origin, ctx)
-    if (!login) return { result: textResult(L(`O login de ${origin} não abriu. Peça pra ${this.deps.me()} conferir no Cofre.`, `The login for ${origin} didn't open. Ask ${this.deps.me()} to check it in the Cofre.`), true) }
+    if (!login) return { result: textResult(L(`O login de ${origin} não abriu. Peça pra ${this.deps.me()} conferir no Cofre.`, `The login for ${origin} didn't open. Ask ${this.deps.me()} to check it in the Vault.`), true) }
     this.update(id, { doing: { label: doing()[LOGIN]!, detail: origin } })
     let r: BrowserReply | undefined
     if (user !== undefined) r = await this.deps.host(id, 'fill', { ref: user, text: login.username, origin, password: false })

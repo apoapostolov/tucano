@@ -15422,7 +15422,8 @@ button.agent-card__now:hover {
   line-height: 1.4;
   color: var(--text-3);
 }
-/* The foot: the update note when there is one, then Conectores by name and the Settings gear. */
+/* The foot: the update note when there is one, then Enviar feedback, Conectores and the Cofre as three
+   rows of one shape, and the Settings gear on a row of its own, in the corner. */
 .sidebar__foot:empty {
   display: none;
 }
@@ -15434,6 +15435,8 @@ button.agent-card__now:hover {
 .sidebar__tools {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  margin-top: 2px;
   gap: 2px;
 }
 .sidebar__tool {

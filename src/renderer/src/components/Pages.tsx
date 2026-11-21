@@ -1083,7 +1083,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               {!isNew && draft.browser && (
                 <div className="lrow lrow--stack">
                   <span className="lrow__label">
-                    <span className="lrow__name">{L('Logins do Cofre', 'Cofre logins')}</span>
+                    <span className="lrow__name">{L('Logins do Cofre', 'Vault logins')}</span>
                   </span>
                   <AgentVaultLogins agentId={draft.id} name={draft.name} />
                 </div>
@@ -1119,7 +1119,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
             />
           )}
           {!isNew && pane('ferramentas') && draft.computer && (
-            <Section title={L('Chaves do Cofre', 'Cofre keys')} help={L(`As chaves que ${name} pode usar nos comandos. Cada uso fica no registro do Cofre.`, `The keys ${name} may use in its commands. Each use goes in the Cofre’s log.`)}>
+            <Section title={L('Chaves do Cofre', 'Vault keys')} help={L(`As chaves que ${name} pode usar nos comandos. Cada uso fica no registro do Cofre.`, `The keys ${name} may use in its commands. Each use goes in the Vault’s log.`)}>
               <AgentVaultKeys agentId={draft.id} name={draft.name} />
             </Section>
           )}

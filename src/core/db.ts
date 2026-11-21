@@ -712,6 +712,18 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'deleted_at', 'INTEGER']
 ]
 
+// Every table a migration makes, and every index, read out of MIGRATIONS itself so the two cannot
+// drift ([name, the statement that makes it]).
+const TABLES: [string, string][] = MIGRATIONS.flatMap((sql) =>
+  [...sql.matchAll(/CREATE TABLE IF NOT EXISTS (\w+) \(([\s\S]*?)\n\s*\);/g)].map((m): [string, string] => [
+    m[1]!,
+    `CREATE TABLE IF NOT EXISTS ${m[1]} (${m[2]}\n  );`
+  ])
+)
+const INDEXES: [string, string][] = MIGRATIONS.flatMap((sql) =>
+  [...sql.matchAll(/CREATE (?:UNIQUE )?INDEX IF NOT EXISTS (\w+) ON (\w+)[^;]*;/g)].map((m): [string, string] => [m[1]!, m[0]])
+)
+
 type Row = Record<string, unknown>
 
 // A stored access back to its shape; anything unreadable is "everything".
@@ -885,6 +897,9 @@ export class Db {
   private migrate(file: string): void {
     const { user_version } = this.db.prepare('PRAGMA user_version').get() as { user_version: number }
     this.created = user_version === 0
+    // A count past the list is a file that ran migrations this build no longer has, from a merge that
+    // dropped one: what they made is kept below, and only a migration that moves data goes without.
+    if (user_version > MIGRATIONS.length) console.error(`[db] the file is at schema ${user_version}; this build has ${MIGRATIONS.length} migrations`)
     // A copy from before the update, among the daily ones (and pruned with them).
     if (user_version > 0 && user_version < MIGRATIONS.length && file !== ':memory:') {
       const backups = join(dirname(file), 'backups')
@@ -897,9 +912,25 @@ export class Db {
         this.db.exec(`PRAGMA user_version = ${v + 1}`)
       })
     }
+    // A table a migration makes, made anyway when the counter already ran past it. The counter is an
+    // index into MIGRATIONS, so a list that ever got shorter leaves a file counted as done with
+    // migrations it never ran: this fork stood at 44 while its list had 40 (the initiative feature
+    // left the schema on 17 Nov), and 0.2.44's jobs, harness keys and Cofre tables then arrived
+    // nowhere, so every reply died on `jobs` and every key on `vault_keys`. Each statement is the
+    // IF NOT EXISTS from its own migration, so a file that has the table is not touched.
+    for (const [table, make] of TABLES) {
+      if ((this.db.prepare(`PRAGMA table_info(${table})`).all() as unknown[]).length) continue
+      this.tx(() => this.db.exec(make))
+    }
     for (const [table, column, type] of COLUMNS) {
       const has = (this.db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === column)
       if (!has) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`)
+    }
+    // The same for an index whose migration was skipped: a scan where the sweep expects an index is
+    // slower, not wrong, so it waits for the columns above to be there.
+    for (const [name, make] of INDEXES) {
+      if (this.db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?").get(name)) continue
+      this.db.exec(make)
     }
     // A monthly limit too large to read back as a number (written before limits were checked, by
     // someone meaning "no limit") makes every read of the agents fail, and the workspace doesn't

@@ -2414,7 +2414,7 @@ export class Runner {
             name: PEDIR_CHAVE,
             description: L(
               `Pede ${asksKeys ? 'uma chave (de API, um token) pelo nome' : ''}${asksKeys && asksLogins ? ' ou ' : ''}${asksLogins ? 'o login de um site' : ''} que você não tem no Cofre, quando a tarefa precisa. Vira um card na conversa: ${settings.workspaceName} (ou alguém do time) cola ali e salva no Cofre, sem o valor passar por você. Nunca peça que colem uma chave ou senha na conversa. Se for liberado, você continua numa nova mensagem.`,
-              `Asks for ${asksKeys ? 'a key (an API key, a token) by name' : ''}${asksKeys && asksLogins ? ' or ' : ''}${asksLogins ? "a site's login" : ''} you don't have in the Cofre, when the task needs it. It becomes a card in the conversation: ${settings.workspaceName} (or someone on the team) pastes it there and saves it in the Cofre, without the value going through you. Never ask anyone to paste a key or a password in the conversation. If it's given, you go on in a new message.`
+              `Asks for ${asksKeys ? 'a key (an API key, a token) by name' : ''}${asksKeys && asksLogins ? ' or ' : ''}${asksLogins ? "a site's login" : ''} you don't have in the Vault, when the task needs it. It becomes a card in the conversation: ${settings.workspaceName} (or someone on the team) pastes it there and saves it in the Vault, without the value going through you. Never ask anyone to paste a key or a password in the conversation. If it's given, you go on in a new message.`
             ),
             inputSchema: {
               type: 'object',
@@ -2440,7 +2440,7 @@ export class Runner {
         items: { type: 'string' },
         description: L(
           `Chaves do Cofre que este comando usa, pelo nome. Cada uma entra como variável de ambiente só neste comando (use $NOME nele) e, no que o comando imprimir, o valor aparece como [cofre:NOME]. Disponíveis: ${names}. Nunca escreva o valor de uma chave num arquivo, numa mensagem ou num commit; e nunca peça que alguém cole uma chave na conversa.`,
-          `Keys of the Cofre this command uses, by name. Each one goes in as an environment variable for this command only (use $NAME in it), and in what the command prints its value shows as [cofre:NAME]. Available: ${names}. Never write a key's value into a file, a message or a commit; and never ask anyone to paste a key into the conversation.`
+          `Keys of the Vault this command uses, by name. Each one goes in as an environment variable for this command only (use $NAME in it), and in what the command prints its value shows as [cofre:NAME]. Available: ${names}. Never write a key's value into a file, a message or a commit; and never ask anyone to paste a key into the conversation.`
         )
       }
       return { ...t, inputSchema: { ...t.inputSchema, properties: { ...props, keys } } as ToolDef['inputSchema'] }
@@ -3021,9 +3021,9 @@ ${note}`,
           // The keys of the Cofre this command asked for, checked before anything runs (src/core/vault.ts).
           const wanted = (name === 'bash' || name === 'start_service') && Array.isArray(args['keys']) ? args['keys'].filter((k): k is string => typeof k === 'string' && !!k.trim()) : []
           const vault = this.deps.vault
-          const picked = wanted.length ? (vault ? vault.pick(agent.id, wanted, requester.id) : { error: L('O Cofre não está disponível aqui.', "The Cofre isn't available here.") }) : { keys: [] }
+          const picked = wanted.length ? (vault ? vault.pick(agent.id, wanted, requester.id) : { error: L('O Cofre não está disponível aqui.', "The Vault isn't available here.") }) : { keys: [] }
           if ('error' in picked) {
-            addSteps({ id: randomUUID(), label: L('Não rodou', "Didn't run"), detail: L(`chave do Cofre: ${wanted.join(', ')}`, `Cofre key: ${wanted.join(', ')}`), status: 'error' })
+            addSteps({ id: randomUUID(), label: L('Não rodou', "Didn't run"), detail: L(`chave do Cofre: ${wanted.join(', ')}`, `Vault key: ${wanted.join(', ')}`), status: 'error' })
             return textResult(picked.error, true)
           }
           const strict = picked.keys.filter((k) => k.approve).map((k) => k.name)
@@ -3098,7 +3098,7 @@ ${note}`,
               env = await vault!.open(picked.keys, { agentId: agent.id, conversationId: conv.id, messageId: msg.id, personId: requester.id, via: name === 'start_service' ? 'service' : 'bash' })
             } catch (e) {
               const why = e instanceof Error ? e.message : String(e)
-              addSteps({ id: randomUUID(), label: L('Não rodou', "Didn't run"), detail: L(`chave do Cofre: ${why}`, `Cofre key: ${why}`), status: 'error' })
+              addSteps({ id: randomUUID(), label: L('Não rodou', "Didn't run"), detail: L(`chave do Cofre: ${why}`, `Vault key: ${why}`), status: 'error' })
               return textResult(L(`Não rodei: ${why}`, `Not run: ${why}`), true)
             }
           }
@@ -3321,8 +3321,8 @@ ${note}`,
           if (bad) return textResult(bad, true)
           const origin = site ? loginOrigin(site) : undefined
           if (site && !origin) return textResult(L('Esse endereço não serve pra um login: use o do site, com https.', "That address won't do for a login: use the site's, with https."), true)
-          if (nome && vault.usable(agent.id, requester.id).some((k) => k.name === nome)) return textResult(L(`Você já tem ${nome} no Cofre: use no bash com keys: ["${nome}"].`, `You already have ${nome} in the Cofre: use it in bash with keys: ["${nome}"].`), true)
-          if (origin && vault.loginSites(agent.id, requester.id).includes(origin)) return textResult(L(`Você já tem o login de ${origin} no Cofre: use navegador_login na página de login.`, `You already have the login for ${origin} in the Cofre: use navegador_login on the sign-in page.`), true)
+          if (nome && vault.usable(agent.id, requester.id).some((k) => k.name === nome)) return textResult(L(`Você já tem ${nome} no Cofre: use no bash com keys: ["${nome}"].`, `You already have ${nome} in the Vault: use it in bash with keys: ["${nome}"].`), true)
+          if (origin && vault.loginSites(agent.id, requester.id).includes(origin)) return textResult(L(`Você já tem o login de ${origin} no Cofre: use navegador_login na página de login.`, `You already have the login for ${origin} in the Vault: use navegador_login on the sign-in page.`), true)
           if (questions || approval) return textResult(L('Já existe um pedido esperando decisão nesta mensagem. Encerre agora.', 'There is already a request waiting for a decision in this message. End now.'), true)
           const what = nome ? { nome } : { site: origin! }
           approval = {
@@ -3332,7 +3332,7 @@ ${note}`,
             conversationId: conv.id,
             messageId: msg.id,
             connectorId: COFRE,
-            connectorName: 'Cofre',
+            connectorName: L('Cofre', 'Vault'),
             tool: PEDIR_CHAVE,
             args: what,
             why: typeof args['motivo'] === 'string' ? args['motivo'].trim() : '',
@@ -3351,7 +3351,7 @@ ${note}`,
           return textResult(
             L(
               `Pedido enviado: um card na conversa, onde ${settings.workspaceName} cola ${nome ? 'a chave' : 'o login'} e salva no Cofre. Encerre sua resposta agora dizendo em uma frase o que pediu e por quê, sem pedir que colem na conversa. Se for liberado, você continua numa nova mensagem.`,
-              `Request sent: a card in the conversation, where ${settings.workspaceName} pastes the ${nome ? 'key' : 'login'} and saves it in the Cofre. End your reply now saying in one sentence what you asked for and why, without asking anyone to paste it in the conversation. If it's given, you go on in a new message.`
+              `Request sent: a card in the conversation, where ${settings.workspaceName} pastes the ${nome ? 'key' : 'login'} and saves it in the Vault. End your reply now saying in one sentence what you asked for and why, without asking anyone to paste it in the conversation. If it's given, you go on in a new message.`
             )
           )
         }
@@ -4052,7 +4052,7 @@ ${note}`,
       // The Cofre's keys it asked for are checked again now: one taken back meanwhile doesn't go in.
       const wanted = Array.isArray(ap.args['keys']) ? ap.args['keys'].filter((k): k is string => typeof k === 'string') : []
       const vault = this.deps.vault
-      const picked = wanted.length && agent ? (vault ? vault.pick(agent.id, wanted, ap.requestedBy) : { error: L('O Cofre não está disponível aqui.', "The Cofre isn't available here.") }) : { keys: [] }
+      const picked = wanted.length && agent ? (vault ? vault.pick(agent.id, wanted, ap.requestedBy) : { error: L('O Cofre não está disponível aqui.', "The Vault isn't available here.") }) : { keys: [] }
       let env: Record<string, string> | undefined
       let keyError = 'error' in picked ? picked.error : undefined
       if (decision === 'approved' && agent?.computer && this.deps.computers && 'keys' in picked && picked.keys.length) {
@@ -4140,21 +4140,21 @@ ${note}`,
       const has = !!agent && !!vault && (nome ? vault.usable(agent.id, ap.requestedBy).some((k) => k.name === nome) : vault.loginSites(agent.id, ap.requestedBy).includes(site))
       if (decision === 'approved' && has) {
         ok = true
-        outcome = L('Salvo no Cofre e liberado.', 'Saved in the Cofre and given.')
+        outcome = L('Salvo no Cofre e liberado.', 'Saved in the Vault and given.')
         task = nome
           ? L(
               `${me} salvou ${what} no Cofre e liberou pra você. Use no bash (ou no start_service) com keys: ["${nome}"]: o valor entra só naquele comando, e você nunca o vê. Continue de onde parou.`,
-              `${me} saved ${what} in the Cofre and gave it to you. Use it in bash (or start_service) with keys: ["${nome}"]: the value goes only into that command, and you never see it. Pick up where you left off.`
+              `${me} saved ${what} in the Vault and gave it to you. Use it in bash (or start_service) with keys: ["${nome}"]: the value goes only into that command, and you never see it. Pick up where you left off.`
             )
           : L(
               `${me} salvou ${what} no Cofre e liberou pra você. Na página de login, use navegador_login: o app digita, e você não vê a senha. Continue de onde parou.`,
-              `${me} saved ${what} in the Cofre and gave it to you. On the sign-in page, use navegador_login: the app types it, and you don't see the password. Pick up where you left off.`
+              `${me} saved ${what} in the Vault and gave it to you. On the sign-in page, use navegador_login: the app types it, and you don't see the password. Pick up where you left off.`
             )
       } else if (decision === 'approved') {
         outcome = L('Salvo, mas não vale pra este pedido.', "Saved, but it doesn't count for this request.")
         task = L(
           `${me} salvou ${what} no Cofre, mas entre as chaves de ${me}: só vale no trabalho que ${me} pedir, e este pedido é de outra pessoa. Avise em uma frase.`,
-          `${me} saved ${what} in the Cofre, but among ${me}'s own: it only counts in work ${me} asks for, and this request is someone else's. Say so in one sentence.`
+          `${me} saved ${what} in the Vault, but among ${me}'s own: it only counts in work ${me} asks for, and this request is someone else's. Say so in one sentence.`
         )
       } else {
         outcome = decision === 'refused' ? L('Nada foi salvo.', 'Nothing was saved.') : expired
