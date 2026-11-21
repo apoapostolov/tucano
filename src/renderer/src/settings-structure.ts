@@ -9,7 +9,7 @@ export interface SettingsAccess {
 }
 
 type Scope = 'personal' | 'workspace' | 'computer' | 'mixed'
-type PageId = 'app' | 'workspace' | 'agents' | 'models' | 'knowledge' | 'connections'
+type PageId = 'app' | 'workspace' | 'agents' | 'models' | 'knowledge' | 'connections' | 'harnesses'
 type Section = {
   id: string
   page: PageId
@@ -32,7 +32,6 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'app-startup', page: 'app', label: L('Inicialização', 'Startup'), keys: ['openAtLogin', 'launchMinimized'], scope: 'computer', visible: admin },
     { id: 'app-updates', page: 'app', label: L('Atualizações', 'Updates'), keys: [], scope: 'computer', visible: admin },
     { id: 'workspace-context', page: 'workspace', label: L('Contexto', 'Context'), keys: ['workspaceLabel', 'workspaceName', 'context', 'onboarding'], scope: 'workspace', visible: admin },
-    { id: 'workspace-harnesses', page: 'workspace', label: L('Harnesses', 'Harnesses'), keys: [], scope: 'workspace', visible: admin },
     { id: 'workspace-people', page: 'workspace', label: L('Pessoas', 'People'), keys: [], scope: 'mixed', visible: team },
     { id: 'workspace-activity', page: 'workspace', label: L('Atividade', 'Activity'), keys: [], scope: 'workspace', visible: team && admin },
     { id: 'workspace-transfer', page: 'workspace', label: L('Importar e exportar', 'Import and export'), keys: [], scope: 'workspace', visible: admin },
@@ -47,6 +46,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-automation', page: 'agents', label: L('Automação', 'Automation'), keys: ['quietHours'], scope: 'workspace', visible: admin },
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
+    { id: 'harnesses-keys', page: 'harnesses', label: L('Harnesses (MCP)', 'Harnesses (MCP)'), keys: [], scope: 'workspace', visible: true },
     { id: 'models-agents', page: 'models', label: L('Modelos dos agentes', 'Agent models'), keys: [], scope: 'workspace', visible: admin },
     { id: 'models-session-names', page: 'models', label: L('Nomes das sessões', 'Session names'), keys: ['sessionNameModel', 'sessionNameEffort'], scope: 'workspace', visible: admin },
     { id: 'models-runtimes', page: 'models', label: L('Runtimes', 'Runtimes'), keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
@@ -90,13 +90,14 @@ const legacy: Readonly<Record<string, string>> = {
 // order they read on screen. A section whose card hasn't been written yet stays out of these lists:
 // the strip never shows a link to nothing and the nav drops any section the pane doesn't render.
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
-  geral: ['app-appearance', 'workspace-context', 'workspace-harnesses', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
+  geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
   modelos: ['models-agents', 'models-session-names', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
   agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser'],
   integracoes: ['connections-phone'],
   pessoas: ['workspace-people'],
   atividade: ['workspace-activity'],
-  servidores: ['connections-servers']
+  servidores: ['connections-servers'],
+  harnesses: ['harnesses-keys']
 }
 
 // The sections of one tab, in its reading order, each one still owned — label, keys and access —

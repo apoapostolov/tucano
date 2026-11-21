@@ -45,7 +45,7 @@
 - 80% do limite do mês: só uma linha na conversa, sem notificação.
 
 ## Microfone (ditado)
-- "O microfone está bloqueado": libere o Tucano nas configurações de privacidade do sistema (no Mac, Ajustes do Sistema › Privacidade e Segurança › Microfone).
+- "O microfone está bloqueado": libere o Tucano nas configurações de privacidade do sistema.
 - "Não chegou som do microfone": confira qual microfone está em uso nas configurações de som do sistema.
 
 ## Apps do computador

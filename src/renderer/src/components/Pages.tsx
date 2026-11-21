@@ -4376,7 +4376,7 @@ export function SettingsPage(): ReactNode {
       <div className="agent-form">
         {pane('pessoas') && <SectionAnchor id="workspace-people" label={sectionLabel('workspace-people')}><PeoplePane /></SectionAnchor>}
         {pane('atividade') && admin && <SectionAnchor id="workspace-activity" label={sectionLabel('workspace-activity')}><ActivityPane /></SectionAnchor>}
-        {pane('geral') && admin && <SectionAnchor id="workspace-harnesses" label={sectionLabel('workspace-harnesses')}><HarnessesPane /></SectionAnchor>}
+        {pane('harnesses') && <SectionAnchor id="harnesses-keys" label={sectionLabel('harnesses-keys')}><HarnessesPane /></SectionAnchor>}
         {/* A member's own: the language, the theme and the sounds (their name is in Pessoas). */}
         {pane('geral') && !admin && (
           <Card title={L('Pra você', 'Yours')} lead={L('Como o Tucano aparece pra você. Muda só pra você.', 'How Tucano looks to you. It changes only for you.')} section="app-appearance">

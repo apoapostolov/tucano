@@ -294,6 +294,9 @@ describe('a channel prompt the router picks for', () => {
     db.saveAgent(agent())
     db.saveAgent({ ...agent(), id: 'a2', name: 'Nina', handle: 'nina' })
     db.createConversation({ id: 'c1', kind: 'channel', name: 'eng', members: ['a1', 'a2'] })
+    // Who may be called in after a reply is upstream's own subject (test/living-agents.test.ts): off here,
+    // so the starts and ends counted are the prompt's own reply, which is what these tests are about.
+    db.setProactive('c1', false)
   }
 
   it('parallel: the picked reply goes beside the reply running there, the two at once', async () => {

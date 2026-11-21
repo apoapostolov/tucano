@@ -132,7 +132,7 @@ describe('settings sections inside the 0.2.37 tabs', () => {
   it('keeps the page tab bar as the only tablist, and puts the strip under it, above the cards', async () => {
     await render('geral')
     expect(document.querySelectorAll('[role="tablist"]')).toHaveLength(1)
-    expect(document.querySelectorAll('[role="tab"]')).toHaveLength(7)
+    expect(document.querySelectorAll('[role="tab"]')).toHaveLength(8) // upstream's Harnesses page is the eighth
     expect(strip()).not.toBeNull()
     // The strip sits between the tab bar and the cards, so it spans the same width as the tabs.
     const tabBar = document.querySelector('.tabs')!
@@ -164,6 +164,9 @@ describe('settings sections inside the 0.2.37 tabs', () => {
 
     await render('servidores')
     expect(labels()).toEqual(['Servers'])
+
+    await render('harnesses')
+    expect(labels()).toEqual(['Harnesses (MCP)'])
   })
 
   it('points every link at a card that is on the page, and marks the first one as the reading', async () => {
@@ -214,7 +217,7 @@ describe('settings sections inside the 0.2.37 tabs', () => {
 
   it('shows a member only the sections they have, and their own controls', async () => {
     await render('geral', [MEMBER], 'bia')
-    expect(document.querySelectorAll('[role="tab"]')).toHaveLength(1)
+    expect(document.querySelectorAll('[role="tab"]')).toHaveLength(2)
     // No workspace, dictation, updates, team, backups or danger for a member: their own card, then
     // the two everyone shares.
     expect(labels()).toEqual(['Appearance', 'Notifications', 'Conversation'])

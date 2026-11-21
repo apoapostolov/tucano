@@ -144,7 +144,6 @@ export const MAX_RESULT_BYTES = 40_000
 export const MAX_QUOTE_CHARS = 32_000
 const REASON_PARAM = '_motivo'
 const OVER_CALLS_GRACE = 3 // calls refused past the budget before the turn is cut
-const RESUME_WINDOW_MS = 12 * 3_600_000 // a reply the app cut longer ago than this, when it reopens, is left for the person
 const RECOVERY_TRIES = 3 // picked up by itself and cut again this many times: the person's Continue is the way on
 const ORPHAN_EVERY_MS = 60_000 // how often a reply left working with no runner is looked for
 const ORPHAN_GRACE_MS = 60_000 // seen dead for this long before it is taken as dead, not between two writes
@@ -1431,19 +1430,19 @@ export class Runner {
     }
     for (const msg of candidates.values()) {
       const run = msg.run!
-      const { restartPending: _, cutAt, ...rest } = run
+      const { restartPending: _, ...rest } = run
       // Already going on from this one: the continuation is queued or at work, so a second pass over
       // the same row would start a second reply beside it (the tick reaches here every minute, not
       // only a restart).
       if (this.recovering.has(msg.id) || this.continuing.has(msg.id)) continue
-      // From when the app cut it, not from when it was asked: a long reply asked hours ago was still
-      // going when the app closed. Rows from before the app recorded that fall back to their own time.
-      const stale = Date.now() - (cutAt ?? msg.at) > RESUME_WINDOW_MS
+      // However long ago it was cut, it goes on (upstream, 0.2.44): the app's closing is the app's doing,
+      // and a reply left behind by it is not the person's to remember. `cutAt` is still read for the
+      // count below and for what the turn is told.
       // Picked up by itself this many times already and cut every time: the person's Continue is the
       // only way on. Without this, an engine that dies at once turns one session into a loop.
       const tried = (run.resumes ?? 0) >= RECOVERY_TRIES
       // Auto-continue takes every cut reply; Recovery only the ones with something to go on with.
-      const goes = !stale && !tried && (automatic || canContinue(run))
+      const goes = !tried && (automatic || canContinue(run))
       const agent = msg.author.kind === 'agent' ? db.agent(msg.author.id) : undefined
       const conv = msg.conversationId ? db.conversation(msg.conversationId) : undefined
       const reachable = !!agent && !agent.archived && !!conv && conv.members.includes(agent.id)

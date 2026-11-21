@@ -84,9 +84,14 @@ function Head({ badge, byline, done, nav }: { badge: string; byline?: string | u
   )
 }
 
+// The option the agent recommends, marked where it's listed (upstream's own mark, in the card's words).
+function Recommended(): ReactNode {
+  return <span className="tag tag--agent ask-option__tag">{L('recomendada', 'recommended')}</span>
+}
+
 // Jev's pick, as a pill: the card still waits for the person, so it never takes the tick or the
 // keyboard. It's a hint on an option, not a state.
-function Recommended(): ReactNode {
+function JevPick(): ReactNode {
   return <span className="ask-option__pill">{L('Recomendado', 'Recommended')}</span>
 }
 
@@ -102,7 +107,8 @@ function Asked({ questions, recommended }: { questions: Decision[]; recommended?
               {q.options.map((o, j) => (
                 <span key={j} className="ask-list__option">
                   <span className="ask-chip">{o.label}</span>
-                  {(recommended?.[i] === j || o.recommended) && <Recommended />}
+                  {o.recommended && <Recommended />}
+                  {recommended?.[i] === j && <JevPick />}
                 </span>
               ))}
             </span>
@@ -325,10 +331,11 @@ function DecisionStep({ draftId, question, answer, recommended, last, takeFocus,
                   <span className="ask-option__line">
                     <span className="ask-option__label">
                       {o.label}
-                      {/* The option's own wording says so, when Jev hasn't picked one for this decision. */}
-                      {recommended !== i && (o.recommended || isRecommended(o)) && <span className="tag tag--agent ask-option__rec">{L('recomendado', 'recommended')}</span>}
+                      {o.recommended && <Recommended />}
+                      {/* The option's own wording says so, when the agent didn't mark one and Jev didn't pick one. */}
+                      {recommended !== i && !o.recommended && isRecommended(o) && <span className="tag tag--agent ask-option__rec">{L('recomendado', 'recommended')}</span>}
                     </span>
-                    {recommended === i && <Recommended />}
+                    {recommended === i && <JevPick />}
                   </span>
                   {o.description && <span className="ask-option__detail">{o.description}</span>}
                 </span>

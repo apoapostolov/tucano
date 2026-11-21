@@ -3416,6 +3416,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
 .ask-option__tag {
   margin-left: 6px;
   vertical-align: 1px;

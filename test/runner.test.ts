@@ -51,6 +51,7 @@ describe('Runner', () => {
   it('keeps only the selected excerpt in a reply and passes it to the responding agent', async () => {
     db.saveMessage({ id: 'quoted', conversationId: 'c1', author: { kind: 'agent', id: 'a1' }, text: 'An introduction.\n\n**Deploy** after review.\n\nA separate conclusion.', at: 100 })
     const r = runner()
+    db.setProactive('c1', false) // chime-in is upstream's own subject (test/living-agents.test.ts), not who a quote answers
     await r.send('c1', 'Explain this part.', [], undefined, undefined, { reply: { messageId: 'quoted', quote: 'Deploy after review.' } })
     await r.idle()
     const saved = db.messages().find((m) => m.reply)!
@@ -75,6 +76,7 @@ describe('Runner', () => {
     db.saveMessage(source)
     for (let i = 0; i < 50; i++) db.saveMessage({ id: `filler-${i}`, conversationId: 'c1', author: { kind: 'person', id: db.ownerId() }, text: 'Later context.', at: 101 + i })
     const r = runner()
+    db.setProactive('c1', false) // chime-in is upstream's own subject (test/living-agents.test.ts), not who a quote answers
     await r.send('c1', 'Review it now.', [], undefined, undefined, { reply: { messageId: source.id } })
     await r.idle()
     const reply = db.messages().find((m) => m.reply)!
@@ -109,6 +111,7 @@ describe('Runner', () => {
   it('keeps explicit mentions ahead of the quoted author and does not route quoted mentions', async () => {
     db.saveMessage({ id: 'quoted', conversationId: 'c1', author: { kind: 'agent', id: 'a2' }, text: 'Ask @theo about this.', at: 100 })
     const r = runner()
+    db.setProactive('c1', false) // chime-in is upstream's own subject (test/living-agents.test.ts), not who a quote answers
     await r.send('c1', '@lia please explain.', [], undefined, undefined, { reply: { messageId: 'quoted' } })
     await r.idle()
     expect(agentMessages().map((m) => m.author)).toEqual([{ kind: 'agent', id: 'a2' }, { kind: 'agent', id: 'a1' }])
@@ -118,6 +121,7 @@ describe('Runner', () => {
   it('answers a pending question when replying to the agent who asked it', async () => {
     db.saveMessage({ id: 'question', conversationId: 'c1', author: { kind: 'agent', id: 'a1' }, text: 'Which environment?', at: 100, run: { status: 'waiting_input', steps: [], question: 'Which environment?' } })
     const r = runner()
+    db.setProactive('c1', false) // chime-in is upstream's own subject (test/living-agents.test.ts), not who a quote answers
     await r.send('c1', 'Staging.', [], undefined, undefined, { reply: { messageId: 'question' } })
     await r.idle()
     expect(db.message('question')?.run?.status).toBe('done')
