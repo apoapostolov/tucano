@@ -43,6 +43,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 ### Changed
 
+- **A wiki's settings are walked by a section strip, like a page of Settings.** The dialog's four groups — **The curator**, **Resolver**, **The folder** and **Bring what you already have** — now have a row under its title that stays there while the box scrolls, follows the reading position, and takes the box to a group over an interruptible 280 ms ease; a keyboard activation and a reduced-motion preference move at once, and the group the box lands on takes focus. The dialog keeps room under its last group so that group reaches the line like the others, and a group whose card this person's role leaves out never becomes a link.
 - **The "Agent replies in a row" setting leaves Settings → Agents.** Every request now runs to the end on its own (upstream's change above), so there is no longer a number of chained replies to tune: the control and its key are gone from the agents' section.
 
 ### Fixed
