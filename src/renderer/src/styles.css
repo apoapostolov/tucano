@@ -15423,7 +15423,7 @@ button.agent-card__now:hover {
   color: var(--text-3);
 }
 /* The foot: the update note when there is one, then Enviar feedback, Conectores and the Cofre as three
-   rows of one shape, and the Settings gear on a row of its own, in the corner. */
+   rows of one shape, the Cofre sharing its row with the Settings gear. */
 .sidebar__foot:empty {
   display: none;
 }
@@ -15435,8 +15435,6 @@ button.agent-card__now:hover {
 .sidebar__tools {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  margin-top: 2px;
   gap: 2px;
 }
 .sidebar__tool {
@@ -15451,6 +15449,12 @@ button.agent-card__now:hover {
   color: var(--text-2);
   font-size: 13px;
   text-align: left;
+}
+/* A row of the foot takes its 30px from the row below, not from the space left over: `flex: 1` is
+   there for the Cofre filling the row it shares with the gear, and a column would read it as a
+   zero basis and shrink the row to its text (20px), which is what made the three rows differ. */
+.sidebar__foot-rows > .sidebar__tool {
+  flex: none;
 }
 .sidebar__tool:hover, .sidebar__tool.is-active { background: var(--hover); color: var(--text); }
 .sidebar__gear { color: var(--text-2); }

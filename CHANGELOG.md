@@ -17,7 +17,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Mudou:** a configuração **Respostas seguidas entre agentes** sai de Configurações → Agentes: todo pedido agora vai até o fim sozinho, então não há mais um número de respostas em sequência pra ajustar.
 > - **Corrigido:** um banco que já tinha passado do número de migrações agora recebe as tabelas que elas criariam. Era por isso que uma resposta morria na tabela `jobs` e o Cofre na `vault_keys`: o contador do arquivo estava em 44 com a lista em 40, e toda migração nova era pulada.
 > - **Corrigido:** o **Cofre** chama-se **Vault** em inglês: a página, a barra lateral, os cards e o guia. Em português continua Cofre.
-> - **Mudou:** no pé da barra lateral, **Enviar feedback**, **Conectores** e o **Cofre** são três linhas do mesmo formato, e o ícone de configurações fica sozinho no canto.
+> - **Mudou:** no pé da barra lateral, **Enviar feedback**, **Conectores** e o **Cofre** são três linhas do mesmo formato, com o ícone de configurações no fim da linha do Cofre.
 ### Original Changes
 
 
@@ -43,7 +43,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 
 - **A database that had counted past its migrations now gets the tables they would have made.** On this build a reply died on the `jobs` table and the Cofre's page on `vault_keys`. The file's schema count stood at 44 while the build's list had 40 for a few days (the initiative feature left the schema on 17 November), so every migration added since was skipped: the counter is an index into the list, and a list that got shorter left the file counted as done with migrations it never ran. The tables and indexes a migration declares are now made on start when the counter has already run past them, and a file counted past the list says so in the app's log. A file that has them is not touched.
 - **The Cofre is the Vault in English.** The page, its tabs, the sidebar row, the request cards, the keys on an agent's page and the guide all say Vault in English; Portuguese keeps Cofre, and the `[cofre:NOME]` marker a command's output carries is unchanged.
-- **Enviar feedback, Connectors and the Vault are three rows of one shape at the foot of the sidebar.** The Vault had been sharing a row with the Settings gear, so it drew at half width with the gear beside it; the gear now has a row of its own in the corner.
+- **Enviar feedback, Connectors and the Vault are three rows of one shape at the foot of the sidebar.** The Vault had been left in the row that holds the Settings gear while Connectors moved to a row of its own, so its icon, label and box were set like the others but its row was not; all three now use the same row markup and spacing, and the gear keeps its place at the end of the Vault's row.
 
 ## [0.2.43] - 2026-11-20
 
