@@ -268,10 +268,12 @@
       ],
       "approved": "Save automatically",
       "previous": [
-        "Saves on its own"
+        "Saves on its own",
+        "Saved on its own"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -1389,10 +1391,12 @@
       ],
       "approved": "Use detected harness folders or add a folder. Enabled folders appear in every agent’s skill list.",
       "previous": [
-        "The folders Tucano reads. The ones the harnesses already keep on this computer come by themselves; one more folder can be added here. Everything that is on shows up together in each bot’s list of skills."
+        "The folders Tucano reads. The ones the harnesses already keep on this computer come by themselves; one more folder can be added here. Everything that is on shows up together in each bot’s list of skills.",
+        "Runtime skill folders are detected automatically. Add other folders here. Enabled skills appear on agent profiles."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -1428,10 +1432,12 @@
       ],
       "approved": "For you",
       "previous": [
-        "Your preferences"
+        "Your preferences",
+        "Yours"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -1649,10 +1655,12 @@
       ],
       "approved": "Show Asks only when an agent has a question for you.",
       "previous": [
-        "The Asks entry leaves the sidebar while no agent is asking you anything, and comes back with the first question. Off, it is always there."
+        "The Asks entry leaves the sidebar while no agent is asking you anything, and comes back with the first question. Off, it is always there.",
+        "The Asks item leaves the sidebar while no agent has a question for you, and comes back with the first one. Off, it always stays."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -1699,12 +1707,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Visible steps",
+      "approved": "Steps shown",
       "previous": [
-        "How many steps to show"
+        "How many steps to show",
+        "Visible steps"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -2170,10 +2180,12 @@
       ],
       "approved": "Send mode while replying",
       "previous": [
-        "A new prompt while a reply is running"
+        "A new prompt while a reply is running",
+        "While a reply is running"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -6227,12 +6239,14 @@
       "files": [
         "src/renderer/src/store.ts"
       ],
-      "approved": "Could not resume the reply.",
+      "approved": "I couldn't resume the reply.",
       "previous": [
-        "I couldn't let the reply go on."
+        "I couldn't let the reply go on.",
+        "Could not resume the reply."
       ],
       "reviews": [
-        "docs/english-copy-round2-review.json"
+        "docs/english-copy-round2-review.json",
+        ".tucano-local/copy-review-8.json"
       ]
     },
     {
@@ -7411,13 +7425,17 @@
       "files": [
         "src/renderer/src/components/HermesImport.tsx"
       ],
-      "approved": "Routine “${r}” (not imported)",
+      "approved": "The “${r}” routine (its schedule doesn't fit here)",
       "previous": [
-        "the “${r}” routine (not imported)"
+        "the “${r}” routine (not imported)",
+        "Routine “${r}” (not imported)",
+        "the “${r}” routine (its schedule doesn't fit here)"
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
-      ]
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-review-8.json"
+      ],
+      "englishExpressionLiterals": true
     },
     {
       "source": "Procurando a pasta do Hermes…",

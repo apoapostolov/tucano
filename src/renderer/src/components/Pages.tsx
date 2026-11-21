@@ -319,7 +319,7 @@ export function LookPicker({ agent, patch }: { agent: Pick<Agent, 'name' | 'colo
   )
 }
 const MEMORY_MODES = (): { value: MemoryMode; label: string; hint: string }[] => [
-  { value: 'auto', label: L('Grava sozinho', 'Saves on its own'), hint: L('Guarda e avisa na mensagem, com Desfazer.', 'Keeps it and says so in the message, with Undo.') },
+  { value: 'auto', label: L('Grava sozinho', 'Save automatically'), hint: L('Guarda e avisa na mensagem, com Desfazer.', 'Keeps it and says so in the message, with Undo.') },
   { value: 'approve', label: L('Pede aprovação', 'Asks for approval'), hint: L('Cada memória nova espera você guardar.', 'Each new memory waits for you to keep it.') },
   { value: 'read', label: L('Só lê', 'Read only'), hint: L('Usa as memórias, mas não guarda novas.', 'Uses memories but doesn’t keep new ones.') }
 ]
@@ -4302,7 +4302,7 @@ function SkillFoldersCard(): ReactNode {
       title={L('De onde vêm as skills', 'Skill folders')}
       lead={L(
         'As pastas que o Tucano lê. As que os harnesses já mantêm neste computador entram sozinhas; uma pasta a mais pode ser adicionada aqui. Tudo o que está ligado aparece junto na lista de skills de cada bot.',
-        'Runtime skill folders are detected automatically. Add other folders here. Enabled skills appear on agent profiles.'
+        'Use detected harness folders or add a folder. Enabled folders appear in every agent’s skill list.'
       )}
     >
       {shown.length === 0 && <p className="muted small">{folders ? L('Nenhuma pasta de skills encontrada.', 'No skills folder found.') : L('Procurando…', 'Looking…')}</p>}
@@ -4379,7 +4379,7 @@ export function SettingsPage(): ReactNode {
         {pane('harnesses') && <SectionAnchor id="harnesses-keys" label={sectionLabel('harnesses-keys')}><HarnessesPane /></SectionAnchor>}
         {/* A member's own: the language, the theme and the sounds (their name is in Pessoas). */}
         {pane('geral') && !admin && (
-          <Card title={L('Pra você', 'Yours')} lead={L('Como o Tucano aparece pra você. Muda só pra você.', 'How Tucano looks to you. It changes only for you.')} section="app-appearance">
+          <Card title={L('Pra você', 'For you')} lead={L('Como o Tucano aparece pra você. Muda só pra você.', 'How Tucano looks to you. It changes only for you.')} section="app-appearance">
             <div className="field">
               <span className="field__label">Idioma · Language</span>
               <LanguagePicker />
@@ -4569,7 +4569,7 @@ export function SettingsPage(): ReactNode {
               <Icon name="ask" />
               <div className="grow">
                 <strong>{L('Esconder Perguntas quando não há nenhuma', 'Hide empty Asks')}</strong>
-                <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', 'The Asks item leaves the sidebar while no agent has a question for you, and comes back with the first one. Off, it always stays.')}</p>
+                <p className="muted small">{L('A entrada Perguntas sai da barra lateral enquanto nenhum agente te perguntou nada, e volta na primeira pergunta. Desligado, ela fica sempre lá.', 'Show Asks only when an agent has a question for you.')}</p>
               </div>
               <Toggle on={settings.hideEmptyAsks === true} onChange={(v) => updateSettings({ hideEmptyAsks: v })} label={L('Esconder Perguntas quando não há nenhuma', 'Hide empty Asks')} />
             </div>
@@ -4766,7 +4766,7 @@ export function SettingsPage(): ReactNode {
           <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
             <div className="grid2">
               <Field
-                label={L('Um novo prompt com uma resposta em curso', 'While a reply is running')}
+                label={L('Um novo prompt com uma resposta em curso', 'Send mode while replying')}
                 hint={L(
                   'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
                   'Enter follows this choice. Ctrl+Enter queues, Alt+Enter steers the running reply, and Shift+Alt+Enter interrupts it, each just once. Shift+Enter adds a line.'
@@ -4828,7 +4828,7 @@ export function SettingsPage(): ReactNode {
                   onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
                   options={[
                     { value: 'approve', label: L('Vira sugestão pra você aprovar', 'A suggestion for you to approve') },
-                    { value: 'auto', label: L('Grava sozinho', 'Saved on its own') },
+                    { value: 'auto', label: L('Grava sozinho', 'Save automatically') },
                     { value: 'off', label: L('Nada (só resume)', 'Nothing (just summarizes)') }
                   ]}
                   placeholder={L('Escolha', 'Pick')}

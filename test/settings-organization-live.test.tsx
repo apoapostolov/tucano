@@ -221,7 +221,7 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     // No workspace, dictation, updates, team, backups or danger for a member: their own card, then
     // the two everyone shares.
     expect(labels()).toEqual(['Appearance', 'Notifications', 'Conversation'])
-    expect(card('Yours')).toBeDefined()
+    expect(card('For you')).toBeDefined()
     expect(anchors()[0]!.getAttribute('data-settings-section')).toBe('app-appearance')
   })
 

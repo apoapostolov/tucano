@@ -67,7 +67,7 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
         { label: L('Modelo', 'Model'), items: preview.models }
       ].filter((g) => g.items.length)
     : []
-  const leftOut = preview?.profiles.flatMap((p) => p.routinesAsNames.map((r) => L(`a rotina “${r}” (a agenda não cabe aqui)`, `the “${r}” routine (its schedule doesn't fit here)`))) ?? []
+  const leftOut = preview?.profiles.flatMap((p) => p.routinesAsNames.map((r) => L(`a rotina “${r}” (a agenda não cabe aqui)`, `The “${r}” routine (its schedule doesn't fit here)`))) ?? []
 
   return (
     <Modal title={L('Importar do Hermes', 'Import from Hermes')} onClose={onClose} className="hermes-import">
