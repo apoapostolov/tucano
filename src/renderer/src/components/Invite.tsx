@@ -14,7 +14,7 @@ export function CopyLink({ link }: { link: string }): ReactNode {
   const copy = (): void =>
     void navigator.clipboard.writeText(link).then(
       () => (setCopied(true), setTimeout(() => setCopied(false), 1600)),
-      () => toast(L('Não consegui copiar. Selecione o link e copie.', "I couldn't copy. Select the link and copy it."))
+      () => toast(L('Não consegui copiar. Selecione o link e copie.', "Could not copy the link. Select it and copy manually."))
     )
   return (
     <div className="row invite-link">
@@ -46,17 +46,17 @@ export function InviteCard({ onClose, owner }: { onClose: () => void; owner: boo
             {owner && <option value="admin">{roleLabel('admin')}</option>}
           </select>
         </Field>
-        <Field label={L('O que faz', 'What they do')} hint={L('Pros agentes saberem com quem falam. A pessoa pode mudar depois.', 'So the agents know who they talk to. They can change it later.')}>
+        <Field label={L('O que faz', "Role description")} hint={L('Pros agentes saberem com quem falam. A pessoa pode mudar depois.', "Help agents understand this person’s role. They can edit it later.")}>
           <input value={about} disabled={!!link} maxLength={200} placeholder={L('Ex.: cuida do financeiro', 'E.g. handles finance')} onChange={(e) => setAbout(e.target.value)} />
         </Field>
       </div>
       {!link && (
-        <Field group label={L('O que a pessoa vê', 'What they see')}>
+        <Field group label={L('O que a pessoa vê', "Access")}>
           {role === 'admin' ? <p className="muted small">{L('Admins sempre veem tudo.', 'Admins always see everything.')}</p> : <AccessChoice value={access} onChange={setAccess} />}
         </Field>
       )}
       {link ? (
-        <Field label={L('Link do convite', 'Invite link')} hint={L('Mande por onde preferir. Ele some daqui quando você fechar: um novo convite gera outro link.', 'Send it however you like. It leaves this screen when you close it: a new invite makes another link.')}>
+        <Field label={L('Link do convite', 'Invite link')} hint={L('Mande por onde preferir. Ele some daqui quando você fechar: um novo convite gera outro link.', "Copy this link before closing. Each new invite creates a different link.")}>
           <CopyLink link={link} />
         </Field>
       ) : null}

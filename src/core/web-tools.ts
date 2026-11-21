@@ -107,7 +107,7 @@ export async function searchWeb(query: string, count = 6, f: typeof fetch = fetc
     signal: AbortSignal.timeout(25_000)
   })
   if (res.status === 429) throw new Error(L('A busca está no limite de uso por agora. Tente de novo em alguns minutos.', 'Search is at its usage limit for now. Try again in a few minutes.'))
-  if (!res.ok) throw new Error(L(`A busca respondeu ${res.status}.`, `The search answered ${res.status}.`))
+  if (!res.ok) throw new Error(L(`A busca respondeu ${res.status}.`, `Search returned HTTP ${res.status}.`))
   const body = (await res.text()).slice(0, MAX_BODY)
   const result = resultOf(body)
   const text = result?.content?.find((c) => c.text)?.text ?? ''

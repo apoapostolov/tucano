@@ -15,7 +15,7 @@ const settings = (notice: Settings['notice']): Settings => ({ workspaceName: 'Ca
 const drawn = (notice: Settings['notice']): string => renderToStaticMarkup(<NotificationCard settings={settings(notice)} update={() => {}} />)
 
 // The words of the rows that only the cards have, in the language the page is in.
-const CARDS_ONLY = ['Where they appear', 'Decide from the notification', 'Skin', 'Time on screen', 'Stack mode', 'Stays under the pointer']
+const CARDS_ONLY = ['Position', 'Respond from notifications', 'Appearance', 'Time on screen', 'Stack mode', 'Keep open on hover']
 
 beforeEach(() => {
   setLang('en')
@@ -65,7 +65,7 @@ describe('Settings › Notifications: Native or Enhanced', () => {
   it('Enhanced shows the enhanced settings and tests the cards', () => {
     const html = drawn({ mode: 'enhanced' })
     for (const row of CARDS_ONLY) expect(html).toContain(row)
-    expect(html).toContain('Choose the area')
+    expect(html).toContain('Choose area')
     expect(html).toContain('Test notifications')
     expect(html).not.toContain('Send one')
     expect(noticeOf({ notice: { mode: 'enhanced' } }).on).toBe(true)

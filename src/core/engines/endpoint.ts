@@ -96,12 +96,12 @@ async function refusal(res: Response): Promise<string> {
   }
   const why =
     res.status === 401 || res.status === 403
-      ? L('o endpoint recusou a chave', 'the endpoint refused the key')
+      ? L('o endpoint recusou a chave', "the endpoint rejected the key")
       : res.status === 404
-        ? L('o endpoint não achou esse modelo ou esse endereço', 'the endpoint found no such model or address')
+        ? L('o endpoint não achou esse modelo ou esse endereço', "the model or endpoint address was not found")
         : res.status === 429
-          ? L('o endpoint pediu pra esperar (limite de uso)', 'the endpoint asked to wait (rate limit)')
-          : L(`o endpoint respondeu ${res.status}`, `the endpoint answered ${res.status}`)
+          ? L('o endpoint pediu pra esperar (limite de uso)', "the endpoint rate limit was reached")
+          : L(`o endpoint respondeu ${res.status}`, `the endpoint returned HTTP ${res.status}`)
   return said.trim() ? `${why}: ${said.trim()}` : why
 }
 
@@ -117,7 +117,7 @@ export function endpointEngine(target: () => Promise<EndpointTarget | undefined>
     async *run(turn: Turn): AsyncIterable<EngineEvent> {
       const t = await target()
       if (!t?.baseUrl) {
-        yield { type: 'error', message: L('Nenhum endpoint configurado: ponha o endereço e a chave em Configurações › Modelos.', 'No endpoint set up: add its address and key in Settings › Models.') }
+        yield { type: 'error', message: L('Nenhum endpoint configurado: ponha o endereço e a chave em Configurações › Modelos.', "No endpoint configured. Add its address and key in Settings › Models.") }
         return
       }
       const url = `${t.baseUrl.replace(/\/+$/, '')}/chat/completions`
@@ -140,7 +140,7 @@ export function endpointEngine(target: () => Promise<EndpointTarget | undefined>
         }
       } catch (e) {
         await client?.close().catch(() => {})
-        yield { type: 'error', message: L(`Não consegui abrir as ferramentas do app: ${e instanceof Error ? e.message : String(e)}`, `I couldn't open the app's tools: ${e instanceof Error ? e.message : String(e)}`) }
+        yield { type: 'error', message: L(`Não consegui abrir as ferramentas do app: ${e instanceof Error ? e.message : String(e)}`, `Could not load application tools: ${e instanceof Error ? e.message : String(e)}`) }
         return
       }
 
@@ -157,7 +157,7 @@ export function endpointEngine(target: () => Promise<EndpointTarget | undefined>
             res = await f(url, { method: 'POST', headers, body: JSON.stringify({ model: turn.model, messages, ...(tools.length ? { tools } : {}), stream: true, stream_options: { include_usage: true } }), signal: turn.signal })
           } catch (e) {
             if (turn.signal.aborted) return
-            yield { type: 'error', message: L(`Não consegui falar com o endpoint (${new URL(url).host}): ${e instanceof Error ? e.message : String(e)}`, `I couldn't reach the endpoint (${new URL(url).host}): ${e instanceof Error ? e.message : String(e)}`) }
+            yield { type: 'error', message: L(`Não consegui falar com o endpoint (${new URL(url).host}): ${e instanceof Error ? e.message : String(e)}`, `Could not reach ${new URL(url).host}: ${e instanceof Error ? e.message : String(e)}`) }
             return
           }
           if (!res.ok) {
@@ -217,13 +217,13 @@ export function endpointEngine(target: () => Promise<EndpointTarget | undefined>
               const args = call.args.trim() ? (JSON.parse(call.args) as Record<string, unknown>) : {}
               out = client ? textOf(await client.callTool({ name: names.get(call.name) ?? call.name, arguments: args })) : L('Não há ferramentas neste turno.', 'There are no tools in this turn.')
             } catch (e) {
-              out = `Error: ${e instanceof SyntaxError ? L('os argumentos não são JSON válido', 'the arguments are not valid JSON') : e instanceof Error ? e.message : String(e)}`
+              out = `Error: ${e instanceof SyntaxError ? L('os argumentos não são JSON válido', "arguments must be valid JSON") : e instanceof Error ? e.message : String(e)}`
             }
             messages.push({ role: 'tool', tool_call_id: call.id, content: out.length > MAX_TOOL_RESULT ? `${out.slice(0, MAX_TOOL_RESULT)}\n[…]` : out })
           }
           yield { type: 'progress', tokens: usage.inputTokens + usage.outputTokens, cacheRead: usage.cacheReadTokens }
         }
-        yield { type: 'error', message: L(`Parei: foram ${MAX_STEPS} chamadas ao modelo nesta resposta sem ele terminar.`, `I stopped: ${MAX_STEPS} model calls in this reply without it finishing.`) }
+        yield { type: 'error', message: L(`Parei: foram ${MAX_STEPS} chamadas ao modelo nesta resposta sem ele terminar.`, `Reply stopped after ${MAX_STEPS} model calls without completion.`) }
       } finally {
         await client?.close().catch(() => {})
       }

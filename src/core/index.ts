@@ -446,7 +446,7 @@ async function foundMcps(): Promise<FoundMcp[]> {
 // reaches the window). Unset until someone saves one in Settings › Models.
 const ENDPOINT_SECRET = 'endpoint:key'
 // An endpoint has no program to install and no login: what a phone from before it asks of it.
-const NOTHING_TO_INSTALL = (): string => L('O endpoint não se instala nem tem login: é um endereço e uma chave, em Configurações › Modelos, no computador ou no navegador.', 'The endpoint has nothing to install and no sign-in: it’s an address and a key, in Settings › Models, on the computer or in the browser.')
+const NOTHING_TO_INSTALL = (): string => L('O endpoint não se instala nem tem login: é um endereço e uma chave, em Configurações › Modelos, no computador ou no navegador.', "Endpoints require no installation or sign-in. Set the address and key in Settings › Models, in the app or browser.")
 async function endpointTarget(): Promise<EndpointTarget | undefined> {
   const e = db.getSettings(DEFAULTS).endpoint
   if (!e?.baseUrl) return undefined
@@ -1870,7 +1870,7 @@ function reachMessage(ctx: Ctx, messageId: string): void {
 // An artifact's file, for what only the computer's own window does with it (show it in Finder, save
 // a copy): a paired device or a member would get a dialog on a screen they can't see.
 function ownArtifactFile(ctx: Ctx, id: string): string {
-  if (serverMode || ctx.device || ctx.person.role !== 'owner') throw new Error(L('Só na janela do próprio computador.', "Only in this computer's own window."))
+  if (serverMode || ctx.device || ctx.person.role !== 'owner') throw new Error(L('Só na janela do próprio computador.', "Available only in the desktop app."))
   const a = db.artifact(id)
   if (!a || !people.canSeeConversation(ctx.person, db.conversation(a.conversationId)) || !people.artifactVisible(ctx.person, a)) throw new Error(L('Esse arquivo não existe mais.', 'This file no longer exists.'))
   // Neither the id nor the name may climb out: no `..` anywhere, the folder inside artifacts/, the file inside its folder.
@@ -1878,7 +1878,7 @@ function ownArtifactFile(ctx: Ctx, id: string): string {
   const folder = resolve(root, a.id)
   const file = resolve(folder, a.name)
   const climbs = (s: string): boolean => s.split(/[\\/]/).includes('..')
-  if (climbs(a.id) || climbs(a.name) || !folder.startsWith(root + sep) || !file.startsWith(folder + sep) || !existsSync(file)) throw new Error(L('O arquivo não está mais aqui.', 'The file is no longer here.'))
+  if (climbs(a.id) || climbs(a.name) || !folder.startsWith(root + sep) || !file.startsWith(folder + sep) || !existsSync(file)) throw new Error(L('O arquivo não está mais aqui.', "This file no longer exists."))
   return file
 }
 // How a conversation works (threads, the wiki, its summary): a DM's person's; a channel's, whoever
@@ -2633,7 +2633,7 @@ const api: Handlers = {
   // rebuild holds the core's only thread, and that is where the run is writing.
   optimizeDb: () => {
     if (db.messagesWithRun(['working', 'waiting_approval']).length) {
-      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', 'A reply is at work right now. Optimize when it finishes.'))
+      throw new Error(L('Uma resposta está trabalhando agora. Otimize quando ela terminar.', "A reply is running. Wait for it to finish before optimizing the database."))
     }
     const before = db.size()
     db.rebuild()
@@ -2724,7 +2724,7 @@ const api: Handlers = {
     const base = cleanEndpoint(baseUrl)
     try {
       const models = await listModels('endpoint', base, key?.trim() || (await secrets.get(ENDPOINT_SECRET)))
-      if (!models.length) return { models: [], error: L('O endpoint respondeu, mas não listou nenhum modelo.', 'The endpoint answered, but listed no models.') }
+      if (!models.length) return { models: [], error: L('O endpoint respondeu, mas não listou nenhum modelo.', "The endpoint returned no models.") }
       return { models }
     } catch (e) {
       return { models: [], error: e instanceof Error ? e.message : String(e) }

@@ -125,7 +125,7 @@ export class Notices {
     const win = this.ensure()
     const card = {
       title: L('Notificação de teste', 'Test notification'),
-      body: L('É assim que os avisos chegam. Passe o ponteiro pra ela ficar.', 'This is how notifications arrive. Hover it to keep it.'),
+      body: L('É assim que os avisos chegam. Passe o ponteiro pra ela ficar.', "Appearance follows your notification settings."),
       at: Date.now()
     }
     if (this.loaded) win.webContents.send('notice:push', card)

@@ -197,7 +197,7 @@ export function approvalCard(a: Approval, who: string): NoticeCard {
     at: a.createdAt,
     title,
     // What it's for. Missing, the exact action is the whole story.
-    body: a.why || L('O agente parou esperando você. A conversa tem os detalhes.', 'The agent stopped, waiting for you. The conversation has the details.'),
+    body: a.why || L('O agente parou esperando você. A conversa tem os detalhes.', "The agent is waiting for your response. Open the conversation for details."),
     meta: approvalMeta(a),
     agentId: a.agentId,
     agentName: who,

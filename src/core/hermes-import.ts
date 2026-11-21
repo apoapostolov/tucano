@@ -206,7 +206,7 @@ function entries(text: string): string[] {
 // The entries that fit (40, of up to 300 characters each); the summary counts the rest.
 function memoriesOf(text: string | undefined | null, which: 'agent' | 'user', notes: string[]): string[] {
   if (text === null) {
-    notes.push(which === 'agent' ? L('as memórias (MEMORY.md grande demais ou ilegível)', "the memories (MEMORY.md too big or unreadable)") : L('o que ele sabia sobre você (USER.md grande demais ou ilegível)', "what it knew about you (USER.md too big or unreadable)"))
+    notes.push(which === 'agent' ? L('as memórias (MEMORY.md grande demais ou ilegível)', "Memories: MEMORY.md exceeds the size limit or cannot be read.") : L('o que ele sabia sobre você (USER.md grande demais ou ilegível)', "Personal memories: USER.md exceeds the size limit or cannot be read."))
     return []
   }
   if (!text) return []
@@ -217,8 +217,8 @@ function memoriesOf(text: string | undefined | null, which: 'agent' | 'user', no
   if (long)
     notes.push(
       which === 'agent'
-        ? L(`${long} memória${long > 1 ? 's' : ''} com mais de ${MAX_MEMORY} caracteres (copie à mão, se quiser)`, `${long} memor${long > 1 ? 'ies' : 'y'} longer than ${MAX_MEMORY} characters (copy by hand, if you want)`)
-        : L(`${long} memória${long > 1 ? 's' : ''} sobre você com mais de ${MAX_MEMORY} caracteres (copie à mão, se quiser)`, `${long} memor${long > 1 ? 'ies' : 'y'} about you longer than ${MAX_MEMORY} characters (copy by hand, if you want)`)
+        ? L(`${long} memória${long > 1 ? 's' : ''} com mais de ${MAX_MEMORY} caracteres (copie à mão, se quiser)`, `${long} memor${long > 1 ? 'ies' : 'y'} over ${MAX_MEMORY} characters; copy manually if needed.`)
+        : L(`${long} memória${long > 1 ? 's' : ''} sobre você com mais de ${MAX_MEMORY} caracteres (copie à mão, se quiser)`, `${long} memor${long > 1 ? 'ies' : 'y'} about you over ${MAX_MEMORY} characters; copy manually if needed.`)
     )
   const about = which === 'user' ? L(' sobre você', ' about you') : ''
   if (over) notes.push(L(`${over} memória${over > 1 ? 's' : ''}${about} além de ${IMPORT_CAPS.memories}`, `${over} memor${over > 1 ? 'ies' : 'y'}${about} beyond ${IMPORT_CAPS.memories}`))
@@ -353,7 +353,7 @@ function skillsOf(r: Reader, dir: string, notes: string[]): { skills: ForeignSki
   const skills = mine.flatMap(({ folder, text }) => {
     const where = basename(folder)
     if (!text) {
-      notes.push(L(`a skill ${where} (grande demais ou ilegível)`, `the ${where} skill (too big or unreadable)`))
+      notes.push(L(`a skill ${where} (grande demais ou ilegível)`, `Skill ${where}: exceeds the size limit or cannot be read.`))
       return []
     }
     const fm = frontmatter(text)
@@ -423,7 +423,7 @@ function routinesOf(r: Reader, dir: string, now: number, notes: string[]): { rou
     const j = Array.isArray(data) ? data : obj(data)['jobs']
     jobs = Array.isArray(j) ? j : Object.entries(obj(j)).map(([id, v]) => ({ id, ...obj(v) }))
   } catch {
-    notes.push(L('as tarefas agendadas (cron/jobs.json grande demais ou ilegível)', 'the scheduled jobs (cron/jobs.json too big or unreadable)'))
+    notes.push(L('as tarefas agendadas (cron/jobs.json grande demais ou ilegível)', "Scheduled jobs: cron/jobs.json exceeds the size limit or cannot be read."))
     return { routines: [], asNames: [] }
   }
   const routines: ForeignAgent['routines'] = []
@@ -441,7 +441,7 @@ function routinesOf(r: Reader, dir: string, now: number, notes: string[]): { rou
       continue
     }
     const tz = str(j['timezone'], 64)
-    if (tz && tz !== here) notes.push(L(`o fuso da rotina "${name}" (${tz}): o horário ficou como estava, no fuso deste computador`, `the time zone of the routine "${name}" (${tz}): the time stayed as it was, in this computer's zone`))
+    if (tz && tz !== here) notes.push(L(`o fuso da rotina "${name}" (${tz}): o horário ficou como estava, no fuso deste computador`, `Routine "${name}": time zone ${tz} was not imported. The time uses this computer’s zone.`))
     const skills = arr(j['skills']).filter((x): x is string => typeof x === 'string')
     routines.push({ name, prompt: skills.length ? `${prompt}\n\n${L('Use a skill', 'Use the skill')}: ${skills.join(', ')}` : prompt, schedule })
   }
@@ -452,7 +452,7 @@ function routinesOf(r: Reader, dir: string, now: number, notes: string[]): { rou
 function asNamesNote(asNames: string[]): string[] {
   if (!asNames.length) return []
   const shown = asNames.slice(0, 10).map((n) => `"${n}"`).join(', ') + (asNames.length > 10 ? L(` e mais ${asNames.length - 10}`, ` and ${asNames.length - 10} more`) : '')
-  return [L(`as tarefas agendadas ${shown} (horário sem equivalente aqui, só roda um script, ou além de ${IMPORT_CAPS.routines}: crie de novo, se quiser)`, `the scheduled jobs ${shown} (a schedule with no match here, a script only, or beyond ${IMPORT_CAPS.routines}: make them again, if you want)`)]
+  return [L(`as tarefas agendadas ${shown} (horário sem equivalente aqui, só roda um script, ou além de ${IMPORT_CAPS.routines}: crie de novo, se quiser)`, `Scheduled jobs ${shown}: unsupported schedules, script-only jobs, or jobs beyond the ${IMPORT_CAPS.routines}-routine limit. Recreate them manually if needed.`)]
 }
 
 // ---------- config.yaml: only names ----------
@@ -479,7 +479,7 @@ function configOf(r: Reader, dir: string, notes: string[]): Config {
     if (raw === null) throw new Error()
     c = obj(parseYaml(raw, { maxAliasCount: 100 }))
   } catch {
-    notes.push(L('as configurações (config.yaml grande demais ou ilegível)', 'the settings (config.yaml too big or unreadable)'))
+    notes.push(L('as configurações (config.yaml grande demais ou ilegível)', "Settings: config.yaml exceeds the size limit or cannot be read."))
     return { servers: [], gateways: [], off: [] }
   }
   // Names only: nothing of a server's command, URL or env is kept. One turned off in Hermes (hermes
@@ -552,9 +552,9 @@ const titled = (key: string): string => {
 function readProfile(r: Reader, dir: string, key: string, now: number, running: string[] = []): HermesProfileRead {
   const notes: string[] = []
   const soulText = allowed(r, dir, 'SOUL.md')
-  if (soulText === null) notes.push(L('o SOUL.md (grande demais ou ilegível)', 'SOUL.md (too big or unreadable)'))
+  if (soulText === null) notes.push(L('o SOUL.md (grande demais ou ilegível)', "SOUL.md exceeds the size limit or cannot be read."))
   const instructions = soulText ? soulOf(soulText) : ''
-  if (!instructions && soulText !== null) notes.push(L('as instruções (não havia um SOUL.md escrito: ficou sem)', 'the instructions (there was no written SOUL.md: it has none)'))
+  if (!instructions && soulText !== null) notes.push(L('as instruções (não havia um SOUL.md escrito: ficou sem)', "Instructions: no custom SOUL.md was found."))
   const memories = memoriesOf(allowed(r, dir, 'memories/MEMORY.md'), 'agent', notes)
   const userMemories = memoriesOf(allowed(r, dir, 'memories/USER.md'), 'user', notes)
   const { skills, stock } = skillsOf(r, dir, notes)
@@ -565,7 +565,7 @@ function readProfile(r: Reader, dir: string, key: string, now: number, running: 
   // The same model on the Hermes engine here, when its provider is named; else this app's default.
   const m = config.model
   const modelId = m && m.provider && m.provider !== 'auto' ? customModel('hermes', `${m.provider}/${m.model}`) : undefined
-  if (m && !modelId) notes.push(L(`o modelo ${m.model} (o provedor era automático: ficou o modelo padrão)`, `the ${m.model} model (the provider was automatic: it got the default model)`))
+  if (m && !modelId) notes.push(L(`o modelo ${m.model} (o provedor era automático: ficou o modelo padrão)`, `Model ${m.model}: automatic provider selection was replaced with the default model.`))
   const name = key === 'default' ? 'Hermes' : titled(key)
   return {
     meta: { key, name, instructions: !!instructions, memories: memories.length, userMemories: userMemories.length, skills: skills.length, routines: routines.length, routinesAsNames: asNames },
@@ -605,9 +605,9 @@ export function readHermes(path: string, opts: HermesReadOpts = {}): HermesRead 
   try {
     r = reader(root, opts)
   } catch {
-    throw new Error(L(`Não achei a pasta ${root}.`, `I couldn't find the folder ${root}.`))
+    throw new Error(L(`Não achei a pasta ${root}.`, `Folder not found: ${root}`))
   }
-  if (!r.isDir(root)) throw new Error(L(`${root} não é uma pasta.`, `${root} isn't a folder.`))
+  if (!r.isDir(root)) throw new Error(L(`${root} não é uma pasta.`, `Not a folder: ${root}`))
   const now = opts.now ?? Date.now()
   const profiles: HermesProfileRead[] = []
   const notes: string[] = []
@@ -643,8 +643,8 @@ export function hermesPreview(read: HermesRead): HermesPreview {
 export function gatewaysNote(gateways: string[]): string {
   const list = gateways.join(', ')
   return gateways.includes('Telegram')
-    ? L(`onde o Hermes conversava (${list}): não vem; aqui, o Telegram se liga em Configurações`, `where Hermes chatted (${list}): it doesn't come; here, Telegram is turned on in Settings`)
-    : L(`onde o Hermes conversava (${list}): não vem`, `where Hermes chatted (${list}): it doesn't come`)
+    ? L(`onde o Hermes conversava (${list}): não vem; aqui, o Telegram se liga em Configurações`, `Messaging connections (${list}) are not imported. Configure Telegram in Settings.`)
+    : L(`onde o Hermes conversava (${list}): não vem`, `Messaging connections (${list}) are not imported.`)
 }
 
 // The chosen profiles (by key; none chosen: all) as a team for applyForeignTeam.

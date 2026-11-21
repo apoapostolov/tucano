@@ -54,10 +54,10 @@ export const seesChannel = (p: Who | undefined, channelId: string): boolean => !
 // "Vê tudo" / "Vê 2 agentes · 1 canal", for the people list.
 export function accessSummary(p: Who | undefined, agents: AgentNode[], channels: Pick<Conversation, 'id'>[]): string {
   const seen = visibleAgentIds(p, agents)
-  if (!seen) return L('Vê tudo', 'Sees everything')
+  if (!seen) return L('Vê tudo', "Full access")
   const team = agents.filter((a) => !a.archived && a.kind !== 'tuca' && seen.has(a.id)).length
   const rooms = channels.filter((c) => p!.access!.channels.includes(c.id)).length
-  if (!team && !rooms) return L('Não vê nenhum agente', 'Sees no agent')
+  if (!team && !rooms) return L('Não vê nenhum agente', "No agent access")
   const parts = [
     team ? (team === 1 ? L('1 agente', '1 agent') : L(`${team} agentes`, `${team} agents`)) : '',
     rooms ? (rooms === 1 ? L('1 canal', '1 channel') : L(`${rooms} canais`, `${rooms} channels`)) : ''

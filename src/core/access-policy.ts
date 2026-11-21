@@ -8,7 +8,7 @@ import type { Db } from './db'
 
 type Who = Pick<Person, 'role' | 'access'>
 
-export const hiddenAgentError = (): string => L('Esse agente não está disponível pra você.', "That agent isn't available to you.")
+export const hiddenAgentError = (): string => L('Esse agente não está disponível pra você.', "You do not have access to this agent.")
 
 // The agents this person may use (all of them when nothing is cut). `keep`: one that stays anyway,
 // like the agent answering, so a prompt built from the list still has it.
@@ -87,5 +87,5 @@ export function viewedConversations<T extends Pick<Conversation, 'kind' | 'membe
 // Read again: the same request may have just given it to them (a channel card makes one, then fills it).
 export function assertChannelVisible(db: Db, person: Person, c: Pick<Conversation, 'id' | 'kind'>): void {
   const now = db.person(person.id) ?? person
-  if (!withinAccess(db, now, c)) throw new Error(L('Esse canal não está disponível pra você.', "That channel isn't available to you."))
+  if (!withinAccess(db, now, c)) throw new Error(L('Esse canal não está disponível pra você.', "You do not have access to this channel."))
 }

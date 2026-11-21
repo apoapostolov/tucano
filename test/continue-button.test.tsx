@@ -207,9 +207,9 @@ describe("a request's line", () => {
     const open = { id: 'dl1', from: 'a1', to: 'a2', conversationId: 'c1', rootId: 'm1', originConversationId: 'c1', originMessageId: 'm1', requestedBy: 'ana', text: 'review it', state: 'open' as const, createdAt: 2 }
     fake = { ...fake, agents: [agent(), rev], conversations: [ch], messages: { c1: [asked, doing] }, delegations: [open] }
     await render(<ConversationView id="c1" />)
-    expect(document.querySelector('.delegation-chip .request-note__state')?.textContent).toBe('working · Running the tests')
+    expect(document.querySelector('.delegation-chip .request-note__state')?.textContent).toBe('Working · Running the tests')
     fake = { ...fake, messages: { c1: [asked, { ...doing, run: { ...doing.run!, status: 'done' } }] } }
     await render(<ConversationView id="c1" />)
-    expect(document.querySelector('.delegation-chip .request-note__state')?.textContent).toBe('working')
+    expect(document.querySelector('.delegation-chip .request-note__state')?.textContent).toBe('Working')
   })
 })

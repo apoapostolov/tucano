@@ -836,7 +836,7 @@ export class People {
     }
     const who = this.db.person(to)
     if (to === by.id || !who) throw new Error(L('Escolha outra pessoa do Tucano.', 'Pick someone else in this Tucano.'))
-    if (restricted(who)) throw new Error(L(`${who.name} não vê todo o time, então não pode cobrir ninguém.`, `${who.name} doesn't see the whole team, so they can't cover for anyone.`))
+    if (restricted(who)) throw new Error(L(`${who.name} não vê todo o time, então não pode cobrir ninguém.`, `${who.name} needs access to the entire team to cover for someone.`))
     if (typeof until !== 'number' || !Number.isFinite(until) || until <= now) throw new Error(L('Escolha até quando.', 'Pick until when.'))
     this.db.setDelegation(by.id, to, until)
     this.db.addActivity({ personId: by.id, kind: 'person.delegation', target: by.id, detail: { to, until }, at: now })

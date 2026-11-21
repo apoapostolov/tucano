@@ -139,7 +139,7 @@ export function PeoplePane(): ReactNode {
 
       <Card
         title={L(`Pessoas ${team ? `de ${team}` : 'do Tucano'}`, `People ${team ? `of ${team}` : 'in this Tucano'}`)}
-        lead={L('Quem tem acesso a este Tucano e o que cada um pode fazer. As DMs de cada pessoa são só dela.', 'Who has access to this Tucano and what each one can do. Each person’s DMs are theirs alone.')}
+        lead={L('Quem tem acesso a este Tucano e o que cada um pode fazer. As DMs de cada pessoa são só dela.', "Manage workspace access and roles. Each person’s DMs remain private.")}
         action={
           admin && !inviting ? (
             <button className="btn btn--primary btn--sm" onClick={() => setInviting(true)}>
@@ -478,9 +478,9 @@ function MeCard(): ReactNode {
             <p className="muted small">
               {covering
                 ? L(`${covering.name} responde e aprova por você até ${time(me.delegateUntil!)}.`, `${covering.name} answers and approves for you until ${time(me.delegateUntil!)}.`)
-                : L('Enquanto você estiver fora, alguém responde às perguntas e decide as aprovações que seriam suas.', 'While you’re away, someone answers the questions and decides the approvals that would be yours.')}
+                : L('Enquanto você estiver fora, alguém responde às perguntas e decide as aprovações que seriam suas.', "Choose who handles your questions and approvals while you are away.")}
             </p>
-            {!covering && left && <p className="access-cover-hint small">{L('Quem não vê todo o time não aparece aqui: cobrir você é decidir aprovações de qualquer agente.', 'Who doesn’t see the whole team isn’t listed: covering for you means deciding approvals from any agent.')}</p>}
+            {!covering && left && <p className="access-cover-hint small">{L('Quem não vê todo o time não aparece aqui: cobrir você é decidir aprovações de qualquer agente.', "Coverage requires access to the entire team to handle approvals from any agent.")}</p>}
             {!covering && (
               <div className="row row--center cover-row">
                 <select value={to} aria-label={L('Quem', 'Who')} onChange={(e) => setTo(e.target.value)}>
@@ -591,16 +591,16 @@ export function activityText(e: ActivityEntry, s: Pick<State, 'people' | 'agents
     case 'history.wiped':
       return typeof d['agent'] === 'string'
         ? L(`apagou o histórico de ${String(d['agent'])}`, `deleted ${String(d['agent'])}’s history`)
-        : L('apagou o histórico de todos os bots', 'deleted every bot’s history')
+        : L('apagou o histórico de todos os bots', "deleted all message history")
     case 'history.swept':
-      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `history past its period went (${Number(d['messages'] ?? 0)} messages)`)
+      return L(`o histórico além do prazo saiu (${Number(d['messages'] ?? 0)} mensagens)`, `deleted expired messages (${Number(d['messages'] ?? 0)} messages)`)
     case 'db.optimized':
       return typeof d['before'] === 'number' && typeof d['after'] === 'number'
         ? L(
             `reescreveu o arquivo do Tucano (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`,
-            `rebuilt the Tucano's file (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
+            `optimized the database (${(d['before'] / 1024 ** 2).toFixed(1)} MB → ${(d['after'] / 1024 ** 2).toFixed(1)} MB)`
           )
-        : L('reescreveu o arquivo do Tucano', "rebuilt the Tucano's file")
+        : L('reescreveu o arquivo do Tucano', "optimized the database")
   }
   const [thing, verb] = e.kind.split('.')
   const noun = ({ vault_key: L('a chave do Cofre', 'Vault key'), vault_login: L('o login do Cofre', 'Vault login'), agent: L('o agente', 'agent'), connector: L('o conector', 'connector'), skill: L('a skill', 'skill'), routine: L('a rotina', 'routine'), channel: L('o canal', 'channel') } as Record<string, string>)[thing ?? ''] ?? thing
@@ -628,7 +628,7 @@ export function ActivityPane(): ReactNode {
   useEffect(() => void removedPeople().then((r) => setRemoved(new Map(r.map((p) => [p.id, p.name]))), () => {}), [])
   const name = (id?: string): string => (id ? (personById(s, id)?.name ?? removed.get(id) ?? L('Alguém', 'Someone')) : 'Tucano')
   return (
-    <Card title={L('Atividade', 'Activity')} lead={L('Quem fez o quê no Tucano. O que se diz nas DMs nunca aparece aqui.', 'Who did what in this Tucano. What’s said in DMs never shows here.')}>
+    <Card title={L('Atividade', 'Activity')} lead={L('Quem fez o quê no Tucano. O que se diz nas DMs nunca aparece aqui.', "Workspace activity. Private DM content is excluded.")}>
       <div className="row activity-filters">
         <select value={personId} aria-label={L('Pessoa', 'Person')} onChange={(e) => setPersonId(e.target.value)}>
           <option value="">{L('Todas as pessoas', 'Everyone')}</option>

@@ -147,7 +147,7 @@ describe('startup', () => {
   it('puts open minimized right after open at login, off until login start is on', async () => {
     await render({ openAtLogin: false }, 'agentes')
     const minimized = row('Routines', 'Open minimized')
-    expect(minimized.previousElementSibling?.querySelector('strong')?.textContent).toBe('Open when the computer starts')
+    expect(minimized.previousElementSibling?.querySelector('strong')?.textContent).toBe('Launch at login')
     expect(switchOf('Routines', 'Open minimized').disabled).toBe(true)
 
     await render({ openAtLogin: true, launchMinimized: true }, 'agentes')

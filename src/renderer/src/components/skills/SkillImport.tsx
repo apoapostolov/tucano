@@ -44,7 +44,7 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
               <input
                 autoFocus
                 value={q}
-                placeholder={L('Buscar nas skills do seu Claude Code e do Codex', 'Search the skills of your Claude Code and Codex')}
+                placeholder={L('Buscar nas skills do seu Claude Code e do Codex', "Search available skill folders")}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') onClose()
@@ -55,8 +55,8 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
               />
             </div>
             <div className="skill-add__list" ref={list}>
-              {!found && <p className="skill-add__none">{L('Procurando…', 'Looking…')}</p>}
-              {found && shown.length === 0 && <p className="skill-add__none">{L('Nenhuma skill com', 'No skill matching')} “{q.trim()}”.</p>}
+              {!found && <p className="skill-add__none">{L('Procurando…', "Searching…")}</p>}
+              {found && shown.length === 0 && <p className="skill-add__none">{L('Nenhuma skill com', "No matching skills.")} “{q.trim()}”.</p>}
               {shown.map((l, i) => {
                 const on = linked(l)
                 return (
@@ -66,8 +66,8 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
                       <span>{l.origin}</span>
                       {l.category && <span>{l.category}</span>}
                       {l.version && <span>v{l.version}</span>}
-                      {l.scripts && <span className="warn-text">{L('precisa de computador', 'needs a computer')}</span>}
-                      {on && <span className="tag tag--ok">{L('em uso', 'in use')}</span>}
+                      {l.scripts && <span className="warn-text">{L('precisa de computador', "Computer access required")}</span>}
+                      {on && <span className="tag tag--ok">{L('em uso', "In use")}</span>}
                     </span>
                     <span className="skill-add__desc">{l.description}</span>
                     {l.tags && l.tags.length > 0 && (
@@ -94,12 +94,12 @@ export function AddFromTerminal({ onClose }: { onClose: () => void }): ReactNode
             <h3>{picked.name}</h3>
             <p>{picked.description}</p>
             {picked.bodyLength > RECOMMENDED_SKILL_BODY_LENGTH && <p className="warn-text small" role="status">{skillLengthNote(picked.bodyLength)}</p>}
-            {picked.scripts && <p className="warn-text small">{L('Tem scripts: só roda com um agente que tenha computador (Linux ou este computador).', 'It has scripts: it only runs with an agent that has a computer (Linux or this computer).')}</p>}
-            <span className="skill-add__label">{L('Quem usa?', 'Who uses it?')}</span>
+            {picked.scripts && <p className="warn-text small">{L('Tem scripts: só roda com um agente que tenha computador (Linux ou este computador).', "Scripts require an agent with computer access (Linux or this computer).")}</p>}
+            <span className="skill-add__label">{L('Quem usa?', "Assign agents")}</span>
             <AgentPicker value={agents} onChange={setAgents} />
             {error && <p className="note note--error">{error}</p>}
             <div className="skill-add__acts">
-              <span className="muted small">{L('Lida direto do arquivo: o que você mudar nela vale na próxima vez.', 'Read straight from the file: what you change in it applies next time.')}</span>
+              <span className="muted small">{L('Lida direto do arquivo: o que você mudar nela vale na próxima vez.', "Read from the source file on each use. File edits apply next time.")}</span>
               <button className="btn btn--primary btn--sm" onClick={use}>
                 {L('Usar', 'Use')}
               </button>

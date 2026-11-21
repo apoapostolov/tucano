@@ -998,13 +998,15 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Continue on a fallback account or runtime when a subscription limit is reached. ${draft.name || 'The agent'} retries the main model next reply.",
+      "approved": "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'The agent'} tries the main model again.",
       "previous": [
-        "When the main model’s subscription hits its limit (the 5-hour or the weekly one), the reply goes on with the reserve, which can be in another program (Claude Code, Codex…) or another account. On the next reply, ${draft.name || 'the agent'} tries the main one again."
+        "When the main model’s subscription hits its limit (the 5-hour or the weekly one), the reply goes on with the reserve, which can be in another program (Claude Code, Codex…) or another account. On the next reply, ${draft.name || 'the agent'} tries the main one again.",
+        "Continue on a fallback account or runtime when a subscription limit is reached. ${draft.name || 'The agent'} retries the main model next reply."
       ],
       "reviews": [
         "docs/english-copy-proposal.md"
-      ]
+      ],
+      "englishExpressionLiterals": true
     },
     {
       "source": "Conta da reserva",

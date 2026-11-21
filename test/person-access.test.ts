@@ -163,7 +163,7 @@ describe('what a restricted member can reach', () => {
     expect(() => assertAgentVisible(db, bia, 'w1')).not.toThrow()
     expect(() => assertAgentVisible(db, ana, 'hidden')).not.toThrow()
     setLang('en')
-    expect(() => assertAgentVisible(db, bia, 'hidden')).toThrow("That agent isn't available to you.")
+    expect(() => assertAgentVisible(db, bia, 'hidden')).toThrow("You do not have access to this agent.")
   })
 
   it('a channel taken out of their access is not theirs to change, even one they made; one given in the same request is', () => {
@@ -215,7 +215,7 @@ describe('covering for someone', () => {
     const week = Date.now() + 7 * 86_400_000
     expect(() => people.setDelegation(carl, bia.id, week)).toThrow('Bia não vê todo o time, então não pode cobrir ninguém.')
     setLang('en')
-    expect(() => people.setDelegation(carl, bia.id, week)).toThrow("Bia doesn't see the whole team, so they can't cover for anyone.")
+    expect(() => people.setDelegation(carl, bia.id, week)).toThrow("Bia needs access to the entire team to cover for someone.")
     expect(() => people.setDelegation(carl, ana.id, week)).not.toThrow()
   })
 

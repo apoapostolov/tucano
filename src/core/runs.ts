@@ -2980,7 +2980,7 @@ ${note}`,
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
           // A long reply must not keep access that changed after its prompt was built.
           const current = wikiNow()
-          if (!current) return textResult(L('Você não tem acesso à wiki agora.', 'You do not have wiki access now.'), true)
+          if (!current) return textResult(L('Você não tem acesso à wiki agora.', "You no longer have Wiki access."), true)
           // The write tools have their own branch (see WIKI_WRITE_TOOL_NAMES): here it only reads.
           const r = wikiCall(current, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
@@ -2991,7 +2991,7 @@ ${note}`,
           // Its level may have changed mid-turn: read again before a page is touched.
           const current = db.agent(agent.id)
           const view = wikiNow()
-          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', 'You cannot write to the wiki now.'), true)
+          if (!current || !view || wikiAccess(current) !== 'read_write') return textResult(L('Você não pode escrever na wiki agora.', "You no longer have permission to edit the Wiki."), true)
           const r = wikiWrite(wikiWritable, { id: current.id, name: current.name }, name, args, (title) => !!view.page(title), { conversationId: conv.id })
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)

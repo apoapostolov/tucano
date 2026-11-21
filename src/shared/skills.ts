@@ -12,7 +12,7 @@ export function skillLengthNote(length: number): string {
   return excess > 0
     ? L(
         `Receita longa: ${length.toLocaleString(locale())} caracteres, ${excess.toLocaleString(locale())} acima do recomendado de ${RECOMMENDED_SKILL_BODY_LENGTH.toLocaleString(locale())}. Recomendamos encurtar; a receita inteira será mantida.`,
-        `Long recipe: ${length.toLocaleString(locale())} characters, ${excess.toLocaleString(locale())} over the ${RECOMMENDED_SKILL_BODY_LENGTH.toLocaleString(locale())}-character recommendation. Consider shortening it; the full recipe will be kept.`
+        `Long instructions: ${length.toLocaleString(locale())} characters (${excess.toLocaleString(locale())} above the recommended ${RECOMMENDED_SKILL_BODY_LENGTH.toLocaleString(locale())}). Full text is retained.`
       )
     : ''
 }

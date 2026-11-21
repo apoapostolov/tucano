@@ -1162,7 +1162,7 @@ const askCore = (failed: string, method: 'pauseRun' | 'resumeRun' | 'followUpRun
 }
 // A reply put on hold stops before its next tool call or turn, keeping its session and text, and
 // goes on when released, without another model taking over.
-export const pauseRun = (messageId: string): void => askCore(L('Não consegui pausar a resposta.', "I couldn't pause the reply."), 'pauseRun', { messageId })
+export const pauseRun = (messageId: string): void => askCore(L('Não consegui pausar a resposta.', "Could not pause the reply."), 'pauseRun', { messageId })
 export const resumeRun = (messageId: string): void => askCore(L('Não consegui retomar a resposta.', "I couldn't resume the reply."), 'resumeRun', { messageId })
 // The reply goes on from where it ended, in the same row and the same session, with what the person
 // asked for as its next step instead of as another message in the conversation.
@@ -1199,7 +1199,7 @@ export function patchAgent(agentId: string, patch: Partial<Agent>): void {
 }
 
 export const localPath = (messageId: string, path: string): Promise<LocalInfo | null> => call('localPath', { messageId, path })
-export const revealArtifact = (id: string): void => void fire(L('Não consegui mostrar o arquivo.', "I couldn't show the file."), 'revealArtifact', { id })
+export const revealArtifact = (id: string): void => void fire(L('Não consegui mostrar o arquivo.', "Could not show the file."), 'revealArtifact', { id })
 // A copy of what an agent sent, on this computer. In a browser (Tucano as a server) the file is on
 // the server: it comes down under its own name (src/server/artifact-http.ts). On the desktop the
 // app asks where to put it; that's the owner's, at the computer's own window, like revealArtifact.

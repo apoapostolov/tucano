@@ -16,30 +16,30 @@ export function SkillForm({ draft, onChange, onClose }: { draft: SkillInput; onC
     <div className="agent-form">
       <Card title={draft.id ? L(`Editar ${draft.name}`, `Edit ${draft.name}`) : L('Nova skill', 'New skill')}>
         <div className="grid2">
-          <Field label={L('Nome', 'Name')} hint={L('Curto, vira algo como testes-do-core.', 'Short; becomes something like core-tests.')}>
+          <Field label={L('Nome', 'Name')} hint={L('Curto, vira algo como testes-do-core.', "Used to generate an ID such as core-tests.")}>
             <input autoFocus value={draft.name} placeholder={L('testes do core', 'core tests')} onChange={(e) => set({ name: e.target.value })} />
           </Field>
-          <Field label={L('Quando usar', 'When to use')} hint={L('Uma frase. Vai no prompt de cada agente.', 'One sentence. It goes in every agent’s prompt.')}>
+          <Field label={L('Quando usar', 'When to use')} hint={L('Uma frase. Vai no prompt de cada agente.', "One sentence in assigned agents’ prompts.")}>
             <input value={draft.description} placeholder={L('Ao rodar ou consertar os testes do Core', 'When running or fixing the Core tests')} onChange={(e) => set({ description: e.target.value })} />
           </Field>
         </div>
         {draft.source ? (
           <p className="hint">
-            {L('Ligada a', 'Linked to')} <span className="mono">{draft.source}</span>: {L('a receita muda lá, e os agentes leem sempre a versão de agora. Aqui você escolhe quem usa.', 'the recipe changes there, and agents always read the current version. Here you pick who uses it.')}
+            {L('Ligada a', 'Linked to')} <span className="mono">{draft.source}</span>: {L('a receita muda lá, e os agentes leem sempre a versão de agora. Aqui você escolhe quem usa.', "Edit the source file to update instructions. Choose assigned agents here.")}
           </p>
         ) : (
           <>
-            <Field label={L('Receita', 'Recipe')} hint={L('Os passos, em Markdown: comandos exatos, armadilhas, como conferir.', 'The steps, in Markdown: exact commands, pitfalls, how to check.')}>
+            <Field label={L('Receita', "Instructions")} hint={L('Os passos, em Markdown: comandos exatos, armadilhas, como conferir.', "Markdown instructions, commands, cautions, and checks.")}>
               <textarea rows={10} className="mono" value={draft.body} onChange={(e) => set({ body: e.target.value })} />
             </Field>
             {draft.body.length > RECOMMENDED_SKILL_BODY_LENGTH && <p className="hint hint--warn" role="status">{skillLengthNote(draft.body.length)}</p>}
           </>
         )}
-        <Field label={L('Quem usa', 'Who uses it')}>
+        <Field label={L('Quem usa', "Assigned agents")}>
           <AgentPicker value={draft.agents} onChange={(agents) => set({ agents })} />
         </Field>
         <div className="row row--between">
-          <span className="hint">{draft.id ? L('A versão de agora fica no histórico: dá pra voltar.', 'The current version stays in the history: you can go back.') : ''}</span>
+          <span className="hint">{draft.id ? L('A versão de agora fica no histórico: dá pra voltar.', "The current version stays in History for restoration.") : ''}</span>
           <div className="row">
             {error && <span className="field__error">{error}</span>}
             <button className="btn btn--sm btn--ghost" onClick={onClose}>

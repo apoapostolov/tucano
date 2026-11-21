@@ -330,7 +330,7 @@ function HarnessRow({ engine, st, picked, toggle }: { engine: EngineId; st: Engi
           <code className="harness__cmd">{manual}</code>
         </div>
       )}
-      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', 'Installing in the terminal that opened. Once it finishes, it shows up here on its own.')}</p>}
+      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', "Complete installation in the terminal. Tucano detects it automatically.")}</p>}
       {!st.installed && install === 'node' && (
         <p className="hint hint--warn harness__body">
           {L(`O ${ENGINES[engine].label} precisa do Node.js. Instale o Node.js e depois clique em Instalar de novo.`, `${ENGINES[engine].label} needs Node.js. Install Node.js, then click Install again.`)}{' '}
@@ -435,7 +435,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
         </button>
         <label className="grow harness__name" htmlFor={checkId}>
           <strong>{L('Endpoint próprio', 'Your own endpoint')}</strong>
-          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', 'OpenRouter, OmniRoute, Ollama… nothing to install')}</span>
+          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', "OpenRouter, OmniRoute, Ollama; no installation required")}</span>
         </label>
         {st.installed && <span className="tag tag--ok">endpoint</span>}
         {picked && st.loggedIn && !open && (
@@ -452,7 +452,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           <p className="hint">
             {L(
               'Um endereço no padrão da OpenAI (/chat/completions) e a chave dele. Os agentes rodam direto nele, sem Claude Code nem Codex, e cada um usa um dos modelos que você marcar.',
-              'An address in OpenAI’s format (/chat/completions) and its key. Agents run straight on it, with no Claude Code or Codex, each on one of the models you tick.'
+              "Use an OpenAI-compatible API (/chat/completions) and key. Agents use selected models directly, without Claude Code or Codex."
             )}
           </p>
           <div className="endpoint__presets">
@@ -472,7 +472,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           </label>
           <div className="endpoint__actions">
             <button className="btn btn--sm" disabled={!url.trim() || busy !== null} onClick={() => void probe()}>
-              {busy === 'probe' ? L('Buscando…', 'Fetching…') : L('Buscar os modelos', 'Fetch the models')}
+              {busy === 'probe' ? L('Buscando…', "Loading…") : L('Buscar os modelos', "Load models")}
             </button>
             {saved && (
               <button className="btn btn--ghost btn--sm" disabled={busy !== null} onClick={() => void setEndpoint('', []).then(() => (setUrl(''), setListed(null), setChosen([]), setOpen(false)))}>
@@ -484,7 +484,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           {listed && listed.length > 0 && (
             <>
               <div className="endpoint__head">
-                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Models the agents may use (${chosen.length} of ${listed.length})`)}</span>
+                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Allowed models (${chosen.length} of ${listed.length})`)}</span>
                 {listed.length > 8 && <input className="endpoint__filter" value={filter} placeholder={L('Filtrar…', 'Filter…')} onChange={(e) => setFilter(e.target.value)} />}
               </div>
               <div className="endpoint__models" role="group" aria-label={L('Modelos', 'Models')}>
@@ -495,7 +495,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
                   </label>
                 ))}
               </div>
-              <p className="hint">{L('O modelo precisa saber chamar ferramentas: é por elas que um agente pede a outro, pergunta a você e usa os conectores.', 'The model must handle tool calls: that’s how an agent asks another, asks you and uses connectors.')}</p>
+              <p className="hint">{L('O modelo precisa saber chamar ferramentas: é por elas que um agente pede a outro, pergunta a você e usa os conectores.', "Tool calling is required for delegation, questions, and connectors.")}</p>
             </>
           )}
           <div className="endpoint__actions">

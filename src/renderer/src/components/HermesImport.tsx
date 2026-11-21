@@ -18,7 +18,7 @@ function brings(p: HermesProfile): string {
     p.skills > 0 && n(p.skills, 'skill', 'skills'),
     p.routines > 0 && L(n(p.routines, 'rotina', 'rotinas'), n(p.routines, 'routine', 'routines'))
   ].filter((x): x is string => !!x)
-  return parts.length ? parts.join(', ') : L('só o nome', 'just the name')
+  return parts.length ? parts.join(', ') : L('só o nome', "Name only")
 }
 
 export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone: (summary: string) => void }): ReactNode {
@@ -72,9 +72,9 @@ export function HermesImport({ onClose, onDone }: { onClose: () => void; onDone:
   return (
     <Modal title={L('Importar do Hermes', 'Import from Hermes')} onClose={onClose} className="hermes-import">
       <div className="hermes-import__where">
-        <span className="small muted mono">{preview?.path ?? (busy ? L('Procurando a pasta do Hermes…', 'Looking for the Hermes folder…') : '')}</span>
+        <span className="small muted mono">{preview?.path ?? (busy ? L('Procurando a pasta do Hermes…', "Finding Hermes folder…") : '')}</span>
         <button className="btn btn--ghost btn--sm" onClick={pick} disabled={busy}>
-          {preview ? L('Outra pasta…', 'Another folder…') : L('Escolher pasta…', 'Choose folder…')}
+          {preview ? L('Outra pasta…', "Change folder…") : L('Escolher pasta…', 'Choose folder…')}
         </button>
       </div>
 

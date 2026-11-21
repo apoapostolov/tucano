@@ -35,7 +35,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {L('Todos os agentes', 'All agents')}
         </button>
         <button type="button" className={everyone ? '' : 'is-active'} onClick={() => everyone && onChange(agents.map((a) => a.id))}>
-          {L('Só alguns', 'Only some')}
+          {L('Só alguns', "Selected agents")}
         </button>
       </div>
       {!everyone && (
@@ -43,7 +43,7 @@ export function AgentPicker({ value, onChange }: { value: string[]; onChange: (i
           {agents.map((a) => {
             const on = value.includes(a.id)
             return (
-              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', 'At least one agent uses the skill') : undefined} onClick={() => toggle(a.id)}>
+              <button key={a.id} type="button" className={`agent-pill ${on ? 'is-on' : ''}`} title={on && value.length === 1 ? L('Pelo menos um agente usa a skill', "At least one agent must be assigned") : undefined} onClick={() => toggle(a.id)}>
                 <AgentAvatar agent={a} size={18} />
                 {a.name}
                 {on && <Icon name="check" size={12} />}
