@@ -26,7 +26,8 @@
     "check:copy:render": "node scripts/check-english-copy.mjs",
     "check:copy:approved": "node scripts/maintain-english-copy.mjs check",
     "fix:copy": "node scripts/maintain-english-copy.mjs apply",
-    "test:copy-overrides": "node scripts/test-copy-overrides.mjs"
+    "test:copy-overrides": "node scripts/test-copy-overrides.mjs",
+    "export:copy": "node scripts/export-copy-catalogue.mjs"
   },
   "devDependencies": {
     "@babel/parser": "7.29.9",

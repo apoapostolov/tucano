@@ -34,6 +34,22 @@ that explicitly permit reviewed English literals within interpolation still pres
 expression's operators, identifiers and structure. Application uses current source offsets,
 so context restrictions cannot be bypassed by matching another occurrence in the same file.
 
+## Export the approved copy
+
+`npm run export:copy` writes two files to `.tucano-local/strings` by default (override with
+`--out DIR`, add `--bom` for Excel):
+
+- `strings-processed.csv` has one row per registered string: the Portuguese source, the
+  approved English, the files and contexts it belongs to, earlier variants, how many live
+  occurrences it has, and whether the source still carries it. `status` is `live`, `drifted`
+  or `absent`, so strings that only ever lived on an unmerged branch stay visible but marked.
+- `strings-inventory.csv` has one row per `L()` pair in `src`, with the registry's approved
+  text beside the live one. It is the list a translation file is built from, and the gap
+  between reviewed and unreviewed strings is the count where `status` is `unreviewed`.
+
+Neither file is committed: they are derived from the registry and the source, so regenerate
+them after a review or a merge instead of editing them.
+
 ## The two copy checks on `next`
 
 `next` carries two different checks and they answer different questions.
