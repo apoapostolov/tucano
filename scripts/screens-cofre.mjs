@@ -84,6 +84,8 @@ const rows = await win.locator('.vault-import__lines .table__row').count()
 const skipped = await win.locator('.vault-import__lines .tag--danger').count()
 const already = await win.locator('.vault-import__lines label').count()
 console.log('csv import, rows:', rows, 'already saved:', already, 'skipped:', skipped)
+await win.click('.modal__foot .btn--ghost') // close it: the next step clicks the sidebar
+await win.waitForSelector('.vault-import__lines', { state: 'detached' })
 
 await win.locator('.nav-item', { hasText: /Aprovações|Approvals/ }).first().click()
 await win.waitForSelector('.key-request')
