@@ -539,7 +539,7 @@ describe('work handed down the tree', () => {
     r.cancelQuestion(claras.id, db.owner())
     await r.idle()
     expect(db.message(claras.id)?.run).toMatchObject({ status: 'done', cancelled: true })
-    expect(db.message(relay.id)?.run?.status).toBe('done')
+    expect(db.message(relay.id)?.run).toMatchObject({ status: 'done', cancelled: true })
     expect(db.question(relay.id)?.state).toBe('closed')
     expect(db.delegationAt(root!.id)?.state).toBe('done')
     expect(by('clara', dmOf('clara'))).toHaveLength(2)

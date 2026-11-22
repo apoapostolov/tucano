@@ -28,7 +28,7 @@ import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom } from './tuca'
 import { appliesNow, decidedCards, keepDecided } from './tuca-apply'
 import { LER_GUIA, readGuide } from './guide'
-import { pendingAgents, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
+import { feedbackFrom, PROPOR_FEEDBACK, pendingAgents, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
 import type { Db } from './db'
 import type { Engine, TurnImage } from './engines/types'
 import { accountDir } from './engines/detect'
@@ -340,6 +340,7 @@ export interface RunnerDeps {
   applyNow?: (messageId: string, personId: string) => void // a Tuca reply ended: what it proposed inside the app is applied for that person (Settings.tucaApplyNow); without it, everything stays a card
   wiki?: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'kinds' | 'view' | 'heldTitles' | 'outOfReach' | 'addChange' | 'applyChange' | 'save' | 'readOnly'> // without it, agents have no wiki
   wikiCurator?: { afterReply(conversationId: string): void } // reads the conversation after a reply, to keep what lasts
+  feedbackOn?: () => boolean // whether this workspace can send feedback
   timers?: { wait(ms: number, signal?: AbortSignal): Promise<void>; now(): number } // how the app waits on a pending result; tests pass a fake clock
 }
 
@@ -2507,7 +2508,7 @@ ${note}`,
       ...(canSeeImages ? [VER_IMAGEM] : []),
       ...(canReadFiles ? [LER_ANEXO] : []),
       ...(proposes ? [PROPOR_AGENTE, PROPOR_TIME, ...PROPOSAL_TOOLS()] : []),
-      ...(helps ? [LER_GUIA, VER_ESTADO] : []),
+      ...(helps ? [LER_GUIA, VER_ESTADO, ...(this.deps.feedbackOn?.() ? [PROPOR_FEEDBACK] : [])] : []),
       ...(team.length ? DELEGATION_TOOLS : []),
       ...(computers ? computerTools(agent).map((t) => withKeys(t.name === 'bash' ? withRules(t) : t)) : []),
       ...(browser ? browserTools() : []),
@@ -2764,6 +2765,19 @@ ${note}`,
           const page = readGuide(args['pagina'])
           if (!page.error) addSteps({ id: randomUUID(), label: L('Leu o guia', 'Read the guide'), detail: String(args['pagina']), status: 'done' })
           return textResult(page.text, page.error)
+        }
+
+        if (name === PROPOR_FEEDBACK.name && helps && this.deps.feedbackOn?.()) {
+          const r = feedbackFrom(args)
+          if (!r.draft) return textResult(r.error!, true)
+          msg.run = { ...msg.run!, feedbackDraft: r.draft }
+          addSteps({ id: randomUUID(), label: L('Escreveu um feedback', 'Wrote feedback'), detail: r.draft.kind, status: 'done' })
+          return textResult(
+            L(
+              'O card com o feedback está na sua resposta. A pessoa revisa e envia por ele: diga isso em uma linha, sem repetir o texto.',
+              'The card with the feedback is in your reply. The person reviews it and sends it from there: say so in one line, without repeating the text.'
+            )
+          )
         }
 
         if (name === VER_ESTADO.name && helps) {
@@ -3838,7 +3852,7 @@ ${note}`,
 
     // Handed work, as it stands now (cancelled meanwhile, it's no one's any more).
     const handedNow = handed ? this.handedIn(msg) : undefined
-    const base = { endedAt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, route: msg.run?.route, agentDraft: msg.run?.agentDraft, proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId }
+    const base = { endedAt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, route: msg.run?.route, feedbackDraft: msg.run?.feedbackDraft, agentDraft: msg.run?.agentDraft, proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId }
     if (control.reason === 'stopped') {
       save({ text: kept(msg.text), run: { ...base, ...again, status: 'stopped', steps: closeThinking('error', L('Parado', 'Stopped')) } })
     } else if (control.reason === 'loop' || control.reason === 'errors' || control.reason === 'stall' || control.reason === 'sleeping') {
@@ -4444,6 +4458,52 @@ ${note}`,
     await this.send(asked.conversationId, '', [], asked.threadId, by.id, { answers: asked.id })
   }
 
+  // Dismissed with Cancelar: an ordinary question closes without waking its agent. Its next turn reads that it
+  // was cancelled (context.ts). Work handed down the tree waits on it, though: there, cancelling means "I won't answer",
+  // not "stop", so whoever does the work goes on without the answer, assuming what it must and saying so.
+  cancelQuestion(messageId: string, by: Person): void {
+    const { db, emit } = this.deps
+    const asked = this.decidable(messageId, by)
+    const q = db.question(messageId)
+    if (q?.state === 'open') {
+      db.saveQuestion({ ...q, state: 'closed' })
+      emit({ type: 'inbox' })
+    }
+    this.update(asked, { run: { ...asked.run!, status: 'done', cancelled: true } })
+    // The question of whoever does handed work, cancelled right where it was asked.
+    const handed = asked.run?.handed ? db.delegation(asked.run.handed) : asked.threadId ? db.delegationAt(asked.threadId) : undefined
+    if (handed?.state === 'open' && handed.asking === asked.id) {
+      if (handed.askingTold) this.closeRelay(handed, asked, true)
+      return this.goOnWithout(handed)
+    }
+    // The question the asker took up to the person, from that work: each request it was waiting on goes on.
+    if (asked.author.kind !== 'agent') return
+    for (const d of db.delegationsFrom(asked.author.id, asked.conversationId, asked.threadId)) {
+      const below = d.state === 'open' && d.asking && d.askingTold ? db.message(d.asking) : undefined
+      if (below && below.at <= asked.at) this.goOnWithout(d)
+    }
+  }
+
+  // A question on handed work nobody will answer: it closes, and whoever does the work goes on without it.
+  private goOnWithout(d: Delegation): void {
+    const { db } = this.deps
+    const q = d.asking ? db.message(d.asking) : undefined
+    if (q?.run?.status === 'waiting_input') this.update(q, { run: { ...q.run, status: 'done', cancelled: true } })
+    this.keep({ ...d, asking: undefined, askingTold: false })
+    const to = db.agent(d.to)
+    const conv = db.conversation(d.conversationId)
+    if (!to || to.archived || !conv || this.paused) return
+    void this.startReply(to, conv, {
+      depth: 1,
+      threadId: workThread(d),
+      handed: d.id,
+      task: L(
+        'A pessoa preferiu não responder a sua pergunta. Siga com o pedido sem a resposta: assuma o que for mais razoável e diga o que assumiu.',
+        "The person chose not to answer your question. Go on with the request without the answer: assume what's most reasonable and say what you assumed."
+      )
+    })
+  }
+
   // The user took over the agent's browser ("Assumir") and handed it back
   // ("Devolver" or closing the window) — exactly what the agent asked for with
   // ask_user, so it goes on by itself instead of waiting for a message.
@@ -4868,7 +4928,7 @@ ${note}`,
   // A question that went up and that a person answered right where it was left: the question whoever asked
   // took to the person, from there, has nothing left to ask, and stops waiting. Not when it took up another
   // request's question too, still waiting: that one is still to answer there.
-  private closeRelay(d: Delegation, asked: Message): void {
+  private closeRelay(d: Delegation, asked: Message, cancelled = false): void {
     const { db, emit } = this.deps
     const others = db.delegationsFrom(d.from, d.originConversationId, d.originThreadId).some((x) => x.id !== d.id && x.state === 'open' && x.asking && x.askingTold)
     if (others) return
@@ -4876,7 +4936,7 @@ ${note}`,
       .messagesWithRun(['waiting_input'])
       .find((m) => m.conversationId === d.originConversationId && m.threadId === d.originThreadId && m.author.kind === 'agent' && m.author.id === d.from && m.at >= asked.at)
     if (!relay) return
-    this.update(relay, { run: { ...relay.run!, status: 'done' } })
+    this.update(relay, { run: { ...relay.run!, status: 'done', ...(cancelled ? { cancelled: true } : {}) } })
     const q = db.question(relay.id)
     if (q?.state === 'open') {
       db.saveQuestion({ ...q, state: 'closed' })

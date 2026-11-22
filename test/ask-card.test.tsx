@@ -101,6 +101,14 @@ describe('cancelling a decisions card', () => {
     expect(renderToStaticMarkup(<AskCard id="m1" questions={decisions} mode="done" badge="Respondida" />)).not.toContain('Cancelar')
   })
 
+  it('keeps synthetic preview questions local, without offering stored-question cancellation', () => {
+    const html = renderToStaticMarkup(<AskCard id="preview" questions={decisions} mode="answer" badge="Preview" onSend={() => {}} />)
+    expect(html).not.toContain('Cancelar')
+    const review = renderToStaticMarkup(<AskCard id="preview-review" questions={decisions} saved={[{ chosen: [0] }, { text: 'Friday' }]} mode="answer" badge="Preview" onSend={() => {}} />)
+    expect(review).toContain('Confira antes de enviar')
+    expect(review).not.toContain('Cancelar')
+  })
+
   it('cancelled, says so on every decision and does not claim it was answered', () => {
     const html = renderToStaticMarkup(<AskCard id="m1" questions={decisions} mode="done" badge="Cancelada" cancelled />)
     expect(html).toContain('Cancelada')
