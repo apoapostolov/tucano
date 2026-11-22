@@ -2609,6 +2609,14 @@ function AgentSkills({ agentId, name }: { agentId: string; name: string }): Reac
   )
 }
 
+// How tall the reasoning preview is before it scrolls, in lines: the fork's own setting, carried
+// through the 0.2.45 merge (upstream has no height control; Thought.tsx still reads thinkingSize).
+export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
+  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines before scrolling.') },
+  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines before scrolling.') },
+  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines before scrolling.') }
+]
+
 // ---------- tabs ----------
 
 type TabList = readonly (readonly [string, string])[]
@@ -3482,6 +3490,20 @@ export function SettingsPage(): ReactNode {
                   </p>
                 </div>
                 <Toggle on={settings.showThinking === true} onChange={(v) => updateSettings({ showThinking: v })} />
+              </div>
+              <div className="key-row">
+                <Icon name="expand" />
+                <div className="grow">
+                  <strong>{L('O tamanho do raciocínio', 'Reasoning panel height')}</strong>
+                  <p className="muted small">{THINKING_SIZES().find((c) => c.value === (settings.thinkingSize ?? 'md'))!.hint}</p>
+                </div>
+                <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', 'Reasoning panel height')}>
+                  {THINKING_SIZES().map((c) => (
+                    <button key={c.value} type="button" role="radio" aria-checked={(settings.thinkingSize ?? 'md') === c.value} className={(settings.thinkingSize ?? 'md') === c.value ? 'is-active' : ''} onClick={() => updateSettings({ thinkingSize: c.value })}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </Card>
             <Card title={L('Falar com quem faz o Tucano', 'Talk to the people who make Tucano')}>
