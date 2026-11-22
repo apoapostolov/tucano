@@ -1159,6 +1159,7 @@ setInterval(() => {
 
 const runner = new Runner({
   db,
+  feedbackOn: () => feedback.on,
   engines: engineImpls,
   settings: () => enginesReady.then(settings),
   emit,
@@ -2094,6 +2095,11 @@ const api: Handlers = {
   },
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
+  // The queue in the work drawer: a row that goes now, the order rows were dragged into, and a row
+  // taken back out (its message goes with it, so it never runs).
+  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
+  reorderQueued: ({ conversationId, ids }, ctx) => (reach(ctx, conversationId), runner.reorderQueued(conversationId, ids)),
+  dropQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.dropQueued(messageId)),
 
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
@@ -3446,6 +3452,7 @@ const api: Handlers = {
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),
+  cancelQuestion: ({ messageId }, ctx) => runner.cancelQuestion(messageId, ctx.person),
   runRoutine: ({ id }, ctx) => {
     const r = db.routine(id)
     if (!r) throw new Error(L('Essa rotina não existe mais.', 'That routine no longer exists.'))

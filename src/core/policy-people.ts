@@ -92,6 +92,9 @@ export const NEEDS: Record<Method, Need> = {
   threadMessages: 'anyone',
   stopRun: 'anyone',
   retryRun: 'anyone',
+  startQueued: 'anyone',
+  reorderQueued: 'anyone',
+  dropQueued: 'anyone',
   continueRun: 'anyone',
   deleteMessage: 'anyone', // a conversation one can reach; a channel's own rules decide more
   continueJob: 'anyone',

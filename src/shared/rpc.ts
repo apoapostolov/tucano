@@ -48,6 +48,9 @@ export interface Api {
   sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: SendMode; steerTo?: string; reply?: ReplyTarget }): void // threadId: a reply in the thread that message started; mode: how it joins a reply already running there; steerTo: the running reply a steer is for, when more than one runs there; reply: to that message, or to the excerpt of it I selected
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
+  startQueued(p: { messageId: string }): void // a prompt waiting in the queue goes now, past the cap
+  reorderQueued(p: { conversationId: string; ids: string[] }): void // the order the queue's rows were dragged into
+  dropQueued(p: { messageId: string }): void // a prompt taken back out of the queue, and its message with it
   retryRun(p: { messageId: string }): void
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
   deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the room with its thread: the ids that went

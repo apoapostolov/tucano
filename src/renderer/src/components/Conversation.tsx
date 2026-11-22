@@ -17,6 +17,7 @@ import { saidAt } from '../../../shared/types'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
 import { canFollowUp, canResume } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
+import { lentComputersOf } from '../lent'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
 import { canEditChannel,
@@ -371,7 +372,7 @@ export function ConversationView({ id }: { id: string }): ReactNode {
             members={members}
             mentionOnly={allMentionOnly(conv, members)}
             listening={anyListening(conv, members)}
-            placeholder={dmAgent ? L(`Mensagem pra ${dmAgent.name}`, `Message ${dmAgent.name}`) : L(`Mensagem em #${title}`, `Message #${title}`)}
+            placeholder={dmAgent ? L(`Mensagem pra ${dmAgent.name}`, `Message ${dmAgent.name}`) : L(`Mensagem em #${title}`, `Message #${title}`)} notice={dmAgent && <ComputerOff agent={dmAgent} />}
             onJump={jumpTo}
           />
         )}
@@ -380,6 +381,35 @@ export function ConversationView({ id }: { id: string }): ReactNode {
         <ThreadPanel rootId={thread} conv={conv} title={conv.kind === 'channel' ? `#${title}` : title} members={members} {...(jump && jump.rootId === thread ? { focusId: jump.id, focusKey: jump.n } : {})} />
       ) : (
         <SidePanel />
+      )}
+    </div>
+  )
+}
+
+export function ComputerOff({ agent }: { agent: Agent }): ReactNode {
+  const connectors = useStore((s) => s.connectors)
+  const people = useStore((s) => s.people)
+  const you = useStore((s) => s.you)
+  const off = lentComputersOf({ connectors, people, you }, agent).filter((c) => !c.on)
+  if (!off.length) return null
+  const names = off.map((c) => c.name)
+  const which = names.length === 1 ? names[0]! : `${names.slice(0, -1).join(', ')} ${L('e', 'and')} ${names.at(-1)}`
+  const one = names.length === 1
+  return (
+    <div className="computer-off" role="status" title={L('Desligado: o app do Tucano está fechado lá. Ao abrir, volta sozinho.', "Tucano is closed on this computer. Open it to reconnect.")}>
+      <Icon name="laptop" size={14} />
+      <span className="grow">
+        {L(`${one ? '' : 'Os computadores '}`, `${one ? '' : 'The computers '}`)}
+        <b>{which}</b>
+        {L(
+          ` ${one ? 'está desligado' : 'estão desligados'}. ${agent.name} responde, mas só usa ${one ? 'esse computador' : 'eles'} quando ${one ? 'ele ligar' : 'ligarem'}.`,
+          ` ${one ? 'is' : 'are'} off. ${agent.name} answers, but only uses ${one ? 'it' : 'them'} once ${one ? "it's" : "they're"} back on.`
+        )}
+      </span>
+      {off.some((c) => c.mine) && (
+        <button className="text-btn small" onClick={() => navigate({ kind: 'connectors' })}>
+          {L('Ver computadores', 'See computers')}
+        </button>
       )}
     </div>
   )
@@ -2255,6 +2285,11 @@ const stepsMemory = (conversationId: string): string => `steps:${conversationId}
 // One quiet line: what the agent is doing now (and for how long), or how many steps it took. The
 // steps themselves open on a click, from the line or from the handle beside the list; the reasoning
 // and the pill that acts on a running reply sit under them, in that order.
+// One reply's run as the conversation draws it: its steps, with the steer and Stop in the steps row.
+export function RunBlock({ message }: { message: Message }): ReactNode {
+  return <RunSteps message={message} />
+}
+
 export function RunSteps({ message }: { message: Message }): ReactNode {
   const run = message.run!
   // Every step (what the app has always done), the latest few, or one line of current activity: the
@@ -3548,7 +3583,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
 // `tools`: a screen's own control in the bar (the Tuca's model, on his builder screen), in place of the hint.
 // `mentionOnly`: a channel that keeps its agent in the room, answering only when mentioned.
 // `listening`: a channel where Jev hears each message and brings the agent in when the work needs it.
-export function Composer({ conversationId, threadId, members, mentionOnly, listening, placeholder, tools, onJump }: {
+export function Composer({ conversationId, threadId, members, mentionOnly, listening, placeholder, tools, onJump, notice }: {
   conversationId: string
   threadId?: string
   members: Agent[]
@@ -3557,6 +3592,7 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
   placeholder: string
   tools?: ReactNode
   onJump?: (messageId: string, threadId?: string) => void
+  notice?: ReactNode // one quiet line tucked above the field (a computer its agent uses is off)
 }): ReactNode {
   const key = threadId ?? conversationId // the draft's
   // The field starts with the conversation's draft, not empty: StrictMode (in dev) unmounts
@@ -3888,6 +3924,7 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
       )}
       {/* The work this conversation is carrying, above the field; in a thread, it isn't there. */}
       {!threadId && <WorkDrawer key={conversationId} conversationId={conversationId} {...(onJump ? { onJump } : {})} />}
+      {notice}
       <div className="composer">
         {replyId && (
           <div className="composer__reply">
