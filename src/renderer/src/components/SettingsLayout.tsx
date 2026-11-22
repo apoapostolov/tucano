@@ -1,6 +1,6 @@
 import { createContext, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
-import { settingsGroupLabel, type SettingsHit, type SettingsPageId, type SettingsSection } from '../settings-structure'
+import { inStrip, settingsGroupLabel, type SettingsHit, type SettingsPageId, type SettingsSection } from '../settings-structure'
 import { Icon, type IconName } from './ui'
 
 export const SETTINGS_SCROLL_MS = 280
@@ -55,7 +55,7 @@ export function SettingsGroups({ groups, current, onPick }: { groups: readonly S
 // a link, so a subject this person's role leaves out is never a dead anchor.
 export function SettingsJumps({ sections }: { sections: readonly SettingsSection[] }): ReactNode {
   const [present, setPresent] = useState<readonly string[] | null>(null)
-  const listed = sections.filter((section) => section.visible)
+  const listed = sections.filter((section) => section.visible && inStrip(section))
   const available = present ? listed.filter((section) => present.includes(section.id)) : listed
   const root = useRef<HTMLElement>(null)
   const frame = useRef<number | null>(null)

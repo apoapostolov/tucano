@@ -74,7 +74,10 @@ describe('placement validation rejects a control without a home', () => {
       'const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {',
       '  geral: [\'app-appearance\']',
       '}',
-      ''
+      '',
+      'export function settingsTabStructure(tab: string): readonly string[] {',
+      '  return tabSections[tab] ?? []',
+      '}',
     ].join('\n'))
     writeFileSync(join(root, 'src/renderer/src/components/Pages.tsx'), page)
     writeFileSync(join(root, 'src/shared/types.ts'), `export interface Settings {\n  ${settings}: 'dark'\n}\n`)
@@ -86,30 +89,49 @@ describe('placement validation rejects a control without a home', () => {
     }
   }
   const section = (id: string, keys: string) => `    { id: '${id}', page: 'geral', label: 'Appearance', keys: [${keys}], scope: 'personal', visible: true },`
+  // A Settings page in the shape the checker reads: a declared group list, and a local helper that
+  // says which group is open. The body is what the group `geral` draws.
+  const page = (body: string) => [
+    'export function SETTINGS_TABS() {',
+    "  return ['geral']",
+    '}',
+    'export function SettingsPage() {',
+    '  const on = (group: string) => !searching && tab === group',
+    '  return (',
+    '    <>',
+    `      {on('geral') && (${body})}`,
+    '      {updateSettings({ surveys: true })}',
+    '    </>',
+    '  )',
+    '}'
+  ].join('\n')
 
   it('accepts a declared section with its card on the page', () => {
-    const result = fixture(section('app-appearance', "'theme'"), 'const a = <Card section="app-appearance" />')
+    const result = fixture(section('app-appearance', "'theme'"), page('<Card section="app-appearance" />'))
+    expect(result.failures).toEqual([])
     expect(result.passed).toBe(true)
   })
 
   it('rejects a section whose card never renders', () => {
-    const result = fixture(section('app-appearance', "'theme'"), 'const a = <p>nothing</p>')
+    const result = fixture(section('app-appearance', "'theme'"), page('<p>nothing</p>'))
     expect(result.passed).toBe(false)
-    expect(result.failures).toContain('Section declares no rendered card: app-appearance')
+    expect(result.failures).toContain('Section app-appearance is listed for tab geral, but no card renders its anchor')
   })
 
   it('rejects a card that belongs to no section, and a key owned twice', () => {
-    const orphan = fixture(section('app-appearance', "'theme'"), 'const a = <Card section="app-appearance" />\nconst b = <Card section="app-typo" />')
-    expect(orphan.failures).toContain('app-typo is rendered without a declared home: missing')
-    const duplicate = fixture(section('app-appearance', "'theme'") + '\n' + section('app-other', "'theme'"), 'const a = <Card section="app-appearance" />\nconst b = <Card section="app-other" />')
+    const orphan = fixture(section('app-appearance', "'theme'"), page('<><Card section="app-appearance" /><Card section="app-typo" /></>'))
+    expect(orphan.failures.some(failure => failure.startsWith('Undeclared section rendered: app-typo ('))).toBe(true)
+    const duplicate = fixture(section('app-appearance', "'theme'") + '\n' + section('app-other', "'theme'"), page('<><Card section="app-appearance" /><Card section="app-other" /></>'))
     expect(duplicate.failures).toContain('theme is owned by both app-appearance and app-other')
   })
 
-  it('rejects a section the tab bar never lists, and a key Settings does not have', () => {
-    const unlisted = fixture(section('app-missing', "'theme'"), 'const a = <Card section="app-appearance" />\nconst b = <Card section="app-missing" />')
-    expect(unlisted.failures).toContain('Section has no tab in tabSections: app-missing')
-    const unknown = fixture(section('app-appearance', "'breakingBad'"), 'const a = <Card section="app-appearance" />')
-    expect(unknown.failures).toContain('app-appearance owns breakingBad, which Settings does not declare')
+  it('rejects a section the tab bar never lists, and a key no section owns', () => {
+    const unlisted = fixture(section('app-missing', "'theme'"), page('<Card section="app-missing" />'))
+    expect(unlisted.failures.some(failure => failure.startsWith('Section app-missing is rendered in pane geral, but no tab in settings-structure.ts lists it'))).toBe(true)
+    // A key is owned by the section whose card writes it. A card writing one that settings-structure.ts
+    // gives to nobody has no home, and the checker names it instead of letting it pass.
+    const unknown = fixture(section('app-appearance', "'theme'"), page('<Card section="app-appearance">{updateSettings({ breakingBad: true })}</Card>'))
+    expect(unknown.failures.some(failure => failure.startsWith('breakingBad is written in app-appearance, but settings-structure.ts declares no section for it'))).toBe(true)
   })
 })
 

@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Root } from 'react-dom/client'
 import { setLang } from '../src/shared/lang'
 import { SettingsJumps, SettingsResults } from '../src/renderer/src/components/SettingsLayout'
-import { searchSettings, settingsGroups, settingsStructure } from '../src/renderer/src/settings-structure'
+import { inStrip, searchSettings, settingsGroups, settingsStructure } from '../src/renderer/src/settings-structure'
 
 const { window, document } = parseHTML('<!doctype html><html><body><div id="root"></div></body></html>')
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
@@ -49,7 +49,10 @@ const { createRoot } = await import('react-dom/client')
 
 const access = { admin: true, owner: true, team: false, servers: false, extensions: true }
 const ALL = settingsStructure(access)
-const SECTIONS = ALL.filter(section => section.visible)
+const VISIBLE = ALL.filter(section => section.visible)
+// The row names the subjects of the open group; one that reads inside the card above it (nav: false)
+// keeps its card and its anchor, and gets no second way to the same place.
+const SECTIONS = VISIBLE.filter(inStrip)
 let root: Root
 let skipped: string | null = null
 
@@ -104,6 +107,22 @@ describe('settings jump row', () => {
     await render()
     expect(links()).toHaveLength(SECTIONS.length - 1)
     expect(links().map(link => link.getAttribute('href'))).not.toContain(`#settings-${SECTIONS[1]!.id}`)
+  })
+
+  it('names no link for a subject that reads inside the card above it, and still draws its card', async () => {
+    const inside = VISIBLE.find(section => !inStrip(section))
+    expect(inside, 'a subject declared with nav: false').toBeDefined()
+    await act(async () => root.render(
+      <div className="page__scroll">
+        <div className="settings-groups" />
+        <SettingsJumps sections={VISIBLE} />
+        {VISIBLE.map(section => (
+          <div key={section.id} className="card" id={`settings-${section.id}`} data-settings-section={section.id} tabIndex={-1} />
+        ))}
+      </div>
+    ))
+    expect(links().map(link => link.getAttribute('href'))).not.toContain(`#settings-${inside!.id}`)
+    expect(document.querySelector(`#settings-${inside!.id}`)).not.toBeNull()
   })
 
   it('animates a pointer selection with ease-in-out, parks the subject under the groups and focuses it without a second scroll', async () => {

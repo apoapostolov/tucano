@@ -14,13 +14,9 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 // Cards the page renders without a section anchor, by their English title. Each one is work that
 // belongs to no tab yet (see the comments beside them in Pages.tsx). A card that gains an anchor
 // leaves this list; a new unanchored card fails.
-export const UNOWNED_CARDS = [
-  { card: 'Talk to the people who make Tucano', reason: 'feedback and surveys: app chrome, no tab of its own' },
-  { card: 'Sidebar', reason: 'hide-empty toggles: app-sidebar is declared but has no card in a tab yet' },
-  { card: 'Recovery', reason: 'agents-recovery is declared and stays out of the tabs until its card has an anchor' },
-  { card: 'Browser Use', reason: 'the click classifier job: no section declared yet' },
-  { card: 'Skill folders', reason: 'agents-skills is declared but no tab lists it yet' }
-];
+// Every card on Settings now carries a section of its own, so this list is empty: the check below
+// fails the moment a new card is drawn without one, and fails again if an entry here outlives its card.
+export const UNOWNED_CARDS = [];
 
 // Settings keys written by a card that no section declares yet. The feedback card's survey toggle
 // is the only one: it lives in app chrome that settings-structure.ts does not describe. A key that
@@ -140,23 +136,42 @@ export function inspectSettingsPlacement(workspace, options = {}) {
     children(node).forEach(collectTabs);
   };
   collectTabs(tabList?.body);
-  for (const tab of tabs.keys()) {
-    if (!declaredTabs.has(tab)) failures.push(`settings-structure.ts lists sections for tab ${tab}, which the Settings page does not declare in SETTINGS_TABS`);
+  // The groups at the top of Settings are built from settings-structure.ts (`settingsGroups(...)`), so a
+  // tab listed there is a tab this page draws by construction; a hand-written list must still name them.
+  const derivedTabs = find(tabList?.body, n => n.type === 'CallExpression' && n.callee.type === 'Identifier' && n.callee.name === 'settingsGroups');
+  if (!derivedTabs) {
+    for (const tab of tabs.keys()) {
+      if (!declaredTabs.has(tab)) failures.push(`settings-structure.ts lists sections for tab ${tab}, which the Settings page does not declare in SETTINGS_TABS`);
+    }
   }
-  const pane = find(page, n => n.type === 'VariableDeclarator' && n.id.name === 'pane')?.init;
-  const paneArgument = pane?.params?.[0];
-  const paneBody = pane?.body;
-  if (!(pane?.type === 'ArrowFunctionExpression' && paneArgument?.type === 'Identifier' &&
-    paneBody?.type === 'BinaryExpression' && paneBody.operator === '===' &&
-    ((paneBody.left.name === 'tab' && paneBody.right.name === paneArgument.name) || (paneBody.right.name === 'tab' && paneBody.left.name === paneArgument.name)))) {
-    throw new Error('SettingsPage must render from pane(tab): the `pane` helper comparing the open tab.');
-  }
+  // The helper that says which group a card belongs to: `pane(group)` or, since the five groups became
+  // sections with a jump row, `on(group)`. Either way it is a local arrow comparing the open tab.
+  // `on` reads `!searching && tab === group`, so the comparison may sit inside a larger expression:
+  // what matters is that the helper decides by the open tab.
+  const comparesTab = (body, name) => {
+    const hit = node => {
+      if (!node) return false;
+      if (node.type === 'BinaryExpression' && node.operator === '===' &&
+        ((node.left?.name === 'tab' && node.right?.name === name) || (node.right?.name === 'tab' && node.left?.name === name))) return true;
+      return children(node).some(hit);
+    };
+    return hit(body);
+  };
+  const helper = ['pane', 'on']
+    .map(name => find(page, n => n.type === 'VariableDeclarator' && n.id.name === name))
+    .find(node => {
+      const init = node?.init;
+      const argument = init?.params?.[0];
+      return init?.type === 'ArrowFunctionExpression' && argument?.type === 'Identifier' && comparesTab(init.body, argument.name);
+    });
+  if (!helper) throw new Error('SettingsPage must render from pane(tab) or on(tab): the local helper comparing the open tab.');
+  const paneName = helper.id.name;
 
   const paneNames = node => {
     const names = [];
     const walk = current => {
       if (!current) return;
-      if (current.type === 'CallExpression' && current.callee.type === 'Identifier' && current.callee.name === 'pane') {
+      if (current.type === 'CallExpression' && current.callee.type === 'Identifier' && current.callee.name === paneName) {
         const name = literal(current.arguments[0]);
         if (name) names.push(name);
         return;
@@ -199,7 +214,9 @@ export function inspectSettingsPlacement(workspace, options = {}) {
         } else if (name === 'Card') {
           const section = literal(attribute('section')?.value);
           if (section) {
-            claim(section, { ...context, line: opening.loc.start.line });
+            // The five groups anchor a card with `SectionAnchor id` and the card names the same
+            // section again: one card, one claim. A second claim is only a real duplicate elsewhere.
+            if (section !== context.section) claim(section, { ...context, line: opening.loc.start.line });
             next.section = section;
             next.unanchored = false;
           } else if (!context.section && context.panes.some(paneName => tabs.has(paneName))) {

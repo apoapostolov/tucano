@@ -1,4 +1,4 @@
-import { L, locale, type Lang } from '../../../shared/lang'
+import { L, lang, locale, type Lang } from '../../../shared/lang'
 import { nodeOf } from '../../../shared/node-link'
 import { hasMonthlyLimit, safeLimit } from '../../../shared/limits'
 import { instructionLengthNote } from '../../../shared/instructions'
@@ -16,6 +16,7 @@ import {
   newAgentDraft,
   openDm,
   refreshEngines,
+  setClassifierKey,
   saveAgent,
   settleDraft,
   slug,
@@ -105,6 +106,8 @@ import { confirmDeleteAgent, confirmDialog, ContextMenu, type MenuItem, type Men
 import { Modal } from './Modal'
 import { AgentAvatar, AVATARS, Icon, type IconName, NumberInput, SleepingToucan, time, tokens, UsageBar } from './ui'
 import { Select } from './Select'
+import { RoutingPane, SmartRoutingSwitch } from './Routing'
+import { CLASSIFIER_JOBS, classifierLabel, jobLabel, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
 import { UpdateSettings } from './Update'
 import { openFeedback } from './Feedback'
 import type { NotifyState } from '../rpc'
@@ -3322,12 +3325,190 @@ function SettingsSearchField({ value, onChange }: { value: string; onChange: (va
   )
 }
 
+export function ClassifiersCard(): ReactNode {
+  const settings = useStore((s) => s.settings)
+  const work = onGateway(settings)
+  const list = settings.classifiers ?? []
+  const jobs = settings.classifierJobs ?? {}
+  const keys = settings.classifierKeys ?? {}
+  const [adding, setAdding] = useState(false)
+  const [provider, setProvider] = useState<ClassifierProvider>('typesafe')
+  const [name, setName] = useState('')
+  const [model, setModel] = useState('')
+  const [open, setOpen] = useState<string | null>(null) // the row whose key field is open
+  const [key, setKey] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const startAdd = (): void => {
+    const spec = providerSpec(provider)
+    setAdding(true)
+    setName(spec.defaultName)
+    setModel(spec.model)
+    setError('')
+  }
+  const pickProvider = (p: ClassifierProvider): void => {
+    const spec = providerSpec(p)
+    setProvider(p)
+    setName(spec.defaultName)
+    setModel(spec.model)
+  }
+  const add = (): void => {
+    const spec = providerSpec(provider)
+    const id = `c-${Math.random().toString(36).slice(2, 10)}`
+    const made: ClassifierConfig = { id, name: name.trim() || spec.defaultName, provider, model: model.trim() || spec.model }
+    updateSettings({ classifiers: [...list, made] })
+    setAdding(false)
+    setName('')
+    setModel('')
+    setOpen(id) // the key is the next thing it needs
+  }
+  const remove = (id: string): void => {
+    const left = Object.fromEntries(Object.entries(jobs).filter(([, v]) => v !== id)) as Partial<Record<ClassifierJob, string>>
+    updateSettings({ classifiers: list.filter((c) => c.id !== id), classifierJobs: left })
+    if (open === id) setOpen(null)
+  }
+  const assign = (job: ClassifierJob, id: string): void => {
+    const next = { ...jobs }
+    if (id) next[job] = id
+    else delete next[job]
+    updateSettings({ classifierJobs: next })
+  }
+  const saveKey = (id: string, value: string | null): void => {
+    setBusy(true)
+    setError('')
+    setClassifierKey(id, value)
+      .then(() => {
+        setKey('')
+        setOpen(null)
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e)))
+      .finally(() => setBusy(false))
+  }
+  const serves = (id: string): string =>
+    CLASSIFIER_JOBS.filter((j) => jobs[j] === id)
+      .map((j) => jobLabel(j)[lang()])
+      .join(', ')
+
+  return (
+    <>
+      {list.length === 0 && (
+        <p className="muted small">
+          {L('Nenhum classificador ainda. Adicione um para o roteador escolher quem responde, ou para o navegador achar o que clicar.', 'No classifier yet. Add one so the router can pick who replies, or the browser can find what to click.')}
+        </p>
+      )}
+      {list.map((c) => {
+        const spec = providerSpec(c.provider)
+        const on = serves(c.id)
+        return (
+          <div className="key-row" key={c.id}>
+            <Icon name="spark" />
+            <div className="grow">
+              <strong>{classifierLabel(c)}</strong>
+              <p className="muted small">
+                {spec.label} · {c.model}
+                {on ? ` · ${on}` : ` · ${L('não usado', 'not used')}`}
+              </p>
+              {open === c.id ? (
+                <div className="row">
+                  <input className="grow" type="password" value={key} placeholder={L('Cole a chave aqui', 'Paste the key here')} onChange={(e) => setKey(e.target.value)} />
+                  <button className="btn btn--sm" disabled={busy || !key.trim()} onClick={() => saveKey(c.id, key)}>
+                    {busy ? L('Conferindo…', 'Checking…') : L('Salvar', 'Save')}
+                  </button>
+                  <button className="btn btn--sm btn--ghost" disabled={busy} onClick={() => setOpen(null)}>
+                    {L('Cancelar', 'Cancel')}
+                  </button>
+                </div>
+              ) : keys[c.id] ? (
+                <div className="row">
+                  <span className="tag tag--ok">{L('Chave salva', 'Key saved')}</span>
+                  <button
+                    className="btn btn--sm btn--ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      setOpen(c.id)
+                      setKey('')
+                    }}
+                  >
+                    {L('Trocar', 'Change')}
+                  </button>
+                  <button className="btn btn--sm btn--ghost" disabled={busy} onClick={() => saveKey(c.id, null)}>
+                    {L('Remover chave', 'Remove key')}
+                  </button>
+                </div>
+              ) : (
+                <div className="row">
+                  <button
+                    className="btn btn--sm"
+                    onClick={() => {
+                      setOpen(c.id)
+                      setKey('')
+                    }}
+                  >
+                    {L('Salvar chave', 'Save key')}
+                  </button>
+                  <span className="muted small grow">{spec.keyHint[lang()]}</span>
+                </div>
+              )}
+            </div>
+            <button className="btn btn--sm btn--ghost" title={L('Remover este classificador', 'Remove this classifier')} onClick={() => remove(c.id)}>
+              ×
+            </button>
+          </div>
+        )
+      })}
+
+      {adding ? (
+        <div className="key-row key-row--form">
+          <Icon name="spark" />
+          <div className="grow">
+            <div className="grid2">
+          <Field label={L('Provedor', 'Provider')}>
+            <Select value={provider} onChange={(v) => pickProvider(v as ClassifierProvider)} options={PROVIDERS.map((p) => ({ value: p.provider, label: p.label, hint: p.model }))} />
+          </Field>
+          <Field label={L('Nome', 'Name')} hint={L('Como ele aparece nas escolhas abaixo.', "Display name in task assignments.")}>
+            <input value={name} onChange={(e) => setName(e.target.value)} />
+          </Field>
+          <Field label={L('Modelo', 'Model')} hint={L('O par de modelos que responde. Fixar a versão mantém as probabilidades que você já calibrou.', "Model pair used for decisions. Pin a version to preserve your calibration.")}>
+            <input value={model} onChange={(e) => setModel(e.target.value)} />
+          </Field>
+          <div className="row">
+            <button className="btn" onClick={add} disabled={!model.trim()}>
+              {L('Adicionar', 'Add')}
+            </button>
+            <button className="btn btn--ghost" onClick={() => setAdding(false)}>
+              {L('Cancelar', 'Cancel')}
+            </button>
+          </div>
+            </div>
+          </div>
+          <span className="key-row__glyph" aria-hidden="true" />
+        </div>
+      ) : (
+        <div className="row">
+          <button className="btn btn--sm" onClick={startAdd}>
+            {L('+ Adicionar classificador', '+ Add classifier')}
+          </button>
+          <span className="muted small grow">{L('TypeSafe, OpenRouter, OpenAI e Google.', 'TypeSafe, OpenRouter, OpenAI and Google.')}</span>
+        </div>
+      )}
+
+      {error && <p className="note note--error">{error}</p>}
+      <p className="hint">
+        <Icon name="shield" size={13} /> {L('Um classificador não escreve texto: devolve uma escolha, um sim/não ou uma nota, com a probabilidade de cada opção. A chave fica no cofre do sistema e nunca volta pra tela.', 'A classifier writes no text: it returns a choice, a yes/no or a score, with each option’s probability. The key stays in the system’s vault and never comes back to the screen.')}
+      </p>
+    </>
+  )
+}
+
 export function SettingsPage(): ReactNode {
   const settings = useStore((s) => s.settings)
   const packaged = useStore((s) => s.packaged)
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   // At work, Jev and Telegram stay: the person decides, told what leaves the gateway.
   const work = onGateway(settings)
+  // Routing is on for the whole workspace or for one agent by itself: only then do the pools mean anything.
+  const routingOn = useStore((st) => st.settings.routing?.enabled === true || st.agents.some((a) => a.smartRouting === true))
   const team = useStore(teamMode)
   const admin = useStore(amAdmin)
   const owner = useStore(amOwner)
@@ -3765,6 +3946,21 @@ export function SettingsPage(): ReactNode {
         )}
 
         {on('modelos') && admin && (
+          <SectionAnchor id="models-classifiers" sections={structure}>
+            <Card
+              title={L('Classificadores', 'Classifiers')}
+              section="models-classifiers"
+              lead={L(
+                'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, o que o agente clica numa página.',
+                'Fast models choose who replies or what to click. They return a choice, a yes/no answer or a score with probabilities in under a second.'
+              )}
+            >
+              <ClassifiersCard />
+            </Card>
+          </SectionAnchor>
+        )}
+
+        {on('modelos') && admin && (
           <SectionAnchor id="models-router" sections={structure}>
             <Card title={L('Roteador', 'Router')} section="models-router" lead={L('Modelo pequeno que lê a conversa e decide quem responde nos canais. Não concede permissão nenhuma.', 'A small model that reads the conversation and decides who replies in channels. It grants no permissions at all.')}>
               <Field label={L('Modelo do roteador', 'Router model')} hint={L('Prefira um modelo rápido: ele roda antes de cada resposta num canal.', 'Choose a fast model: it runs before every channel reply.')}>
@@ -3772,6 +3968,22 @@ export function SettingsPage(): ReactNode {
               </Field>
               {settings.routerModel === 'jev' && <JevKey saved={!!settings.jevKey} />}
               {settings.routerModel === 'jev' && work && <OutsideGateway what={L('cada mensagem sem @menção vai pra TypeSafe escolher quem responde.', 'every message without an @mention goes to TypeSafe to pick who replies.')} />}
+              <SmartRoutingSwitch />
+            </Card>
+          </SectionAnchor>
+        )}
+
+        {on('modelos') && admin && routingOn && (
+          <SectionAnchor id="models-routes" sections={structure}>
+            <Card
+              title={L('Rotas', 'Routing')}
+              section="models-routes"
+              lead={L(
+                'O Jev lê cada pedido e escolhe o modelo nos pools abaixo, por papel. Desligado, cada agente usa o próprio modelo.',
+                'Jev reads each prompt and picks the model from the pools below, by role. Off, each agent uses its own model.'
+              )}
+            >
+              <RoutingPane />
             </Card>
           </SectionAnchor>
         )}
