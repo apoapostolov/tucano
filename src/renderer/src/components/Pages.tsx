@@ -3697,7 +3697,7 @@ export function SettingsPage(): ReactNode {
                   <p className="muted small">
                     {L(
                       `Com um trecho selecionado numa mensagem, ${key} começa uma resposta a ele, sem procurar o botão. Desligado, o atalho não faz nada e o botão da mensagem responde ao trecho do mesmo jeito.`,
-                      `With text selected in a message, ${key} starts a reply to that excerpt without hunting for the button. Off, the shortcut does nothing and the message’s own button still replies to it.`
+                      `Select message text and press ${key} to reply to that excerpt. When off, use the message’s Reply button.`
                     )}
                   </p>
                 </div>
@@ -3967,7 +3967,7 @@ export function SettingsPage(): ReactNode {
               section="models-classifiers"
               lead={L(
                 'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, o que o agente clica numa página.',
-                'Fast models choose who replies or what to click. They return a choice, a yes/no answer or a score with probabilities in under a second.'
+                'Fast models choose who replies or what to click. They return a choice, yes/no answer or score with probabilities in under a second.'
               )}
             >
               <ClassifiersCard />
