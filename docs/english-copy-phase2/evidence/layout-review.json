@@ -1,6 +1,12 @@
 {
-  "baseline": "98554fdd007637409696f98e061973b5ca9338c6",
-  "candidate": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+  "baselines": [
+    "98554fdd007637409696f98e061973b5ca9338c6",
+    "2e38864165b3cf8b0ee522b890e07db239d25a7b"
+  ],
+  "candidates": [
+    "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+    "a6f698ed25fef9e159e29f5b4417da9443ada034"
+  ],
   "ordinaryChangedHintsMaxLines": 2,
   "overflowCount": 0,
   "exceptions": [

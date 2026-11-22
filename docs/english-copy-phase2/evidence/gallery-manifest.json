@@ -1,8 +1,15 @@
 {
-  "baselineSHA": "98554fdd007637409696f98e061973b5ca9338c6",
-  "candidateSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+  "baselineSHAs": [
+    "98554fdd007637409696f98e061973b5ca9338c6",
+    "2e38864165b3cf8b0ee522b890e07db239d25a7b"
+  ],
+  "candidateSHAs": [
+    "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+    "a6f698ed25fef9e159e29f5b4417da9443ada034"
+  ],
   "description": "Real built-renderer screenshots at native image size, arranged as Existing and Proposed with synthetic data.",
   "notes": [
+    "Frames 02 and 05 use the newer upstream baseline and subsequent candidate; all other frames use the original baseline and earlier candidate, as recorded per image.",
     "The feedback attachment uses a synthetic capture bridge; no feedback was sent.",
     "All original screenshots are embedded in full without cropping or resizing."
   ],
@@ -35,27 +42,367 @@
     },
     {
       "number": 2,
-      "title": "Personal theme",
-      "frame": "02-personal-theme.png",
-      "defect": "“Through the day” suggests a timed theme change rather than the System setting.",
-      "revision": "The hint says that System follows the computer’s light or dark theme.",
+      "title": "Reasoning visibility",
+      "frame": "02-reasoning-visibility.png",
+      "defect": "“What the model is thinking” and its three-line hint describe presentation at length.",
+      "revision": "“Show reasoning” names the choice and retains when reasoning appears and its Pi limitation. At 900 CSS px, the hint falls from three lines to two.",
       "existing": {
-        "file": "900-you-01-Appearance.png",
-        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
-        "sha256": "375544b37b4b3fd80b7a4684060afde4f63a71abf71bd2dee4628788a3bea87b",
+        "file": "900-reasoning.png",
+        "sourceSHA": "2e38864165b3cf8b0ee522b890e07db239d25a7b",
+        "sha256": "cd1d0f66770549a32a4f1e81069aec355741b0d167109193dc8d52dc2944a2e7",
         "width": 580,
-        "height": 191
+        "height": 536
       },
       "proposed": {
-        "file": "900-you-01-Appearance.png",
-        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
-        "sha256": "d39060f9f471f911e1eb3b0a62a564de20a89270b65585a87a41f9a89f31b162",
+        "file": "900-reasoning.png",
+        "sourceSHA": "a6f698ed25fef9e159e29f5b4417da9443ada034",
+        "sha256": "bd958cefde20cf230a57b3d3f20e805ce210a191b336b46b1b94ff1e49c82b8a",
         "width": 580,
-        "height": 172
+        "height": 536
+      },
+      "measurements": {
+        "existing": [
+          {
+            "name": "reasoning",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row strong",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Show the steps while the agent works",
+                    "characters": 36,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 614,
+                    "height": 21.6875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "What the model is thinking",
+                    "characters": 26,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 614,
+                    "height": 21.6875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Opens the list of what the agent is doing under its reply. Off, only the line with what it’s doing now stays; a click on it opens the steps. It changes only for you.",
+                    "characters": 165,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 614,
+                    "height": 37.1875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+                    "characters": 219,
+                    "lines": 3,
+                    "visible": true,
+                    "width": 614,
+                    "height": 55.78125,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "index": 1,
+                "text": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+                "problem": "3 lines exceeds 2"
+              }
+            ],
+            "passed": false
+          },
+          {
+            "name": "reasoning",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row strong",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Show the steps while the agent works",
+                    "characters": 36,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 474,
+                    "height": 21.6875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "What the model is thinking",
+                    "characters": 26,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 474,
+                    "height": 21.6875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Opens the list of what the agent is doing under its reply. Off, only the line with what it’s doing now stays; a click on it opens the steps. It changes only for you.",
+                    "characters": 165,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 474,
+                    "height": 37.1875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+                    "characters": 219,
+                    "lines": 3,
+                    "visible": true,
+                    "width": 474,
+                    "height": 55.78125,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "index": 1,
+                "text": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+                "problem": "3 lines exceeds 2"
+              }
+            ],
+            "passed": false
+          }
+        ],
+        "proposed": [
+          {
+            "name": "reasoning",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row strong",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Show the steps while the agent works",
+                    "characters": 36,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 614,
+                    "height": 21.6875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "Show reasoning",
+                    "characters": 14,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 614,
+                    "height": 21.6875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Shows steps under replies. When off, select the current step to see the list. This affects only you.",
+                    "characters": 100,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 614,
+                    "height": 18.59375,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "Shows reasoning below the steps, during and after replies. When off, only steps and answers appear. Currently available only with Pi.",
+                    "characters": 133,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 614,
+                    "height": 37.1875,
+                    "contentWidth": 614,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "reasoning",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row strong",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Show the steps while the agent works",
+                    "characters": 36,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 474,
+                    "height": 21.6875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "Show reasoning",
+                    "characters": 14,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 474,
+                    "height": 21.6875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "14px",
+                    "lineHeight": "21.7px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-app-conversation .settings-group:first-of-type .key-row p",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Shows steps under replies. When off, select the current step to see the list. This affects only you.",
+                    "characters": 100,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 474,
+                    "height": 37.1875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  },
+                  {
+                    "text": "Shows reasoning below the steps, during and after replies. When off, only steps and answers appear. Currently available only with Pi.",
+                    "characters": 133,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 474,
+                    "height": 37.1875,
+                    "contentWidth": 474,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          }
+        ]
       },
       "output": {
         "width": 1480,
-        "height": 489.265625
+        "height": 857.9375
       },
       "viewportCssWidth": 900
     },
@@ -113,27 +460,471 @@
     },
     {
       "number": 5,
-      "title": "Conversation controls",
-      "frame": "05-conversation-controls.png",
-      "defect": "The step and survey descriptions use indirect narration for their behavior.",
-      "revision": "The revised text explains the visible steps and survey checks while retaining the data disclosure.",
+      "title": "Reply mode and composer",
+      "frame": "05-reply-mode-and-composer.png",
+      "defect": "“While a reply is running” does not name what the setting controls; “Enter: into the reply” leaves the composer action implicit.",
+      "revision": "“New prompts during a reply” names the setting, and “Enter: steer” identifies the selected action.",
       "existing": {
-        "file": "900-you-04-Conversations.png",
-        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
-        "sha256": "0a1d78adfe2a07286747be5bbbf4791344fd4c0923777da5f30da8a6c7f22e5c",
+        "file": "900-reply-mode.png",
+        "sourceSHA": "2e38864165b3cf8b0ee522b890e07db239d25a7b",
+        "sha256": "c446c716fa3e1b818a0b7af3b62e52f0030cb6626af62d26a4f924e4730244f7",
         "width": 580,
-        "height": 410
+        "height": 182,
+        "state": "Settings"
       },
       "proposed": {
-        "file": "900-you-04-Conversations.png",
-        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
-        "sha256": "782dda30f134a311aa300b496268eb140e9340bdf5df5a9fbf6cbdf077ca0444",
+        "file": "900-reply-mode.png",
+        "sourceSHA": "a6f698ed25fef9e159e29f5b4417da9443ada034",
+        "sha256": "1594383aab1fb785b5f06b5bc6e078f73e87743902954784045f389faf77dee3",
         "width": 580,
-        "height": 428
+        "height": 181,
+        "state": "Settings"
+      },
+      "additionalExisting": [
+        {
+          "file": "900-running-composer.png",
+          "sourceSHA": "2e38864165b3cf8b0ee522b890e07db239d25a7b",
+          "sha256": "9db6adb39d61b26a9bb3ebc6419e9af591833ce3453873f6117783dcdc7fb325",
+          "width": 588,
+          "height": 94,
+          "state": "Composer while a reply runs"
+        }
+      ],
+      "additionalProposed": [
+        {
+          "file": "900-running-composer.png",
+          "sourceSHA": "a6f698ed25fef9e159e29f5b4417da9443ada034",
+          "sha256": "ea25fd69cb7cb084a42e8330a539c101734e1df443faa8026a22dde7a3190298",
+          "width": 588,
+          "height": 94,
+          "state": "Composer while a reply runs"
+        }
+      ],
+      "measurements": {
+        "existing": [
+          {
+            "name": "reply-mode",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-agents-replies .field__label",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "While a reply is running",
+                    "characters": 24,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 686,
+                    "height": 19.375,
+                    "contentWidth": 686,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .hint",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Enter uses this mode. Ctrl+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Shift+Enter adds a line.",
+                    "characters": 111,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 686,
+                    "height": 18.59375,
+                    "contentWidth": 686,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .select__trigger__value",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Parallel replies",
+                    "characters": 16,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 640,
+                    "height": 20.921875,
+                    "contentWidth": 640,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "13.5px",
+                    "lineHeight": "20.925px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "running-composer",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": ".composer__mode",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Enter: into the reply",
+                    "characters": 21,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 138.71875,
+                    "height": 28,
+                    "contentWidth": 117,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "reply-mode",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-agents-replies .field__label",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "While a reply is running",
+                    "characters": 24,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 546,
+                    "height": 19.375,
+                    "contentWidth": 546,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .hint",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Enter uses this mode. Ctrl+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Shift+Enter adds a line.",
+                    "characters": 111,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 546,
+                    "height": 37.1875,
+                    "contentWidth": 546,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .select__trigger__value",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Steer current reply",
+                    "characters": 19,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 500,
+                    "height": 20.921875,
+                    "contentWidth": 500,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "13.5px",
+                    "lineHeight": "20.925px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "running-composer",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": ".composer__mode",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Enter: into the reply",
+                    "characters": 21,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 138.71875,
+                    "height": 28,
+                    "contentWidth": 117,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          }
+        ],
+        "proposed": [
+          {
+            "name": "reply-mode",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-agents-replies .field__label",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "New prompts during a reply",
+                    "characters": 26,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 686,
+                    "height": 19.375,
+                    "contentWidth": 686,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .hint",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Enter uses this mode. Ctrl+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Shift+Enter adds a line.",
+                    "characters": 111,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 686,
+                    "height": 18.59375,
+                    "contentWidth": 686,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .select__trigger__value",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Parallel replies",
+                    "characters": 16,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 640,
+                    "height": 20.921875,
+                    "contentWidth": 640,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "13.5px",
+                    "lineHeight": "20.925px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "running-composer",
+            "width": 1280,
+            "viewport": {
+              "width": 1280,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": ".composer__mode",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Enter: steer",
+                    "characters": 12,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 90.875,
+                    "height": 28,
+                    "contentWidth": 69,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "reply-mode",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": "#settings-agents-replies .field__label",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "New prompts during a reply",
+                    "characters": 26,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 546,
+                    "height": 19.375,
+                    "contentWidth": 546,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .hint",
+                "maxLines": 2,
+                "rows": [
+                  {
+                    "text": "Enter uses this mode. Ctrl+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Shift+Enter adds a line.",
+                    "characters": 111,
+                    "lines": 2,
+                    "visible": true,
+                    "width": 546,
+                    "height": 37.1875,
+                    "contentWidth": 546,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12px",
+                    "lineHeight": "18.6px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              },
+              {
+                "selector": "#settings-agents-replies .select__trigger__value",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Steer current reply",
+                    "characters": 19,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 500,
+                    "height": 20.921875,
+                    "contentWidth": 500,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "13.5px",
+                    "lineHeight": "20.925px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          },
+          {
+            "name": "running-composer",
+            "width": 900,
+            "viewport": {
+              "width": 900,
+              "height": 900
+            },
+            "results": [
+              {
+                "selector": ".composer__mode",
+                "maxLines": 1,
+                "rows": [
+                  {
+                    "text": "Enter: steer",
+                    "characters": 12,
+                    "lines": 1,
+                    "visible": true,
+                    "width": 90.875,
+                    "height": 28,
+                    "contentWidth": 69,
+                    "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+                    "fontSize": "12.5px",
+                    "lineHeight": "19.375px",
+                    "overflowX": false,
+                    "overflowY": false
+                  }
+                ]
+              }
+            ],
+            "failures": [],
+            "passed": true
+          }
+        ]
       },
       "output": {
         "width": 1480,
-        "height": 749.9375
+        "height": 692.9375
       },
       "viewportCssWidth": 900
     },
@@ -142,7 +933,7 @@
       "title": "Approval after external content",
       "frame": "06-approval-after-external-content.png",
       "defect": "“Ask before what can’t be undone” leaves the approval and action scope implicit.",
-      "revision": "The label names approval for irreversible actions after reading external content.",
+      "revision": "The label names approval for irreversible actions after reading external content. The unchanged three-line security explanation remains visible.",
       "existing": {
         "file": "900-agents-00-Autonomy.png",
         "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
@@ -159,7 +950,7 @@
       },
       "output": {
         "width": 1480,
-        "height": 723.265625
+        "height": 746.9375
       },
       "viewportCssWidth": 900
     },
@@ -220,7 +1011,7 @@
       "title": "Tuca changes",
       "frame": "09-tuca-changes.png",
       "defect": "The automatic-apply explanation uses several conversational clauses.",
-      "revision": "The revision states the apply timing, 24-hour Undo and the changes still requiring confirmation.",
+      "revision": "The three-line explanation retains apply timing, the 24-hour Undo and the changes still requiring confirmation.",
       "existing": {
         "file": "900-agents-03-Tuca.png",
         "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
@@ -237,7 +1028,7 @@
       },
       "output": {
         "width": 1480,
-        "height": 508.265625
+        "height": 531.9375
       },
       "viewportCssWidth": 900
     },
