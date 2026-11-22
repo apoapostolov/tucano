@@ -1,0 +1,22 @@
+{
+  "worktree": {
+    "setup": "npm ci"
+  },
+  "scripts": {
+    "dev": {
+      "command": "npm run dev"
+    },
+    "test": {
+      "command": "npm test"
+    },
+    "typecheck": {
+      "command": "npm run typecheck"
+    },
+    "build": {
+      "command": "npm run build"
+    },
+    "self-build": {
+      "command": "npm run self-build"
+    }
+  }
+}
