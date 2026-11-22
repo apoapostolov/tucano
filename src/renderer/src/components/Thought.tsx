@@ -128,10 +128,11 @@ export function Thought({ message, working }: { message: Message; working: boole
     <>
       {/* The one line naming it: the word alone, dim and in full caps in the sheet. The chrome the
           header used to carry — the chevron and the fold — stayed gone; only the name came back,
-          over the reasoning rather than over the text. Screen readers get the block's own aria-label,
-          so this line is not read twice. */}
+          over the reasoning rather than over the text. One word names it in English whether it is
+          thinking or done; the Portuguese keeps its pair. Screen readers get the block's own
+          aria-label, so this line is not read twice. */}
       <div className="thought__head" aria-hidden="true">
-        {working ? L('Pensando', 'Thinking') : L('Pensou', 'Thought')}
+        {L(working ? 'Pensando' : 'Pensou', 'Thinking')}
       </div>
       <div
         ref={box}

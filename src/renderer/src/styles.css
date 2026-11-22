@@ -18196,11 +18196,11 @@ button.agent-card__now:hover {
 }
 
 /* The one line naming it, as the block was read in 0.2.36 — but the word alone: no chevron, nothing
-   to fold, and no background of its own. Small, dim and in full caps, and its left edge is the block's
-   text (3px of margin, the 2px rail, the 14px of padding the reasoning sits in), so the name and the
-   reasoning under it start on the same line. */
+   to fold, and no background of its own. Small, dim and in full caps, starting on the reasoning's own
+   line: the block's 3px of margin and 2px rail put both there, and the head adds no step-in of its
+   own (19px did, and left the name hanging right of the reasoning it names). */
 .thought__head {
-  margin: 7px 0 0 19px;
+  margin: 7px 0 0;
   color: var(--text-3);
   font-size: 10px;
   font-weight: 600;

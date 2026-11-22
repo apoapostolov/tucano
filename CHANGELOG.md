@@ -9,6 +9,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Novo:** uma **gaveta acima do campo** mostra as respostas em curso e as que terminaram nesta conversa: clique pra ir até uma, pare só aquela no **x**.
 > - **Novo:** quando o navegador de um agente cai numa **barreira** (verificação de robô, acesso recusado, login, aviso de cookies, página que não abriu ou vazia), o agente recebe uma linha dizendo o que é e o que fazer, em vez de clicar de novo. Uma página normal que só fala dessas coisas não é marcada.
 > - **Mudou:** o inglês das respostas ao mesmo tempo e dos ajustes de servidor e computador ficou mais claro.
+> - **Mudou:** o cabeçalho do raciocínio encosta na linha onde o texto começa, sem degrau, e em inglês é **Thinking** enquanto ele pensa e depois também.
 
 ### Added
 
@@ -19,6 +20,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 ### Changed
 
 - **Clearer English for concurrent replies and computer settings.** Nine strings now say what the limit, the queue, the per-agent override and the server's settings do, and the settings search finds the new label. The Portuguese is unchanged. Thanks to Apostol Apostolov. (#628)
+- **The reasoning header sits on the line it names, in one English word.** The line over the model's reasoning carried a 19px step-in of its own, so the name hung to the right of the reasoning under it; it now starts where that text starts. In English it reads **Thinking** while the model thinks and after it is over, instead of turning into "Thought"; the Portuguese keeps **Pensando** and **Pensou**. Upstream does the same to the head it draws, word first and the chevron after it, in [eduwxyz/tucano#638](https://github.com/eduwxyz/tucano/pull/638). Thanks to Apostol Apostolov.
 
 ## [0.2.45] - 2026-11-22
 

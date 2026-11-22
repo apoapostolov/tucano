@@ -6,6 +6,7 @@ import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Message, Settings } from '../src/shared/types'
 import type { State } from '../src/renderer/src/store'
+import { setLang } from '../src/shared/lang'
 
 const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
 window.Element.prototype.scrollTo = () => {} // the block keeps itself at the last line; linkedom has no scrolling
@@ -75,6 +76,20 @@ describe('the thinking block', () => {
     await draw(true)
     await click(head())
     expect(document.querySelector('.thought__text')).toBeNull()
+  })
+
+  it('names itself with one English word, thinking or done', async () => {
+    // One word covers the block in English: it does not turn from "Thinking" into "Thought" when the
+    // reply ends. The Portuguese keeps its pair, which the tests above read.
+    setLang('en')
+    try {
+      await draw(true)
+      expect(head().textContent).toBe('Thinking')
+      await draw(false)
+      expect(head().textContent).toBe('Thinking')
+    } finally {
+      setLang('pt')
+    }
   })
 
   it('is nothing at all while it has thought nothing, or with the switch off', async () => {
