@@ -40,14 +40,18 @@ describe('a long reply’s steps', () => {
     fake.settings = { ...fake.settings, steps: undefined, stepsLatest: undefined }
     const html = renderToStaticMarkup(<RunSteps message={reply(30)} />)
     expect(html.match(/<li class="step /g)?.length).toBe(30)
-    expect(html).not.toContain('steps__more')
+    expect(html).not.toContain('steps__earlier')
   })
 
   it('keep only the newest few when the person asked for a window, and say how many left', () => {
     fake.settings = { ...fake.settings, steps: 'latest', stepsLatest: 5 }
     const html = renderToStaticMarkup(<RunSteps message={reply(8)} />)
     expect(html.match(/<li class="step /g)?.length).toBe(5)
-    expect(html).toContain('3 passos mais antigos fora da lista') // the window's own line, in the app's language
+    // The line the window draws for what it left out, in the app's language. The port carried its own
+    // wording ("N passos mais antigos fora da lista"); the base's line is the one the app draws, so the
+    // expectation follows the code rather than the wording the PR was written with.
+    expect(html).toContain('3 passos antes destes')
+    expect(html).toContain('steps__earlier')
     // The line above the list still names every step the reply took, not the five on screen.
     expect(renderToStaticMarkup(<RunSteps message={reply(8, 'done')} />)).toContain('8 passos')
   })
