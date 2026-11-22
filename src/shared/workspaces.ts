@@ -36,6 +36,7 @@ export const GENERAL_SETTINGS = [
   'clock',
   'browserJev',
   'browserAddOns',
+  'browserAccessibility',
   'classifiers',
   'classifierJobs',
   'wikiCapture',
