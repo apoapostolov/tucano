@@ -397,7 +397,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
         </button>
         <label className="grow harness__name" htmlFor={checkId}>
           <strong>{L('Endpoint próprio', 'Your own endpoint')}</strong>
-          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', 'OpenRouter, OmniRoute, Ollama… nothing to install')}</span>
+          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', "OpenRouter, OmniRoute, Ollama; no installation required")}</span>
         </label>
         {st.installed && <span className="tag tag--ok">endpoint</span>}
         {picked && st.loggedIn && !open && (
@@ -434,7 +434,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           </label>
           <div className="endpoint__actions">
             <button className="btn btn--sm" disabled={!url.trim() || busy !== null} onClick={() => void probe()}>
-              {busy === 'probe' ? L('Buscando…', 'Fetching…') : L('Buscar os modelos', 'Fetch the models')}
+              {busy === 'probe' ? L('Buscando…', "Loading…") : L('Buscar os modelos', "Load models")}
             </button>
             {saved && (
               <button className="btn btn--ghost btn--sm" disabled={busy !== null} onClick={() => void setEndpoint('', []).then(() => (setUrl(''), setListed(null), setChosen([]), setOpen(false)))}>
@@ -446,7 +446,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           {listed && listed.length > 0 && (
             <>
               <div className="endpoint__head">
-                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Models the agents may use (${chosen.length} of ${listed.length})`)}</span>
+                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Allowed models (${chosen.length} of ${listed.length})`)}</span>
                 {listed.length > 8 && <input className="endpoint__filter" value={filter} placeholder={L('Filtrar…', 'Filter…')} onChange={(e) => setFilter(e.target.value)} />}
               </div>
               <div className="endpoint__models" role="group" aria-label={L('Modelos', 'Models')}>

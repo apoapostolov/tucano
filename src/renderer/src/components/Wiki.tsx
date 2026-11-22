@@ -1625,7 +1625,7 @@ const FINDING_LABEL: Record<WikiFinding['kind'], () => string> = {
   broken: () => L('Página por escrever', "Missing page"),
   missing: () => L('Sem página', "Missing page"),
   orphan: () => L('Ninguém liga pra elas', "Unlinked pages"),
-  log: () => L('Parece um registro', "Reads like a log"),
+  log: () => L('Parece um registro', "Excessive history"),
   git: () => L('Repositório git', 'Git repository')
 }
 const FINDING_TONE: Record<WikiFinding['kind'], 'danger' | 'warn' | 'calm'> = { contradiction: 'danger', stale: 'warn', duplicate: 'warn', link: 'calm', broken: 'calm', missing: 'calm', orphan: 'calm', log: 'warn', git: 'warn' }
@@ -1665,7 +1665,7 @@ function WikiReviewPane(): ReactNode {
               ['danger', L('Não batem', "Conflicting facts"), L('Duas páginas dizendo coisas diferentes sobre o mesmo valor, data ou prazo.', "Pages disagree about an amount, date, or deadline.")],
               ['warn', L('Desatualizada', 'Out of date'), L('"Aguardando resposta" numa página, "contrato assinado" em outra.', '"Waiting for an answer" on one page, "contract signed" on another.')],
               ['warn', L('Repetida', 'Duplicate'), L('Duas páginas sobre a mesma pessoa ou o mesmo projeto. Ela junta, sem perder nada.', "Merge duplicate pages about the same person or project, preserving their content.")],
-              ['warn', L('Parece um registro', "Reads like a log"), L('Um histórico que virou diário do que foi feito. Ela resume no que vale hoje.', "Condense activity logs into the facts that still apply.")],
+              ['warn', L('Parece um registro', "Excessive history"), L('Um histórico que virou diário do que foi feito. Ela resume no que vale hoje.', "Condense activity logs into the facts that still apply.")],
               ['calm', L('Solta', "Unresolved links"), L('Links pra páginas que não existem, nomes sem página, páginas que ninguém cita.', "Missing pages, unresolved names, and unlinked pages.")]
             ] as const
           ).map(([tone, t, d]) => (

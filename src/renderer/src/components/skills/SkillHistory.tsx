@@ -11,8 +11,8 @@ export function History({ skill }: { skill: Skill }): ReactNode {
   useEffect(() => {
     void skillVersions(skill.id).then(setVersions)
   }, [skill.id, skill.updatedAt])
-  if (!versions) return <p className="muted small">{L('Buscando o histórico…', 'Fetching the history…')}</p>
-  if (versions.length === 0) return <p className="muted small">{L('Nenhuma mudança ainda: esta é a primeira versão.', 'No changes yet: this is the first version.')}</p>
+  if (!versions) return <p className="muted small">{L('Buscando o histórico…', "Loading history…")}</p>
+  if (versions.length === 0) return <p className="muted small">{L('Nenhuma mudança ainda: esta é a primeira versão.', "No previous versions.")}</p>
   return (
     <div className="skill__history">
       {versions.map((v) => (
@@ -22,7 +22,7 @@ export function History({ skill }: { skill: Skill }): ReactNode {
               {L('Antes de', 'Before')} {time(v.at)} <span className="muted">· {v.by === 'me' ? L(`mudada por ${who(v.by)}`, `changed by ${who(v.by)}`) : L(`mudada por uma proposta de ${who(v.by)}`, `changed by a proposal from ${who(v.by)}`)}</span>
             </span>
             <button className="link small" onClick={() => setShowing(showing === v.id ? null : v.id)}>
-              {showing === v.id ? L('esconder', 'hide') : L('o que mudou', 'what changed')}
+              {showing === v.id ? L('esconder', "Hide changes") : L('o que mudou', "Show changes")}
             </button>
             <button className="btn btn--xs" onClick={() => restoreSkill(skill.id, v.id)}>
               {L('Voltar a esta', 'Restore version')}

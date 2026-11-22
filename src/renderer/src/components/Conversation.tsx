@@ -622,7 +622,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
         ) : null}
         {text && quiet && !showSaid ? (
           <button className="link small msg__said" onClick={() => setShowSaid(true)}>
-            {L('Ver o que escreveu', 'See what it wrote')}
+            {L('Ver o que escreveu', "View response")}
           </button>
         ) : text ? (
           <div className="md">
@@ -687,7 +687,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
           <>
             <div className="note">
               {L(`Pausei: cheguei no teto desta resposta (${tokens(message.run.budget ?? 0)} tokens). Continuo de onde parei?`, `Paused: I hit this reply’s ceiling (${tokens(message.run.budget ?? 0)} tokens). Shall I pick up where I left off?`)}{' '}
-              <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', 'The ceiling per reply is set in Settings › Agents › Limits; it isn’t the agent’s monthly limit.')}</span>
+              <span className="muted">{L('O teto por resposta muda em Configurações › Agentes › Limites; não é o limite mensal do agente.', "Set the per-reply limit in Settings › Agents › Limits. It is separate from the monthly limit.")}</span>
             </div>
             <button className="btn btn--xs retry" onClick={() => continueRun(message.id)}>
               {L('Continuar', 'Continue')}
@@ -1353,7 +1353,7 @@ function RequestNote({ at, from }: { at: DelegationRef; from?: string }): ReactN
           {state.text}
         </span>
       )}
-      <span className="request-note__where">{at.threadId ? (from ? L(`a resposta volta pra ${from}`, `the answer goes back to ${from}`) : L('a resposta volta pra quem pediu', 'the answer goes back to whoever asked')) : from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', "the final answer goes back to whoever asked")}</span>
+      <span className="request-note__where">{at.threadId ? (from ? L(`a resposta volta pra ${from}`, `The answer returns to ${from}.`) : L('a resposta volta pra quem pediu', 'the answer goes back to whoever asked')) : from ? L(`a resposta desta thread volta pra ${from}`, `what this thread ends with goes back to ${from}`) : L('a resposta desta thread volta pra quem pediu', "the final answer goes back to whoever asked")}</span>
     </div>
   )
 }
@@ -1411,7 +1411,7 @@ function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolea
   const kind = from && to ? askWay(agents, { from, to: at.to }) : undefined
   const label =
     kind === 'up'
-      ? asked ? L('Passou ao chefe', 'Passed to the head') : L('Do pedido ao chefe', 'From the request to the head')
+      ? asked ? L('Passou ao chefe', "Escalated to sector head") : L('Do pedido ao chefe', "From the request to the sector head")
       : kind === 'sector' && to
         ? asked ? L(`Pediu para ${sectorName(to, 'Setor de')}`, `Asked ${sectorName(to, 'Sector of')}`) : L(`Do pedido para ${sectorName(to, 'Setor de')}`, `From the request to ${sectorName(to, 'Sector of')}`)
         : undefined
@@ -1421,12 +1421,12 @@ function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolea
     ? null
     : d.state === 'open'
       ? d.asking
-        ? { tone: 'is-warn', text: L('com uma dúvida', 'has a question') }
+        ? { tone: 'is-warn', text: L('com uma dúvida', "Awaiting an answer") }
         : approval
-          ? { tone: 'is-warn', text: L('esperando sua aprovação', 'waiting for your approval') }
-          : { tone: 'is-live', text: step ? `${L('trabalhando', 'working')} · ${step}` : L('trabalhando', 'working') }
+          ? { tone: 'is-warn', text: L('esperando sua aprovação', "Awaiting your approval") }
+          : { tone: 'is-live', text: step ? `${L('trabalhando', "Working")} · ${step}` : L('trabalhando', "Working") }
       : d.state === 'done'
-        ? { tone: 'is-done', text: L('concluído', 'done') }
+        ? { tone: 'is-done', text: L('concluído', "Completed") }
         : d.state === 'cancelled'
           ? { tone: '', text: L('cancelado', 'cancelled') }
           : { tone: 'is-warn', text: L('não terminou', 'did not finish') }
@@ -1464,7 +1464,7 @@ function DelegationChip({ at, asked, from }: { at: DelegationRef; asked?: boolea
         </button>
         {answer && (
           <button className="link" onClick={() => openThread(answer)}>
-            {L('Ver a resposta', 'See the answer')}
+            {L('Ver a resposta', "View answer")}
           </button>
         )}
       </div>

@@ -52,18 +52,18 @@ export function SectorZones({ agents, spot, admin, picked, onPick }: { agents: A
             style={{ ...tint(head), left: b.x - PAD_SIDE, top: b.y - PAD_TOP, width: b.w + PAD_SIDE * 2, height: b.h + PAD_TOP + PAD_BOTTOM }}
           >
             <div className="org-zone__tag">
-              <button className="org-zone__name" title={L('Ver o setor', 'See the sector')} onClick={() => onPick(head.id)}>
+              <button className="org-zone__name" title={L('Ver o setor', "View sector")} onClick={() => onPick(head.id)}>
                 <Icon name="users" size={14} />
                 {name}
               </button>
               {wide && does && (
                 <span className="org-zone__does" title={does}>
-                  <b>{L('Resolve:', 'Solves:')}</b> {does}
+                  <b>{L('Resolve:', "Responsibilities:")}</b> {does}
                 </span>
               )}
               {wide && !does && admin && (
                 <button className="org-zone__does is-empty" onClick={() => onPick(head.id)}>
-                  {L('Diga o que este setor resolve', 'Say what this sector solves')}
+                  {L('Diga o que este setor resolve', "Describe sector responsibilities")}
                 </button>
               )}
             </div>
@@ -141,7 +141,7 @@ export function SectorPanel({ head, agents, admin, asks, onClose }: { head: Agen
             />
           </label>
           <label className="field">
-            <span className="field__label">{L('O que este setor resolve', 'What this sector solves')}</span>
+            <span className="field__label">{L('O que este setor resolve', "Responsibilities")}</span>
             <textarea rows={3} value={does} maxLength={200} onChange={(e) => ((draft.current.does = e.target.value), setDoes(e.target.value))} onBlur={save} />
             <span className="hint">{L('Os outros chefes leem isto para saber quando mandar algo pra cá.', 'Other sector heads use this to decide when to send work here.')}</span>
           </label>
@@ -156,13 +156,13 @@ export function SectorPanel({ head, agents, admin, asks, onClose }: { head: Agen
       ) : (
         <>
           <div className="field">
-            <span className="field__label">{L('O que este setor resolve', 'What this sector solves')}</span>
-            <p className="org-sector__text">{head.sectorDoes?.trim() || L('Ainda não foi escrito.', 'Not written yet.')}</p>
+            <span className="field__label">{L('O que este setor resolve', "Responsibilities")}</span>
+            <p className="org-sector__text">{head.sectorDoes?.trim() || L('Ainda não foi escrito.', "No description yet.")}</p>
           </div>
         </>
       )}
       <div className="field">
-        <span className="field__label">{L('Quem recebe os pedidos de fora', 'Who takes requests from outside')}</span>
+        <span className="field__label">{L('Quem recebe os pedidos de fora', "Sector head")}</span>
         <span className="org-sector__head">
           <AgentAvatar agent={head} size={28} />
           <span className="truncate">
@@ -180,14 +180,14 @@ export function SectorPanel({ head, agents, admin, asks, onClose }: { head: Agen
               <button key={d.id} className="org-pop__ask" title={d.text} onClick={() => (navigate({ kind: 'conversation', id: d.conversationId, message: d.rootId }), openThread(d.rootId))}>
                 <span className="org-pop__ask-top">
                   <i className={d.asking ? 'is-asking' : ''} />
-                  {L(`Pedido de ${nameOf(d.from)}`, `Asked by ${nameOf(d.from)}`)} · {d.asking ? L('pergunta esperando', 'a question waits') : ago(d.createdAt)}
+                  {L(`Pedido de ${nameOf(d.from)}`, `Asked by ${nameOf(d.from)}`)} · {d.asking ? L('pergunta esperando', "Awaiting an answer") : ago(d.createdAt)}
                 </span>
                 <span className="org-pop__ask-text">{d.text.replace(/\s+/g, ' ').trim().slice(0, 96)}</span>
               </button>
             ))}
           </div>
         ) : (
-          <p className="org-sector__text is-calm">{L('Nenhum pedido de outro setor agora.', 'No request from another sector right now.')}</p>
+          <p className="org-sector__text is-calm">{L('Nenhum pedido de outro setor agora.', "No requests from other sectors.")}</p>
         )}
       </div>
       <div className="org-side__acts">
