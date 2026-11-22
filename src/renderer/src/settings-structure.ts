@@ -46,7 +46,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-limits', page: 'agents', label: L('Limites', 'Limits'), keys: ['defaultLimit', 'runBudgetPct', 'autoContinue'], scope: 'workspace', visible: admin },
     { id: 'agents-tuca', page: 'agents', label: L('Tuca', 'Tuca'), keys: ['tucaApplyNow'], scope: 'workspace', visible: admin },
     { id: 'agents-browser', page: 'agents', label: L('Navegador dos agentes', 'Agents browser'), keys: ['browserJev'], scope: 'workspace', visible: admin },
-    { id: 'agents-addons', page: 'agents', label: L('Anúncios e avisos de cookies', 'Ads and consent notices'), keys: ['browserAddOns'], scope: 'workspace', visible: admin, nav: false },
+    { id: 'agents-addons', page: 'agents', label: L('Extensões do navegador', 'Browser Extensions'), keys: ['browserAddOns'], scope: 'workspace', visible: admin, nav: false },
     { id: 'agents-automation', page: 'agents', label: L('Automação', 'Automation'), keys: ['quietHours'], scope: 'workspace', visible: admin },
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },

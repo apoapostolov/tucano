@@ -202,6 +202,16 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     expect(strip()!.getAttribute('aria-label')).toBe('Settings sections')
   })
 
+  it('draws the extensions card after Browser Use, at the foot of the Agents tab', async () => {
+    // Apo's read on the installed build: the extensions' card sat above Browser Use, between the
+    // reply settings and the card that picks who finds the click. It reads under it, as its last card.
+    await render('agentes')
+    const titles = cards()
+    const use = titles.indexOf('Browser Use')
+    expect(use).toBeGreaterThan(-1)
+    expect(titles.indexOf('Browser Extensions')).toBe(use + 1)
+  })
+
   it('walks to a card and focuses it when the person picks it', async () => {
     await render('geral')
     await clickLink('Data and deletion')

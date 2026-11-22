@@ -4763,19 +4763,6 @@ export function SettingsPage(): ReactNode {
         )}
 
         {pane('agentes') && admin && (
-          <Card
-            title={L('Bloqueador de anúncios e avisos de cookies', 'An ad blocker, and consent notices answered')}
-            section="agents-addons"
-            lead={L(
-              'O navegador dos agentes roda com as extensões que você ligar, para o agente ler a própria página: nenhum aviso de cookies ou anúncio fica por cima dela. Cada uma é um interruptor; as três dividem 215 MB de Chrome for Testing.',
-              'The agents’ browser runs with the extensions you turn on, so what an agent reads is the page itself: no cookie notice or ad sits over it. Each has its own switch; the three share one 215 MB Chrome for Testing download.'
-            )}
-          >
-            <AgentAddOns />
-          </Card>
-        )}
-
-        {pane('agentes') && admin && (
           <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
             <div className="grid2">
               <Field
@@ -4811,6 +4798,19 @@ export function SettingsPage(): ReactNode {
         )}
 
         {pane('agentes') && <BrowserClickCard />}
+
+        {pane('agentes') && admin && (
+          <Card
+            title={L('Extensões do navegador', 'Browser Extensions')}
+            section="agents-addons"
+            lead={L(
+              'O navegador dos agentes roda com as extensões que você ligar, para o agente ler a própria página: nenhum aviso de cookies ou anúncio fica por cima dela. Cada uma é um interruptor; as três dividem 215 MB de Chrome for Testing.',
+              'The agents’ browser runs with the extensions you turn on, so what an agent reads is the page itself: no cookie notice or ad sits over it. Each has its own switch; the three share one 215 MB Chrome for Testing download.'
+            )}
+          >
+            <AgentAddOns />
+          </Card>
+        )}
 
         {pane('integracoes') && (
           <SectionAnchor id="connections-phone" label={sectionLabel('connections-phone')}>

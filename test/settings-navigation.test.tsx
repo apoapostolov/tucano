@@ -177,7 +177,7 @@ describe('settings section navigation', () => {
     await act(async () => root.render(<div className="page__scroll"><SettingsLayout embedded sections={settingsStructure(access)} />{cards()}</div>))
     const strip = [...document.querySelectorAll('nav a')].map(link => link.textContent)
     expect(strip).toEqual(agents.filter(inStrip).map(section => section.label))
-    expect(strip).not.toContain('Ads and consent notices')
+    expect(strip).not.toContain('Browser Extensions')
     expect(strip).toContain('Agents browser')
     expect(document.querySelector('[data-settings-section="agents-addons"]')).not.toBeNull()
   })

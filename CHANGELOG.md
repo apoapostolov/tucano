@@ -23,7 +23,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Corrigido:** o **Cofre** chama-se **Vault** em inglês: a página, a barra lateral, os cards e o guia. Em português continua Cofre.
 > - **Corrigido:** a dica de cotas escondidas mandava para *Configurações › Cotas* em inglês; a seção se chama **Quotas** lá.
 > - **Mudou:** no pé da barra lateral, **Enviar feedback**, **Conectores** e o **Cofre** são três linhas do mesmo formato, com o ícone de configurações no fim da linha do Cofre.
-> - **Mudou:** o card do bloqueador de anúncios lê logo abaixo do card do Navegador dos agentes e **não ganha uma linha própria** na tira de seções: é a mesma página, e o nome acima já diz onde você está.
+> - **Mudou:** o card do bloqueador de anúncios chama-se **Extensões do navegador** e lê no fim da aba, logo abaixo do card **Uso do navegador**, sem **uma linha própria** na tira de seções: é a mesma página, e o nome acima já diz onde você está.
 ### Original Changes
 
 
@@ -52,7 +52,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 ### Changed
 
 - **A wiki's settings are walked by a section strip, like a page of Settings.** The dialog's four groups — **The curator**, **Resolver**, **The folder** and **Bring what you already have** — now have a row under its title that stays there while the box scrolls, follows the reading position, and takes the box to a group over an interruptible 280 ms ease; a keyboard activation and a reduced-motion preference move at once, and the group the box lands on takes focus. The dialog keeps room under its last group so that group reaches the line like the others, and a group whose card this person's role leaves out never becomes a link.
-- **The extensions' card reads inside Agents' browser, with no row of its own in the section strip.** Settings › Agents is walked by a strip of section names under the tabs, one per card; the ad blocker and the cookie notices are a card directly under Agents' browser, so a name of its own there would be a second way to the same place — and it would leave the strip highlighting nothing once you scrolled to it. The card is still declared (it owns the `browserAddOns` key, so the placement check still holds its anchor), it just carries `nav: false` and the strip paints no row for it: the section above it already says where you are.
+- **The extensions' card is named Browser Extensions, and reads under Browser Use.** Settings › Agents is walked by a strip of section names under the tabs, one per card; the ad blocker and the cookie notices now sit at the foot of the tab, directly under **Browser Use**, so a name of their own in the strip would be a second way to the same place — and it would leave the strip highlighting nothing once you scrolled to it. The card is still declared (it owns the `browserAddOns` key, so the placement check still holds its anchor), it just carries `nav: false` and the strip paints no row for it: a test holds the card directly after Browser Use in the tab's reading order.
 - **The "Agent replies in a row" setting leaves Settings → Agents.** Every request now runs to the end on its own (upstream's change above), so there is no longer a number of chained replies to tune: the control and its key are gone from the agents' section.
 
 ### Fixed
