@@ -3723,6 +3723,19 @@ export function SettingsPage(): ReactNode {
           </SectionAnchor>
         )}
 
+        {on('agentes') && admin && (
+          <Card
+            title={L('Extensões do navegador', 'Browser Extensions')}
+            section="agents-addons"
+            lead={L(
+              'O navegador dos agentes roda com as extensões que você ligar, para o agente ler a própria página: nenhum anúncio, aviso de cookies ou camada por cima dela. Cada uma é um interruptor; as cinco dividem um Chrome for Testing, e esse navegador guarda logins próprios.',
+              'The agents’ browser runs with the extensions you turn on, so what an agent reads is the page: no ad, cookie notice or overlay on top. Each has a switch; the five share one Chrome for Testing, and that browser keeps its own sign-ins.'
+            )}
+          >
+            <AgentAddOns />
+          </Card>
+        )}
+
         {/* ---------- Models ---------- */}
         {on('modelos') && admin && <SectionAnchor id="models-agents" sections={structure}><AgentModelsPanel /></SectionAnchor>}
 
