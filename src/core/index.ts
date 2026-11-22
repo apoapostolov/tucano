@@ -2083,12 +2083,10 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
     reach(ctx, conversationId)
     // `mode` 'steer': written in a running reply's own pill, for that reply (`steerTo`), not a prompt.
-    // `reply`: the message (or the excerpt of it) this answers. The core checks it before a message of
-    // mine exists, so the answer comes back to the caller: a reply it refuses leaves the field as it was.
-    return runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}), ...(reply ? { reply } : {}) })
+    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}) }), 'sendMessage')
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {
@@ -2097,26 +2095,6 @@ const api: Handlers = {
   },
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
-
-  // A prompt waiting in the queue (the work drawer): Start sends it now, even with the channel's cap
-  // used up; the order is what a person made by dragging the rows.
-  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
-  reorderQueued: ({ conversationId, ids }, ctx) => {
-    reach(ctx, conversationId)
-    if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
-    runner.reorderQueued(conversationId, ids)
-  },
-  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
-  // waiting in goes, and the message goes with it — the row and the pill it already put in the
-  // conversation are one message, so both leave in the same step (runs.ts, `dropQueued`).
-  dropQueued: ({ messageId }, ctx) => {
-    const m = db.message(messageId)
-    if (!m) return
-    reach(ctx, m.conversationId)
-    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
-    if (!own) manage(ctx, m.conversationId) // someone else's prompt in a channel: only whoever runs it
-    runner.dropQueued(messageId)
-  },
 
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
@@ -2131,7 +2109,7 @@ const api: Handlers = {
     return gone
   },
 
-  retryRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.retry(messageId)),
+  retryRun: ({ messageId, note }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.retry(messageId, note ?? undefined)),
 
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), bg(runner.continue(messageId), 'continueRun')),
   // The note a job left where it stopped on its brakes: Continuar, by whoever can see it.

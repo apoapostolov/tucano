@@ -71,8 +71,8 @@ import {
   type VoiceStatus,
   type ProposalsResult,
   type BackupSummary,
-  type FeedbackDraft,
-  type NodeInfo
+  type NodeInfo,
+  type FeedbackDraft
 } from '../../shared/types'
 import { covers } from '../../shared/access'
 import { call, connect, disconnect } from './rpc'
@@ -1114,11 +1114,12 @@ export const markRead = (id: string): void => { void call('markRead', { conversa
 // A message sent outside threads, in a conversation that answers in them: its thread opens when it
 // comes back from the core (a while at most, so one that never does doesn't open a later one).
 let openNext: { conversationId: string; until: number } | null = null
-// `threadId`: a reply in the thread that message started. `reply`: the message this one answers
-// (or the excerpt of it I selected); `mode: 'steer'` hands it to the reply `steerTo` (what is
-// running there) at its next tool call instead of starting a message of its own.
+// `threadId`: a reply in the thread that message started. `mode: 'steer'` hands it to the reply
+// `steerTo` (what is running there) at its next tool call instead of starting a message of its own;
+// the other modes say how a new prompt joins what runs there. `reply`: the message this one answers
+// (or the excerpt of it I selected) — upstream's order first, so its own callers are unchanged.
 // True once the core took it: a reply the core refuses leaves the field, and the quote, as they were.
-export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = [], reply?: ReplyTarget, mode?: SendMode, steerTo?: string): Promise<boolean> => {
+export const sendMessage = (conversationId: string, text: string, images: ImageUpload[] = [], threadId?: string, files: FileUpload[] = [], mode?: SendMode, steerTo?: string, reply?: ReplyTarget): Promise<boolean> => {
   if (!(text.trim() || images.length || files.length)) return Promise.resolve(false)
   const threads = !threadId && state.conversations.find((c) => c.id === conversationId)?.threads
   openNext = threads ? { conversationId, until: Date.now() + 15_000 } : null
@@ -1137,8 +1138,8 @@ export const setReplyTo = (key: string, reply?: ReplyTarget): void => set((s) =>
 
 export const answerDecision = (messageId: string, index: number, answer: Answer | null): void =>
   void fire(L('Não consegui guardar a resposta.', "I couldn't save the answer."), 'answerDecision', { messageId, index, answer })
-export const submitDecisions = (messageId: string): Promise<void> => fire(L('Não consegui enviar as respostas.', "I couldn't send the answers."), 'submitDecisions', { messageId })
 export const cancelQuestion = (messageId: string): Promise<void> => fire(L('Não consegui cancelar a pergunta.', "I couldn't cancel the question."), 'cancelQuestion', { messageId })
+export const submitDecisions = (messageId: string): Promise<void> => fire(L('Não consegui enviar as respostas.', "I couldn't send the answers."), 'submitDecisions', { messageId })
 
 // The person is writing: the core gets what will answer ready. Once in a while per place, and
 // nobody needs to hear if it didn't work. `opened`: they only opened it (the agent's kept session
@@ -1154,10 +1155,7 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
 // A prompt in the queue goes now, cap or no cap (the Start on its row in the work drawer); and the
 // order a person drags the rows into is what the queue runs in.
-export const startQueued = (messageId: string): void => void fire(L('Não consegui começar este pedido agora.', "I couldn't start that prompt now."), 'startQueued', { messageId })
-export const reorderQueued = (conversationId: string, ids: string[]): void => void fire(L('Não consegui guardar a ordem da fila.', "I couldn't keep the queue's order."), 'reorderQueued', { conversationId, ids })
 // Taking a prompt back out of the queue: it never runs, and its message goes with its row.
-export const dropQueued = (messageId: string): void => void fire(L('Não consegui tirar este pedido da fila.', "I couldn't take that prompt out of the queue."), 'dropQueued', { messageId })
 // Pausing, resuming and going on from a reply are named here and answered by the core's table
 // (src/core/index.ts registers the method, src/core/policy-people.ts who may call it). They are sent
 // by name because that table is not part of this change: a core that doesn't know one refuses it, and
@@ -1170,13 +1168,10 @@ const askCore = (failed: string, method: 'pauseRun' | 'resumeRun' | 'followUpRun
 }
 // A reply put on hold stops before its next tool call or turn, keeping its session and text, and
 // goes on when released, without another model taking over.
-export const pauseRun = (messageId: string): void => askCore(L('Não consegui pausar a resposta.', "Could not pause the reply."), 'pauseRun', { messageId })
-export const resumeRun = (messageId: string): void => askCore(L('Não consegui retomar a resposta.', "I couldn't resume the reply."), 'resumeRun', { messageId })
 // The reply goes on from where it ended, in the same row and the same session, with what the person
 // asked for as its next step instead of as another message in the conversation.
-export const followUpRun = (messageId: string, text: string): void =>
-  askCore(L('Não consegui seguir com essa resposta.', "I couldn't go on from that reply."), 'followUpRun', { messageId, text })
-export const retryRun = (messageId: string): void => void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId })
+export const retryRun = (messageId: string, note?: string): void =>
+  void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId, ...(note ? { note } : {}) })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })
 // A session's reply goes with the thread it started and the work under it.
 export const deleteMessage = (messageId: string): void => void fire(L('Não consegui apagar a sessão.', "Could not delete the session."), 'deleteMessage', { messageId })
@@ -1221,7 +1216,7 @@ export const saveArtifact = (a: Pick<Artifact, 'id' | 'name'>): void => {
   link.click()
 }
 export const openLocal = (messageId: string, path: string, how: 'open' | 'reveal'): void => void call('openLocal', { messageId, path, how })
-export const openPanel = (panel: Panel | null): void => set((s) => ({ ...s, panel, ...(panel ? {} : { panelWide: false }) }))
+export const openPanel = (panel: Panel | null): void => set((s) => ({ ...s, panel, panelWide: panel ? s.panelWide : false }))
 // The panel over the whole page, or back beside the conversation. Closing it always brings the conversation back.
 export const widenPanel = (wide: boolean): void => set((s) => ({ ...s, panelWide: wide && !!s.panel }))
 export const openThread = (messageId: string, message?: string): void => openPanel({ kind: 'thread', id: messageId, ...(message ? { message } : {}) })
