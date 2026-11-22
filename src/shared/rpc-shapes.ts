@@ -242,6 +242,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   dismissQuestion: { id: 's' },
   answerDecision: { messageId: 's', index: 'n', answer: 'o|null' },
   submitDecisions: { messageId: 's' },
+  cancelQuestion: { messageId: 's' },
   watchRoutine: { id: 's', on: 'b' },
   sendFeedback: { kind: '[bug,idea,other]', message: 's', image: 's?', lang: '[pt,en]?' },
   survey: { lang: '[pt,en]?' },

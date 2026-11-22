@@ -1148,6 +1148,7 @@ setInterval(() => {
 
 const runner = new Runner({
   db,
+  feedbackOn: () => feedback.on,
   engines: engineImpls,
   settings: () => enginesReady.then(settings),
   emit,
@@ -3482,6 +3483,7 @@ const api: Handlers = {
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),
+  cancelQuestion: ({ messageId }, ctx) => runner.cancelQuestion(messageId, ctx.person),
   runRoutine: ({ id }, ctx) => {
     const r = db.routine(id)
     if (!r) throw new Error(L('Essa rotina não existe mais.', 'That routine no longer exists.'))
