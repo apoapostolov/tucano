@@ -1159,6 +1159,7 @@ setInterval(() => {
 
 const runner = new Runner({
   db,
+  feedbackOn: () => feedback.on,
   engines: engineImpls,
   settings: () => enginesReady.then(settings),
   emit,
@@ -2095,6 +2096,26 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
+  // A prompt waiting in the queue (the work drawer): Start sends it now, even with the channel's cap
+  // used up; the order is what a person made by dragging the rows.
+  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
+  reorderQueued: ({ conversationId, ids }, ctx) => {
+    reach(ctx, conversationId)
+    if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
+    runner.reorderQueued(conversationId, ids)
+  },
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes, and the message goes with it — the row and the pill it already put in the
+  // conversation are one message, so both leave in the same step (runs.ts, `dropQueued`).
+  dropQueued: ({ messageId }, ctx) => {
+    const m = db.message(messageId)
+    if (!m) return
+    reach(ctx, m.conversationId)
+    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
+    if (!own) manage(ctx, m.conversationId) // someone else's prompt in a channel: only whoever runs it
+    runner.dropQueued(messageId)
+  },
+
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
   deleteMessage: ({ messageId }, ctx) => {
@@ -2171,6 +2192,7 @@ const api: Handlers = {
     if (!isAutonomy(clean.autonomy)) delete clean.autonomy
     if (typeof clean.outsideGuard !== 'boolean') delete clean.outsideGuard
     if (clean.proactive !== false) delete clean.proactive // on unless turned off
+    if (clean.oneAtATime !== true) delete clean.oneAtATime // as many at once unless turned on
     // Whom it answers to (src/shared/org.ts): another agent that isn't itself, below it, archived or the Tuca. Anything else: no one.
     // One that already answered to the same agent keeps doing so: only a change is checked.
     if (!clean.reportsTo || clean.kind === 'tuca' || (db.agent(clean.id)?.reportsTo !== clean.reportsTo && !possibleBosses(db.agents(), clean.id).some((a) => a.id === clean.reportsTo))) delete clean.reportsTo
@@ -3446,6 +3468,7 @@ const api: Handlers = {
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),
+  cancelQuestion: ({ messageId }, ctx) => runner.cancelQuestion(messageId, ctx.person),
   runRoutine: ({ id }, ctx) => {
     const r = db.routine(id)
     if (!r) throw new Error(L('Essa rotina não existe mais.', 'That routine no longer exists.'))

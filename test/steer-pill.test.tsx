@@ -1,6 +1,8 @@
-// The steer sub-button, beside Stop in a working reply's steps row: it opens a field under the box,
+// The steer pill, in the row a working reply keeps under its chain beside Pause: it opens a field,
 // and what the person writes goes to that reply (send mode `steer`) instead of becoming a message of
 // its own. The chain then says so in their words — as what it is, not as a tool call.
+// The row is `steps__hold` and both pills in it are `steps__ask-pill`; the steer one is the only one
+// that opens a field, so it is the one carrying `aria-expanded`.
 import { parseHTML } from 'linkedom'
 import { act } from 'react'
 import type { Root } from 'react-dom/client'
@@ -31,8 +33,9 @@ vi.mock('../src/renderer/src/store', async (original) => {
   return {
     ...real,
     useStore: <T,>(select: (s: State) => T): T => select(fake),
-    sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, mode?: string, replyId?: string): void => {
-      sent.push({ conversationId, text, mode, replyId })
+    // The app's own order (store.ts): reply, then the mode, then the reply the steer belongs to.
+    sendMessage: (conversationId: string, text: string, _images?: unknown, _threadId?: string, _files?: unknown, _reply?: unknown, mode?: string, steerTo?: string): void => {
+      sent.push({ conversationId, text, mode, replyId: steerTo })
     },
     stopRun: (id: string): void => {
       stopped.push(id)
@@ -67,9 +70,9 @@ afterEach(() => act(() => root.unmount()))
 const draw = async (message: Message): Promise<void> => {
   await act(async () => root.render(<RunBlock message={message} />))
 }
-const pill = (): HTMLElement | null => document.querySelector('.steps__steer-pill')
-const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__steer-note textarea')
-const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__steer-row button')] as HTMLElement[]
+const pill = (): HTMLElement | null => document.querySelector('.steps__ask-pill[aria-expanded]')
+const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__ask-note textarea')
+const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__ask-row button')] as HTMLElement[]
 // Typing as React sees it: the value set past React's own tracker, then the input event.
 const type = async (text: string): Promise<void> => {
   const ta = field()!
@@ -95,22 +98,22 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 describe('the steer pill', () => {
   it('is one pill in the row under the chain of a reply at work, not a control inside its header', async () => {
     await draw(reply('working'))
-    const pills = document.querySelector('.steps__pills')!
-    const steer = pills.querySelector<HTMLElement>('.steps__steer-pill')!
+    const hold = document.querySelector('.steps__hold')!
+    const steer = pill()!
+    expect(hold.contains(steer)).toBe(true) // beside Pause, in the row the reply keeps for itself
     expect(steer.textContent?.trim()).toBe('Orientar')
     expect(steer.getAttribute('title')).toMatch(/Dizer como seguir|Say how to go on/)
-    expect(document.querySelectorAll('.steps__pills')).toHaveLength(1) // one row, not one row per control
-    expect(document.querySelectorAll('.steps__steer-pill')).toHaveLength(1) // not a second steer control
+    expect(document.querySelectorAll('.steps__hold')).toHaveLength(1) // one row, not one row per control
+    expect(document.querySelectorAll('.steps__ask-pill[aria-expanded]')).toHaveLength(1) // not a second steer control
     expect(document.querySelectorAll('.steps__stop')).toHaveLength(1) // Stop stays the stop action
     // The header keeps Stop alone: a pill inside it would also fire the header's own toggle.
-    expect(document.querySelector('.steps__toggle')!.querySelector('.steps__steer-pill')).toBeNull()
+    expect(document.querySelector('.steps__toggle')!.querySelector('.steps__ask-pill')).toBeNull()
     expect(document.querySelector('.steps__list')).not.toBeNull()
-    expect(document.querySelector('.steps__steer')).toBeNull() // no field until it is opened
-    // The row sits inside the box, under the header and above the steps it opened.
-    expect(pills.parentElement!.className).toContain('steps')
-    expect(pills.nextElementSibling!.className).toBe('steps__list')
+    expect(document.querySelector('.steps__ask-note')).toBeNull() // no field until it is opened
+    // The row sits inside the block, under the reasoning and above the reply's own footer.
+    expect(hold.parentElement!.className).toContain('steps')
     await act(async () => steer.click())
-    expect(document.querySelector('.steps')!.nextElementSibling?.className).toBe('steps__steer')
+    expect(document.querySelector('.steps__ask')).not.toBeNull() // the field, in its own box
     expect(stopped).toHaveLength(0) // steering did not stop the reply
     expect(document.querySelector('.steps__list')).not.toBeNull() // and did not toggle the steps
     await draw(reply('done'))

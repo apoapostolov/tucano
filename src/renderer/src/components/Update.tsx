@@ -71,7 +71,7 @@ export function UpdateNote(): ReactNode {
 function status(u: UpdateState): string {
   switch (u.status) {
     case 'off':
-      return L('As atualizações funcionam no app instalado.', 'Updates work in the installed app.')
+      return L('As atualizações funcionam no app instalado.', "Automatic updates are off.")
     case 'checking':
       return L('Procurando uma versão nova…', "Checking for updates…")
     case 'downloading':

@@ -28,7 +28,7 @@ import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom } from './tuca'
 import { appliesNow, decidedCards, keepDecided } from './tuca-apply'
 import { LER_GUIA, readGuide } from './guide'
-import { pendingAgents, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
+import { feedbackFrom, pendingAgents, PROPOR_FEEDBACK, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
 import type { Db } from './db'
 import type { Engine, TurnImage } from './engines/types'
 import { accountDir } from './engines/detect'
@@ -341,6 +341,7 @@ export interface RunnerDeps {
   wiki?: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'kinds' | 'view' | 'heldTitles' | 'outOfReach' | 'addChange' | 'applyChange' | 'save' | 'readOnly'> // without it, agents have no wiki
   wikiCurator?: { afterReply(conversationId: string): void } // reads the conversation after a reply, to keep what lasts
   timers?: { wait(ms: number, signal?: AbortSignal): Promise<void>; now(): number } // how the app waits on a pending result; tests pass a fake clock
+  feedbackOn?: () => boolean // feedback to the people who make Tucano can be sent from here (core/feedback.ts); without it, the Tuca can't write one
 }
 
 // What the runner needs from the connector manager.
@@ -464,8 +465,10 @@ const bareModelFor = (engine: EngineId, model: string): string => {
 }
 export class Runner {
   private recovering = new Set<string>()
-  private queue: { job: () => Promise<unknown>; urgent: boolean }[] = []
+  private queue: { job: () => Promise<unknown>; urgent: boolean; solo?: string }[] = []
   private active = 0
+  // Agents that go one at a time (Agent.oneAtATime), with a reply running now: their next one waits.
+  private soloRunning = new Set<string>()
   private routing = 0
   private controllers = new Map<string, Control>()
   // Rows with a continuation in flight: the pill on them stays until the new reply is on its way.
@@ -713,10 +716,15 @@ export class Runner {
     // handed to it between two tool calls, or in place of it. With nothing running, all four are the
     // same. No mode at all (the phone, an approval's outcome, a routine, a retry) is the way replies
     // have always gone here: one at a time per agent and thread, a person's newer message taking over.
-    const mode = opts.mode
+    // A prompt with no mode at all (the phone, an approval's outcome, a routine, a retry) and a steer that
+    // found nothing to go into join a reply the way Enter does: beside it, up to the replies at once.
+    const mode: SendMode = opts.mode === undefined || opts.mode === 'steer' ? 'parallel' : opts.mode
     // Parallel has a per-channel cap. What comes past it waits in that channel's queue like a
     // queued prompt, marked on the message so it starts once after a restart, not twice.
-    const parallelCap = mode === 'parallel' ? maxParallelSessionsCap((await this.deps.settings()).maxParallelSessions) : 0
+    const caps = await this.deps.settings()
+    // Settings › Agents › Replies writes `repliesAtOnce` (the row in Pages.tsx); a workspace that set the
+    // newer per-person `maxParallelSessions` keeps it, and either way the cap is the one the card shows.
+    const parallelCap = mode === 'parallel' ? maxParallelSessionsCap(caps.maxParallelSessions ?? caps.repliesAtOnce) : 0
     // A prompt already waiting for a slot holds the place it is waiting for: a newer one goes behind it
     // instead of jumping the line (drainIn starts them in the order they were written).
     const room = (): boolean =>
@@ -1820,27 +1828,34 @@ export class Runner {
           done(undefined)
           throw e
         }),
-      p.urgent
+      p.urgent,
+      p.agent
     )
   }
 
   // `urgent`: it answers something the person just did (see MAX_CONCURRENT_URGENT).
-  private enqueue(job: () => Promise<unknown>, urgent = false): void {
-    this.queue.push({ job, urgent })
+  // `agent`: whose reply it is. One that goes one at a time (Agent.oneAtATime) waits here while another
+  // reply of its runs, wherever that one is: what it waits behind says so (the prompt's waiting mark).
+  private enqueue(job: () => Promise<unknown>, urgent = false, agent?: Agent): void {
+    this.queue.push({ job, urgent, ...(agent?.oneAtATime ? { solo: agent.id } : {}) })
     this.pump()
   }
 
   private pump(): void {
     for (;;) {
       if (this.paused) return // paused: nothing new starts, queued work waits
-      const urgent = this.queue.findIndex((q) => q.urgent)
-      const at = this.active < MAX_CONCURRENT ? (urgent >= 0 ? urgent : this.queue.length > 0 ? 0 : -1) : this.active < MAX_CONCURRENT_URGENT ? urgent : -1
+      const free = (q: { solo?: string }): boolean => !q.solo || !this.soloRunning.has(q.solo)
+      const urgent = this.queue.findIndex((q) => q.urgent && free(q))
+      const first = this.queue.findIndex(free)
+      const at = this.active < MAX_CONCURRENT ? (urgent >= 0 ? urgent : first) : this.active < MAX_CONCURRENT_URGENT ? urgent : -1
       if (at < 0) return
-      const { job } = this.queue.splice(at, 1)[0]!
+      const { job, solo } = this.queue.splice(at, 1)[0]!
+      if (solo) this.soloRunning.add(solo)
       if (this.active++ === 0) this.deps.onBusy?.(true)
       void job()
         .catch((e: unknown) => console.error('[runner]', e))
         .finally(() => {
+          if (solo) this.soloRunning.delete(solo)
           this.active--
           this.pump()
           if (this.active === 0) this.deps.onBusy?.(false)
@@ -2507,7 +2522,7 @@ ${note}`,
       ...(canSeeImages ? [VER_IMAGEM] : []),
       ...(canReadFiles ? [LER_ANEXO] : []),
       ...(proposes ? [PROPOR_AGENTE, PROPOR_TIME, ...PROPOSAL_TOOLS()] : []),
-      ...(helps ? [LER_GUIA, VER_ESTADO] : []),
+      ...(helps ? [LER_GUIA, VER_ESTADO, ...(this.deps.feedbackOn?.() ? [PROPOR_FEEDBACK] : [])] : []),
       ...(team.length ? DELEGATION_TOOLS : []),
       ...(computers ? computerTools(agent).map((t) => withKeys(t.name === 'bash' ? withRules(t) : t)) : []),
       ...(browser ? browserTools() : []),
@@ -2764,6 +2779,19 @@ ${note}`,
           const page = readGuide(args['pagina'])
           if (!page.error) addSteps({ id: randomUUID(), label: L('Leu o guia', 'Read the guide'), detail: String(args['pagina']), status: 'done' })
           return textResult(page.text, page.error)
+        }
+
+        if (name === PROPOR_FEEDBACK.name && helps && this.deps.feedbackOn?.()) {
+          const r = feedbackFrom(args)
+          if (!r.draft) return textResult(r.error!, true)
+          msg.run = { ...msg.run!, feedbackDraft: r.draft }
+          addSteps({ id: randomUUID(), label: L('Escreveu um feedback', 'Wrote feedback'), detail: r.draft.kind, status: 'done' })
+          return textResult(
+            L(
+              'O card com o feedback está na sua resposta. A pessoa revisa e envia por ele: diga isso em uma linha, sem repetir o texto.',
+              'The card with the feedback is in your reply. The person reviews and sends it from there: say so in one line, without repeating the text.'
+            )
+          )
         }
 
         if (name === VER_ESTADO.name && helps) {
@@ -3838,7 +3866,7 @@ ${note}`,
 
     // Handed work, as it stands now (cancelled meanwhile, it's no one's any more).
     const handedNow = handed ? this.handedIn(msg) : undefined
-    const base = { endedAt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, route: msg.run?.route, agentDraft: msg.run?.agentDraft, proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId }
+    const base = { endedAt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, route: msg.run?.route, agentDraft: msg.run?.agentDraft, feedbackDraft: msg.run?.feedbackDraft, proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId }
     if (control.reason === 'stopped') {
       save({ text: kept(msg.text), run: { ...base, ...again, status: 'stopped', steps: closeThinking('error', L('Parado', 'Stopped')) } })
     } else if (control.reason === 'loop' || control.reason === 'errors' || control.reason === 'stall' || control.reason === 'sleeping') {
@@ -4442,6 +4470,52 @@ ${note}`,
   async submitDecisions(messageId: string, by: Person): Promise<void> {
     const asked = this.decidable(messageId, by)
     await this.send(asked.conversationId, '', [], asked.threadId, by.id, { answers: asked.id })
+  }
+
+  // Dismissed with the card's Cancelar button: the question closes and the agent isn't woken. Its next turn reads that it
+  // was cancelled (context.ts). Work handed down the tree waits on it, though: there, cancelling means "I won't answer",
+  // not "stop", so whoever does the work goes on without the answer, assuming what it must and saying so.
+  cancelQuestion(messageId: string, by: Person): void {
+    const { db, emit } = this.deps
+    const asked = this.decidable(messageId, by)
+    const q = db.question(messageId)
+    if (q?.state === 'open') {
+      db.saveQuestion({ ...q, state: 'closed' })
+      emit({ type: 'inbox' })
+    }
+    this.update(asked, { run: { ...asked.run!, status: 'done', cancelled: true } })
+    // The question of whoever does handed work, cancelled right where it was asked.
+    const handed = asked.run?.handed ? db.delegation(asked.run.handed) : asked.threadId ? db.delegationAt(asked.threadId) : undefined
+    if (handed?.state === 'open' && handed.asking === asked.id) {
+      if (handed.askingTold) this.closeRelay(handed, asked)
+      return this.goOnWithout(handed)
+    }
+    // The question the asker took up to the person, from that work: each request it was waiting on goes on.
+    if (asked.author.kind !== 'agent') return
+    for (const d of db.delegationsFrom(asked.author.id, asked.conversationId, asked.threadId)) {
+      const below = d.state === 'open' && d.asking && d.askingTold ? db.message(d.asking) : undefined
+      if (below && below.at <= asked.at) this.goOnWithout(d)
+    }
+  }
+
+  // A question on handed work nobody will answer: it closes, and whoever does the work goes on without it.
+  private goOnWithout(d: Delegation): void {
+    const { db } = this.deps
+    const q = d.asking ? db.message(d.asking) : undefined
+    if (q?.run?.status === 'waiting_input') this.update(q, { run: { ...q.run, status: 'done', cancelled: true } })
+    this.keep({ ...d, asking: undefined, askingTold: false })
+    const to = db.agent(d.to)
+    const conv = db.conversation(d.conversationId)
+    if (!to || to.archived || !conv || this.paused) return
+    void this.startReply(to, conv, {
+      depth: 1,
+      threadId: workThread(d),
+      handed: d.id,
+      task: L(
+        'A pessoa preferiu não responder a sua pergunta. Siga com o pedido sem a resposta: assuma o que for mais razoável e diga o que assumiu.',
+        "The person chose not to answer your question. Go on with the request without the answer: assume what's most reasonable and say what you assumed."
+      )
+    })
   }
 
   // The user took over the agent's browser ("Assumir") and handed it back
