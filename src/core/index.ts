@@ -2080,10 +2080,12 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
     reach(ctx, conversationId)
     // `mode` 'steer': written in a running reply's own pill, for that reply (`steerTo`), not a prompt.
-    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}) }), 'sendMessage')
+    // `reply`: the message (or the excerpt of it) this answers. The core checks it before a message of
+    // mine exists, so the answer comes back to the caller: a reply it refuses leaves the field as it was.
+    return runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}), ...(reply ? { reply } : {}) })
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {
