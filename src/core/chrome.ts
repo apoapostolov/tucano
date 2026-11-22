@@ -30,6 +30,11 @@ const COMMAND_MS = 30_000 // for the work of the day: a page that isn't coming b
 export const commandDeadline = (starting: boolean): number => (starting ? OPEN_TIMEOUT_MS : COMMAND_MS)
 const FRAME_MS = 150 // at most ~6 frames a second while someone watches
 const IDLE_MS = 2000 // and one every 2 s otherwise: an animated page left open costs little
+// Where a window for a wall is sent, and where it comes back to when I take it over. macOS does not
+// honour the far corner: Chrome opened there lands at 0,30, and moved there it stops with 40 px still on
+// the screen (measured 2026-11-22). Windows keeps it out of sight.
+const OFF_SCREEN = -24000
+const IN_VIEW = 60
 const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 // The site of an address, for "this one was already tried": '' when there isn't one yet.
 const siteOf = (url: string): string => {
@@ -93,6 +98,7 @@ class Tab {
   closedAll?: () => void // every tab is gone (I closed the window)
   onDownload?: (method: string, params: Record<string, unknown>) => void // a download began or moved on
   remote = false // I'm driving it from the panel (no window: Tucano as a server)
+  offscreen = false // a real window opened for a wall, which nobody has taken over: the agent still drives it
   // True from the first byte of the handshake to the last: Chrome answering its first command on a
   // loaded machine is the slow part, and it gets the same generous deadline as the open itself.
   private starting = false
@@ -103,6 +109,12 @@ class Tab {
     private onFrame?: (jpeg: string) => boolean,
     readonly carriesExtensions = false // fixed for this process's life: what fill() refuses on
   ) {}
+
+  // Whether a person has this lane: a window opened only to get past a wall doesn't count, or the agent
+  // would be told I'm using its browser and refused its next action.
+  get inView(): boolean {
+    return (this.headed && !this.offscreen) || this.remote
+  }
 
   // Chrome reads commands on its fd 3 and writes on fd 4, each message ending in a NUL.
   private get input(): Writable {
@@ -277,8 +289,11 @@ export class ChromeBrowsers {
   // Sites that only let a real browser through: which one each agent's lane is drawn in a window for
   // right now, and which ones it was already tried on. The second set is what ends the loop: a wall a
   // window doesn't get past is never asked for again in that lane.
-  private wallHeaded = new Map<string, string>()
+  private wallHeaded = new Set<string>()
   private wallTried = new Map<string, Set<string>>()
+  private relaunching = new Map<string, Promise<BrowserReply>>() // one switch to a window at a time, shared
+  private procs = new Set<ChildProcess>() // every Chrome started, including one still opening when the app quits
+  private quits = 0 // a switch to a window under way when the app quits opens nothing more
 
   constructor(
     private dir: string, // profiles live in <dir>/<agentId>
@@ -294,13 +309,17 @@ export class ChromeBrowsers {
     // Where each agent's downloads land (core/downloads.ts); without it, nothing downloads.
     private downloads?: (agentId: string) => string,
     // The browser's own extensions, when they're here (core/chrome-addons.ts): Chrome for Testing, the
-    // only build that still takes a folder of them, and where they are. Read at every launch, and a lane
-    // already open is restarted on its next op when the set changed (see tab()), so a switch turned on
-    // under a running lane takes effect then, not at the next app start.
+    // only build that still takes a folder of them, and where they are. Read at every launch, so one
+    // that lands while a lane is running is in the next lane, without closing the page an agent is on.
     private addOns?: { bin: string; dirs: string[]; launchFailed?: (why: string) => void },
     // Chrome switches that are the person's own choice (Settings › Agents › Additional accessibility),
     // read at every launch like the extensions above, so a change reaches the next lane and not this one.
-    private flags?: () => string[]
+    private flags?: () => string[],
+    // Whether a wall may open a real window by itself. Not on a Mac for now: Chrome started this way
+    // comes to the front and takes the focus from what the person is doing (measured 2026-11-22, about
+    // 8 s across a run), and macOS won't keep the window off the screen either. There the wall's note
+    // stands: wait, use another source, or ask the person to take the browser over.
+    private wallWindows = process.platform !== 'darwin'
   ) {
     process.on('exit', () => this.quit())
     if (idleMs) setInterval(() => void this.closeIdle(), Math.min(60_000, Math.max(100, idleMs / 2))).unref()
@@ -329,14 +348,16 @@ export class ChromeBrowsers {
   }
 
   quit(): void {
-    for (const t of this.tabs.values()) t.proc.kill()
+    this.quits++
+    for (const proc of this.procs) proc.kill()
+    this.procs.clear()
     this.tabs.clear()
     this.launchedWith.clear()
   }
 
-  // A lane that carries extensions gets a profile of its own: Chrome for Testing can't decrypt the cookies
-  // the branded build saved, and it deletes what it can't read — sharing the folder would sign the agent
-  // out of every site for good, even after the extensions are turned off again.
+  // A lane with extensions has a profile of its own. Chrome for Testing can't decrypt the cookies the
+  // branded build saved, and it deletes what it can't read: sharing the folder would sign the agent out
+  // of every site for good, even after the extensions are turned off again.
   private profile(agentId: string, carried = false): string {
     return join(this.dir, carried ? `${agentId}.extensions` : agentId)
   }
@@ -353,7 +374,7 @@ export class ChromeBrowsers {
   }
 
   // Everything a lane is started with that a switch can change: what it carries and how its Chrome
-  // behaves. Kept apart from the profile, which follows what it carries: a switch that changes how a
+  // behaves. Kept apart from wanted() above, which also decides the profile: a switch that changes how a
   // page behaves must not send the lane to the other profile and sign the agent out of every site.
   private fingerprint(agentId: string): string {
     return `${this.wanted(agentId)}|${(this.flags?.() ?? []).join(' ')}`
@@ -378,10 +399,9 @@ export class ChromeBrowsers {
     return { url: tab.url, title: '', ...(before?.carriesExtensions ? { reopened: true } : {}) }
   }
 
-  private async launch(agentId: string, headed: boolean): Promise<Tab> {
+  private async launch(agentId: string, headed: boolean, url?: string, offscreen = false): Promise<Tab> {
     const carried = this.wanted(agentId)
     const startedWith = this.fingerprint(agentId) // as it is now: what lands during the start is the next lane's
-
     const profile = this.profile(agentId, !!carried)
     mkdirSync(profile, { recursive: true })
     const downloads = agentId.startsWith('.shot-') ? undefined : this.downloads?.(agentId)
@@ -414,19 +434,19 @@ export class ChromeBrowsers {
       // A window opened to get past a bot check is off the screen: it is a real window, drawn by the
       // real renderer, which is what these walls let through (measured 2026-11-22: at -24000,-24000
       // Cloudflare, idealo's 403 and google all cleared exactly as in the middle of the screen), but
-      // it never takes the focus from me. Taking the lane over opens it in front of me instead.
-      ...(headed ? ['--new-window', ...(offscreen ? ['--window-position=-24000,-24000'] : [])] : ['--headless=new', '--mute-audio']),
-      // A headless lane never gets a page here: Chrome can drop what it's handed at startup, and a blank page
-      // is what an agent then reads (see navigate). A real window is the exception, because Chrome places it
-      // from this line and Windows only reads that placement back to a page that came with it — one navigated
-      // into an off-screen window afterwards reads screenX 0 and outerWidth 0, exactly like a headless lane
-      // (measured here 2026-11-22, --window-position=-24000,-24000: the window's real bounds -21845,-21845,
-      // 1281x801, but the page said 0).
-      headed && url && /^https?:/.test(url) ? url : 'about:blank'
+      // it stays out of my way. Taking the lane over opens it in front of me instead, at a fixed place:
+      // left to itself Chrome would reopen where the last window of this profile was, off the screen.
+      ...(headed ? ['--new-window', `--window-position=${offscreen ? `${OFF_SCREEN},${OFF_SCREEN}` : `${IN_VIEW},${IN_VIEW}`}`] : ['--headless=new', '--mute-audio']),
+      // Never a page on this line: Chrome can drop what it's handed at startup, and a blank page is what an
+      // agent then reads. A caller that names a page gets it from navigate() below, once the lane is answering.
+      'about:blank'
     ]
     const proc = spawn(carried ? this.addOns!.bin : this.bin, args, { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] })
+    this.procs.add(proc)
+    proc.once('exit', () => this.procs.delete(proc))
     const onFrame = this.onFrame
     const tab = new Tab(proc, headed, onFrame && ((jpeg) => onFrame(agentId, jpeg)), load.length > 0)
+    tab.offscreen = offscreen
     let timer: ReturnType<typeof setTimeout> | undefined
     const failed = new Promise<never>((_, reject) => {
       proc.once('error', reject) // the program isn't there, or can't be run
@@ -440,6 +460,10 @@ export class ChromeBrowsers {
     try {
       await Promise.race([tab.connect(), failed])
       await this.watchDownloads(tab, downloads)
+      if (offscreen) await this.placeWindow(tab, OFF_SCREEN) // the flag alone doesn't hold on macOS
+      // A caller that names a page (a wall's own window, a lane coming back) gets it here, after the
+      // handshake: Chrome can drop a page handed to it on the command line while it starts.
+      if (url && /^https?:/.test(url)) await this.navigate(tab, url)
     } catch (e) {
       proc.kill()
       if (carried) {
@@ -464,6 +488,13 @@ export class ChromeBrowsers {
     this.tabs.set(agentId, tab)
     this.launchedWith.set(agentId, startedWith)
     return tab
+  }
+
+  // Moved through the browser's own window bounds, which is what's true on every system (the page's
+  // screenX doesn't follow on Windows), and never a restart: what's on the page stays as it was.
+  private async placeWindow(tab: Tab, at: number): Promise<void> {
+    const { windowId } = await tab.send('Browser.getWindowForTarget', { targetId: tab.target }).catch(() => ({ windowId: undefined }))
+    if (typeof windowId === 'number') await tab.send('Browser.setWindowBounds', { windowId, bounds: { left: at, top: at, width: W, height: H } }).catch(() => {})
   }
 
   // Downloads go to the agent's own folder, through .partial (core/downloads.ts), never past the size
@@ -521,12 +552,11 @@ export class ChromeBrowsers {
     if (t) {
       // A window the person took over is theirs until they hand it back: nothing restarts under it.
       if (t.headed || agentId.startsWith('.shot-') || this.launchedWith.get(agentId) === this.fingerprint(agentId)) return t
-
       // This one was started with a different set of extensions: a switch was turned on (or off) while it
       // was open, or the download landed. Without this it keeps the old set for as long as it lives — on a
-      // Mac, where an idle lane is never closed, for the whole session. It closes the way an idle one does
-      // (cookies are written first) and the page it was on comes back in the next browser, so nothing is
-      // lost but the seconds of the relaunch.
+      // Mac with no idle close, for the whole session. It closes the way an idle one does (cookies are
+      // written first) and the page it was on comes back in the next browser, so nothing is lost but the
+      // seconds of the relaunch.
       this.tabs.delete(agentId)
       this.launchedWith.delete(agentId)
       if (/^https?:/.test(t.url)) this.resumeAt.set(agentId, t.url)
@@ -581,24 +611,49 @@ export class ChromeBrowsers {
     const here = { url: t?.url ?? '', title: '' }
     // A window needs a screen, and nothing here may race a lane that is starting, closing or being
     // handed back: the answer is no, and the page's own note still says what to do.
-    if (this.windowless || !this.chromeBin) return { ...here, headful: false }
-    if (this.starting.has(agentId) || this.handingBack.has(agentId) || this.closing.has(agentId)) return { ...here, headful: false }
-    if (t?.headed) return this.wallHeaded.get(agentId) === siteOf(t.url) ? { ...here, headful: true, shown: t.remote } : { ...here, headful: false }
-    const site = siteOf(t?.url ?? '')
+    if (this.windowless || !this.wallWindows || !this.bin) return { ...here, headful: false }
+    const going = this.relaunching.get(agentId)
+    if (going) return going // two calls that met the same wall get the same window
+    if (!t || this.starting.has(agentId) || this.handingBack.has(agentId) || this.closing.has(agentId)) return { ...here, headful: false }
+    if (t.headed) return { ...here, headful: this.wallHeaded.has(agentId), shown: t.inView }
+    const site = siteOf(t.url)
     const tried = this.wallTried.get(agentId) ?? new Set<string>()
-    if (site && tried.has(site)) return { ...here, headful: false }
-    if (site) {
-      tried.add(site)
-      this.wallTried.set(agentId, tried)
+    if (!site || tried.has(site)) return { ...here, headful: false }
+    tried.add(site)
+    this.wallTried.set(agentId, tried)
+    // In `starting` from this very line, so whatever the agent asks during the switch waits for this
+    // Chrome instead of opening a second one on the same profile.
+    this.tabs.delete(agentId)
+    const url = t.url
+    const quits = this.quits
+    const open = (headed: boolean): Promise<Tab> => {
+      if (this.quits !== quits) throw new Error(L('o app fechou', 'the app quit'))
+      return this.launch(agentId, headed, url, headed)
     }
-    if (t) {
-      this.tabs.delete(agentId)
-      await this.shutDown(t)
-    }
-    const tab = await this.launch(agentId, true, here.url, true)
-    await this.navigate(tab, here.url)
-    if (site) this.wallHeaded.set(agentId, site)
-    return { url: tab.url, title: '', headful: true }
+    const p = this.shutDown(t)
+      .then(() => open(true))
+      .then(async (tab) => {
+        await this.settle(tab)
+        this.wallHeaded.add(agentId)
+        return tab
+      })
+      // A window that won't open is no reason to lose the page: back to headless where it was.
+      .catch(async () => {
+        const back = await open(false)
+        await this.settle(back)
+        return back
+      })
+      .catch((e: unknown) => {
+        this.resumeAt.set(agentId, url)
+        throw e
+      })
+      .finally(() => this.starting.delete(agentId))
+    this.starting.set(agentId, p)
+    const reply = p
+      .then((tab): BrowserReply => ({ url: tab.url, title: '', headful: tab.headed }), (): BrowserReply => ({ ...here, headful: false }))
+      .finally(() => this.relaunching.delete(agentId))
+    this.relaunching.set(agentId, reply)
+    return reply
   }
 
   async run(agentId: string, op: BrowserOp, args: Record<string, unknown> = {}): Promise<BrowserReply> {
@@ -608,8 +663,7 @@ export class ChromeBrowsers {
       const reply = await this.runOp(agentId, op, args)
       // Every answer from a lane that is in a window for a wall says so, so the note the agent reads
       // (shared/wall.ts) stops advising a wait or a takeover that can't help.
-      const site = siteOf(this.tabs.get(agentId)?.url ?? '')
-      return site && this.wallHeaded.get(agentId) === site ? { ...reply, headful: true } : reply
+      return this.tabs.get(agentId)?.headed && this.wallHeaded.has(agentId) ? { ...reply, headful: true } : reply
     } finally {
       this.busy.set(agentId, (this.busy.get(agentId) ?? 1) - 1)
       this.used.set(agentId, Date.now())
@@ -618,6 +672,8 @@ export class ChromeBrowsers {
 
   private async runOp(agentId: string, op: BrowserOp, args: Record<string, unknown>): Promise<BrowserReply> {
     if (op === 'close' || op === 'clear') {
+      // A Chrome still opening (a switch to a window, a first page) would land after this and stay.
+      await this.starting.get(agentId)?.catch(() => {})
       this.resumeAt.delete(agentId)
       this.wallHeaded.delete(agentId)
       this.wallTried.delete(agentId)
@@ -659,16 +715,13 @@ export class ChromeBrowsers {
     if (op === 'headful') return this.headful(agentId)
     if (op === 'show') {
       const current = this.tabs.get(agentId) ?? (await this.starting.get(agentId))
-      // A window opened to get past a wall is off the screen: asked to take the lane over, it comes
-      // into view on the page it is on. Moved, not restarted: a challenge half solved on it stays
-      // half solved, which is the one thing I asked to see it for.
-      if (current?.headed && this.wallHeaded.has(agentId)) {
-        // Moved with the DevTools window bounds, not restarted: a challenge half solved on it stays
-        // half solved, which is the one thing I asked to see it for. (On Windows the page's own
-        // screenX does not follow a moved window; the browser's bounds are what is true.)
-        const { windowId } = await current.send('Browser.getWindowForTarget', { targetId: current.target }).catch(() => ({ windowId: undefined }))
-        if (typeof windowId === 'number') await current.send('Browser.setWindowBounds', { windowId, bounds: { left: 60, top: 60, width: W, height: H } }).catch(() => {})
-        await current.send('Page.bringToFront').catch(() => {})
+      // A window opened to get past a wall: asked to take the lane over, it comes into view on the page
+      // it is on. Moved, not restarted: a challenge half solved on it stays half solved, which is the
+      // one thing I asked to see it for.
+      if (current?.offscreen) {
+        current.offscreen = false
+        await this.placeWindow(current, IN_VIEW)
+        await current.cmd('Page.bringToFront').catch(() => {})
         this.onShown(agentId, true)
         return { url: current.url, title: '', shown: true }
       }
@@ -678,7 +731,7 @@ export class ChromeBrowsers {
         this.tabs.delete(agentId)
         await this.shutDown(current)
       }
-      const tab = await this.launch(agentId, true, url)
+      const tab = await this.launch(agentId, true)
       if (url && /^https?:/.test(url)) await this.navigate(tab, url)
       this.onShown(agentId, true)
       return { url: tab.url, title: '', shown: true }
@@ -695,7 +748,7 @@ export class ChromeBrowsers {
         .run<{ url: string; title: string; w: number; h: number }>('({ url: location.href, title: document.title, w: innerWidth, h: innerHeight })')
         .catch(() => ({ url: tab.url, title: '', w: 0, h: 0 }))
       const point = at && w && h ? { x: at.x / w, y: at.y / h } : undefined
-      return { ...info, shown: tab.headed || tab.remote, ...(point ? { point } : {}), ...(frame ? { frame: await this.frame(tab) } : {}) }
+      return { ...info, shown: tab.inView, ...(point ? { point } : {}), ...(frame ? { frame: await this.frame(tab) } : {}) }
     }
 
     switch (op) {
@@ -706,7 +759,7 @@ export class ChromeBrowsers {
         return here(true)
       }
       case 'snapshot':
-        return { ...(await tab.run<BrowserReply>(SNAPSHOT)), shown: tab.headed || tab.remote }
+        return { ...(await tab.run<BrowserReply>(SNAPSHOT)), shown: tab.inView }
       case 'click': {
         const at = typeof args['ref'] === 'number' ? await tab.run<{ x: number; y: number } | null>(POINT(args['ref'], false)) : { x: Number(args['x']), y: Number(args['y']) }
         if (!at || !Number.isFinite(at.x) || !Number.isFinite(at.y)) throw new Error(L('Esse elemento não está mais na página. Leia a página de novo.', 'That element is no longer on the page. Read the page again.'))
@@ -782,6 +835,24 @@ export class ChromeBrowsers {
     throw new Error(L(`operação desconhecida: ${op}`, `unknown operation: ${op}`))
   }
 
+  // A page opened, with one retry behind it. Chrome can cancel the very first navigation a fresh lane is
+  // handed by its own startup: the provisional load stops, no page is committed, and the agent is given
+  // about:blank as if the site had nothing on it — it reads nothing, clicks nothing, and the session is
+  // spent finding out the page was never there. Measured on this computer, 2026-11-22, over a page served
+  // from this machine: on Chrome for Testing 158.0.8127.36 — the browser a lane with the add-ons runs as —
+  // 5 first opens of 6 landed on about:blank and 0 of 6 did with this second go, while the branded Chrome
+  // of a lane with nothing switched on missed none. The retry asks for the same address, and only while
+  // the browser is still on about:blank: a site that redirected somewhere of its own is left alone.
+  private async navigate(tab: Tab, url: string): Promise<void> {
+    for (let attempt = 0; ; attempt++) {
+      const r = (await tab.cmd('Page.navigate', { url })) as { errorText?: string }
+      if (r.errorText && !/ERR_ABORTED/.test(r.errorText)) throw new Error(L(`não abriu: ${r.errorText}`, `didn't open: ${r.errorText}`))
+      await this.settle(tab)
+      const at = await tab.run<string>('location.href').catch(() => '')
+      if (at !== 'about:blank' || attempt > 0) return
+    }
+  }
+
   private async click(tab: Tab, x: number, y: number): Promise<void> {
     const p = { x: Math.round(x), y: Math.round(y) }
     await tab.cmd('Input.dispatchMouseEvent', { type: 'mouseMoved', ...p })
@@ -799,8 +870,7 @@ export class ChromeBrowsers {
     try {
       const size = (height: number): Promise<unknown> => tab.cmd('Emulation.setDeviceMetricsOverride', { width: o.width, height, deviceScaleFactor: 1, mobile: false })
       await size(o.height)
-      await Promise.race([tab.cmd('Page.navigate', { url: o.url }), wait(30_000).then(() => Promise.reject(new Error(L('a página não carregou em 30 s', "the page didn't load in 30 s"))))])
-      await this.settle(tab)
+      await Promise.race([this.navigate(tab, o.url), wait(30_000).then(() => Promise.reject(new Error(L('a página não carregou em 30 s', "the page didn't load in 30 s"))))])
       await wait(800) // fonts, charts and client-side rendering
       if (o.fullPage) {
         const h = await tab.run<number>('Math.max(document.documentElement.scrollHeight, document.body ? document.body.scrollHeight : 0)').catch(() => 0)
@@ -851,33 +921,6 @@ export class ChromeBrowsers {
     const base = { key: k.key, code: k.code, windowsVirtualKeyCode: k.vk }
     await tab.cmd('Input.dispatchKeyEvent', { type: 'keyDown', ...base, ...(k.text ? { text: k.text } : {}) })
     await tab.cmd('Input.dispatchKeyEvent', { type: 'keyUp', ...base })
-  }
-
-  // A page opened, with one retry behind it. Chrome can cancel the very first navigation a fresh lane is
-  // handed by its own startup: the provisional load stops, no page is committed, and the agent is given
-  // about:blank as if the site had nothing on it — it reads nothing, clicks nothing, and the session is
-  // spent finding out the page was never there. Measured on this computer, 2026-11-22, over a page served
-  // from this machine: on Chrome for Testing 158.0.8127.36 — the browser a lane with the add-ons runs as —
-  // 5 first opens of 6 landed on about:blank and 0 of 6 did with this second go, while the branded Chrome
-  // of a lane with nothing switched on missed none. The retry asks for the same address, and only while
-  // the browser is still on about:blank: a site that redirected somewhere of its own is left alone, and a
-  // real window that came up on the page (see launch) is not reloaded under whoever is looking at it.
-  private async navigate(tab: Tab, url: string): Promise<void> {
-    // A page that came up already on the address it was given (a real window, see launch) is left as it
-    // is: asking again would reload it under whoever is looking at it. Anywhere else the address is asked
-    // for, including a lane that is open on another page — an agent that says "open this" goes there, and
-    // a lane left on the page before would answer with it.
-    const same = (href: string): boolean => href === url || href === `${url}/`
-    for (let attempt = 0; ; attempt++) {
-      const at = await tab.run<string>('location.href').catch(() => '')
-      if (attempt > 0 || !same(at)) {
-        const r = (await tab.cmd('Page.navigate', { url })) as { errorText?: string }
-        if (r.errorText && !/ERR_ABORTED/.test(r.errorText)) throw new Error(L(`não abriu: ${r.errorText}`, `didn't open: ${r.errorText}`))
-      }
-      await this.settle(tab)
-      const now = await tab.run<string>('location.href').catch(() => '')
-      if (now !== 'about:blank' || attempt > 0) return
-    }
   }
 
   // Lets what an action started finish: a navigation, a request, a re-render.
