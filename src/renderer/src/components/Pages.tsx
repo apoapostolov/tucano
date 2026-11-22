@@ -104,6 +104,8 @@ import { confirmDeleteAgent, confirmDialog, ContextMenu, type MenuItem, type Men
 import { Modal } from './Modal'
 import { AgentAvatar, AVATARS, Icon, type IconName, NumberInput, SleepingToucan, time, tokens, UsageBar } from './ui'
 import { Select } from './Select'
+import { AgentAddOns } from './AgentAddOns'
+import { RoutingPane, SmartRoutingSwitch } from './Routing'
 import { UpdateSettings } from './Update'
 import { openFeedback } from './Feedback'
 import type { NotifyState } from '../rpc'
@@ -3329,6 +3331,8 @@ export function SettingsPage(): ReactNode {
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   // At work, Jev and Telegram stay: the person decides, told what leaves the gateway.
   const work = onGateway(settings)
+  // Routing is on for everyone, or on for one agent by itself: only then do the pools mean anything.
+  const routingOn = useStore((st) => st.settings.routing?.enabled === true || st.agents.some((a) => a.smartRouting === true))
   const team = useStore(teamMode)
   const admin = useStore(amAdmin)
   const owner = useStore(amOwner)
@@ -3680,6 +3684,18 @@ export function SettingsPage(): ReactNode {
         )}
 
         {on('agentes') && admin && (
+          <SectionAnchor id="agents-addons" sections={structure}>
+            <Card
+              title={L('Extensões do navegador', 'Browser Extensions')}
+              section="agents-addons"
+              lead={L('O navegador dos agentes roda com as extensões que você ligar: nenhum anúncio nem aviso de cookies fica por cima da página que ele lê.', 'The agent’s browser runs with the extensions you turn on: no ad or cookie notice sits over the page it reads.')}
+            >
+              <AgentAddOns />
+            </Card>
+          </SectionAnchor>
+        )}
+
+        {on('agentes') && admin && (
           <SectionAnchor id="agents-tuca" sections={structure}>
             <Card title="Tuca" section="agents-tuca" lead={L('O que o Tuca muda dentro do app: agentes, times, canais e rotinas.', 'What Tuca changes inside the app: agents, teams, channels and routines.')}>
               <div className="key-row">
@@ -3769,6 +3785,15 @@ export function SettingsPage(): ReactNode {
               </Field>
               {settings.routerModel === 'jev' && <JevKey saved={!!settings.jevKey} />}
               {settings.routerModel === 'jev' && work && <OutsideGateway what={L('cada mensagem sem @menção vai pra TypeSafe escolher quem responde.', 'every message without an @mention goes to TypeSafe to pick who replies.')} />}
+              <SmartRoutingSwitch />
+            </Card>
+          </SectionAnchor>
+        )}
+
+        {on('modelos') && admin && routingOn && (
+          <SectionAnchor id="models-routes" sections={structure}>
+            <Card title={L('Rotas', 'Routing')} section="models-routes" lead={L('O Jev lê cada pedido e escolhe o modelo nos pools abaixo, por papel. Desligado, cada agente usa o próprio modelo.', 'Jev reads each prompt and picks the model from the pools below, by role. Off, each agent uses its own model.')}>
+              <RoutingPane />
             </Card>
           </SectionAnchor>
         )}
