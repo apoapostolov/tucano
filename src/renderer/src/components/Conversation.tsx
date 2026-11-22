@@ -1836,6 +1836,11 @@ export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; cl
 // people want the answer.
 export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
   const on = useStore((s) => s.settings.showThinking === true)
+  // How tall the block is before the reasoning scrolls: 6, 12 or 18 lines, the person's own setting in
+  // Settings › Conversations. It rides on the block as `data-size`; the rule that reads it is in
+  // styles.css, on the box that actually scrolls (`.thought__text`). Without this the setting was
+  // written and never applied: the block kept the one height it was built with.
+  const size = useStore((s) => s.settings.thinkingSize ?? 'md')
   const retained = useLiveThoughtState(message.id, STREAM_MS)
   const thought = retained?.text
   // null: follow the reply — open while it thinks, folded once it's done. A click says otherwise.
@@ -1870,7 +1875,7 @@ export function Thought({ message, working }: { message: Message; working: boole
   // Folded, it carries the line it is on now: what it is thinking, cut to the width of the block.
   const last = thought.trimEnd().split(/\r?\n/).filter((l) => l.trim() !== '').pop() ?? ''
   return (
-    <div className={`thought${open ? ' is-open' : ''}${working ? ' is-working' : ''}`} aria-label={L('O que o agente está pensando', 'What the agent is thinking')}>
+    <div className={`thought${open ? ' is-open' : ''}${working ? ' is-working' : ''}`} data-size={size} aria-label={L('O que o agente está pensando', 'What the agent is thinking')}>
       <button
         type="button"
         className="thought__head"

@@ -14333,7 +14333,11 @@ button.agent-card__now:hover {
   opacity: 0.8;
 }
 .thought__text {
-  max-height: 9.5em;
+  /* How tall the reasoning shows before it scrolls: the person's setting (6, 12 or 18 lines), which
+     Conversation.tsx carries on the block as `data-size`. It belongs on this box, the one that
+     scrolls: a fixed height here outranked the setting and pinned all three sizes to the same six
+     lines. 12 is the middle size, for a block drawn before the setting was ever read. */
+  max-height: calc(var(--thought-lines, 12) * 1.55em);
   overflow-y: auto;
   /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar
      on the box whenever a line of reasoning had nowhere to wrap. */

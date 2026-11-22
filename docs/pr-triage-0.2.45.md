@@ -49,9 +49,17 @@ would cost. Answer by number ("do 1-4; 5 your rec").
    shortcut, clock, hide-empty asks/approvals). Their keys still exist and still persist.
    *Recommendation: one wave per group, added as extra subjects inside the five groups (not as tabs),
    Quotas and Browser Extensions first — they are the two used every day.*
-5. **The steps disclosure and the thinking block's sizes** — upstream's run block folds its own way and
-   the thought has no size setting. *Recommendation: accept upstream's; the fork's steps-mode trio
-   (all / latest / one line) is worth re-offering only if Apo asks for it.*
+5. **The steps disclosure and the thinking block's sizes** — upstream's run block folds its own way
+   and the thought has no size setting. **Apo, 22 Nov 21:19: "the option of size of the thinking block
+   doesn't work at all - in 0.2.44 it is changing size to 6/12/18 lines."** So: upstream's fold stays,
+   the height setting comes back. It was broken in three places at once (measured 6/6/6 lines before the
+   fix, 6/12/18 after): nothing put `data-size` on upstream's block (the fork's own `Thought.tsx` does,
+   and nothing imports it), `.thought__text` kept a fixed `max-height: 9.5em`, and the `--thought-lines`
+   declarations had no consumer left. Fixed on `next`, with `test/thought-height.test.ts` (the three
+   heights, measured in a browser) and `test/thought-height-setting.test.tsx` (the setting reaches the
+   block). The fork's steps-mode trio (all / latest / one line) is still not offered; that part stays as
+   upstream has it. *Open: `components/Thought.tsx` is now dead code — upstream's `Thought` inside
+   `Conversation.tsx` is the live one; retire it or keep it as the reference for a later wave.*
 6. **Reply to message** — the fork's quote-and-reply (`ReplyTarget`, the `reply` column in the
    database, the composer's quote strip) has no upstream counterpart, so its card and strip left with
    the conversation footer. The column and the type are still there, with nothing writing them.
