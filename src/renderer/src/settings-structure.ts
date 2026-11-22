@@ -42,7 +42,8 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-permissions', page: 'agents', label: L('Permissões', 'Permissions'), keys: ['autonomy', 'actionRules', 'outsideGuard', 'approvalTtlHours'], scope: 'workspace', visible: admin },
     { id: 'agents-limits', page: 'agents', label: L('Limites', 'Limits'), keys: ['defaultLimit', 'runBudgetPct', 'autoContinue'], scope: 'workspace', visible: admin },
     { id: 'agents-tuca', page: 'agents', label: L('Tuca', 'Tuca'), keys: ['tucaApplyNow'], scope: 'workspace', visible: admin },
-    { id: 'agents-browser', page: 'agents', label: L('Navegador dos agentes', 'Agents browser'), keys: ['browserJev', 'browserAddOns'], scope: 'workspace', visible: admin },
+    { id: 'agents-browser', page: 'agents', label: L('Navegador dos agentes', 'Agents browser'), keys: ['browserJev'], scope: 'workspace', visible: admin },
+    { id: 'agents-addons', page: 'agents', label: L('Anúncios e avisos de cookies', 'Ads and consent notices'), keys: ['browserAddOns'], scope: 'workspace', visible: admin },
     { id: 'agents-automation', page: 'agents', label: L('Automação', 'Automation'), keys: ['quietHours'], scope: 'workspace', visible: admin },
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
@@ -92,7 +93,7 @@ const legacy: Readonly<Record<string, string>> = {
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
   modelos: ['models-agents', 'models-session-names', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
-  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser'],
+  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser', 'agents-addons'],
   integracoes: ['connections-phone'],
   pessoas: ['workspace-people'],
   atividade: ['workspace-activity'],
