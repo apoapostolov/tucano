@@ -46,7 +46,7 @@ const vendorOf = (p: ClassifierProvider): string => providerSpec(p).label
 export const noAnswer = (p: ClassifierProvider): string => L(`o ${vendorOf(p)} não respondeu`, `${vendorOf(p)} didn't answer`)
 
 export const badFormat = (p: ClassifierProvider): string =>
-  L(`resposta do ${vendorOf(p)} fora do formato`, `${vendorOf(p)}'s answer wasn't in the format`)
+  L(`resposta do ${vendorOf(p)} fora do formato`, `${vendorOf(p)}'s response was not in the expected format`)
 
 export function failure(status: number, p: ClassifierProvider): string {
   const v = vendorOf(p)

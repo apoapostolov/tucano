@@ -364,7 +364,7 @@ export function ConversationView({ id }: { id: string }): ReactNode {
           </div>
         )}
         {gone ? (
-          <p className="composer-off muted small">{L(`${gone.name} foi excluído. A conversa fica aqui pra ler.`, `${gone.name} was deleted. The conversation stays here to read.`)}</p>
+          <p className="composer-off muted small">{L(`${gone.name} foi excluído. A conversa fica aqui pra ler.`, `${gone.name} was deleted. The conversation remains available to read.`)}</p>
         ) : (
           <Composer
             conversationId={id}
@@ -677,7 +677,7 @@ const NO_ATTACHED: Artifact[] = []
 // saying it is queued and why. Not a pill of its own under the message, and no second line.
 export function QueuedNote(): ReactNode {
   return (
-    <span className="msg__queued-line" title={L('Chega quando a resposta acima terminar', 'Goes when the reply above ends')}>
+    <span className="msg__queued-line" title={L('Chega quando a resposta acima terminar', "Runs after the reply above finishes.")}>
       {L('Na fila · esperando a resposta acima terminar', 'Queued · waiting for the reply above to finish')}
     </span>
   )
@@ -2433,7 +2433,7 @@ function SteerPill({ message }: { message: Message }): ReactNode {
       icon="pointer"
       label={L('Orientar', 'Steer')}
       title={L('Dizer como seguir, sem parar o que ele está fazendo', 'Say how to go on, without stopping what it is doing')}
-      aria={L('Orientação para a resposta em curso', 'A steer for the reply running now')}
+      aria={L('Orientação para a resposta em curso', "Instructions for the current reply")}
       placeholder={L('Como ele deve seguir?', 'How should it go on?')}
       onSend={steer}
     />
@@ -2683,7 +2683,7 @@ function CallApprovalCard({ approval, compact }: { approval: Approval; compact?:
   const canAlways = approval.tool !== ACCESS_REQUEST && approval.tool !== 'abrir_pr' && approval.connectorId !== 'navegador' && approval.connectorId !== 'apps' && !runner && !neverAllowedForGood(approval.tool) && (!onComputer || kinds.length > 0)
   const alwaysTitle = onComputer
     ? L(`Daqui pra frente ${agent?.name ?? 'o agente'} faz sozinho: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. Dá pra mudar na página dele.`, `From now on ${agent?.name ?? 'the agent'} does it alone: ${kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')}. You can change it on its page.`)
-    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. Dá pra tirar na página dele.`, `From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking, in any call, even after reading something from outside. You can take it back on its page.`)
+    : L(`Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. Dá pra tirar na página dele.`, `Allow ${agent?.name ?? 'the agent'} to use “${toolWords(approval.tool)}” in ${approval.connectorName} without approval on any call, even after reading external content. Revoke this on its page.`)
 
   return (
     <div className={`approval approval--${approval.state} ${compact ? 'approval--compact' : ''}`}>
@@ -2853,7 +2853,7 @@ function CallApprovalCard({ approval, compact }: { approval: Approval; compact?:
                   className="btn approval__always"
                   title={L(
                     `Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. As outras ações continuam pedindo. Dá pra tirar na página dele.`,
-                    `From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call, even after reading something from outside. Other actions still ask. You can take it back on its page.`
+                    `Allow ${agent?.name ?? 'the agent'} to run ${forGood.join(', ')} through ${approval.connectorName} without approval on any call, even after reading external content. Other actions still require approval. Revoke this on its page.`
                   )}
                   onClick={() => decideApproval(approval.id, 'approved', undefined, true)}
                 >
@@ -3375,7 +3375,7 @@ export function WorkDrawer({ conversationId, onJump }: { conversationId: string;
                   icon="pointer"
                   label={L('Orientar', 'Steer')}
                   title={L('Dizer como seguir, sem parar esta resposta', 'Say how to go on without stopping this reply')}
-                  aria={L('Orientação para esta resposta', 'A steer for this reply')}
+                  aria={L('Orientação para esta resposta', "Instructions for the current reply")}
                   place="row"
                   placeholder={L('Como ele deve seguir?', 'How should it go on?')}
                   onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], undefined, 'steer', m.id)}
@@ -3996,10 +3996,10 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
               onClick={() => updateSettings({ sendMode: 'parallel' })}
               title={L(
                 'Enquanto uma resposta corre aqui, o Enter manda assim. Clique para voltar ao normal; os atalhos continuam valendo uma vez cada (Shift+Enter fila, Alt+Enter entrega, Shift+Alt+Enter interrompe).',
-                'While a reply runs here, Enter sends like this. Click to go back to the plain one; the keys still work once each (Shift+Enter queues, Alt+Enter hands it over, Shift+Alt+Enter interrupts).'
+                "Enter uses this mode during a reply. Select to restore parallel replies. Shortcuts apply to one send: Shift+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts."
               )}
             >
-              {sendMode === 'queue' ? L('Enter: na fila', 'Enter: queued') : sendMode === 'steer' ? L('Enter: entregue à resposta', 'Enter: into the reply') : L('Enter: interrompe', 'Enter: interrupts')}
+              {sendMode === 'queue' ? L('Enter: na fila', 'Enter: queued') : sendMode === 'steer' ? L('Enter: entregue à resposta', "Enter: steer") : L('Enter: interrompe', 'Enter: interrupts')}
             </button>
           ) : null}
           {working.length > 0 ? (

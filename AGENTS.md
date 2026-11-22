@@ -819,6 +819,8 @@ other half, and they belong to the same session.
 | --- | --- | --- |
 | Settings organization and maintained placement rules | | 605 |
 | English labels and hints across Settings and Wiki | 409 | 410 |
+| English interface copy, phase 2 | | 622 |
+| Versioned locale catalogs (i18n) | 618 | |
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
 | Skills: the Tuca sets a bot's skills | 318 | 319 |

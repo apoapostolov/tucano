@@ -725,12 +725,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Changing shared folders restarts the computer and stops services; installed software stays. Without credentials, you must publish and deploy.",
+      "approved": "Lending or returning a folder restarts the agent’s computer: services stop, but installed software stays. Without credentials there, you must publish and deploy the code.",
       "previous": [
-        "Lending or giving back restarts the computer: services stop, what it installed stays. With no credentials inside, publishing the code and putting it live stay with you."
+        "Lending or giving back restarts the computer: services stop, what it installed stays. With no credentials inside, publishing the code and putting it live stay with you.",
+        "Changing shared folders restarts the computer and stops services; installed software stays. Without credentials, you must publish and deploy."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -751,12 +753,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Confirm actions after reading external content",
+      "approved": "Require approval for irreversible actions after reading external content",
       "previous": [
-        "After reading something from outside, ask before what can’t be undone"
+        "After reading something from outside, ask before what can’t be undone",
+        "Confirm actions after reading external content"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -998,13 +1002,15 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'The agent'} tries the main model again.",
+      "approved": "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'the agent'} tries the main model again.",
       "previous": [
         "When the main model’s subscription hits its limit (the 5-hour or the weekly one), the reply goes on with the reserve, which can be in another program (Claude Code, Codex…) or another account. On the next reply, ${draft.name || 'the agent'} tries the main one again.",
-        "Continue on a fallback account or runtime when a subscription limit is reached. ${draft.name || 'The agent'} retries the main model next reply."
+        "Continue on a fallback account or runtime when a subscription limit is reached. ${draft.name || 'The agent'} retries the main model next reply.",
+        "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'The agent'} tries the main model again."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ],
       "englishExpressionLiterals": true
     },
@@ -1313,12 +1319,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Detect spoken language",
+      "approved": "Detect language instead of using app language",
       "previous": [
-        "Detect the language, instead of using the app’s"
+        "Detect the language, instead of using the app’s",
+        "Detect spoken language"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -1473,12 +1481,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Shared with every agent: your role, priorities, and rules.",
+      "approved": "Included in every agent conversation: who you are, what you do, current priorities and what never to do.",
       "previous": [
-        "Goes into every conversation of every agent: who you are, what you do, what matters now and what never to do."
+        "Goes into every conversation of every agent: who you are, what you do, what matters now and what never to do.",
+        "Shared with every agent: your role, priorities, and rules."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -2089,12 +2099,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Defer routines and triggers until quiet hours end. Direct messages still get replies.",
+      "approved": "Routines and triggers wait until quiet hours end, then run late. Your messages still receive replies.",
       "previous": [
-        "Routines and triggers wait and run when it ends (as late ones). What you send still gets answered."
+        "Routines and triggers wait and run when it ends (as late ones). What you send still gets answered.",
+        "Defer routines and triggers until quiet hours end. Direct messages still get replies."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -2141,12 +2153,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Stop after no text or completed tools. Work that shows progress continues.",
+      "approved": "No text appears and no tool finishes. Work that is progressing is not interrupted.",
       "previous": [
-        "No text and no tool finishing. Long work that’s moving isn’t cut off."
+        "No text and no tool finishing. Long work that’s moving isn’t cut off.",
+        "Stop after no text or completed tools. Work that shows progress continues."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -2339,15 +2353,17 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Allow site notifications, then reload.",
+      "approved": "Unblock site notifications, then reload. ",
       "previous": [
         "Allow notifications in site settings and reload. ",
         "The browser blocked notifications from this address. Allow them in the site’s permissions and reload the page. ",
-        "Allow site notifications and reload. "
+        "Allow site notifications and reload. ",
+        "Allow site notifications, then reload."
       ],
       "reviews": [
         "docs/english-copy-proposal.md",
-        "docs/english-copy-round2-review.json"
+        "docs/english-copy-round2-review.json",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -4500,12 +4516,14 @@
       "files": [
         "src/core/runs.ts"
       ],
-      "approved": "The reply ended before reading this instruction.",
+      "approved": "The reply ended before the agent read this instruction.",
       "previous": [
-        "The reply ended before it read this"
+        "The reply ended before it read this",
+        "The reply ended before reading this instruction."
       ],
       "reviews": [
-        "docs/english-copy-round2-review.json"
+        "docs/english-copy-round2-review.json",
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     },
     {
@@ -8074,6 +8092,1800 @@
       ],
       "reviews": [
         "docs/english-copy-round3-addendum.json"
+      ]
+    },
+    {
+      "source": "Ficou grande demais. Desmarque a imagem e envie só o texto.",
+      "files": [
+        "src/core/feedback.ts"
+      ],
+      "approved": "The submission is too large. Deselect the image and send only the text.",
+      "previous": [
+        "It got too big. Uncheck the image and send just the text."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Muitos envios seguidos. Espere um minuto e tente de novo.",
+      "files": [
+        "src/core/feedback.ts"
+      ],
+      "approved": "Too many submissions. Wait a minute and try again.",
+      "previous": [
+        "Too many in a row. Wait a minute and try again."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "A imagem da tela não deu certo. Desmarque e envie só o texto.",
+      "files": [
+        "src/core/feedback.ts"
+      ],
+      "approved": "The screenshot could not be processed. Deselect it and send only the text.",
+      "previous": [
+        "The screen image didn't work. Uncheck it and send just the text."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "A imagem da tela é grande demais. Desmarque e envie só o texto.",
+      "files": [
+        "src/core/feedback.ts"
+      ],
+      "approved": "The screenshot is too large. Deselect it and send only the text.",
+      "previous": [
+        "The screen image is too big. Uncheck it and send just the text."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui ler ${where} (o JSON está quebrado). Cole a configuração à mão.",
+      "files": [
+        "src/core/harness-connect.ts"
+      ],
+      "approved": "Couldn't read ${where} because the configuration is invalid. Paste the configuration manually.",
+      "previous": [
+        "Couldn't read ${where} (the JSON is broken). Paste the configuration by hand."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O servidor respondeu ${res.status}. Tento de novo sozinho.",
+      "files": [
+        "src/core/node-link.ts"
+      ],
+      "approved": "The server returned ${res.status}. Retrying automatically.",
+      "previous": [
+        "The server answered ${res.status}. I'll try again by myself."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não alcancei o servidor (${(e as Error).message}). Tento de novo sozinho.",
+      "files": [
+        "src/core/node-link.ts"
+      ],
+      "approved": "Couldn't reach the server (${(e as Error).message}). Retrying automatically.",
+      "previous": [
+        "Couldn't reach the server (${(e as Error).message}). I'll try again by myself."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "${name} foi arquivado depois disso: reative na lista de agentes, se quiser.",
+      "files": [
+        "src/core/tuca-apply.ts"
+      ],
+      "approved": "${name} has since been archived. Reactivate it from the agents list if needed.",
+      "previous": [
+        "${name} was archived since: bring it back from the agents list if you want."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Passou o prazo pra desfazer (${UNDO_HOURS} horas). Dá pra mudar à mão.",
+      "files": [
+        "src/core/tuca-apply.ts"
+      ],
+      "approved": "The ${UNDO_HOURS}-hour undo period has expired. You can still change it manually.",
+      "previous": [
+        "The time to undo has passed (${UNDO_HOURS} hours). You can still change it by hand."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O que ele precisa saber: contexto, o que conta como pronto, onde estão as coisas.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Include context, completion criteria and relevant locations.",
+      "previous": [
+        "What it needs to know: context, what counts as done, where things are."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "A sua resposta vai pra conversa, e o agente continua.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Your answer goes to the conversation and the agent continues.",
+      "previous": [
+        "Your answer goes to the conversation, and the agent goes on."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Rodou pela rotina “${c.by.name}”",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Run by the routine “${c.by.name}”",
+      "previous": [
+        "Ran by the routine “${c.by.name}”"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "dividiu em ${b.title}",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "split it into ${b.title}",
+      "previous": [
+        "split it in ${b.title}"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Arraste uma tarefa de “A fazer” pra “Fazendo”, ou pra cima de um agente lá no topo. Passe o mouse num pedido dividido pra ver as partes dele.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Drag a task from “To do” to “Doing” or onto an agent above. Hover over a split request to see its parts.",
+      "previous": [
+        "Drag a task from “To do” to “Doing”, or onto an agent at the top. Hover a split request to see its parts."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui apagar a tarefa.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Couldn't delete the task.",
+      "previous": [
+        "I couldn't delete the task."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui decidir.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Couldn't record the decision.",
+      "previous": [
+        "I couldn't decide."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Aprovado. O agente continua.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Approved. The agent continues.",
+      "previous": [
+        "Approved. The agent goes on."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui começar.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Couldn't start the task.",
+      "previous": [
+        "I couldn't start it."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui salvar a tarefa.",
+      "files": [
+        "src/renderer/src/components/Board.tsx"
+      ],
+      "approved": "Couldn't save the task.",
+      "previous": [
+        "I couldn't save the task."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. As outras ações continuam pedindo. Dá pra tirar na página dele.",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Allow ${agent?.name ?? 'the agent'} to run ${forGood.join(', ')} through ${approval.connectorName} without approval on any call, even after reading external content. Other actions still require approval. Revoke this on its page.",
+      "previous": [
+        "From now on ${agent?.name ?? 'the agent'} runs ${forGood.join(', ')} through ${approval.connectorName} without asking, in any call, even after reading something from outside. Other actions still ask. You can take it back on its page."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. Dá pra tirar na página dele.",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Allow ${agent?.name ?? 'the agent'} to use “${toolWords(approval.tool)}” in ${approval.connectorName} without approval on any call, even after reading external content. Revoke this on its page.",
+      "previous": [
+        "From now on ${agent?.name ?? 'the agent'} uses “${toolWords(approval.tool)}” in ${approval.connectorName} without asking, in any call, even after reading something from outside. You can take it back on its page."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "${gone.name} foi excluído. A conversa fica aqui pra ler.",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "${gone.name} was deleted. The conversation remains available to read.",
+      "previous": [
+        "${gone.name} was deleted. The conversation stays here to read."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "As mensagens que ${agent.name} escreveu continuam nas conversas, com o nome riscado, e os recibos continuam em Uso e limites. Vão embora as instruções, as permissões, as memórias dele, as rotinas, o computador, os logins do navegador e os arquivos da pasta dele.\n\nNão dá pra desfazer.",
+      "files": [
+        "src/renderer/src/components/Dialogs.tsx"
+      ],
+      "approved": "Messages written by ${agent.name} remain in conversations with the name struck out; receipts remain in Usage and limits. Its instructions, permissions, memories, routines, computer, browser logins and folder are deleted.\n\nThis cannot be undone.",
+      "previous": [
+        "The messages ${agent.name} wrote stay in the conversations, with the name struck out, and its receipts stay in Usage and limits. Its instructions, permissions, memories, routines, computer, browser logins and folder go.\n\nThis can’t be undone."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui enviar a resposta. Tente de novo.",
+      "files": [
+        "src/renderer/src/components/Feedback.tsx"
+      ],
+      "approved": "Couldn't send the answer. Try again.",
+      "previous": [
+        "I couldn't send the answer. Try again."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "A imagem da tela que vai junto",
+      "files": [
+        "src/renderer/src/components/Feedback.tsx"
+      ],
+      "approved": "Screen image to be sent",
+      "previous": [
+        "The screen picture that goes along"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Tipo",
+      "files": [
+        "src/renderer/src/components/Feedback.tsx"
+      ],
+      "approved": "Type",
+      "previous": [
+        "Kind"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui enviar agora. Tente de novo.",
+      "files": [
+        "src/renderer/src/components/Feedback.tsx"
+      ],
+      "approved": "Couldn't send feedback. Try again.",
+      "previous": [
+        "I couldn't send it right now. Try again."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Além do seu texto, vão só a versão do Tucano${version ? ` (${version})` : ''}, o sistema (${SYSTEMS[platform]}) e o idioma.${image ? ' E a imagem da tela, se estiver marcada.' : ''}",
+      "files": [
+        "src/renderer/src/components/Feedback.tsx"
+      ],
+      "approved": "Along with your text, Tucano sends only its version${version ? ` (${version})` : ''}, the system (${SYSTEMS[platform]}) and the language.${image ? ' The screen image is also sent if selected.' : ''}",
+      "previous": [
+        "Besides your text, only Tucano's version${version ? ` (${version})` : ''}, the system (${SYSTEMS[platform]}) and the language go.${image ? ' And the screen image, if it’s checked.' : ''}"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "criada ${ago(k.createdAt)}",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "created ${ago(k.createdAt)}",
+      "previous": [
+        "made ${ago(k.createdAt)}"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O harness que usa essa chave perde o acesso agora.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "The harness using this key loses access immediately.",
+      "previous": [
+        "The harness using this key loses access now."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Ela aparece só agora: cole já no harness (ou guarde num lugar seguro).",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "This key is shown only once. Paste it into the harness or store it safely.",
+      "previous": [
+        "It shows only now: paste it into the harness now (or keep it somewhere safe)."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Gerar chave",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Create key",
+      "previous": [
+        "Make key"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Gerar uma chave",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Create a key",
+      "previous": [
+        "Make a key"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Conectar em um clique",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Connect",
+      "previous": [
+        "Connect in one click"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Harnesses na mesma rede chegam aqui. O claude.ai e o ChatGPT precisam de um endereço https público.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Harnesses on the same network can reach it. claude.ai and ChatGPT need a public HTTPS address.",
+      "previous": [
+        "Harnesses on the same network reach it. claude.ai and ChatGPT need a public https address."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Qualquer harness com uma chave chega aqui, de qualquer lugar.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Any harness with a key can reach it from anywhere.",
+      "previous": [
+        "Any harness with a key reaches it, from anywhere."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Só programas neste computador chegam a este endereço, e só com o Tucano aberto. O claude.ai e o ChatGPT não chegam.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Only programs on this computer can reach this address, and only while Tucano is open. claude.ai and ChatGPT cannot.",
+      "previous": [
+        "Only programs on this computer reach this address, and only with Tucano open. claude.ai and ChatGPT don’t."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Conecte o seu harness (Claude Code, Codex, Cursor, OpenCode…) a este Tucano. De lá, ele entende o time, conversa com os agentes e configura agentes, canais, rotinas e skills, como você faria aqui.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Connect your harness (Claude Code, Codex, Cursor, OpenCode…) to this Tucano to view the team, talk to agents and configure agents, channels, routines and skills.",
+      "previous": [
+        "Connect your harness (Claude Code, Codex, Cursor, OpenCode…) to this Tucano. From there it understands the team, talks to the agents and sets up agents, channels, routines and skills, as you would here."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não consegui copiar. Selecione o texto e copie.",
+      "files": [
+        "src/renderer/src/components/HarnessKeys.tsx"
+      ],
+      "approved": "Couldn't copy. Select the text and copy it.",
+      "previous": [
+        "I couldn't copy. Select the text and copy it."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fica só o nome, pra configurar aqui à mão",
+      "files": [
+        "src/renderer/src/components/HermesImport.tsx"
+      ],
+      "approved": "Names only; configure manually",
+      "previous": [
+        "Only the name comes, to set up here by hand"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Sem nenhum conector, sem busca na web e sem computador: você libera o que quiser depois.",
+      "files": [
+        "src/renderer/src/components/HermesImport.tsx"
+      ],
+      "approved": "No connectors, web search or computer are enabled. You can enable them later.",
+      "previous": [
+        "No connector, no web search and no computer: you turn on what you want later."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O link vale uma vez, por 7 dias. Quem usa entra com o próprio nome, no navegador ou no app.",
+      "files": [
+        "src/renderer/src/components/Invite.tsx"
+      ],
+      "approved": "The link works once and expires in 7 days. Recipients join under their own name in the browser or app.",
+      "previous": [
+        "The link works once, for 7 days. Whoever uses it comes in with their own name, in the browser or the app."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Vai se montando enquanto vocês conversam",
+      "files": [
+        "src/renderer/src/components/Onboarding.tsx"
+      ],
+      "approved": "Updates as you talk to Tuca",
+      "previous": [
+        "Fills in as you two talk"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Se ele não escolher outro, o agente usa o modelo do Tuca.",
+      "files": [
+        "src/renderer/src/components/Onboarding.tsx"
+      ],
+      "approved": "Unless Tuca chooses another model, the agent uses Tuca’s model.",
+      "previous": [
+        "Unless he picks another, the agent uses Tuca’s model."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O que ele cria entra na hora, e dá pra desfazer.",
+      "files": [
+        "src/renderer/src/components/Onboarding.tsx"
+      ],
+      "approved": "What Tuca creates takes effect immediately and can be undone.",
+      "previous": [
+        "What he makes goes in right away, and can be undone."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Começa outra conversa com o Tuca, do zero. Esta fica aqui quando você sai e volta.",
+      "files": [
+        "src/renderer/src/components/Onboarding.tsx"
+      ],
+      "approved": "Starts a new conversation with Tuca, replacing this one. Leaving this page keeps the current conversation.",
+      "previous": [
+        "Starts another conversation with Tuca, from scratch. This one stays here when you leave and come back."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Você fala com ele, e ele passa cada parte ao setor certo. Os times abaixo dele são os setores.",
+      "files": [
+        "src/renderer/src/components/OrgChart.tsx"
+      ],
+      "approved": "Talk to the entry point to send work to the right sector. The teams below it are sectors.",
+      "previous": [
+        "You talk to it, and it passes each part to the right sector. The teams below it are the sectors."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Enviado a ${sent}. Acompanhe pelas linhas.",
+      "files": [
+        "src/renderer/src/components/OrgChart.tsx"
+      ],
+      "approved": "Sent to ${sent}. Track progress along the lines.",
+      "previous": [
+        "Sent to ${sent}. Follow it on the lines."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Manda uma notificação agora, pra ver se chega.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Send a test notification.",
+      "previous": [
+        "Sends a notification now, to see that it comes."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Quando uma resposta chega no limite e estava avançando, o agente segue sozinho até ${AUTO_CONTINUES} vezes seguidas antes de esperar você. Uma resposta cortada porque o app fechou continua quando ele abre de novo. O limite do mês continua valendo.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "At the reply limit, progress allows up to ${AUTO_CONTINUES} continuations before waiting for you. Replies resume after app restart. The monthly limit still applies.",
+      "previous": [
+        "When a reply reaches its limit while it was getting somewhere, the agent goes on by itself up to ${AUTO_CONTINUES} times in a row before waiting for you. A reply cut because the app closed goes on when it opens again. The monthly limit still holds."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Chegou nele, o agente pausa. Se estava avançando, segue sozinho (veja Continuar sozinho, abaixo); senão, você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Pauses at the limit. With no monthly limit, the percentage uses 10 million tokens.",
+      "previous": [
+        "When it hits it, the agent pauses. If it was getting somewhere it goes on by itself (see Keep going on its own, below); if not, you decide whether it continues. For an agent with no monthly limit, it is taken over 10 million tokens."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O que ele propõe entra assim que ele termina de responder, e o card ganha um Desfazer por ${UNDO_HOURS} horas. Acesso a conectores e o limite do mês continuam esperando você confirmar. Desligado, tudo espera você clicar em Aplicar.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Tuca’s changes apply after his reply, with Undo on the card for ${UNDO_HOURS} hours. Connector access and monthly limits still need confirmation. When off, all changes wait for Apply.",
+      "previous": [
+        "What he proposes goes in as soon as he finishes replying, and the card gets an Undo for ${UNDO_HOURS} hours. Connector access and the monthly limit still wait for you to confirm. Off, everything waits for you to click Apply."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Prefira um modelo rápido: ele roda antes de cada resposta num canal.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Choose a fast model: it runs before every channel reply.",
+      "previous": [
+        "Go for a fast model: it runs before every reply in a channel."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Onde os agentes rodam: um endpoint seu, sem instalar nada, ou um programa como você configurou (no seu plano, no gateway da empresa ou nos seus provedores). Dos programas, o Tucano nunca vê nem guarda as credenciais; a chave de um endpoint fica guardada aqui, cifrada.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Use your endpoint without installing software, or a runtime on your plan, company gateway or provider. Tucano never sees or stores runtime credentials; endpoint keys stay encrypted here.",
+      "previous": [
+        "Where the agents run: an endpoint of yours, with nothing to install, or a program the way you set it up (on your plan, your company’s gateway or your providers). Tucano never sees or stores the programs’ credentials; an endpoint’s key is kept here, encrypted."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Um erro, uma ideia, qualquer coisa. Também em \"Enviar feedback\", no pé da barra.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Send a bug report, idea or other feedback, also available at the foot of the sidebar.",
+      "previous": [
+        "A bug, an idea, anything. Also in \"Send feedback\", at the foot of the sidebar."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "De vez em quando, uma linha discreta no pé da barra com uma pergunta rápida. Pra isso o Tucano consulta tucano.sh algumas vezes por dia. Não manda nada seu.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Occasionally shows a sidebar survey. Tucano checks tucano.sh a few times a day and sends none of your data.",
+      "previous": [
+        "Now and then, a quiet line at the foot of the sidebar with a quick question. For that, Tucano checks tucano.sh a few times a day. It sends nothing of yours."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Abre a lista do que o agente está fazendo embaixo da resposta. Desligado, fica só a linha com o que ele faz agora; um clique nela abre os passos. Muda só pra você.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Shows steps under replies. When off, select the current step to see the list. This affects only you.",
+      "previous": [
+        "Opens the list of what the agent is doing under its reply. Off, only the line with what it’s doing now stays; a click on it opens the steps. It changes only for you."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O idioma do app e o que os agentes usam pra responder.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "The app language and the agents’ reply language.",
+      "previous": [
+        "The app’s language, and the one the agents reply in."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O idioma do app pra você. Os agentes respondem no idioma do Tucano.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Your app language. Agents reply in the workspace language.",
+      "previous": [
+        "The app’s language for you. The agents reply in the Tucano’s language."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Como o Tucano aparece pra você. Muda só pra você.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Tucano’s appearance for you only.",
+      "previous": [
+        "How Tucano looks to you. It changes only for you."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O texto fica no campo para você revisar antes de enviar.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Review text in the field before sending.",
+      "previous": [
+        "The text stays in the field for you to review before sending."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Use the microphone or ⌥ Space (Mac), Ctrl+Space elsewhere; select it again to stop.",
+      "previous": [
+        "Speak instead of typing: click the microphone in the message field, or ⌥ Space on a Mac and Ctrl+Space elsewhere, and click again to finish."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "a lista de elementos das páginas, e às vezes o print delas, vai pro ${providerSpec(chosen.provider).label}.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "the page’s element list and sometimes a screenshot, including signed-in pages, go to ${providerSpec(chosen.provider).label}.",
+      "previous": [
+        "the pages’ element list, and sometimes their screenshot, goes to ${providerSpec(chosen.provider).label}."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "a lista de elementos das páginas, e às vezes o print delas, vai pro ${providerSpec(c.provider).label}.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "the page’s element list and sometimes a screenshot, including signed-in pages, go to ${providerSpec(c.provider).label}.",
+      "previous": [
+        "the pages’ element list, and sometimes their screenshot, goes to ${providerSpec(c.provider).label}."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Tudo deste Tucano num arquivo .zip: agentes, conversas, memórias, wiki e arquivos, pra levar pra um Tucano num servidor (como o Tucano Pro). As senhas dos conectores e os logins de IA não vão: eles ficam presos a este computador.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Export agents, conversations, memories, wiki and files to a .zip for a Tucano server, such as Tucano Pro. Connector passwords and AI logins stay on this computer.",
+      "previous": [
+        "Everything of this Tucano in one .zip: agents, conversations, memories, wiki and files, to take to a Tucano on a server (such as Tucano Pro). Connector passwords and AI logins don't go: they're tied to this computer."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Trouxe o Tucano do seu computador? No app do computador, use Exportar tudo (Configurações › Geral) e envie o arquivo aqui: agentes, conversas, memórias, wiki e arquivos substituem os deste Tucano. Um backup diário (.db, da pasta de backups) também serve, só com o banco.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Use Export everything in the desktop app (Settings › General), then import the file here. It replaces this Tucano’s agents, conversations, memories, wiki and files. A daily .db backup from the backups folder restores only the database.",
+      "previous": [
+        "Bringing the Tucano from your computer? In the desktop app, use Export everything (Settings › General) and send the file here: agents, conversations, memories, wiki and files replace this Tucano's. A daily backup (.db, from the backups folder) works too, with the database only."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Export agents, skills, channels and routines as .md, without credentials or conversations. OpenBot, Grok Bot and Hermes imports have no connectors or web search.",
+      "previous": [
+        "The team in a .md file (agents, skills, channels and routines, without credentials or conversations), to keep or take to another computer. Agents from OpenBot, Grok Bot and Hermes come in too, with no connector and web search off."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Reserva",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Fallback",
+      "previous": [
+        "Reserve"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Quando o principal chega no limite da assinatura.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Used when the main model reaches its subscription limit.",
+      "previous": [
+        "When the main one hits its subscription limit."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Quem está acima divide o trabalho com quem está abaixo e recebe a resposta de volta. O desenho organiza, mas não cerca: qualquer agente pode perguntar ou pedir uma parte pequena a qualquer outro.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Agents delegate to those below them and receive their answers. Any agent can still ask another a question or delegate a small task.",
+      "previous": [
+        "Whoever is above splits the work with those below and gets the answer back. The chart organizes but doesn’t fence: any agent may ask any other a question or a small part."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nada sensível acontece sem você. Cada aprovação cobre uma ação exata, e cada pergunta espera a sua resposta.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Review requests for sensitive actions. Each approval covers one specific action, and each question waits for your answer.",
+      "previous": [
+        "Nothing sensitive happens without you. Each approval covers one exact action, and each question waits for your answer."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nenhuma ainda. “Aprovar e sempre permitir”, num pedido, cria uma.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "No rules yet. “Approve and always allow” on a request creates one.",
+      "previous": [
+        "None yet. “Approve and always allow”, on a request, makes one."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Cada agente tem as suas, na página dele, em Ferramentas. Lá dá pra ver e tirar.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Review and remove each agent’s rules on its page under Tools.",
+      "previous": [
+        "Each agent has its own, on its page, under Tools. That’s where you see and remove them."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Depois de ler algo de fora, pedir antes do que não dá pra desfazer",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Require approval for irreversible actions after reading external content",
+      "previous": [
+        "After reading something from outside, ask before what can’t be undone"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Ele passa a alcançar o que o Tucano alcança aqui: os arquivos e as credenciais que estiverem no disco do servidor. Pra ele usar o seu computador, empreste o computador (abaixo).",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "It can access Tucano’s files and credentials on the server. To use your computer, lend it below.",
+      "previous": [
+        "It can reach what Tucano reaches here: the files and credentials on the server’s disk. For it to use your computer, lend your computer (below)."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Este servidor não tem Docker, então o Linux isolado não roda aqui. Pra rodar comandos, use o seu computador (abaixo), ou escolha Nenhum.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Docker is unavailable on this server. Use your computer below to run commands, or select None.",
+      "previous": [
+        "This server has no Docker, so the isolated Linux doesn’t run here. To run commands, use your computer (below), or pick None."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "A wiki é o que você e o time sabem, em páginas. Com acesso, o agente consulta antes de responder e cita as páginas; lendo e escrevendo, ele também cria e corrige páginas por conta própria.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "The wiki holds your team’s shared pages. With access, the agent checks it before replying and cites pages; with read and write access, it also creates and corrects pages on its own.",
+      "previous": [
+        "The wiki is what you and the team know, as pages. With access, the agent looks there before replying and cites the pages; reading and writing, it also creates and corrects pages on its own."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Busca na web: pesquisa e lê páginas com a ferramenta do próprio Claude Code ou Codex, na sua assinatura. Cada busca aparece nos passos da resposta.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Web search uses Claude Code’s or Codex’s tools on your subscription to search and read pages. Each search appears in the reply’s steps.",
+      "previous": [
+        "Web search: searches and reads pages with Claude Code’s or Codex’s own tool, on your subscription. Every search shows up in the reply’s steps."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Sempre permitido, sem pedir",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Always allowed, without approval",
+      "previous": [
+        "Always allowed, without asking"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Entra sozinho quando algo é da área dele",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Joins relevant conversations automatically",
+      "previous": [
+        "Joins on its own when something is in its area"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nos canais ligados, ${name} lê e responde quando é com ele. Fora deles, chame com @${draft.handle || 'handle'} ou mande DM.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "In enabled channels, ${name} reads messages and replies when relevant. Elsewhere, mention @${draft.handle || 'handle'} or send a DM.",
+      "previous": [
+        "In the channels turned on, ${name} reads and replies when it’s about it. Outside them, call it with @${draft.handle || 'handle'} or send a DM."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O agente roda no Claude Code, no Codex ou em outro que você já usa, do jeito que você configurou: no seu plano, no gateway da empresa ou no seu provedor. O esforço diz quanto ele pensa: mais esforço pensa mais e gasta mais do plano.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "The agent runs in Claude Code, Codex or another configured runtime, using your plan, company gateway or provider. More effort means longer reasoning and uses more of your plan.",
+      "previous": [
+        "The agent runs in Claude Code, Codex or another one you already use, the way you set it up: on your plan, your company’s gateway or your provider. The effort says how hard it thinks: more effort thinks longer and uses more of your plan."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O contexto do workspace já entra em toda conversa. Aqui vai só o que é d${draft.name ? `e ${draft.name}` : 'este agente'}.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Workspace context is included in every conversation. Add only what is specific to ${draft.name || 'this agent'}.",
+      "previous": [
+        "The workspace context already goes into every conversation. Here goes only what’s specific to ${draft.name || 'this agent'}."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Como você chama e reconhece o agente no chat. O papel, numa linha, ajuda a decidir quem responde nos canais.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "The agent’s name and appearance identify it in chat. Its role helps decide who replies in channels.",
+      "previous": [
+        "How you call and recognize the agent in chat. The role, in one line, helps decide who replies in channels."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "As mensagens que escreveu continuam nas conversas; o resto foi embora.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Its messages remain in conversations; everything else is deleted.",
+      "previous": [
+        "The messages it wrote stay in the conversations; everything else is gone."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Falta escolher o modelo.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Select a model.",
+      "previous": [
+        "It needs a model."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Falta o nome.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Enter a name.",
+      "previous": [
+        "It needs a name."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Na wiki, também não vê as páginas que vieram desses canais.",
+      "files": [
+        "src/renderer/src/components/PersonAccess.tsx"
+      ],
+      "approved": "They also cannot see wiki pages derived from excluded channels.",
+      "previous": [
+        "In the wiki, they also won’t see the pages that came from these channels."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Os agentes que ficam de fora também não são chamados a pedido dessa pessoa.",
+      "files": [
+        "src/renderer/src/components/PersonAccess.tsx"
+      ],
+      "approved": "Excluded agents cannot be called on this person’s behalf.",
+      "previous": [
+        "The agents left out are not called on this person’s behalf either."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Ainda não há agentes. Eles aparecem aqui quando você montar o time.",
+      "files": [
+        "src/renderer/src/components/PersonAccess.tsx"
+      ],
+      "approved": "No agents yet. Build the team to see them here.",
+      "previous": [
+        "There are no agents yet. They show up here once you build the team."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Marque o setor inteiro, ou só alguns agentes dele. Quem entrar depois num setor marcado aparece sozinho.",
+      "files": [
+        "src/renderer/src/components/PersonAccess.tsx"
+      ],
+      "approved": "Select sectors or individual agents. New agents in selected sectors are included automatically.",
+      "previous": [
+        "Mark a whole sector, or just some of its agents. Whoever joins a marked sector later shows up on their own."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Todos os agentes e canais, como hoje.",
+      "files": [
+        "src/renderer/src/components/PersonAccess.tsx"
+      ],
+      "approved": "All agents and channels.",
+      "previous": [
+        "All agents and channels, as today."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Num mês sem esse dia, roda no último.",
+      "files": [
+        "src/renderer/src/components/Routines.tsx"
+      ],
+      "approved": "In shorter months, runs on the last day of the month.",
+      "previous": [
+        "In a month without that day, it runs on the last one."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "No próximo dia marcado em que o horário ainda não passou. Depois, desliga sozinha.",
+      "files": [
+        "src/renderer/src/components/Routines.tsx"
+      ],
+      "approved": "Runs once at the next scheduled time on a selected day, then turns itself off.",
+      "previous": [
+        "On the next checked day the time hasn’t passed yet. Then it turns itself off."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Não deu certo, e não ficou dito por quê.",
+      "files": [
+        "src/renderer/src/components/Routines.tsx"
+      ],
+      "approved": "The run failed without reporting a reason.",
+      "previous": [
+        "It didn’t work, and it didn’t say why."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Crie uma em “Nova rotina”, ou comece por um destes:",
+      "files": [
+        "src/renderer/src/components/Routines.tsx"
+      ],
+      "approved": "Create a routine with “New routine”, or start from one of these:",
+      "previous": [
+        "Create one with “New routine”, or start from one of these:"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nenhuma pasta ainda: as ferramentas de arquivo do servidor não leem nem gravam nada aqui. Empreste as pastas dos seus projetos. O terminal alcança o que você alcança, com as mesmas aprovações de um agente neste computador.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "No folders shared. The server’s file tools cannot read or write files here until you share folders. The terminal can access what you can, under the same approvals as an agent on this computer.",
+      "previous": [
+        "No folders yet: the server's file tools don't read or write anything here. Lend your projects' folders. The terminal reaches what you reach, under the same approvals as an agent on this computer."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "As ferramentas de arquivo do servidor só alcançam estas pastas. O terminal alcança o que você alcança, com as mesmas aprovações de um agente neste computador.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "The server’s file tools can access only these folders. The terminal can access what you can, under the same approvals as an agent on this computer.",
+      "previous": [
+        "The server's file tools only reach these folders. The terminal reaches what you reach, under the same approvals as an agent on this computer."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Pra ${lent.map((s) => s.name).join(', ')}: o terminal, o navegador e os conectores deste computador vão junto; as pastas e os apps, só os de baixo. Tudo segue as aprovações configuradas no servidor.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "Shared with ${lent.map((s) => s.name).join(', ')}: this computer’s terminal, browser and connectors, plus only the folders and apps listed below. All access follows the approvals set on the server.",
+      "previous": [
+        "To ${lent.map((s) => s.name).join(', ')}: this computer’s terminal, browser and connectors come along; folders and apps, only the ones below. Everything follows the approvals set on the server."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Escolha, no servidor, os agentes que usam este computador.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "On the server, choose the agents that can use this computer.",
+      "previous": [
+        "Pick, on the server, the agents that use this computer."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Quem empresta é o workspace principal: as pastas e os apps estão nas Configurações dele.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "The main workspace shares this computer. Its folders and apps are in Settings.",
+      "previous": [
+        "The main workspace lends it: the folders and apps are in its Settings."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Os agentes de lá passam a usar o terminal, as pastas que você emprestar, o navegador e os apps deste computador, só quando trabalham pra você, com as aprovações configuradas lá. Funciona enquanto este app estiver aberto. Desligue aqui a qualquer hora.",
+      "files": [
+        "src/renderer/src/components/Servers.tsx"
+      ],
+      "approved": "Its agents can use this computer’s terminal, shared folders, browser and apps only when working for you, under the server’s approvals. Access lasts while this app is open. Turn it off here at any time.",
+      "previous": [
+        "Its agents get to use this computer’s terminal, the folders you lend, its browser and apps, only when they work for you, under the approvals set there. It works while this app is open. Turn it off here any time."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Você tinha tirado da barra. Some de novo quando nada esperar por você.",
+      "files": [
+        "src/renderer/src/components/Sidebar.tsx"
+      ],
+      "approved": "You removed this from the sidebar. It hides again when nothing needs your attention.",
+      "previous": [
+        "You took it out of the sidebar. It goes again once nothing waits on you."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Isso dá acesso ou mexe no gasto: só vale quando você confirmar.",
+      "files": [
+        "src/renderer/src/components/Tuca.tsx"
+      ],
+      "approved": "This grants access or changes spending. It takes effect only after you confirm it.",
+      "previous": [
+        "This grants access or changes spending: it only counts once you confirm it."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Vai direto pro Cofre, cifrado: não aparece na conversa, e ${who} nunca vê.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Saved directly in the Vault, encrypted. It does not appear in the conversation, and ${who} never sees it.",
+      "previous": [
+        "It goes straight into the Vault, encrypted: it doesn’t show in the conversation, and ${who} never sees it."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Guardar no Cofre e liberar",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Save in the Vault and assign",
+      "previous": [
+        "Keep in the Vault and give"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Já tem uma do time no Cofre: só um admin libera.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "A team item is already in the Vault. Only an admin can assign it.",
+      "previous": [
+        "There’s a team one in the Vault: only an admin gives it out."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Já tem uma do time no Cofre",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "A team item is already in the Vault",
+      "previous": [
+        "There’s a team one in the Vault"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fica entre as suas: ${who} usa no que você pedir.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Saved with your items. ${who} can use it for work you request.",
+      "previous": [
+        "It goes among yours: ${who} uses it in what you ask for."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fica entre as suas: ${who} só usa no que você pedir, e este pedido é de ${requester}.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Saved with your items. ${who} can use it only for work you request. This request is from ${requester}.",
+      "previous": [
+        "It goes among yours: ${who} only uses it in what you ask for, and this request is ${requester}’s."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fica entre as do time.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Saved with the team’s items.",
+      "previous": [
+        "It goes among the team’s."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nada do Cofre foi usado ainda. Cada uso aparece aqui: qual chave ou login, qual agente, pra quem e onde.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "No Vault items have been used yet. Each use shows the key or login, agent, who it was used for and where.",
+      "previous": [
+        "Nothing in the Vault was used yet. Each use shows here: which key or login, which agent, for whom and where."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Cole o conteúdo do arquivo. Cada NOME=valor vira uma chave, sem nenhum agente liberado: você escolhe depois.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Paste the file contents. Each NAME=value becomes a key without an assigned agent; you choose agents afterwards.",
+      "previous": [
+        "Paste the file’s content. Each NAME=value becomes a key, given to no agent: you choose afterwards."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O comando espera alguém aprovar, com o comando inteiro à vista. Pra chaves que mexem em dinheiro ou em produção.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "The command waits for approval, and the full command is shown to the approver. Use this for keys that affect money or production.",
+      "previous": [
+        "The command waits for someone to approve, with the whole command in view. For keys that touch money or production."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nenhum ainda: a chave fica guardada até você liberar.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "No agents selected. The key remains unassigned until you choose an agent.",
+      "previous": [
+        "None yet: the key stays put until you give it out."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nova chave sua",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "New personal key",
+      "previous": [
+        "New key of yours"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Cada agente tem um login por site: liberar este tira o outro.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Each agent can have one login per site. Assigning this login replaces its existing login for that site.",
+      "previous": [
+        "Each agent has one login per site: giving this one takes the other away."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Fica cifrada no chaveiro do sistema. Um op://Cofre/Item/senha vem do 1Password na hora.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "The password stays encrypted in the system keychain. An op://Vault/Item/password reference is read from 1Password when used.",
+      "previous": [
+        "It stays encrypted in the system keychain. An op://Vault/Item/password comes from 1Password at the moment."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Novo login seu",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "New personal login",
+      "previous": [
+        "New login of yours"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Use o endereço do site, com https: conta.exemplo.com.br.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Enter the site address with HTTPS, for example https://account.example.com.",
+      "previous": [
+        "Use the site’s address, with https: account.example.com."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nova chave minha…",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "New personal key…",
+      "previous": [
+        "New key of mine…"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nenhuma chave sua.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "You have no keys yet.",
+      "previous": [
+        "No keys of yours."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Novo login meu…",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "New personal login…",
+      "previous": [
+        "New login of mine…"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nenhum login seu.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "You have no logins yet.",
+      "previous": [
+        "No logins of yours."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Os agentes deixam de entrar sozinhos nesse site, e a senha sai do chaveiro do sistema. O que já está logado no navegador deles continua até sair.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Agents will no longer sign in to this site automatically, and the password is removed from the system keychain. Existing browser sessions remain signed in until signed out.",
+      "previous": [
+        "The agents stop signing in to that site on their own, and the password leaves the system keychain. What’s already signed in in their browsers stays until they sign out."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Os agentes deixam de poder usar essa chave, e o valor sai do chaveiro do sistema. Um conector que aponta pra ela para de conectar. Não dá pra desfazer.",
+      "files": [
+        "src/renderer/src/components/Vault.tsx"
+      ],
+      "approved": "Agents can no longer use this key, and its value is removed from the system keychain. A connector using it will stop connecting. This cannot be undone.",
+      "previous": [
+        "The agents can no longer use this key, and its value leaves the system keychain. A connector pointing to it stops connecting. This can’t be undone."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Clique no microfone, ou ${key}, e fale. Clique de novo para terminar: o texto aparece aqui para você revisar. Na primeira vez, o sistema pede para liberar o microfone.",
+      "files": [
+        "src/renderer/src/components/VoiceSetup.tsx"
+      ],
+      "approved": "Use the microphone or ${key.replace('Espaço', 'Space')} to dictate. Select it again to finish and review the text here. Allow microphone access when first asked.",
+      "previous": [
+        "Click the microphone, or ${key.replace('Espaço', 'Space')}, and speak. Click again to finish: the text shows up here to review. The first time, the system asks to allow the microphone."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "O áudio vira texto no servidor deste Tucano, sem passar por nenhum outro serviço. Num servidor, o modelo Leve é bem mais rápido.",
+      "files": [
+        "src/renderer/src/components/VoiceSetup.tsx"
+      ],
+      "approved": "Audio is transcribed only on this server.",
+      "previous": [
+        "The audio becomes text on this Tucano's server, through no other service. On a server, the Light model is much faster."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Num servidor, transcreve umas 5 vezes mais rápido e erra um pouco mais.",
+      "files": [
+        "src/renderer/src/components/VoiceSetup.tsx"
+      ],
+      "approved": "On a server, transcription is about 5 times faster but slightly less accurate.",
+      "previous": [
+        "On a server, it transcribes about 5 times faster, and gets a bit more wrong."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Nunca vêm: mensagens, memórias, resumos, aprovações, histórico de uso, arquivos dos computadores, sessões do navegador e as contas extras do Claude Code e do Codex (na cópia, os agentes usam o login padrão). O Telegram fica no workspace padrão. Mudanças aqui não alteram o original; pastas emprestadas continuam sendo as mesmas.",
+      "files": [
+        "src/renderer/src/components/WorkspaceManager.tsx"
+      ],
+      "approved": "The copy excludes messages, memories, summaries, approvals, usage history, computer files, browser sessions and extra Claude Code and Codex accounts. Agents use the default sign-in. Telegram stays in the default workspace. Settings are independent; lent folders remain shared.",
+      "previous": [
+        "Never coming: messages, memories, summaries, approvals, usage history, computers’ files, browser sessions and the extra Claude Code and Codex accounts (in the copy, agents use the usual sign-in). Telegram stays in the default workspace. Changes here don’t change the original; lent folders are still the same ones."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "resposta do ${vendorOf(p)} fora do formato",
+      "files": [
+        "src/core/classifiers.ts"
+      ],
+      "approved": "${vendorOf(p)}'s response was not in the expected format",
+      "previous": [
+        "${vendorOf(p)}'s answer wasn't in the format"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Chega quando a resposta acima terminar",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Runs after the reply above finishes.",
+      "previous": [
+        "Goes when the reply above ends"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Orientação para a resposta em curso",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Instructions for the current reply",
+      "previous": [
+        "A steer for the reply running now"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Orientação para esta resposta",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Instructions for the current reply",
+      "previous": [
+        "A steer for this reply"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Enquanto uma resposta corre aqui, o Enter manda assim. Clique para voltar ao normal; os atalhos continuam valendo uma vez cada (Shift+Enter fila, Alt+Enter entrega, Shift+Alt+Enter interrompe).",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Enter uses this mode during a reply. Select to restore parallel replies. Shortcuts apply to one send: Shift+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts.",
+      "previous": [
+        "While a reply runs here, Enter sends like this. Click to go back to the plain one; the keys still work once each (Shift+Enter queues, Alt+Enter hands it over, Shift+Alt+Enter interrupts)."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Enter: entregue à resposta",
+      "files": [
+        "src/renderer/src/components/Conversation.tsx"
+      ],
+      "approved": "Enter: steer",
+      "previous": [
+        "Enter: into the reply"
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio. Muda só pra você.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Shows reasoning below the steps during and after replies. When off, only steps and answers appear. Currently available only with Pi. Applies only to you.",
+      "previous": [
+        "While an agent replies, its reasoning shows in small, faded type under the steps and stays there after the reply ends. Off, you see only the steps and the reply. For now, only agents running on Pi send it. It changes only for you."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+      ]
+    },
+    {
+      "source": "Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.",
+      "files": [
+        "src/renderer/src/components/Pages.tsx"
+      ],
+      "approved": "Enter follows this choice. Shift+Enter queues, Alt+Enter steers, and Shift+Alt+Enter interrupts, each for one send. Ctrl+Enter or Command+Enter adds a line.",
+      "previous": [
+        "Enter follows this choice. Ctrl+Enter queues, Alt+Enter steers the running reply, and Shift+Alt+Enter interrupts it, each just once. Shift+Enter adds a line."
+      ],
+      "reviews": [
+        "docs/strings-audit-2026-11-22/phase2-next-review.json"
       ]
     }
   ]
