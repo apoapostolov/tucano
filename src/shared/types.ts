@@ -7,6 +7,7 @@ import type { NoticeSettings } from './notice'
 import type { ChannelLayout } from './channel-layout'
 import type { RouteTrace, RoutingConfig } from './routing'
 import type { Answer, Decision } from './questions'
+import type { PageSigns } from './wall'
 import { L, lang, locale, type Lang } from './lang'
 
 export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green' | 'teal' | 'graphite'
@@ -779,6 +780,7 @@ export interface BrowserReply {
   text?: string
   shown?: boolean // the window is open for me
   point?: { x: number; y: number } // where it just clicked or typed, as a fraction of the viewport
+  signs?: PageSigns // what the page is when it isn't the page: a bot check, a refusal, a wall (shared/wall.ts)
 }
 
 // An agent's browser as the side panel shows it (spec §24): the last frame and what it did.
