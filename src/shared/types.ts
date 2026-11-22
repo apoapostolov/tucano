@@ -636,7 +636,10 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
-
+  // An ad blocker and a cookie-notice remover in the agents' browser (core/chrome-addons.ts): one
+  // download of Chrome for Testing and three extensions, on the switch, never on the start's way.
+  browserAddOns?: boolean
+  addOns?: AddOnsInfo // computed: where that download is, for the switch's own line
   memoryModel: string // summarizes conversations and extracts memories
   memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model
@@ -766,6 +769,14 @@ export type BrowserOp =
   | 'clear'
   | 'input'
   | 'headful' // the page is a bot check: the same lane, in a real window (chrome.ts)
+
+// The ad blocker and cookie-notice removers an agent's browser can carry (core/chrome-addons.ts): one
+// download of Chrome for Testing and three extensions, whose state the settings card shows.
+export interface AddOnsInfo {
+  state: 'preparing' | 'ready' | 'failed'
+  progress?: { received: number; total: number } // bytes of the browser, while it downloads
+  error?: string // why it didn't land: the lane keeps working without them
+}
 
 // What I do on the agent's browser from the panel, when it has no window of its own
 // (Tucano as a server): x and y are fractions of the screen.

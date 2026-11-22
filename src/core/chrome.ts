@@ -273,7 +273,11 @@ export class ChromeBrowsers {
     // same page when next needed: on a server several people share, each costs hundreds of MB.
     private idleMs?: number,
     // Where each agent's downloads land (core/downloads.ts); without it, nothing downloads.
-    private downloads?: (agentId: string) => string
+    private downloads?: (agentId: string) => string,
+    // The browser's own extensions, when they're here (core/chrome-addons.ts): Chrome for Testing, the
+    // only build that still takes a folder of them, and where they are. Read at every launch, so one
+    // that lands while a lane is running is in the next lane, without closing the page an agent is on.
+    private addOns?: { bin: string; dirs: string[] }
   ) {
     process.on('exit', () => this.quit())
     if (idleMs) setInterval(() => void this.closeIdle(), Math.min(60_000, Math.max(100, idleMs / 2))).unref()
@@ -310,6 +314,12 @@ export class ChromeBrowsers {
     return join(this.dir, agentId)
   }
 
+  // Chrome for Testing once the extensions are in (the branded build ignores --load-extension since
+  // 158), and the browser the app found otherwise.
+  private get chromeBin(): string {
+    return this.addOns?.bin || this.bin
+  }
+
   private async launch(agentId: string, headed: boolean, url?: string, offscreen = false): Promise<Tab> {
     const profile = this.profile(agentId)
     mkdirSync(profile, { recursive: true })
@@ -323,6 +333,7 @@ export class ChromeBrowsers {
         for (let i = 0; i < 50 && alive(pid); i++) await wait(200)
       }
     } catch {}
+    const load = agentId.startsWith('.shot-') ? [] : (this.addOns?.dirs ?? [])
     const args = [
       `--user-data-dir=${profile}`,
       '--remote-debugging-pipe',
@@ -333,6 +344,9 @@ export class ChromeBrowsers {
       '--deny-permission-prompts',
       ...chromeKeyringFlags(),
       `--window-size=${W},${H}`,
+      // The ad blocker and the two cookie-notice removers, as folders. Never in a throwaway screenshot
+      // ('.shot-'): that one draws the person's own page as the page is.
+      ...(load.length ? [`--load-extension=${load.join(',')}`] : []),
       // A window opened to get past a bot check is off the screen: it is a real window, drawn by the
       // real renderer, which is what these walls let through (measured 2026-11-22: at -24000,-24000
       // Cloudflare, idealo's 403 and google all cleared exactly as in the middle of the screen), but
@@ -340,7 +354,7 @@ export class ChromeBrowsers {
       ...(headed ? ['--new-window', ...(offscreen ? ['--window-position=-24000,-24000'] : [])] : ['--headless=new', '--mute-audio']),
       url && /^https?:/.test(url) ? url : 'about:blank'
     ]
-    const proc = spawn(this.bin, args, { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] })
+    const proc = spawn(this.chromeBin, args, { stdio: ['ignore', 'ignore', 'ignore', 'pipe', 'pipe'] })
     const onFrame = this.onFrame
     const tab = new Tab(proc, headed, onFrame && ((jpeg) => onFrame(agentId, jpeg)))
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -471,7 +485,7 @@ export class ChromeBrowsers {
     const here = { url: t?.url ?? '', title: '' }
     // A window needs a screen, and nothing here may race a lane that is starting, closing or being
     // handed back: the answer is no, and the page's own note still says what to do.
-    if (this.windowless || !this.bin) return { ...here, headful: false }
+    if (this.windowless || !this.chromeBin) return { ...here, headful: false }
     if (this.starting.has(agentId) || this.handingBack.has(agentId) || this.closing.has(agentId)) return { ...here, headful: false }
     if (t?.headed) return this.wallHeaded.get(agentId) === siteOf(t.url) ? { ...here, headful: true, shown: t.remote } : { ...here, headful: false }
     const site = siteOf(t?.url ?? '')
