@@ -1,0 +1,52 @@
+{
+  "baseline": "98554fdd007637409696f98e061973b5ca9338c6",
+  "candidate": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+  "ordinaryChangedHintsMaxLines": 2,
+  "overflowCount": 0,
+  "exceptions": [
+    {
+      "surface": "agents",
+      "viewport": 1280,
+      "text": "An email, a page or an issue can carry instructions someone else wrote. With this on, after reading something like that, sending, publishing, paying, deleting and risky clicks ask for your approval, even where a rule lets it do them alone.",
+      "lines": 3,
+      "reason": "Unchanged source text, outside this replacement set."
+    },
+    {
+      "surface": "workspace",
+      "viewport": 1280,
+      "text": "Use Export everything in the desktop app (Settings › General), then import the file here. It replaces this Tucano’s agents, conversations, memories, wiki and files. A daily .db backup from the backups folder restores only the database.",
+      "lines": 3,
+      "reason": "Destructive restore disclosure: complete replacement scope and database-only backup distinction."
+    },
+    {
+      "surface": "agents",
+      "viewport": 900,
+      "text": "An email, a page or an issue can carry instructions someone else wrote. With this on, after reading something like that, sending, publishing, paying, deleting and risky clicks ask for your approval, even where a rule lets it do them alone.",
+      "lines": 3,
+      "reason": "Unchanged source text, outside this replacement set."
+    },
+    {
+      "surface": "agents",
+      "viewport": 900,
+      "text": "Tuca’s changes apply after his reply, with Undo on the card for 24 hours. Connector access and monthly limits still need confirmation. When off, all changes wait for Apply.",
+      "lines": 3,
+      "reason": "Preserves application timing, the 24-hour Undo period, confirmation exceptions and the off-state Apply action."
+    },
+    {
+      "surface": "models",
+      "viewport": 900,
+      "text": "More than one Claude Code, Codex or Antigravity login, like a work account and a personal one. Each agent picks its account on its page. You sign in through the CLI itself: Tucano never sees or stores the password.",
+      "lines": 3,
+      "reason": "Unchanged source text, outside this replacement set."
+    },
+    {
+      "surface": "workspace",
+      "viewport": 900,
+      "text": "Use Export everything in the desktop app (Settings › General), then import the file here. It replaces this Tucano’s agents, conversations, memories, wiki and files. A daily .db backup from the backups folder restores only the database.",
+      "lines": 3,
+      "reason": "Destructive restore disclosure: complete replacement scope and database-only backup distinction."
+    }
+  ],
+  "coverage": "Settings/Wiki default and expanded capture states plus forgotten memory, invalid HTTPS login, attached feedback and once routine. This is not a measurement of every error, tooltip or conditional state.",
+  "characterBudget": "Measured sample text gives an estimate only; actual text line counts establish fit."
+}

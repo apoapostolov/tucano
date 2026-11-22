@@ -1,0 +1,427 @@
+{
+  "baselineSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+  "candidateSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+  "description": "Real built-renderer screenshots at native image size, arranged as Existing and Proposed with synthetic data.",
+  "notes": [
+    "The feedback attachment uses a synthetic capture bridge; no feedback was sent.",
+    "All original screenshots are embedded in full without cropping or resizing."
+  ],
+  "frames": [
+    {
+      "number": 1,
+      "title": "Language and context",
+      "frame": "01-language-and-context.png",
+      "defect": "The language and context hints use indirect, conversational phrasing.",
+      "revision": "The revised hints name the agents’ reply language and say that context is included in every agent conversation.",
+      "existing": {
+        "file": "900-you-00-General.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "09a8d042faa1312306ea53e48af30045bd59987414bc6786be60519677d37bee",
+        "width": 580,
+        "height": 603
+      },
+      "proposed": {
+        "file": "900-you-00-General.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "074e6c1d55c6eb941f2a5e3a99645f25e44baadbe21674e64ede9600ab6a7385",
+        "width": 580,
+        "height": 603
+      },
+      "output": {
+        "width": 1480,
+        "height": 924.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 2,
+      "title": "Personal theme",
+      "frame": "02-personal-theme.png",
+      "defect": "“Through the day” suggests a timed theme change rather than the System setting.",
+      "revision": "The hint says that System follows the computer’s light or dark theme.",
+      "existing": {
+        "file": "900-you-01-Appearance.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "375544b37b4b3fd80b7a4684060afde4f63a71abf71bd2dee4628788a3bea87b",
+        "width": 580,
+        "height": 191
+      },
+      "proposed": {
+        "file": "900-you-01-Appearance.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "d39060f9f471f911e1eb3b0a62a564de20a89270b65585a87a41f9a89f31b162",
+        "width": 580,
+        "height": 172
+      },
+      "output": {
+        "width": 1480,
+        "height": 489.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 3,
+      "title": "Blocked notifications",
+      "frame": "03-blocked-notifications.png",
+      "defect": "The blocked-notification instructions are long and bury the available alternatives.",
+      "revision": "The revised text says to unblock notifications and reload, then names the other notification routes.",
+      "existing": {
+        "file": "900-you-02-Notifications.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "96185c1b07da8fcd5a1af248d7e448aa4b094e13845a2c05a06d7fbf826085a8",
+        "width": 580,
+        "height": 307
+      },
+      "proposed": {
+        "file": "900-you-02-Notifications.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "e693da4c7ef557700e122869e4f899637dd0a955149daeae2a27de74ca4bd91c",
+        "width": 580,
+        "height": 270
+      },
+      "output": {
+        "width": 1480,
+        "height": 628.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 4,
+      "title": "Dictation guidance",
+      "frame": "04-dictation-guidance.png",
+      "defect": "The introduction strings together the controls, privacy, model trade-off and review step.",
+      "revision": "The shorter guidance names the shortcuts, server transcription and review step directly.",
+      "existing": {
+        "file": "900-you-03-Dictation.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "160707aac30b6a1bab9ac3bc0ce2c3fd95ffc112cae5e1a1bdf4b685006492b9",
+        "width": 580,
+        "height": 284
+      },
+      "proposed": {
+        "file": "900-you-03-Dictation.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "9914774228145fce1b9341615fb934748e80e7f63c3c8e07a605524142cbca60",
+        "width": 580,
+        "height": 245
+      },
+      "output": {
+        "width": 1480,
+        "height": 605.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 5,
+      "title": "Conversation controls",
+      "frame": "05-conversation-controls.png",
+      "defect": "The step and survey descriptions use indirect narration for their behavior.",
+      "revision": "The revised text explains the visible steps and survey checks while retaining the data disclosure.",
+      "existing": {
+        "file": "900-you-04-Conversations.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "0a1d78adfe2a07286747be5bbbf4791344fd4c0923777da5f30da8a6c7f22e5c",
+        "width": 580,
+        "height": 410
+      },
+      "proposed": {
+        "file": "900-you-04-Conversations.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "782dda30f134a311aa300b496268eb140e9340bdf5df5a9fbf6cbdf077ca0444",
+        "width": 580,
+        "height": 428
+      },
+      "output": {
+        "width": 1480,
+        "height": 749.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 6,
+      "title": "Approval after external content",
+      "frame": "06-approval-after-external-content.png",
+      "defect": "“Ask before what can’t be undone” leaves the approval and action scope implicit.",
+      "revision": "The label names approval for irreversible actions after reading external content.",
+      "existing": {
+        "file": "900-agents-00-Autonomy.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "6745cb777ef766df391a979bc361c5273388f6dee79a44d764e9f84b61440c1a",
+        "width": 580,
+        "height": 425
+      },
+      "proposed": {
+        "file": "900-agents-00-Autonomy.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "a2042576aa29cf72e06bf08b6a0fcb5db05c5eca8f52522d425a7e748e35fc27",
+        "width": 580,
+        "height": 384
+      },
+      "output": {
+        "width": 1480,
+        "height": 723.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 7,
+      "title": "Reply limits and recovery",
+      "frame": "07-reply-limits.png",
+      "defect": "The reply-limit explanation repeats continuation behavior and obscures the fallback calculation.",
+      "revision": "The revised hints separate the limit, the 10-million-token fallback and automatic continuation.",
+      "existing": {
+        "file": "900-agents-01-Limits.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "4226ab55e39ca924167832bf3b0b6cb1178178cb36b1bb7f2d62ca8a9d1ed642",
+        "width": 580,
+        "height": 524
+      },
+      "proposed": {
+        "file": "900-agents-01-Limits.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "9055368df45bc32edf9f0bb7237a52010b56bd61a1ff2cf64c6ad750bd887845",
+        "width": 580,
+        "height": 431
+      },
+      "output": {
+        "width": 1480,
+        "height": 845.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 8,
+      "title": "Routine startup and quiet hours",
+      "frame": "08-routine-startup-and-quiet-hours.png",
+      "defect": "The startup hint describes remembering to open the app; “it ends” leaves quiet hours implicit.",
+      "revision": "The hints state when Tucano starts and when delayed routines run.",
+      "existing": {
+        "file": "900-agents-02-Routines.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "2f5930b276e22a244e7e82d1a03540ca009ea9e041d0659b6e8d01d283359f35",
+        "width": 580,
+        "height": 281
+      },
+      "proposed": {
+        "file": "900-agents-02-Routines.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "4d80e69f68a2cd479a827b22f5bd58d62426b2afa2c9c2effec9d0ad6691c193",
+        "width": 580,
+        "height": 281
+      },
+      "output": {
+        "width": 1480,
+        "height": 579.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 9,
+      "title": "Tuca changes",
+      "frame": "09-tuca-changes.png",
+      "defect": "The automatic-apply explanation uses several conversational clauses.",
+      "revision": "The revision states the apply timing, 24-hour Undo and the changes still requiring confirmation.",
+      "existing": {
+        "file": "900-agents-03-Tuca.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "70f00d8636926cd679e6d617756658405cceb701cd9008ed62b2aa6e635b2008",
+        "width": 580,
+        "height": 210
+      },
+      "proposed": {
+        "file": "900-agents-03-Tuca.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "8e5664e353c8d8b4ac90342d818637434d676ce7b6689d2e254214a8b1e92d30",
+        "width": 580,
+        "height": 210
+      },
+      "output": {
+        "width": 1480,
+        "height": 508.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 10,
+      "title": "Browser matching",
+      "frame": "10-browser-matching.png",
+      "defect": "An example interrupts the explanation of how an agent finds a page element.",
+      "revision": "The text names text matching and its element-number fallback.",
+      "existing": {
+        "file": "900-agents-04-Browser.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "b55d070b583246c98b9f10aa3c033e28f5aa77596128fd808fcbbea60e11c934",
+        "width": 580,
+        "height": 161
+      },
+      "proposed": {
+        "file": "900-agents-04-Browser.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "a7e363ef049db1c01d4919f85b033ba635004a04aff5ca0dca4bdc3129476bbb",
+        "width": 580,
+        "height": 161
+      },
+      "output": {
+        "width": 1480,
+        "height": 459.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 11,
+      "title": "MCP access",
+      "frame": "11-mcp-access.png",
+      "defect": "The harness introduction describes its capabilities indirectly and the key action says “Make”.",
+      "revision": "The revised text names the available capabilities and uses “Create a key”.",
+      "existing": {
+        "file": "900-connections-01-MCP-access.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "8a9cd4f3653b1544248091164160b42dc9fbd5c7d3bce90c2b9f9af9c9f8446f",
+        "width": 580,
+        "height": 608
+      },
+      "proposed": {
+        "file": "900-connections-01-MCP-access.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "d6c3f593778b45772460f74b1d780c8050939121ebd64472008bc299ce2cae0f",
+        "width": 580,
+        "height": 607
+      },
+      "output": {
+        "width": 1480,
+        "height": 906.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 12,
+      "title": "Team export",
+      "frame": "12-team-export.png",
+      "defect": "The export description begins with a fragment and uses an indirect import caveat.",
+      "revision": "The revised text names the export exclusions and notes that those imports lack connectors and web search.",
+      "existing": {
+        "file": "900-workspace-02-Move-the-team.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "f2e52dc6daba6b88c50c4e9f49f62a373f4e43534f88c136ddc54b4d8038448a",
+        "width": 580,
+        "height": 237
+      },
+      "proposed": {
+        "file": "900-workspace-02-Move-the-team.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "b169e945a03a292005a0b00bf98d9d187c744fc8c512b7693db532fb1a7eac42",
+        "width": 580,
+        "height": 218
+      },
+      "output": {
+        "width": 1480,
+        "height": 558.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 13,
+      "title": "Forgotten memory safeguard",
+      "frame": "13-forgotten-memory.png",
+      "defect": "“Deleting permanently removes that too” leaves the removed protection ambiguous.",
+      "revision": "The revision identifies the record that prevents relearning and the effect of permanent deletion.",
+      "existing": {
+        "file": "900-memory-forgotten.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "40d93626cdde117266c6d617e1bb3815074a5ab11194c96e91182d98b276ad2b",
+        "width": 644,
+        "height": 286
+      },
+      "proposed": {
+        "file": "900-memory-forgotten.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "b79fe3b710039ad12e580fb3c91ad4a228ee8103f1a0b2804544fddee938436c",
+        "width": 644,
+        "height": 286
+      },
+      "output": {
+        "width": 1480,
+        "height": 607.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 14,
+      "title": "Vault login address and assignment",
+      "frame": "14-vault-login.png",
+      "defect": "The address example omits an HTTPS URL and “takes the other away” obscures replacement.",
+      "revision": "The error gives a complete HTTPS example and the assignment hint names the login replaced.",
+      "existing": {
+        "file": "900-vault-invalid-login.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "6e81d801dbdb4a13c2d265c05b4a2ffdf975545cdddd29ada1a2d8f658192283",
+        "width": 460,
+        "height": 666
+      },
+      "proposed": {
+        "file": "900-vault-invalid-login.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "5f1400974395ce70af1f62929c59449920a19e89a0aa04c12e2606ba308d15d0",
+        "width": 460,
+        "height": 702
+      },
+      "output": {
+        "width": 1480,
+        "height": 1023.9375
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 15,
+      "title": "Feedback disclosure",
+      "frame": "15-feedback-disclosure.png",
+      "defect": "The disclosure says what “goes” and adds the optional image as a fragment.",
+      "revision": "The text names what Tucano sends and when it also sends the screen image.",
+      "existing": {
+        "file": "900-feedback-attachment.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "0e97edcd19aa1ed8819b3d3e7ebf64ec6d275daf58b3d520d5af372857b1a56e",
+        "width": 520,
+        "height": 436
+      },
+      "proposed": {
+        "file": "900-feedback-attachment.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "b51cc0c66dfa5aea41225f16977218ff00db25e3a9482ed1064aeddc5fccefff",
+        "width": 520,
+        "height": 436
+      },
+      "output": {
+        "width": 1480,
+        "height": 734.265625
+      },
+      "viewportCssWidth": 900
+    },
+    {
+      "number": 16,
+      "title": "One-time routine",
+      "frame": "16-routine-once.png",
+      "defect": "“On the next checked day the time hasn’t passed yet” is difficult to parse.",
+      "revision": "The summary names the next scheduled time on a selected day and automatic shutoff.",
+      "existing": {
+        "file": "900-routine-once.png",
+        "sourceSHA": "98554fdd007637409696f98e061973b5ca9338c6",
+        "sha256": "d59c4974b26d223c8007507ae9c69e761351b1f49501b4a59b0ef9f0e052237f",
+        "width": 638,
+        "height": 195
+      },
+      "proposed": {
+        "file": "900-routine-once.png",
+        "sourceSHA": "3d2f538e5ff6ce4ba1f806da26950bbd02ee8db2",
+        "sha256": "38240a2a52f0b17f9bfa2c289c7685a5f20d7731ca8b46daf188c490e774b130",
+        "width": 638,
+        "height": 195
+      },
+      "output": {
+        "width": 1480,
+        "height": 493.265625
+      },
+      "viewportCssWidth": 900
+    }
+  ]
+}

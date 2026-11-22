@@ -1,0 +1,403 @@
+{
+  "source": "98554fdd007637409696f98e061973b5ca9338c6",
+  "trackedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "dirty": false,
+  "baseline": true,
+  "synthetic": "Seeded local workspace; synthetic memory and synthetic capture bridge; no live data.",
+  "deviceScaleFactor": 1,
+  "browser": "headless Microsoft Edge",
+  "captures": [
+    {
+      "name": "memory-forgotten",
+      "width": 1280,
+      "file": "1280-memory-forgotten.png",
+      "detail": "A synthetic memory was created and forgotten through the app."
+    },
+    {
+      "name": "vault-invalid-login",
+      "width": 1280,
+      "file": "1280-vault-invalid-login.png",
+      "detail": "A new login with an invalid HTTP address; no credential is submitted."
+    },
+    {
+      "name": "feedback-attachment",
+      "width": 1280,
+      "file": "1280-feedback-attachment.png",
+      "detail": "Synthetic attachment supplied by a temporary capture bridge; no feedback is sent."
+    },
+    {
+      "name": "routine-once",
+      "width": 1280,
+      "file": "1280-routine-once.png",
+      "detail": "New routine form with Once selected; no routine is saved."
+    },
+    {
+      "name": "memory-forgotten",
+      "width": 900,
+      "file": "900-memory-forgotten.png",
+      "detail": "A synthetic memory was created and forgotten through the app."
+    },
+    {
+      "name": "vault-invalid-login",
+      "width": 900,
+      "file": "900-vault-invalid-login.png",
+      "detail": "A new login with an invalid HTTP address; no credential is submitted."
+    },
+    {
+      "name": "feedback-attachment",
+      "width": 900,
+      "file": "900-feedback-attachment.png",
+      "detail": "Synthetic attachment supplied by a temporary capture bridge; no feedback is sent."
+    },
+    {
+      "name": "routine-once",
+      "width": 900,
+      "file": "900-routine-once.png",
+      "detail": "New routine form with Once selected; no routine is saved."
+    }
+  ],
+  "measurements": [
+    {
+      "name": "memory-forgotten",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".read-group h2 span",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Left out of the prompt and kept from being learned again. Deleting permanently removes that too.",
+              "characters": 96,
+              "lines": 1,
+              "visible": true,
+              "width": 574.921875,
+              "height": 19.375,
+              "contentWidth": 575,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "vault-invalid-login",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".vault-editor .field__error",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Use the site’s address, with https: account.example.com.",
+              "characters": 56,
+              "lines": 1,
+              "visible": true,
+              "width": 418,
+              "height": 18.59375,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".vault-editor label.field:nth-of-type(3) .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "It stays encrypted in the system keychain. An op://Vault/Item/password comes from 1Password at the moment.",
+              "characters": 106,
+              "lines": 2,
+              "visible": true,
+              "width": 418,
+              "height": 37.1875,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".vault-editor [role=\"group\"] .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Each agent has one login per site: giving this one takes the other away.",
+              "characters": 72,
+              "lines": 1,
+              "visible": true,
+              "width": 418,
+              "height": 18.59375,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "feedback-attachment",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".feedback__what",
+          "maxLines": 4,
+          "reason": "Privacy disclosure identifies the data and optional image sent with feedback; all text must remain visible.",
+          "rows": [
+            {
+              "text": "Besides your text, only Tucano's version (0.2.44), the system (Windows) and the language go. And the screen image, if it’s checked.",
+              "characters": 131,
+              "lines": 2,
+              "visible": true,
+              "width": 478,
+              "height": 56,
+              "contentWidth": 454,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "routine-once",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".routine-when__sum",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Once, at 9:00 · On the next checked day the time hasn’t passed yet. Then it turns itself off.",
+              "characters": 93,
+              "lines": 1,
+              "visible": true,
+              "width": 604,
+              "height": 30.375,
+              "contentWidth": 604,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "memory-forgotten",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".read-group h2 span",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Left out of the prompt and kept from being learned again. Deleting permanently removes that too.",
+              "characters": 96,
+              "lines": 2,
+              "visible": true,
+              "width": 492.703125,
+              "height": 38.75,
+              "contentWidth": 493,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "vault-invalid-login",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".vault-editor .field__error",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Use the site’s address, with https: account.example.com.",
+              "characters": 56,
+              "lines": 1,
+              "visible": true,
+              "width": 418,
+              "height": 18.59375,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".vault-editor label.field:nth-of-type(3) .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "It stays encrypted in the system keychain. An op://Vault/Item/password comes from 1Password at the moment.",
+              "characters": 106,
+              "lines": 2,
+              "visible": true,
+              "width": 418,
+              "height": 37.1875,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".vault-editor [role=\"group\"] .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Each agent has one login per site: giving this one takes the other away.",
+              "characters": 72,
+              "lines": 1,
+              "visible": true,
+              "width": 418,
+              "height": 18.59375,
+              "contentWidth": 418,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "feedback-attachment",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".feedback__what",
+          "maxLines": 4,
+          "reason": "Privacy disclosure identifies the data and optional image sent with feedback; all text must remain visible.",
+          "rows": [
+            {
+              "text": "Besides your text, only Tucano's version (0.2.44), the system (Windows) and the language go. And the screen image, if it’s checked.",
+              "characters": 131,
+              "lines": 2,
+              "visible": true,
+              "width": 478,
+              "height": 56,
+              "contentWidth": 454,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    },
+    {
+      "name": "routine-once",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "results": [
+        {
+          "selector": ".routine-when__sum",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Once, at 9:00 · On the next checked day the time hasn’t passed yet. Then it turns itself off.",
+              "characters": 93,
+              "lines": 1,
+              "visible": true,
+              "width": 604,
+              "height": 30.375,
+              "contentWidth": 604,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [],
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "passed": true,
+  "syntheticData": true,
+  "runtime": "Microsoft Edge, headless"
+}
