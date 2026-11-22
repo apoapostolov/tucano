@@ -21,7 +21,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   voice: { kind: 'object', max: 10_000, nullable: true },
   channelLayout: { kind: 'object', max: 500_000, nullable: true },
   dmOrder: { kind: 'array', max: 100_000, nullable: true },
-  navOrder: { kind: 'array', max: 100_000, nullable: true },
+  navOrder: { kind: 'array', max: 500, nullable: true },
   navHidden: { kind: 'array', max: 100_000, nullable: true },
   agentOrder: { kind: 'array', max: 100_000, nullable: true },
   sectorOrder: { kind: 'array', max: 100_000, nullable: true },

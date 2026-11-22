@@ -253,6 +253,15 @@ describe('the sidebar in the order the person left it', () => {
   it('draws the top items in their order, and one taken out stays out', async () => {
     await render({ agents: [agent({})], conversations: [], settings: { navOrder: ['operations', 'board', 'approvals'], sidebarHidden: ['approvals'] } as State['settings'] })
     const top = [...document.querySelectorAll('.top-row')].map((r) => r.getAttribute('data-order-id'))
-    expect(top).toEqual([null, 'operations', 'board', 'knowledge']) // the Tuca stays first, unsortable; Aprovações stays out
+    expect(top).toEqual([null, 'operations', 'board', 'asks', 'knowledge']) // the Tuca stays first, unsortable; Aprovações stays out
   })
+  it('steps over hide-empty Questions and Approvals and never moves Tuca', async () => {
+    await render({ agents: [agent({})], conversations: [], settings: { navOrder: ['board', 'asks', 'approvals', 'knowledge', 'operations'], hideEmptyAsks: true, hideEmptyApprovals: true } as State['settings'] })
+    const knowledge = document.querySelector('[data-order-id="knowledge"] .nav-item')!
+    await keyOn(knowledge, 'ArrowUp')
+    expect(store.updateSettings).toHaveBeenLastCalledWith({ navOrder: ['knowledge', 'board', 'asks', 'approvals', 'operations'] })
+    expect(document.querySelector('[data-order-id="asks"]')).toBeNull()
+    expect(document.querySelector('[data-order-id="approvals"]')).toBeNull()
+  })
+
 })

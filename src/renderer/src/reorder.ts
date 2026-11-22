@@ -1,20 +1,26 @@
-// Sorting the sidebar's own rows (the DMs, the agents) by hand: press and hold a row to pick it
-// up, then release it over the row it should come before. Not a drag from the first pixel, because
-// these rows are buttons — a slightly short drag would open the conversation instead of moving it.
+// Sorting the sidebar's own rows (the items at the top, the channels, the agents, the sectors) by
+// hand: press and hold a row to pick it up, then let go over the row it should come before. Not a
+// drag from the first pixel, because these rows are buttons: a slightly short drag would open the
+// conversation instead of moving it. With the keyboard, Alt+↑/↓ moves the row it is on.
 //
-// Two things learned the hard way on this project: take the pointer capture on press (a control that
-// resizes or re-renders under a held pointer loses the gesture to a boundary event), and treat the
-// gesture as one unit — a click that lands after a drop must not also navigate.
+// Two things learned the hard way on this project: take the pointer capture once the row is picked
+// up (a control that re-renders under a held pointer loses the gesture to a boundary event), and
+// treat the gesture as one unit: a click that lands after a drop must not also navigate.
 import { useCallback, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 
 const HOLD_MS = 350
+const SLOP = 6 // px a pointer may wander while it holds; more is a scroll or a selection, not a hold
 
 export interface HoldReorder {
   picked: string | null // the row the pointer picked up
-  over: string | null // the row it would land before
-  // A row that can be picked up and that a drop lands on (or before).
-  rowProps: (id: string) => {
+  over: string | null // the row (or place) it would land before
+  // A row that can be picked up and that a drop lands before. `group`: the list it belongs to, when
+  // one hook sorts several (the agents of each sector); a row is only dropped within its own list.
+  rowProps: (
+    id: string,
+    group?: string
+  ) => {
     'data-order-id': string
     'data-order-group'?: string
     onPointerDown: (e: ReactPointerEvent) => void
@@ -25,19 +31,23 @@ export interface HoldReorder {
     onClickCapture: (e: ReactMouseEvent) => void
     style?: { touchAction: 'none' }
   }
-  // A place that only receives a drop: a section's end, a group's name. Nothing to pick up there.
-  zoneProps: (id: string) => { 'data-order-id': string; 'data-order-group'?: string }
+  // A place that only receives a drop: a list's end, a group's name. Nothing to pick up there.
+  zoneProps: (id: string, group?: string) => { 'data-order-id': string; 'data-order-group'?: string }
+  // Whether a row of this list (`group`) is being carried: what wakes the places that only take a drop.
+  carrying: (group?: string) => boolean
 }
 
 export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string, before: string) => void; onNudge: (id: string, by: -1 | 1) => void; group?: string }): HoldReorder {
   const [picked, setPicked] = useState<string | null>(null)
+  const [pickedIn, setPickedIn] = useState<string | undefined>(undefined)
   const [over, setOver] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const swallow = useRef(false) // the click that follows a drop must not navigate
   const target = useRef<string | null>(null) // the row under the pointer, without waiting for a render
-  const carrying = useRef<string | null>(null) // the same, for the handlers that run before a render
+  const carrying = useRef<{ id: string; group?: string } | null>(null) // the same, for the handlers that run before a render
   const pressedOn = useRef<HTMLElement | null>(null) // the row the pointer went down on
   const pressedWith = useRef<number | null>(null) // and its pointer
+  const pressedAt = useRef<{ x: number; y: number } | null>(null) // and where
 
   const cancel = useCallback((): void => {
     if (pressedOn.current && pressedWith.current !== null) {
@@ -51,11 +61,13 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
     }
     pressedOn.current = null
     pressedWith.current = null
+    pressedAt.current = null
     if (timer.current) clearTimeout(timer.current)
     timer.current = null
     carrying.current = null
     target.current = null
     setPicked(null)
+    setPickedIn(undefined)
     setOver(null)
   }, [])
 
@@ -64,30 +76,36 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
     const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-order-id]')
     // A row of another list is not a place to drop: each list keeps its own order, so a drop that
     // lands outside the one being carried goes nowhere rather than to the end of the wrong list.
-    if (el && group && el.dataset.orderGroup !== group) return null
-    return el?.dataset.orderId ?? null
+    if (!el || el.dataset.orderGroup !== carrying.current?.group) return null
+    return el.dataset.orderId ?? null
   }
+
+  const tag = (g: string | undefined): { 'data-order-group'?: string } => (g ? { 'data-order-group': g } : {})
 
   return {
     picked,
     over,
-    rowProps: (id) => ({
+    carrying: (g = group) => picked !== null && pickedIn === g,
+    rowProps: (id, g = group) => ({
       'data-order-id': id,
-      ...(group ? { 'data-order-group': group } : {}),
+      ...tag(g),
       // Only while a row is being carried: a permanent touch-action would stop the list scrolling.
       ...(picked ? { style: { touchAction: 'none' as const } } : {}),
       onPointerDown: (e) => {
         if (e.button !== 0) return
         // No capture yet. Taking it on every press retargets the click that follows to this row, so
-        // the button inside it never opens — and a row that never opens reads as a dead sidebar.
+        // the button inside it never opens, and a row that never opens reads as a dead sidebar.
         // It is taken once the row is actually being carried, below.
         pressedOn.current = e.currentTarget as HTMLElement
         pressedWith.current = e.pointerId
+        pressedAt.current = { x: e.clientX, y: e.clientY }
         if (timer.current) clearTimeout(timer.current)
         timer.current = setTimeout(() => {
+          timer.current = null
           swallow.current = true
-          carrying.current = id
+          carrying.current = { id, group: g }
           setPicked(id)
+          setPickedIn(g)
           // Now that the row is picked up, keep the gesture even if it leaves the row or the row
           // re-renders under the pointer.
           try {
@@ -98,7 +116,13 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
         }, HOLD_MS)
       },
       onPointerMove: (e) => {
-        if (!carrying.current) return
+        if (!carrying.current) {
+          // Moved off before the hold: a scroll or a selection. Nothing is picked up, even if the
+          // pointer is let go somewhere this row never hears about.
+          const at = pressedAt.current
+          if (timer.current && at && Math.hypot(e.clientX - at.x, e.clientY - at.y) > SLOP) cancel()
+          return
+        }
         const at = rowAt(e.clientX, e.clientY)
         if (at === target.current) return
         target.current = at
@@ -106,9 +130,9 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
       },
       onPointerUp: () => {
         const to = target.current
-        const id2 = carrying.current
-        const dropped = !!(id2 && to && to !== id2)
-        if (dropped) onDrop(id2!, to!)
+        const from = carrying.current?.id
+        const dropped = !!(from && to && to !== from)
+        if (dropped) onDrop(from!, to!)
         // A row held long enough to be picked up and then let go where it was is still a click: it
         // opens, exactly like a quick one. Only a drop eats the click that follows it.
         swallow.current = dropped
@@ -117,8 +141,13 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
       onPointerCancel: () => cancel(),
       // A row the keyboard is on moves with Alt+arrows: the same step the context menu offers.
       onKeyDown: (e) => {
+        if (e.key === 'Escape' && carrying.current) {
+          swallow.current = false
+          return cancel()
+        }
         if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return
         e.preventDefault()
+        e.stopPropagation()
         onNudge(id, e.key === 'ArrowUp' ? -1 : 1)
       },
       onClickCapture: (e) => {
@@ -128,6 +157,6 @@ export function useHoldReorder({ onDrop, onNudge, group }: { onDrop: (id: string
         e.stopPropagation()
       }
     }),
-    zoneProps: (id) => ({ 'data-order-id': id, ...(group ? { 'data-order-group': group } : {}) })
+    zoneProps: (id, g = group) => ({ 'data-order-id': id, ...tag(g) })
   }
 }

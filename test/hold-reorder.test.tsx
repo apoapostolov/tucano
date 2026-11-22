@@ -185,3 +185,78 @@ describe('a list of its own', () => {
     expect(store.drops).toEqual([])
   })
 })
+
+// One hook can sort several lists (the agents of each sector): each row says which, and a row only
+// lands in its own. A press that wanders off before the hold is a scroll, not a pick-up.
+const nudges = vi.hoisted(() => [] as string[])
+function Sectors(): React.ReactNode {
+  const sort = useHoldReorder({ group: 'agents', onDrop: (id, before) => store.drops.push(`${id}->${before}`), onNudge: (id, by) => nudges.push(`${id}${by}`) })
+  return (
+    <div>
+      {[['a1', 'sector:a'], ['a2', 'sector:a'], ['b1', 'sector:b']].map(([id, g]) => (
+        <div key={id} {...sort.rowProps(id!, g)} data-picked={sort.picked === id ? 'yes' : undefined}>
+          <button>{id}</button>
+        </div>
+      ))}
+      <div {...sort.zoneProps('end:a', 'sector:a')} data-live={sort.carrying('sector:a') ? 'yes' : undefined} />
+    </div>
+  )
+}
+
+describe('several lists under one hook', () => {
+  const over = (selector: string): (() => void) => {
+    const before = document.elementFromPoint
+    Object.assign(document, { elementFromPoint: () => container.querySelector(selector) })
+    return () => Object.assign(document, { elementFromPoint: before })
+  }
+  const hold = async (): Promise<void> => act(async () => new Promise((ok) => setTimeout(ok, 420)))
+
+  beforeEach(async () => {
+    nudges.length = 0
+    await act(async () => root.render(<Sectors />))
+  })
+
+  it('drops a row on a row or the end of its own list, never on another list', async () => {
+    press('a2', 'pointerdown')
+    await hold()
+    expect(container.querySelector('[data-live]')).not.toBeNull() // its list's end wakes up
+    let restore = over('[data-order-id="b1"] button')
+    press('a2', 'pointermove')
+    press('a2', 'pointerup')
+    restore()
+    expect(store.drops).toEqual([])
+
+    press('a1', 'pointerdown')
+    await hold()
+    restore = over('[data-order-id="end:a"]')
+    press('a1', 'pointermove')
+    press('a1', 'pointerup')
+    restore()
+    expect(store.drops).toEqual(['a1->end:a'])
+    expect(container.querySelector('[data-live]')).toBeNull()
+  })
+
+  it('picks nothing up when the press wanders off before the hold', async () => {
+    fire(rowOf('a1').querySelector('button')!, 'pointerdown', { clientX: 10, clientY: 10 })
+    fire(rowOf('a1').querySelector('button')!, 'pointermove', { clientX: 10, clientY: 40 })
+    await hold()
+    expect(container.querySelector('[data-picked]')).toBeNull()
+  })
+
+  it('steps the row the keyboard is on with Alt+arrows, and lets plain arrows be', () => {
+    fire(rowOf('a2').querySelector('button')!, 'keydown', { key: 'ArrowUp', altKey: true })
+    fire(rowOf('a1').querySelector('button')!, 'keydown', { key: 'ArrowDown', altKey: true })
+    fire(rowOf('a1').querySelector('button')!, 'keydown', { key: 'ArrowDown', altKey: false })
+    expect(nudges).toEqual(['a2-1', 'a11'])
+  })
+
+  it('puts a carried row back with Escape', async () => {
+    press('a1', 'pointerdown')
+    await hold()
+    expect(container.querySelector('[data-picked]')).not.toBeNull()
+    fire(rowOf('a1').querySelector('button')!, 'keydown', { key: 'Escape' })
+    expect(container.querySelector('[data-picked]')).toBeNull()
+    press('a1', 'pointerup')
+    expect(store.drops).toEqual([])
+  })
+})

@@ -592,3 +592,18 @@ describe('routines of a person and of the team', () => {
     expect(settings2.workspaceName).toBe('Ana')
   })
 })
+
+
+describe('personal sidebar ordering', () => {
+  it('lets members save their order without inheriting the owner order', () => {
+    const { db, people, ana, bia, carl } = team()
+    const ownerSettings = { ...settings, navOrder: ['operations'], agentOrder: ['owner-agent'], sectorOrder: ['owner-sector'] }
+    const mine = { navOrder: ['board'], agentOrder: ['my-agent'], sectorOrder: ['my-sector'] }
+    expect(can(bia, { kind: 'settings', keys: Object.keys(mine) })).toBe(true)
+    expect(people.takePrefs(bia, mine)).toEqual({})
+    expect(people.settingsFor(bia, ownerSettings)).toMatchObject(mine)
+    for (const key of ['navOrder', 'agentOrder', 'sectorOrder'] as const) expect(people.settingsFor(carl, ownerSettings)[key]).toBeUndefined()
+    expect(people.settingsFor(ana, ownerSettings)).toBe(ownerSettings)
+    db.close()
+  })
+})

@@ -14,7 +14,7 @@ export const ownerError = (): string => L('Só o dono do Tucano pode fazer isso.
 
 // What a person may change of the settings without being an admin: how the app looks to them.
 // Each person's own (kept on them, see People.settingsFor); the owner's are the settings themselves.
-export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'stepsOpen', 'replyShortcut', 'maxParallelSessions', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'channelLayout', 'folded', 'sidebarHidden', 'language', 'seenVersion', 'onboarding', 'clock', 'hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'navHidden', 'notice', 'voice', 'openAtLogin', 'launchMinimized', 'quotaView', 'quotaHidden', 'lastImageFolder']
+export const PERSONAL_SETTINGS: readonly (keyof Settings)[] = ['theme', 'sounds', 'stepsOpen', 'replyShortcut', 'maxParallelSessions', 'showThinking', 'thinkingSize', 'steps', 'stepsLatest', 'channelLayout', 'folded', 'sidebarHidden', 'language', 'seenVersion', 'onboarding', 'clock', 'hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'agentOrder', 'sectorOrder', 'navHidden', 'notice', 'voice', 'openAtLogin', 'launchMinimized', 'quotaView', 'quotaHidden', 'lastImageFolder']
 export const isPersonalSetting = (k: string): boolean => (PERSONAL_SETTINGS as readonly string[]).includes(k)
 
 export type Action =
@@ -214,6 +214,7 @@ export const NEEDS: Record<Method, Need> = {
   inbox: 'anyone',
   noticeFeed: 'anyone',
   answerQuestion: 'target',
+  cancelQuestion: 'target',
   questionsHistory: 'anyone', // only what this person can see anyway
   confirmQuestion: 'target',
   dismissQuestion: 'target', // who may answer it may also leave it unanswered
