@@ -1,13 +1,15 @@
 # English copy review, phase 2
 
-This proposal revises 195 English interface strings after accepted #410. The
+This proposal revises 199 English interface strings after accepted #410. The
 initial audit used `98554fdd007637409696f98e061973b5ca9338c6`; the PR now includes
-upstream `2e38864165b3cf8b0ee522b890e07db239d25a7b`. It makes actions,
+upstream `67c0494d025a70553e5474a6e99e013b65e13bf0`. It makes actions,
 settings and consequences easier to understand across Settings, conversations,
 agent setup, the task board, Vault, server access, invitations and feedback.
 The initial review considered 206 candidates and deferred 24. A further review
 of 50 incoming English occurrences revised 13, retained 35 and excluded two
-model-facing or test-engine strings.
+model-facing or test-engine strings. The latest upstream review considered 23
+occurrences: nine replacements and 14 retained strings. Five superseded changes
+were removed when upstream replaced send mode with reply concurrency.
 
 The edits preserve behavior. They change English literals without changing
 Portuguese strings, localization structure, interpolation expressions, model
@@ -62,7 +64,10 @@ They show actual built components with synthetic data. The attachment fixture is
 synthetic and no feedback was submitted. Original component screenshots appear
 in full at their original size; annotations sit outside the application image.
 
-Frames 02 and 05 compare upstream `2e388641` with candidate `a6f698ed`.
+Frame 02 compares upstream `2e388641` with candidate `a6f698ed`.
+Frame 05 still shows the superseded reply-mode controls; a replacement frame
+for reply concurrency is pending. The nine latest replacements also await
+fresh rendered measurements.
 The remaining 14 compare the initial baseline `98554fdd` with `3d2f538e`;
 their affected components retain those revisions. Each frame names its capture
 SHAs, and the manifest records full source SHAs and image hashes. Headless Edge used
@@ -70,7 +75,7 @@ SHAs, and the manifest records full source SHAs and image hashes. Headless Edge 
 the actual font, available width, character count, line count and overflow.
 There are 116 Settings/Wiki measurements and 12 additional-state measurements
 per version, plus ten new reasoning/reply-mode measurements per version.
-The proposed text has no overflow or failed measurements. Changed ordinary hints in the captured states fit
+The previously captured text has no overflow or failed measurements. Changed ordinary hints in the captured states fit
 within two lines. The complete Tuca application/Undo explanation and destructive
 backup-restore disclosure take three lines; the layout review records why their
 full consequences must remain visible. Three other long measurements are
@@ -87,20 +92,24 @@ certify every conditional tooltip, user-facing error or permission state.
 
 ## Validation status
 
-`npm run typecheck`, `npm run build`, `git diff --check` and the affected test
+After the latest merge, `npm run typecheck` and the targeted concurrency/server
+selection pass (5 files / 45 tests). Rendered checks and a new build remain pending.
+
+Previously, `npm run typecheck`, `npm run build`, `git diff --check` and the affected test
 selections pass (9 files / 86 tests and 4 files / 42 tests) on the verified
 pushed head `a6f698ed`. Parsed-source comparison confirms that all
-195 source changes are English arguments of `L(...)` across 34 files;
-Portuguese and the surrounding application syntax are unchanged. One Settings
+199 source changes are English arguments of `L(...)` across 34 files;
+Portuguese and the surrounding application syntax are unchanged against
+upstream `67c0494d`. One Settings
 navigation test expectation now matches the revised empty-result text.
 
-The initial candidate, before merging the newer upstream commits, reported
-239 files and 2,381 tests passing, with two failures:
-the routine calendar fixture fails identically on the unchanged baseline, and
-the Tuca batch test intermittently reaches its 20-second polling deadline while
-the reply is still working. The unchanged candidate also passed all 11 Tuca
-tests. A diagnostic copy with only that polling deadline extended passed all 11;
-the slow case took 23.3 seconds. No production behavior or test deadline was
-changed to conceal these failures. Upstream #619 subsequently corrected the
-calendar fixture and is included here. A full-suite rerun on the current pushed
-head is in progress; the earlier result does not describe a fresh full run.
+The full suite on pushed head `a6f698ed25fef9e159e29f5b4417da9443ada034`
+reported 253 files and 2,457 tests passing, one failure, and four files / 61 tests
+skipped. The Tuca batch test reached its 20-second polling deadline while the
+reply was still working. Earlier diagnostics also observed this intermittent
+failure; extending only that deadline in a diagnostic copy allowed all 11 Tuca
+tests to pass, with the slow case taking 23.3 seconds. No production behavior or
+test deadline was changed to conceal the failure. The previous calendar fixture
+failure was corrected by upstream #619. This full-suite result precedes the
+latest upstream merge; the current candidate has the targeted checks above,
+without a new full-suite run.

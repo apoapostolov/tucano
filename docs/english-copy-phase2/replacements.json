@@ -1,7 +1,7 @@
 {
-  "base": "2e38864165b3cf8b0ee522b890e07db239d25a7b",
+  "base": "67c0494d025a70553e5474a6e99e013b65e13bf0",
   "scope": "English user-facing copy after accepted #410",
-  "count": 195,
+  "count": 199,
   "replacements": [
     {
       "id": 127,
@@ -101,6 +101,17 @@
       "before": "The server answered ${res.status}. I'll try again by myself.",
       "after": "The server returned ${res.status}. Retrying automatically.",
       "reason": "States the HTTP response and automatic retry directly."
+    },
+    {
+      "id": "incoming-01",
+      "file": "src/core/runs.ts",
+      "line": 853,
+      "context": "module",
+      "attribute": null,
+      "source": "A resposta terminou antes de ler isto",
+      "before": "The reply ended before reading this instruction.",
+      "after": "The reply ended before the agent read this instruction.",
+      "reason": "Name the agent as the actor reading instructions."
     },
     {
       "id": 389,
@@ -237,7 +248,7 @@
     {
       "id": 650,
       "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 291,
+      "line": 295,
       "context": "ConversationView",
       "attribute": null,
       "source": "${gone.name} foi excluído. A conversa fica aqui pra ler.",
@@ -246,9 +257,20 @@
       "reason": "Clarifies that the retained conversation is readable."
     },
     {
+      "id": "incoming-02",
+      "file": "src/renderer/src/components/Conversation.tsx",
+      "line": 317,
+      "context": "ComputerOff",
+      "attribute": "title",
+      "source": "Desligado: o app do Tucano está fechado lá. Ao abrir, volta sozinho.",
+      "before": "Off: the Tucano app is closed there. Opening it brings it back.",
+      "after": "Tucano is closed on this computer. Open it to reconnect.",
+      "reason": "Distinguish the closed app from computer power and name recovery."
+    },
+    {
       "id": 673,
       "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 1189,
+      "line": 1231,
       "context": "ThreadSummaryPanel",
       "attribute": "empty",
       "source": "Quando a thread ficar parada por alguns minutos, o que foi dito vira um resumo aqui, e as memórias sobre você saem dele.",
@@ -257,9 +279,42 @@
       "reason": "Shortens the idle timing and summary-to-memory explanation."
     },
     {
+      "id": "incoming-04",
+      "file": "src/renderer/src/components/Conversation.tsx",
+      "line": 1785,
+      "context": "RunSteps",
+      "attribute": "aria-label",
+      "source": "Orientação para a resposta em curso",
+      "before": "A steer for the reply running now",
+      "after": "Instructions for the current reply",
+      "reason": "Use a natural accessible field name."
+    },
+    {
+      "id": "incoming-05",
+      "file": "src/renderer/src/components/Conversation.tsx",
+      "line": 1878,
+      "context": "Thought",
+      "attribute": "title",
+      "source": "Recolher o que ele pensou",
+      "before": "Fold what it thought",
+      "after": "Collapse reasoning",
+      "reason": "Name the disclosure action using the established term."
+    },
+    {
+      "id": "incoming-06",
+      "file": "src/renderer/src/components/Conversation.tsx",
+      "line": 1878,
+      "context": "Thought",
+      "attribute": "title",
+      "source": "Ler o que ele pensou",
+      "before": "Read what it thought",
+      "after": "Show reasoning",
+      "reason": "Name the disclosure action using the established term."
+    },
+    {
       "id": 691,
       "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 1831,
+      "line": 2042,
       "context": "alwaysTitle",
       "attribute": null,
       "source": "Daqui pra frente ${agent?.name ?? 'o agente'} usa “${toolWords(approval.tool)}” no ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. Dá pra tirar na página dele.",
@@ -270,7 +325,7 @@
     {
       "id": 714,
       "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 2001,
+      "line": 2212,
       "context": "CallApprovalCard",
       "attribute": "title",
       "source": "Daqui pra frente ${agent?.name ?? 'o agente'} roda ${forGood.join(', ')} pelo ${approval.connectorName} sem pedir, em qualquer chamada, mesmo depois de ler algo de fora. As outras ações continuam pedindo. Dá pra tirar na página dele.",
@@ -708,9 +763,20 @@
       "reason": "Takes longer alone loses the explicit reasoning behavior; retains its cost."
     },
     {
+      "id": "incoming-67-1",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Ligado, um prompt novo para ${name} espera a resposta em curso terminar, em qualquer conversa. Desligado, segue Configurações › Agentes › Respostas.",
+      "before": "On, a new prompt for ${name} waits for the running reply to end, in any conversation. Off, it follows Settings › Agents › Replies.",
+      "after": "New prompts for ${name} wait until its current reply finishes, across all conversations. When off, Settings › Agents › Replies applies.",
+      "reason": "Replace the awkward On/Off construction; preserve the agent name, all-conversation scope and fallback setting.",
+      "line": 805,
+      "context": "AgentPage",
+      "attribute": "sub"
+    },
+    {
       "id": 1040,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 807,
+      "line": 814,
       "context": "AgentPage",
       "attribute": "help",
       "source": "Nos canais ligados, ${name} lê e responde quando é com ele. Fora deles, chame com @${draft.handle || 'handle'} ou mande DM.",
@@ -719,20 +785,9 @@
       "reason": "Shortens the second condition while preserving both ways to contact the agent."
     },
     {
-      "id": 1042,
-      "file": "src/renderer/src/components/Pages.tsx",
-      "line": 824,
-      "context": "AgentPage",
-      "attribute": "label",
-      "source": "Entra sozinho quando algo é da área dele",
-      "before": "Joins on its own when something is in its area",
-      "after": "Joins relevant conversations automatically",
-      "reason": "Names the action directly."
-    },
-    {
       "id": 1044,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 827,
+      "line": 831,
       "context": "AgentPage",
       "attribute": "label",
       "source": "Entra sozinho quando algo é da área dele",
@@ -741,9 +796,20 @@
       "reason": "Matches the visible label."
     },
     {
+      "id": 1042,
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 834,
+      "context": "AgentPage",
+      "attribute": "label",
+      "source": "Entra sozinho quando algo é da área dele",
+      "before": "Joins on its own when something is in its area",
+      "after": "Joins relevant conversations automatically",
+      "reason": "Names the action directly."
+    },
+    {
       "id": 1045,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 842,
+      "line": 849,
       "context": "AgentPage",
       "attribute": "help",
       "source": "Um nível por conector. O que fica de fora nem aparece pro modelo.",
@@ -754,7 +820,7 @@
     {
       "id": 1049,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 923,
+      "line": 930,
       "context": "AgentPage",
       "attribute": "label",
       "source": "Sempre permitido, sem pedir",
@@ -765,7 +831,7 @@
     {
       "id": 1054,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 955,
+      "line": 962,
       "context": "AgentPage",
       "attribute": "help",
       "source": "Busca na web: pesquisa e lê páginas com a ferramenta do próprio Claude Code ou Codex, na sua assinatura. Cada busca aparece nos passos da resposta.",
@@ -776,7 +842,7 @@
     {
       "id": 1071,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1052,
+      "line": 1059,
       "context": "AgentPage",
       "attribute": "help",
       "source": "A wiki é o que você e o time sabem, em páginas. Com acesso, o agente consulta antes de responder e cita as páginas.",
@@ -787,7 +853,7 @@
     {
       "id": 1078,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1143,
+      "line": 1150,
       "context": "ComputerCard",
       "attribute": null,
       "source": "Este servidor não tem Docker, então o Linux isolado não roda aqui. Pra rodar comandos, use o seu computador (abaixo), ou escolha Nenhum.",
@@ -798,7 +864,7 @@
     {
       "id": 1081,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1161,
+      "line": 1168,
       "context": "ComputerCard",
       "attribute": null,
       "source": "Ele passa a alcançar o que o Tucano alcança aqui: os arquivos e as credenciais que estiverem no disco do servidor. Pra ele usar o seu computador, empreste o computador (abaixo).",
@@ -809,7 +875,7 @@
     {
       "id": 1106,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1469,
+      "line": 1476,
       "context": "LentFolders",
       "attribute": null,
       "source": "Empreste a pasta de um projeto pra ele trabalhar nela. Ele mexe nos arquivos de verdade, então use git pra poder desfazer.",
@@ -820,7 +886,7 @@
     {
       "id": 1109,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1493,
+      "line": 1500,
       "context": "LentFolders",
       "attribute": null,
       "source": "Emprestar ou devolver reinicia o computador: os serviços param, o que ele instalou fica. Sem credenciais lá dentro, publicar o código e colocar no ar ficam com você.",
@@ -831,7 +897,7 @@
     {
       "id": 1110,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1543,
+      "line": 1550,
       "context": "AutonomyControls",
       "attribute": null,
       "source": "Com a proteção abaixo ligada, o que não tem volta depois de ler algo de fora também pede.",
@@ -842,7 +908,7 @@
     {
       "id": 1111,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1549,
+      "line": 1556,
       "context": "AutonomyControls",
       "attribute": null,
       "source": "Depois de ler algo de fora, pedir antes do que não tem volta",
@@ -853,7 +919,7 @@
     {
       "id": 1114,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1582,
+      "line": 1589,
       "context": "label",
       "attribute": null,
       "source": "Depois de ler algo de fora, pedir antes do que não dá pra desfazer",
@@ -864,7 +930,7 @@
     {
       "id": 1116,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1590,
+      "line": 1597,
       "context": "AutonomyRows",
       "attribute": "sub",
       "source": "Com a proteção abaixo ligada, o que não tem volta depois de ler algo de fora também pede.",
@@ -875,7 +941,7 @@
     {
       "id": 1123,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1780,
+      "line": 1787,
       "context": "AlwaysRulesLink",
       "attribute": null,
       "source": "Cada agente tem as suas, na página dele, em Ferramentas. Lá dá pra ver e tirar.",
@@ -886,7 +952,7 @@
     {
       "id": 1124,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1782,
+      "line": 1789,
       "context": "AlwaysRulesLink",
       "attribute": null,
       "source": "Nenhuma ainda. “Aprovar e sempre permitir”, num pedido, cria uma.",
@@ -897,7 +963,7 @@
     {
       "id": 1151,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1981,
+      "line": 1988,
       "context": "MyApprovals",
       "attribute": "subtitle",
       "source": "Nada sensível acontece sem você. Cada aprovação cobre uma ação exata.",
@@ -908,7 +974,7 @@
     {
       "id": 1152,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 1984,
+      "line": 1991,
       "context": "MyApprovals",
       "attribute": "why",
       "source": "Quando um agente quiser publicar, apagar ou enviar algo pra fora, o pedido aparece aqui e na conversa.",
@@ -919,7 +985,7 @@
     {
       "id": 1155,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2034,
+      "line": 2041,
       "context": "InboxPage",
       "attribute": "subtitle",
       "source": "O que espera por você: aprovações que você decide e perguntas dos agentes a você.",
@@ -930,7 +996,7 @@
     {
       "id": 1167,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2594,
+      "line": 2601,
       "context": "ReportsTo",
       "attribute": "help",
       "source": "Quem está acima divide o trabalho com quem está abaixo e recebe a resposta de volta. O desenho organiza, mas não cerca: qualquer agente pode perguntar ou pedir uma parte pequena a qualquer outro.",
@@ -941,7 +1007,7 @@
     {
       "id": 1170,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2642,
+      "line": 2649,
       "context": "label",
       "attribute": null,
       "source": "Modelo reserva",
@@ -952,7 +1018,7 @@
     {
       "id": 1171,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2649,
+      "line": 2656,
       "context": "ReserveModel",
       "attribute": "help",
       "source": "Quando a assinatura do modelo principal chega no limite (o de 5 horas ou o semanal), a resposta segue no reserva, que pode estar em outro programa (Claude Code, Codex…) ou em outra conta. Na resposta seguinte, ${draft.name || 'o agente'} tenta o principal de novo.",
@@ -963,7 +1029,7 @@
     {
       "id": 1172,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2651,
+      "line": 2658,
       "context": "ReserveModel",
       "attribute": "sub",
       "source": "Quando o principal chega no limite da assinatura.",
@@ -974,7 +1040,7 @@
     {
       "id": 1173,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2656,
+      "line": 2663,
       "context": "ReserveModel",
       "attribute": "label",
       "source": "Reserva",
@@ -985,7 +1051,7 @@
     {
       "id": 1174,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2661,
+      "line": 2668,
       "context": "ReserveModel",
       "attribute": "label",
       "source": "Conta da reserva",
@@ -996,7 +1062,7 @@
     {
       "id": 1175,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2661,
+      "line": 2668,
       "context": "ReserveModel",
       "attribute": "sub",
       "source": "Essa conta ainda não entrou: a reserva só funciona depois que você entrar nela em Configurações › Modelos.",
@@ -1007,7 +1073,7 @@
     {
       "id": 1176,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2663,
+      "line": 2670,
       "context": "ReserveModel",
       "attribute": "aria-label",
       "source": "Conta da reserva",
@@ -1018,7 +1084,7 @@
     {
       "id": 1179,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2677,
+      "line": 2684,
       "context": "ReserveModel",
       "attribute": null,
       "source": "É o mesmo modelo, na mesma conta do principal: a reserva não vai ser usada.",
@@ -1029,7 +1095,7 @@
     {
       "id": 1180,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2678,
+      "line": 2685,
       "context": "ReserveModel",
       "attribute": null,
       "source": "É o mesmo programa, na mesma conta do principal: se o limite for da assinatura, ele também vai estar sem.",
@@ -1040,7 +1106,7 @@
     {
       "id": 1181,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2679,
+      "line": 2686,
       "context": "ReserveModel",
       "attribute": null,
       "source": " Escolha outra conta em “Conta da reserva”.",
@@ -1051,7 +1117,7 @@
     {
       "id": 1183,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2774,
+      "line": 2781,
       "context": "TeamCard",
       "attribute": "lead",
       "source": "O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.",
@@ -1062,7 +1128,7 @@
     {
       "id": 1186,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2909,
+      "line": 2916,
       "context": "BackupCard",
       "attribute": "lead",
       "source": "Trouxe o Tucano do seu computador? No app do computador, use Exportar tudo (Configurações › Geral) e envie o arquivo aqui: agentes, conversas, memórias, wiki e arquivos substituem os deste Tucano. Um backup diário (.db, da pasta de backups) também serve, só com o banco.",
@@ -1073,7 +1139,7 @@
     {
       "id": 1187,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2913,
+      "line": 2920,
       "context": "BackupCard",
       "attribute": "lead",
       "source": "Tudo deste Tucano num arquivo .zip: agentes, conversas, memórias, wiki e arquivos, pra levar pra um Tucano num servidor (como o Tucano Pro). As senhas dos conectores e os logins de IA não vão: eles ficam presos a este computador.",
@@ -1084,7 +1150,7 @@
     {
       "id": 1188,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2992,
+      "line": 2999,
       "context": "WorkspaceDangerArea",
       "attribute": "aria-label",
       "source": "Área de perigo",
@@ -1095,7 +1161,7 @@
     {
       "id": 1189,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 2993,
+      "line": 3000,
       "context": "WorkspaceDangerArea",
       "attribute": "title",
       "source": "Área de perigo",
@@ -1106,7 +1172,7 @@
     {
       "id": 1192,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3049,
+      "line": 3056,
       "context": "PhoneCard",
       "attribute": "lead",
       "source": "Aprovações com botões, as perguntas dos agentes (é só responder a mensagem) e o fim das rotinas, no seu Telegram. Útil pra rotina que pede aprovação de madrugada.",
@@ -1117,7 +1183,7 @@
     {
       "id": 1193,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3075,
+      "line": 3082,
       "context": "PhoneCard",
       "attribute": null,
       "source": "Só quem mandar este código fica com o bot. Esperando…",
@@ -1128,7 +1194,7 @@
     {
       "id": 1197,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3176,
+      "line": 3183,
       "context": "VoiceCard",
       "attribute": "lead",
       "source": "Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.",
@@ -1139,7 +1205,7 @@
     {
       "id": 1198,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3176,
+      "line": 3183,
       "context": "VoiceCard",
       "attribute": "lead",
       "source": "O texto fica no campo para você revisar antes de enviar.",
@@ -1150,7 +1216,7 @@
     {
       "id": 1201,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3212,
+      "line": 3219,
       "context": "VoiceCard",
       "attribute": null,
       "source": "Detectar o idioma, em vez de usar o do app",
@@ -1161,7 +1227,7 @@
     {
       "id": 1203,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3214,
+      "line": 3221,
       "context": "VoiceCard",
       "attribute": "hint",
       "source": "Opcional: sem isso, o app usa o que veio com ele.",
@@ -1172,7 +1238,7 @@
     {
       "id": 1213,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3322,
+      "line": 3330,
       "context": "SettingsPage",
       "attribute": null,
       "source": "O idioma do app e o que os agentes usam pra responder.",
@@ -1183,7 +1249,7 @@
     {
       "id": 1214,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3324,
+      "line": 3332,
       "context": "SettingsPage",
       "attribute": "hint",
       "source": "Entra em toda conversa de todo agente: quem você é, o que faz, o que importa agora e o que nunca fazer.",
@@ -1194,7 +1260,7 @@
     {
       "id": 1217,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3349,
+      "line": 3357,
       "context": "SettingsPage",
       "attribute": "lead",
       "source": "Como o Tucano aparece pra você. Muda só pra você.",
@@ -1205,7 +1271,7 @@
     {
       "id": 1218,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3354,
+      "line": 3362,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Do sistema segue o claro e o escuro do computador ao longo do dia.",
@@ -1216,7 +1282,7 @@
     {
       "id": 1219,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3369,
+      "line": 3377,
       "context": "SettingsPage",
       "attribute": null,
       "source": "O idioma do app pra você. Os agentes respondem no idioma do Tucano.",
@@ -1227,7 +1293,7 @@
     {
       "id": 1221,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3384,
+      "line": 3392,
       "context": "SettingsPage",
       "attribute": null,
       "source": "O toque quando um agente precisa de você e quando termina. Desligado, as notificações continuam aparecendo, em silêncio.",
@@ -1238,7 +1304,7 @@
     {
       "id": 1224,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3402,
+      "line": 3410,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Abre a lista do que o agente está fazendo embaixo da resposta. Desligado, fica só a linha com o que ele faz agora; um clique nela abre os passos. Muda só pra você.",
@@ -1247,9 +1313,31 @@
       "reason": "The toggle label already supplies ongoing agent work; preserves collapsed interaction and personal scope."
     },
     {
+      "id": "incoming-09",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3417,
+      "context": "SettingsPage",
+      "attribute": null,
+      "source": "O que o modelo pensa",
+      "before": "What the model is thinking",
+      "after": "Show reasoning",
+      "reason": "Describe the enabled behavior and synchronize its search label."
+    },
+    {
+      "id": "incoming-10",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3421,
+      "context": "SettingsPage",
+      "attribute": null,
+      "source": "Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio.",
+      "before": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+      "after": "Shows reasoning below the steps, during and after replies. When off, only steps and answers appear. Currently available only with Pi.",
+      "reason": "Preserve timing, off state and Pi availability while removing visual narration."
+    },
+    {
       "id": 1227,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3413,
+      "line": 3434,
       "context": "SettingsPage",
       "attribute": null,
       "source": "De vez em quando, uma linha discreta no pé da barra com uma pergunta rápida. Pra isso o Tucano consulta tucano.sh algumas vezes por dia. Não manda nada seu.",
@@ -1260,7 +1348,7 @@
     {
       "id": 1230,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3422,
+      "line": 3443,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Um erro, uma ideia, qualquer coisa. Também em \"Enviar feedback\", no pé da barra.",
@@ -1271,7 +1359,7 @@
     {
       "id": 1232,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3440,
+      "line": 3461,
       "context": "SettingsPage",
       "attribute": "lead",
       "source": "Pra todos os agentes: até onde eles vão sozinhos e o que pede sua aprovação antes, com um botão na conversa. Na página de cada agente dá pra mudar só pra ele. Ler e investigar nunca pede.",
@@ -1280,9 +1368,53 @@
       "reason": "Retains global default, per-agent override, request location and read-only exemption."
     },
     {
+      "id": "incoming-67-2",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels.",
+      "line": 3473,
+      "context": "SettingsPage",
+      "attribute": "label"
+    },
+    {
+      "id": "incoming-67-3",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Cada prompt ganha uma resposta própria, ao lado das que já estão em curso. Passando deste número, o prompt espera na fila até uma terminar. Um agente pode ir uma por vez na página dele.",
+      "before": "Each prompt gets its own reply beside the running ones. Past this number, it waits in the queue until one ends. An agent can go one at a time on its own page.",
+      "after": "New prompts start separate replies up to this limit, then queue until one finishes. An agent can override this with “One reply at a time”.",
+      "reason": "Name the limit and the exact per-agent override instead of vague page narration.",
+      "line": 3476,
+      "context": "SettingsPage",
+      "attribute": "hint"
+    },
+    {
+      "id": "incoming-67-4",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels.",
+      "line": 3480,
+      "context": "SettingsPage",
+      "attribute": "aria-label"
+    },
+    {
+      "id": "incoming-67-5",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Até 6, o máximo do app",
+      "before": "Up to 6, the app’s most",
+      "after": "Up to 6 (app maximum)",
+      "reason": "Replace an unnatural maximum label while retaining the application-wide ceiling.",
+      "line": 3488,
+      "context": "SettingsPage",
+      "attribute": "options"
+    },
+    {
       "id": 1236,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3460,
+      "line": 3509,
       "context": "SettingsPage",
       "attribute": "hint",
       "source": "Chegou nele, o agente pausa. Se estava avançando, segue sozinho (veja Continuar sozinho, abaixo); senão, você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.",
@@ -1293,7 +1425,7 @@
     {
       "id": 1237,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3468,
+      "line": 3517,
       "context": "SettingsPage",
       "attribute": "label",
       "source": "Considerar travado após (min sem sinal)",
@@ -1304,7 +1436,7 @@
     {
       "id": 1238,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3468,
+      "line": 3517,
       "context": "SettingsPage",
       "attribute": "hint",
       "source": "Sem texto nem ferramenta terminando. Trabalho longo que anda não é cortado.",
@@ -1315,7 +1447,7 @@
     {
       "id": 1240,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3495,
+      "line": 3544,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Quando uma resposta chega no limite e estava avançando, o agente segue sozinho até ${AUTO_CONTINUES} vezes seguidas antes de esperar você. Uma resposta cortada porque o app fechou continua quando ele abre de novo. O limite do mês continua valendo.",
@@ -1326,7 +1458,7 @@
     {
       "id": 1244,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3512,
+      "line": 3561,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Assim nenhuma rotina depende de você lembrar de abrir o app.",
@@ -1337,7 +1469,7 @@
     {
       "id": 1247,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3521,
+      "line": 3570,
       "context": "SettingsPage",
       "attribute": null,
       "source": "Rotinas e gatilhos esperam e rodam quando ele acaba (como atrasados). O que você mandar continua sendo respondido.",
@@ -1348,7 +1480,7 @@
     {
       "id": 1251,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3547,
+      "line": 3596,
       "context": "SettingsPage",
       "attribute": null,
       "source": "O que ele propõe entra assim que ele termina de responder, e o card ganha um Desfazer por ${UNDO_HOURS} horas. Acesso a conectores e o limite do mês continuam esperando você confirmar. Desligado, tudo espera você clicar em Aplicar.",
@@ -1359,7 +1491,7 @@
     {
       "id": 1252,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3559,
+      "line": 3608,
       "context": "SettingsPage",
       "attribute": "lead",
       "source": "Como o app acha o que o agente pede pra clicar (“o botão Buscar”). Pelo texto é de graça e resolve a maioria; quando não acha, o agente usa o número do elemento.",
@@ -1370,7 +1502,7 @@
     {
       "id": 1255,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3573,
+      "line": 3622,
       "context": "SettingsPage",
       "attribute": "hint",
       "source": "Acha o elemento em menos de 1 segundo, até sem texto (pelo print da tela). Mas cada clique que o texto não resolve manda pra TypeSafe a lista de elementos da página e, às vezes, o print dela, inclusive em áreas logadas.",
@@ -1381,7 +1513,7 @@
     {
       "id": 1257,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3591,
+      "line": 3640,
       "context": "SettingsPage",
       "attribute": "lead",
       "source": "Onde os agentes rodam: um endpoint seu, sem instalar nada, ou um programa como você configurou (no seu plano, no gateway da empresa ou nos seus provedores). Dos programas, o Tucano nunca vê nem guarda as credenciais; a chave de um endpoint fica guardada aqui, cifrada.",
@@ -1392,7 +1524,7 @@
     {
       "id": 1261,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3622,
+      "line": 3671,
       "context": "SettingsPage",
       "attribute": "hint",
       "source": "Prefira um modelo rápido: ele roda antes de cada resposta num canal.",
@@ -1401,9 +1533,42 @@
       "reason": "Names the recommendation and reason directly."
     },
     {
+      "id": "incoming-67-6",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Estes ajustes são do servidor ",
+      "before": "These are the settings of the server ",
+      "after": "Settings apply to server ",
+      "reason": "Shorten the prefix while retaining the separately rendered host and sentence continuity.",
+      "line": 3747,
+      "context": "SettingsWhere",
+      "attribute": null
+    },
+    {
+      "id": "incoming-67-7",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": " e valem lá, de qualquer computador. O que é só do seu computador, como emprestá-lo aos agentes, fica no app do Tucano nele.",
+      "before": ", and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+      "after": " from any computer. Manage computer-specific settings, including lending it to agents, in that computer’s Tucano app.",
+      "reason": "Distinguish server scope from computer-specific settings and retain lending guidance. Review together with prefix and host.",
+      "line": 3751,
+      "context": "SettingsWhere",
+      "attribute": null
+    },
+    {
+      "id": "incoming-67-8",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "source": "Abrir no meu computador",
+      "before": "Open on my computer",
+      "after": "Open computer settings",
+      "reason": "Name what opens; the action opens the local app’s lending/settings surface.",
+      "line": 3756,
+      "context": "SettingsWhere",
+      "attribute": null
+    },
+    {
       "id": 1270,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3693,
+      "line": 3767,
       "context": "elsewhere",
       "attribute": null,
       "source": "Pra ser avisado, use o app do Tucano no computador (Configurações › Servidores), o app do iPhone ou o Telegram (Configurações › Celular).",
@@ -1414,7 +1579,7 @@
     {
       "id": 1272,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3696,
+      "line": 3770,
       "context": "notifyHint",
       "attribute": null,
       "source": "O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ",
@@ -1425,7 +1590,7 @@
     {
       "id": 1274,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3700,
+      "line": 3774,
       "context": "notifyHint",
       "attribute": null,
       "source": "Mandei uma. Se não apareceu, confira Ajustes do Sistema › Notificações › Tucano (permitir, e o estilo Faixas ou Alertas) e se um modo Foco está ligado.",
@@ -1436,7 +1601,7 @@
     {
       "id": 1275,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3701,
+      "line": 3775,
       "context": "notifyHint",
       "attribute": null,
       "source": "Mandei uma. Se não apareceu, confira as notificações do sistema e do navegador para o Tucano, e o modo Não perturbe.",
@@ -1447,7 +1612,7 @@
     {
       "id": 1277,
       "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3715,
+      "line": 3789,
       "context": "NotifyTest",
       "attribute": null,
       "source": "Manda uma notificação agora, pra ver se chega.",
@@ -1568,7 +1733,7 @@
     {
       "id": 1384,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 204,
+      "line": 206,
       "context": "ok",
       "attribute": null,
       "source": "Os agentes de lá passam a usar o terminal, as pastas que você emprestar, o navegador e os apps deste computador, só quando trabalham pra você, com as aprovações configuradas lá. Funciona enquanto este app estiver aberto. Desligue aqui a qualquer hora.",
@@ -1579,7 +1744,7 @@
     {
       "id": 1388,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 221,
+      "line": 223,
       "context": "Lend",
       "attribute": null,
       "source": "Quem empresta é o workspace principal: as pastas e os apps estão nas Configurações dele.",
@@ -1590,7 +1755,7 @@
     {
       "id": 1393,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 244,
+      "line": 246,
       "context": "Lend",
       "attribute": null,
       "source": "Escolha, no servidor, os agentes que usam este computador.",
@@ -1601,7 +1766,7 @@
     {
       "id": 1397,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 277,
+      "line": 279,
       "context": "NodeCard",
       "attribute": "lead",
       "source": "Pra ${lent.map((s) => s.name).join(', ')}: o terminal, o navegador e os conectores deste computador vão junto; as pastas e os apps, só os de baixo. Tudo segue as aprovações configuradas no servidor.",
@@ -1612,7 +1777,7 @@
     {
       "id": 1403,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 328,
+      "line": 330,
       "context": "NodeFolders",
       "attribute": null,
       "source": "As ferramentas de arquivo do servidor só alcançam estas pastas. O terminal alcança o que você alcança, com as mesmas aprovações de um agente neste computador.",
@@ -1623,7 +1788,7 @@
     {
       "id": 1404,
       "file": "src/renderer/src/components/Servers.tsx",
-      "line": 329,
+      "line": 331,
       "context": "NodeFolders",
       "attribute": null,
       "source": "Nenhuma pasta ainda: as ferramentas de arquivo do servidor não leem nem gravam nada aqui. Empreste as pastas dos seus projetos. O terminal alcança o que você alcança, com as mesmas aprovações de um agente neste computador.",
@@ -1984,9 +2149,31 @@
       "reason": "Preserves every exclusion, default account behavior, Telegram scope and shared-folder consequence. Privacy/data-warning line exception: all excluded data and shared-folder disclosure must remain visible."
     },
     {
+      "id": "incoming-12",
+      "file": "src/renderer/src/settings-structure.ts",
+      "line": 106,
+      "context": "settingsTerms",
+      "attribute": null,
+      "source": "O que o modelo pensa",
+      "before": "What the model is thinking",
+      "after": "Show reasoning",
+      "reason": "Describe the enabled behavior and synchronize its search label."
+    },
+    {
+      "id": "incoming-67-9",
+      "file": "src/renderer/src/settings-structure.ts",
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels.",
+      "line": 108,
+      "context": "settingsTerms",
+      "attribute": null
+    },
+    {
       "id": 1786,
       "file": "src/renderer/src/settings-structure.ts",
-      "line": 111,
+      "line": 113,
       "context": "settingsTerms",
       "attribute": null,
       "source": "Trocar o modelo de vários agentes",
@@ -2004,149 +2191,6 @@
       "before": "The endpoint refused the key. Check its key in Settings › Models.",
       "after": "The endpoint rejected the key. Check the key in Settings › Models.",
       "reason": "Removes the ambiguous repeated possessive while preserving the recovery path."
-    },
-    {
-      "id": "incoming-01",
-      "file": "src/core/runs.ts",
-      "line": 833,
-      "context": "module",
-      "attribute": null,
-      "source": "A resposta terminou antes de ler isto",
-      "before": "The reply ended before reading this instruction.",
-      "after": "The reply ended before the agent read this instruction.",
-      "reason": "Name the agent as the actor reading instructions."
-    },
-    {
-      "id": "incoming-02",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 318,
-      "context": "ComputerOff",
-      "attribute": "title",
-      "source": "Desligado: o app do Tucano está fechado lá. Ao abrir, volta sozinho.",
-      "before": "Off: the Tucano app is closed there. Opening it brings it back.",
-      "after": "Tucano is closed on this computer. Open it to reconnect.",
-      "reason": "Distinguish the closed app from computer power and name recovery."
-    },
-    {
-      "id": "incoming-03",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 647,
-      "context": "MessageRow",
-      "attribute": "title",
-      "source": "Chega quando a resposta acima terminar",
-      "before": "Goes when the reply above ends",
-      "after": "Runs after the reply above finishes",
-      "reason": "Name the queued action."
-    },
-    {
-      "id": "incoming-04",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 1786,
-      "context": "RunSteps",
-      "attribute": "aria-label",
-      "source": "Orientação para a resposta em curso",
-      "before": "A steer for the reply running now",
-      "after": "Instructions for the current reply",
-      "reason": "Use a natural accessible field name."
-    },
-    {
-      "id": "incoming-05",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 1879,
-      "context": "Thought",
-      "attribute": "title",
-      "source": "Recolher o que ele pensou",
-      "before": "Fold what it thought",
-      "after": "Collapse reasoning",
-      "reason": "Name the disclosure action using the established term."
-    },
-    {
-      "id": "incoming-06",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 1879,
-      "context": "Thought",
-      "attribute": "title",
-      "source": "Ler o que ele pensou",
-      "before": "Read what it thought",
-      "after": "Show reasoning",
-      "reason": "Name the disclosure action using the established term."
-    },
-    {
-      "id": "incoming-07",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 2963,
-      "context": "Composer",
-      "attribute": "title",
-      "source": "Enquanto uma resposta corre aqui, o Enter manda assim. Clique para voltar ao normal; os atalhos continuam valendo uma vez cada (Ctrl+Enter põe na fila, Alt+Enter entrega, Shift+Alt+Enter interrompe, Shift+Enter quebra a linha).",
-      "before": "While a reply runs here, Enter sends like this. Click to go back to the plain one; the keys still work once each (Ctrl+Enter queues, Alt+Enter hands it over, Shift+Alt+Enter interrupts, Shift+Enter breaks the line).",
-      "after": "Enter uses this mode during a reply. Select to restore parallel replies. Shortcuts apply to one send: Ctrl+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts. Shift+Enter adds a line.",
-      "reason": "Identify the restored mode and preserve all shortcuts and their per-send scope."
-    },
-    {
-      "id": "incoming-08",
-      "file": "src/renderer/src/components/Conversation.tsx",
-      "line": 2966,
-      "context": "Composer",
-      "attribute": null,
-      "source": "Enter: entregue à resposta",
-      "before": "Enter: into the reply",
-      "after": "Enter: steer",
-      "reason": "Name the action consistently with the mode."
-    },
-    {
-      "id": "incoming-09",
-      "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3410,
-      "context": "SettingsPage",
-      "attribute": null,
-      "source": "O que o modelo pensa",
-      "before": "What the model is thinking",
-      "after": "Show reasoning",
-      "reason": "Describe the enabled behavior and synchronize its search label."
-    },
-    {
-      "id": "incoming-10",
-      "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3414,
-      "context": "SettingsPage",
-      "attribute": null,
-      "source": "Enquanto um agente responde, o raciocínio dele aparece em letra pequena e apagada, embaixo dos passos, e fica ali depois que a resposta acaba. Desligado, você vê só os passos e a resposta. Por enquanto, só os agentes que rodam no Pi mandam o raciocínio.",
-      "before": "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
-      "after": "Shows reasoning below the steps, during and after replies. When off, only steps and answers appear. Currently available only with Pi.",
-      "reason": "Preserve timing, off state and Pi availability while removing visual narration."
-    },
-    {
-      "id": "incoming-11",
-      "file": "src/renderer/src/components/Pages.tsx",
-      "line": 3466,
-      "context": "SettingsPage",
-      "attribute": "label",
-      "source": "Um novo prompt com uma resposta em curso",
-      "before": "While a reply is running",
-      "after": "New prompts during a reply",
-      "reason": "Name what the choice controls and synchronize its search label."
-    },
-    {
-      "id": "incoming-12",
-      "file": "src/renderer/src/settings-structure.ts",
-      "line": 106,
-      "context": "settingsTerms",
-      "attribute": null,
-      "source": "O que o modelo pensa",
-      "before": "What the model is thinking",
-      "after": "Show reasoning",
-      "reason": "Describe the enabled behavior and synchronize its search label."
-    },
-    {
-      "id": "incoming-13",
-      "file": "src/renderer/src/settings-structure.ts",
-      "line": 108,
-      "context": "settingsTerms",
-      "attribute": null,
-      "source": "Um novo prompt com uma resposta em curso",
-      "before": "While a reply is running",
-      "after": "New prompts during a reply",
-      "reason": "Name what the choice controls and synchronize its search label."
     }
   ],
   "initialAuditBase": "98554fdd007637409696f98e061973b5ca9338c6"
