@@ -899,6 +899,11 @@ it turns CONFLICTING as soon as the base moves: rebase onto `upstream/main`, run
 force-push with the lease named. What this account may and may not do on the project, and what each
 refusal means, is in [Working where you have no admin rights](#working-where-you-have-no-admin-rights).
 
+Never open a pull request on `apoapostolov/tucano:next` (or any fork-only branch). Nobody reads those
+PRs, and they only create noise and a second source of truth. PRs are opened on `eduwxyz/tucano:main`
+manually, by the person, after the change has been integrated into `next` and verified there. An agent
+may prepare the branch and the diff, but it does not open the upstream PR on its own.
+
 Leave other contributors' PRs alone: no rebase, review, comment or close unless the user asks for that
 PR by number. Their conflicts are theirs, and a comment in their thread speaks for the maintainer. Reproduce new
 upstream defects on current upstream main and document stack dependencies and validation.
