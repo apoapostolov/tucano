@@ -152,7 +152,7 @@ describe('a steer into the reply that is running', () => {
 
     const row = db.message(running.id)!.run!.steps.find((s) => s.kind === 'steer')!
     expect(row.status).toBe('error')
-    expect(row.error).toBe('The reply ended before reading this instruction.')
+    expect(row.error).toBe('The reply ended before the agent read this instruction.')
     expect(db.message(running.id)!.run!.status).toBe('done')
     // Still nothing of it posted as a message of the person's.
     expect(people()).toHaveLength(1)

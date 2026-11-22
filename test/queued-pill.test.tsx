@@ -28,7 +28,7 @@ it('says the prompt is queued and why, on one dim caps line', async () => {
   await act(async () => root.render(<QueuedNote />))
   const line = document.querySelector('.msg__queued-line')!
   expect(line.textContent).toBe('Queued · waiting for the reply above to finish')
-  expect(line.getAttribute('title')).toBe('Goes when the reply above ends')
+  expect(line.getAttribute('title')).toBe('Runs after the reply above finishes.')
   // Dim, small, full caps: the house style for a label that is not the prompt itself.
   expect(css).toMatch(/\.msg__queued-line\s*\{[^}]*color:\s*var\(--text-3\)/)
   expect(css).toMatch(/\.msg__queued-line\s*\{[^}]*text-transform:\s*uppercase/)
