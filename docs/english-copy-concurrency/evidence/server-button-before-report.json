@@ -1,0 +1,149 @@
+{
+  "source": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+  "dirty": false,
+  "baseline": true,
+  "browser": "headless Microsoft Edge",
+  "deviceScaleFactor": 1,
+  "fixture": "Seeded workspace, fake engines and a synthetic openLending function. The actual conditional button rendered; its action was not invoked.",
+  "notes": [
+    "Synthetic loopback port numbers are redacted in measurement text. Character counts describe the original rendered text.",
+    "Baseline fit failures are recorded, not treated as passing candidate results."
+  ],
+  "captures": [
+    {
+      "name": "server-button",
+      "width": 1280,
+      "file": "captures/server-button-before/1280-server-button.png",
+      "detail": "The actual server banner and conditional button, exposed by a synthetic desktop bridge function."
+    },
+    {
+      "name": "server-button",
+      "width": 900,
+      "file": "captures/server-button-before/900-server-button.png",
+      "detail": "The actual server banner and conditional button, exposed by a synthetic desktop bridge function."
+    }
+  ],
+  "measurements": [
+    {
+      "name": "server-button",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": false,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+              "characters": 188,
+              "lines": 3,
+              "visible": true,
+              "width": 501.234375,
+              "height": 56.53125,
+              "contentWidth": 501,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".settings-where button",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Open on my computer",
+              "characters": 19,
+              "lines": 1,
+              "visible": true,
+              "width": 154.765625,
+              "height": 28,
+              "contentWidth": 133,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [
+        {
+          "selector": ".settings-where .grow",
+          "index": 0,
+          "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+          "problem": "3 lines exceeds 2"
+        }
+      ]
+    },
+    {
+      "name": "server-button",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": false,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+              "characters": 188,
+              "lines": 4,
+              "visible": true,
+              "width": 361.234375,
+              "height": 75.375,
+              "contentWidth": 361,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".settings-where button",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Open on my computer",
+              "characters": 19,
+              "lines": 1,
+              "visible": true,
+              "width": 154.765625,
+              "height": 28,
+              "contentWidth": 133,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [
+        {
+          "selector": ".settings-where .grow",
+          "index": 0,
+          "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+          "problem": "4 lines exceeds 2"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "captureCompleted": true,
+  "layoutPassed": false
+}

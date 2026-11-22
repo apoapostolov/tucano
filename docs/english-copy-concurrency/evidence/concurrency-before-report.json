@@ -1,0 +1,562 @@
+{
+  "source": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+  "dirty": false,
+  "baseline": true,
+  "browser": "headless Microsoft Edge",
+  "deviceScaleFactor": 1,
+  "fixture": "Seeded workspace and fake engines on an isolated server; no UI text substitution.",
+  "notes": [
+    "Synthetic loopback port numbers are redacted in measurement text. Character counts describe the original rendered text.",
+    "Baseline fit failures are recorded, not treated as passing candidate results."
+  ],
+  "captures": [
+    {
+      "name": "server-banner",
+      "width": 1280,
+      "file": "captures/concurrency-before/1280-server-banner.png",
+      "detail": "Actual server-context banner in the built web renderer; the host is synthetic loopback."
+    },
+    {
+      "name": "concurrency",
+      "width": 1280,
+      "file": "captures/concurrency-before/1280-concurrency.png",
+      "detail": "Global reply concurrency, its hint and current selection."
+    },
+    {
+      "name": "concurrency-options",
+      "width": 1280,
+      "file": "captures/concurrency-before/1280-concurrency-options.png",
+      "detail": "All five actual concurrency choices; no content was substituted."
+    },
+    {
+      "name": "agent-override",
+      "width": 1280,
+      "file": "captures/concurrency-before/1280-agent-override.png",
+      "detail": "The seeded agent’s per-agent override, with the real control and hint."
+    },
+    {
+      "name": "server-banner",
+      "width": 900,
+      "file": "captures/concurrency-before/900-server-banner.png",
+      "detail": "Actual server-context banner in the built web renderer; the host is synthetic loopback."
+    },
+    {
+      "name": "concurrency",
+      "width": 900,
+      "file": "captures/concurrency-before/900-concurrency.png",
+      "detail": "Global reply concurrency, its hint and current selection."
+    },
+    {
+      "name": "concurrency-options",
+      "width": 900,
+      "file": "captures/concurrency-before/900-concurrency-options.png",
+      "detail": "All five actual concurrency choices; no content was substituted."
+    },
+    {
+      "name": "agent-override",
+      "width": 900,
+      "file": "captures/concurrency-before/900-agent-override.png",
+      "detail": "The seeded agent’s per-agent override, with the real control and hint."
+    }
+  ],
+  "measurements": [
+    {
+      "name": "server-banner",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+              "characters": 188,
+              "lines": 2,
+              "visible": true,
+              "width": 666,
+              "height": 37.6875,
+              "contentWidth": 666,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "concurrency",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": "#settings-agents-replies .field__label",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Replies at once in a conversation",
+              "characters": 33,
+              "lines": 1,
+              "visible": true,
+              "width": 686,
+              "height": 19.375,
+              "contentWidth": 686,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": "#settings-agents-replies .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Each prompt gets its own reply beside the running ones. Past this number, it waits in the queue until one ends. An agent can go one at a time on its own page.",
+              "characters": 158,
+              "lines": 2,
+              "visible": true,
+              "width": 686,
+              "height": 37.1875,
+              "contentWidth": 686,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": "#settings-agents-replies .select__trigger__value",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Up to 6, the app’s most",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 640,
+              "height": 20.921875,
+              "contentWidth": 640,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13.5px",
+              "lineHeight": "20.925px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "concurrency-options",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".select__menu [role=option] .select__label",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "One at a time",
+              "characters": 13,
+              "lines": 1,
+              "visible": true,
+              "width": 660,
+              "height": 20.140625,
+              "contentWidth": 660,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 2",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 660,
+              "height": 20.140625,
+              "contentWidth": 660,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 3",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 660,
+              "height": 20.140625,
+              "contentWidth": 660,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 4",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 660,
+              "height": 20.140625,
+              "contentWidth": 660,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 6, the app’s most",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 639,
+              "height": 20.140625,
+              "contentWidth": 639,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "agent-override",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".lrow:has(.lrow__name:text-is(\"One reply at a time\")) .lrow__name",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "One reply at a time",
+              "characters": 19,
+              "lines": 1,
+              "visible": true,
+              "width": 686,
+              "height": 21.6875,
+              "contentWidth": 686,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "14px",
+              "lineHeight": "21.7px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".lrow:has(.lrow__name:text-is(\"One reply at a time\")) .lrow__sub",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "On, a new prompt for Lia waits for the running reply to end, in any conversation. Off, it follows Settings › Agents › Replies.",
+              "characters": 126,
+              "lines": 1,
+              "visible": true,
+              "width": 686,
+              "height": 17.390625,
+              "contentWidth": 686,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "17.4px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "server-banner",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": false,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+              "characters": 188,
+              "lines": 3,
+              "visible": true,
+              "width": 526,
+              "height": 56.53125,
+              "contentWidth": 526,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": [
+        {
+          "selector": ".settings-where .grow",
+          "index": 0,
+          "text": "These are the settings of the server 127.0.0.1:<loopback-port>, and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+          "problem": "3 lines exceeds 2"
+        }
+      ]
+    },
+    {
+      "name": "concurrency",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": "#settings-agents-replies .field__label",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Replies at once in a conversation",
+              "characters": 33,
+              "lines": 1,
+              "visible": true,
+              "width": 546,
+              "height": 19.375,
+              "contentWidth": 546,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "19.375px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": "#settings-agents-replies .hint",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Each prompt gets its own reply beside the running ones. Past this number, it waits in the queue until one ends. An agent can go one at a time on its own page.",
+              "characters": 158,
+              "lines": 2,
+              "visible": true,
+              "width": 546,
+              "height": 37.1875,
+              "contentWidth": 546,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "18.6px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": "#settings-agents-replies .select__trigger__value",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Up to 6, the app’s most",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 500,
+              "height": 20.921875,
+              "contentWidth": 500,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13.5px",
+              "lineHeight": "20.925px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "concurrency-options",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".select__menu [role=option] .select__label",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "One at a time",
+              "characters": 13,
+              "lines": 1,
+              "visible": true,
+              "width": 520,
+              "height": 20.140625,
+              "contentWidth": 520,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 2",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 520,
+              "height": 20.140625,
+              "contentWidth": 520,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 3",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 520,
+              "height": 20.140625,
+              "contentWidth": 520,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 4",
+              "characters": 7,
+              "lines": 1,
+              "visible": true,
+              "width": 520,
+              "height": 20.140625,
+              "contentWidth": 520,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            },
+            {
+              "text": "Up to 6, the app’s most",
+              "characters": 23,
+              "lines": 1,
+              "visible": true,
+              "width": 499,
+              "height": 20.140625,
+              "contentWidth": 499,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "20.15px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "agent-override",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".lrow:has(.lrow__name:text-is(\"One reply at a time\")) .lrow__name",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "One reply at a time",
+              "characters": 19,
+              "lines": 1,
+              "visible": true,
+              "width": 506,
+              "height": 21.6875,
+              "contentWidth": 506,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "14px",
+              "lineHeight": "21.7px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".lrow:has(.lrow__name:text-is(\"One reply at a time\")) .lrow__sub",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "On, a new prompt for Lia waits for the running reply to end, in any conversation. Off, it follows Settings › Agents › Replies.",
+              "characters": 126,
+              "lines": 2,
+              "visible": true,
+              "width": 506,
+              "height": 34.78125,
+              "contentWidth": 506,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12px",
+              "lineHeight": "17.4px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "errors": [],
+  "captureCompleted": true,
+  "layoutPassed": false
+}

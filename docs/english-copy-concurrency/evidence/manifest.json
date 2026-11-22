@@ -1,0 +1,451 @@
+{
+  "description": "Actual built renderer screenshots displayed in full at native size, with annotations outside the application images.",
+  "captureBaseline": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+  "acceptedBaseline": "e44b688213f1ec70868d685d5a336b3772f1810d",
+  "captureCandidate": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+  "sourceVerification": "The nine original English strings occur in both the captured baseline and the accepted baseline; their replacements occur in the captured candidate. Accessible and search copies were verified in source.",
+  "syntheticFixtures": [
+    "Seeded workspace and fake engines with isolated loopback ports.",
+    "Frames 07–08 additionally install a synthetic openLending function to expose the actual conditional desktop-bridge button; the function is not invoked."
+  ],
+  "limitation": "These images and measurements cover the browser renderer; installed Electron results are reported separately.",
+  "reports": [
+    "concurrency-before-report.json",
+    "followup-after-report.json",
+    "server-button-before-report.json",
+    "server-button-final-report.json"
+  ],
+  "changes": [
+    {
+      "id": "concurrency-01",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 805,
+      "context": "AgentPage",
+      "attribute": "sub",
+      "source": "Ligado, um prompt novo para ${name} espera a resposta em curso terminar, em qualquer conversa. Desligado, segue Configurações › Agentes › Respostas.",
+      "before": "On, a new prompt for ${name} waits for the running reply to end, in any conversation. Off, it follows Settings › Agents › Replies.",
+      "after": "New prompts for ${name} wait until its current reply finishes, across all conversations. When off, Settings › Agents › Replies applies.",
+      "reason": "Replace the awkward On/Off construction; preserve the agent name, all-conversation scope and fallback setting."
+    },
+    {
+      "id": "concurrency-02",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3473,
+      "context": "SettingsPage",
+      "attribute": "label",
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels."
+    },
+    {
+      "id": "concurrency-03",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3476,
+      "context": "SettingsPage",
+      "attribute": "hint",
+      "source": "Cada prompt ganha uma resposta própria, ao lado das que já estão em curso. Passando deste número, o prompt espera na fila até uma terminar. Um agente pode ir uma por vez na página dele.",
+      "before": "Each prompt gets its own reply beside the running ones. Past this number, it waits in the queue until one ends. An agent can go one at a time on its own page.",
+      "after": "New prompts start separate replies up to this limit, then queue until one finishes. An agent can override this with “One reply at a time”.",
+      "reason": "Name the limit and the exact per-agent override instead of vague page narration."
+    },
+    {
+      "id": "concurrency-04",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3480,
+      "context": "SettingsPage",
+      "attribute": "aria-label",
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels."
+    },
+    {
+      "id": "concurrency-05",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3488,
+      "context": "SettingsPage",
+      "attribute": "options",
+      "source": "Até 6, o máximo do app",
+      "before": "Up to 6, the app’s most",
+      "after": "Up to 6 (app maximum)",
+      "reason": "Replace an unnatural maximum label while retaining the application-wide ceiling."
+    },
+    {
+      "id": "concurrency-06",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3747,
+      "context": "SettingsWhere",
+      "attribute": null,
+      "source": "Estes ajustes são do servidor ",
+      "before": "These are the settings of the server ",
+      "after": "Settings for server ",
+      "reason": "Shorten the prefix while retaining the separately rendered host and sentence continuity."
+    },
+    {
+      "id": "concurrency-07",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3751,
+      "context": "SettingsWhere",
+      "attribute": null,
+      "source": " e valem lá, de qualquer computador. O que é só do seu computador, como emprestá-lo aos agentes, fica no app do Tucano nele.",
+      "before": ", and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.",
+      "after": ". Manage local settings and agent lending in each computer’s Tucano app.",
+      "reason": "Distinguish server scope from computer-specific settings and retain lending guidance. Review together with prefix and host."
+    },
+    {
+      "id": "concurrency-08",
+      "file": "src/renderer/src/components/Pages.tsx",
+      "line": 3756,
+      "context": "SettingsWhere",
+      "attribute": null,
+      "source": "Abrir no meu computador",
+      "before": "Open on my computer",
+      "after": "Open computer settings",
+      "reason": "Name what opens; the action opens the local app’s lending/settings surface."
+    },
+    {
+      "id": "concurrency-09",
+      "file": "src/renderer/src/settings-structure.ts",
+      "line": 108,
+      "context": "settingsTerms",
+      "attribute": null,
+      "source": "Respostas ao mesmo tempo numa conversa",
+      "before": "Replies at once in a conversation",
+      "after": "Concurrent replies per conversation",
+      "reason": "Use the established term for the configured concurrency; synchronize visible, accessible and search labels."
+    }
+  ],
+  "frames": [
+    {
+      "number": 1,
+      "title": "Replies per conversation",
+      "frame": "01-concurrency-900.png",
+      "viewportCssWidth": 900,
+      "defect": "The queue explanation is indirect, and “the app’s most” does not clearly identify the maximum.",
+      "revision": "The label names concurrency; the hint explains the limit, queue and override. The maximum is named directly.",
+      "note": "The same revised label is also used for the accessible name and Settings search term; those occurrences were checked in source.",
+      "changeIds": [
+        "concurrency-02",
+        "concurrency-03",
+        "concurrency-04",
+        "concurrency-05",
+        "concurrency-09"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/900-concurrency.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "493fec7d6b723b370ff058920970415f518094dfa6b200a929fdda8b66c80d7e",
+          "width": 580,
+          "height": 181,
+          "state": "Setting and current limit"
+        },
+        {
+          "sourceImage": "captures/concurrency-before/900-concurrency-options.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "8f41587a3c5316f180d56462ccc6b0e154a82b2ce12f476bd0ab56abb6d8e9d7",
+          "width": 546,
+          "height": 181,
+          "state": "All available choices"
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/900-concurrency.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "45e2856534ce48cdd4ea0ac65fd1f8456cf0092785e5faf5fe0a437ba0e78f9c",
+          "width": 580,
+          "height": 181,
+          "state": "Setting and current limit"
+        },
+        {
+          "sourceImage": "captures/followup-after/900-concurrency-options.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "0d0226fa75e423f9a95852c43be59b377290f01a1daa804f0bedab065422f5e7",
+          "width": 546,
+          "height": 181,
+          "state": "All available choices"
+        }
+      ],
+      "output": {
+        "sha256": "3b32587f999f005ad0e132b0e68923dc9ffa84521a177c73daccf64081b9a84d",
+        "width": 1720,
+        "height": 779
+      }
+    },
+    {
+      "number": 2,
+      "title": "Replies per conversation",
+      "frame": "02-concurrency-1280.png",
+      "viewportCssWidth": 1280,
+      "defect": "The queue explanation is indirect, and “the app’s most” does not clearly identify the maximum.",
+      "revision": "The label names concurrency; the hint explains the limit, queue and override. The maximum is named directly.",
+      "note": "The same revised label is also used for the accessible name and Settings search term; those occurrences were checked in source.",
+      "changeIds": [
+        "concurrency-02",
+        "concurrency-03",
+        "concurrency-04",
+        "concurrency-05",
+        "concurrency-09"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/1280-concurrency.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "46e17d5961ceeb3e189223b5fe9d9630a024cd765b3d372d26f2dcd2a3252c46",
+          "width": 720,
+          "height": 181,
+          "state": "Setting and current limit"
+        },
+        {
+          "sourceImage": "captures/concurrency-before/1280-concurrency-options.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "bf2a51cb8e80a3902c7487f4e808900ab8d91d60159cedac5818e201f8464145",
+          "width": 686,
+          "height": 181,
+          "state": "All available choices"
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/1280-concurrency.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "e71831d62716ad0d6dd1ce144e9446eade85a953c63ce810742e32dcd7c2fef9",
+          "width": 720,
+          "height": 181,
+          "state": "Setting and current limit"
+        },
+        {
+          "sourceImage": "captures/followup-after/1280-concurrency-options.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "6ad9ce7842572c0d696e32b6c8d4e7e22af2ead795e7695372e024eff695e54b",
+          "width": 686,
+          "height": 181,
+          "state": "All available choices"
+        }
+      ],
+      "output": {
+        "sha256": "2728f8301dd1deddeec1476729e2903d785677bcb35da5b6229a5748646e6077",
+        "width": 1720,
+        "height": 779
+      }
+    },
+    {
+      "number": 3,
+      "title": "Agent override",
+      "frame": "03-agent-override-900.png",
+      "viewportCssWidth": 900,
+      "defect": "The “On” and “Off” explanation makes the scope and fallback harder to scan.",
+      "revision": "The hint states that the agent waits across all conversations and identifies the global setting used when the override is off.",
+      "note": "Lia is a seeded synthetic agent.",
+      "changeIds": [
+        "concurrency-01"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/900-agent-override.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "f08e3edff230a178be85f4aee8434f9bdaa57db5de614063c140ca8f4237d10a",
+          "width": 578,
+          "height": 76
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/900-agent-override.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "b69661fc77388bd4f5f9c2cbebf1119c915e36b28e0696bba2aefc7d55e4a026",
+          "width": 578,
+          "height": 75
+        }
+      ],
+      "output": {
+        "sha256": "1eb70dc14c51c16b1f0798452d29e7cccc9cd72bde727e4771c451105794742b",
+        "width": 1720,
+        "height": 398
+      }
+    },
+    {
+      "number": 4,
+      "title": "Agent override",
+      "frame": "04-agent-override-1280.png",
+      "viewportCssWidth": 1280,
+      "defect": "The “On” and “Off” explanation makes the scope and fallback harder to scan.",
+      "revision": "The hint states that the agent waits across all conversations and identifies the global setting used when the override is off.",
+      "note": "Lia is a seeded synthetic agent.",
+      "changeIds": [
+        "concurrency-01"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/1280-agent-override.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "92704026bda2b3d5eccacf543ee76d3d1df44526040180c299fbdb26c0003ad2",
+          "width": 758,
+          "height": 58
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/1280-agent-override.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "bdb9f7d5f432a4f65fee1aee62e68ee08836154d8e2102d44ab26ef0e257d3f5",
+          "width": 758,
+          "height": 75
+        }
+      ],
+      "output": {
+        "sha256": "8fa1df86c02427952989805558aedde64521d6e76c5bbd48396ca37d6ee6edc9",
+        "width": 1720,
+        "height": 397
+      }
+    },
+    {
+      "number": 5,
+      "title": "Server and computer settings",
+      "frame": "05-server-scope-900.png",
+      "viewportCssWidth": 900,
+      "defect": "The server context and location of computer-specific controls are described at length.",
+      "revision": "The banner names the server and directs local settings and agent lending to each computer’s Tucano app.",
+      "note": "The host is a synthetic loopback address.",
+      "changeIds": [
+        "concurrency-06",
+        "concurrency-07"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/900-server-banner.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "da2e78acbf87cbed46e59500a45b949d822ab46ca8a20b693f05bd0463c0e37e",
+          "width": 580,
+          "height": 79
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/900-server-banner.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "2a026e4b0372a535bc2007c2603a62c12484355373dfdbc9909b962ea403d0ef",
+          "width": 580,
+          "height": 60
+        }
+      ],
+      "output": {
+        "sha256": "9e4af4e056a0d31bf5dfacd2f986c0b4fb4e819c7a34d1bd5c74cb6932fb3377",
+        "width": 1720,
+        "height": 401
+      }
+    },
+    {
+      "number": 6,
+      "title": "Server and computer settings",
+      "frame": "06-server-scope-1280.png",
+      "viewportCssWidth": 1280,
+      "defect": "The server context and location of computer-specific controls are described at length.",
+      "revision": "The banner names the server and directs local settings and agent lending to each computer’s Tucano app.",
+      "note": "The host is a synthetic loopback address.",
+      "changeIds": [
+        "concurrency-06",
+        "concurrency-07"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/concurrency-before/1280-server-banner.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "58389ac5566114ef8e1148bed2b1cd07b5ac38393973950db503336938821e69",
+          "width": 720,
+          "height": 60
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/followup-after/1280-server-banner.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "e9ea512ed3d74c5064c97651e7a8d70ec1e2e3a0bedcd723567743348495c217",
+          "width": 720,
+          "height": 42
+        }
+      ],
+      "output": {
+        "sha256": "b34283dc56acfff3ed70f9f8523de59f2fb42a06c0e2cc5d323734c25d8c900b",
+        "width": 1720,
+        "height": 386
+      }
+    },
+    {
+      "number": 7,
+      "title": "Computer settings button",
+      "frame": "07-computer-settings-button-900.png",
+      "viewportCssWidth": 900,
+      "defect": "“Open on my computer” leaves the destination implicit.",
+      "revision": "“Open computer settings” names the destination beside the server-scope explanation.",
+      "note": "A synthetic desktop bridge exposes the actual conditional button; its action was not invoked.",
+      "changeIds": [
+        "concurrency-06",
+        "concurrency-07",
+        "concurrency-08"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/server-button-before/900-server-button.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "0914b066c7233c1ebea4f123fcfd643dbc0e5bca304d2e39a932c08e8ad860a9",
+          "width": 580,
+          "height": 98
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/server-button-final/900-server-button.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "c890e963b7650b4ee60da35ef876683e1145a82dae2ee053fded0a7a8e11bb05",
+          "width": 580,
+          "height": 60
+        }
+      ],
+      "output": {
+        "sha256": "14d6c40fb7edc7d81b19922576f398bcd71ee72c32ee8badbd7c1b323dfd98d4",
+        "width": 1720,
+        "height": 420
+      }
+    },
+    {
+      "number": 8,
+      "title": "Computer settings button",
+      "frame": "08-computer-settings-button-1280.png",
+      "viewportCssWidth": 1280,
+      "defect": "“Open on my computer” leaves the destination implicit.",
+      "revision": "“Open computer settings” names the destination beside the server-scope explanation.",
+      "note": "A synthetic desktop bridge exposes the actual conditional button; its action was not invoked.",
+      "changeIds": [
+        "concurrency-06",
+        "concurrency-07",
+        "concurrency-08"
+      ],
+      "existing": [
+        {
+          "sourceImage": "captures/server-button-before/1280-server-button.png",
+          "sourceSHA": "67c0494d025a70553e5474a6e99e013b65e13bf0",
+          "sha256": "ab847ae4da38e2de15d56fe56fc169786e9c37f1f9f70f7bac07327c1e7912a1",
+          "width": 720,
+          "height": 79
+        }
+      ],
+      "proposed": [
+        {
+          "sourceImage": "captures/server-button-final/1280-server-button.png",
+          "sourceSHA": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+          "sha256": "ef1092b6a9293c578d751da060a495ec4d5882829ae055fbe00384125c0d8b25",
+          "width": 720,
+          "height": 60
+        }
+      ],
+      "output": {
+        "sha256": "65c6f3b992abc6159609f18147bf9215c084366c9d9e2fea183e8ae385a87df9",
+        "width": 1720,
+        "height": 401
+      }
+    }
+  ]
+}

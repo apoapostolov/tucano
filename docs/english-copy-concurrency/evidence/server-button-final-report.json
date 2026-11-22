@@ -1,0 +1,135 @@
+{
+  "source": "7c4f2e040a87d3923062af2c97767c5036c67e00",
+  "dirty": false,
+  "baseline": false,
+  "browser": "headless Microsoft Edge",
+  "deviceScaleFactor": 1,
+  "fixture": "Seeded workspace, fake engines and a synthetic openLending function. The actual conditional button rendered; its action was not invoked.",
+  "notes": [
+    "Synthetic loopback port numbers are redacted in measurement text. Character counts describe the original rendered text.",
+    "Baseline fit failures are recorded, not treated as passing candidate results."
+  ],
+  "captures": [
+    {
+      "name": "server-button",
+      "width": 1280,
+      "file": "captures/server-button-final/1280-server-button.png",
+      "detail": "The actual server banner and conditional button, exposed by a synthetic desktop bridge function."
+    },
+    {
+      "name": "server-button",
+      "width": 900,
+      "file": "captures/server-button-final/900-server-button.png",
+      "detail": "The actual server banner and conditional button, exposed by a synthetic desktop bridge function."
+    }
+  ],
+  "measurements": [
+    {
+      "name": "server-button",
+      "width": 1280,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Settings for server 127.0.0.1:<loopback-port>. Manage local settings and agent lending in each computer’s Tucano app.",
+              "characters": 107,
+              "lines": 2,
+              "visible": true,
+              "width": 490.046875,
+              "height": 37.6875,
+              "contentWidth": 490,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".settings-where button",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Open computer settings",
+              "characters": 22,
+              "lines": 1,
+              "visible": true,
+              "width": 165.953125,
+              "height": 28,
+              "contentWidth": 144,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    },
+    {
+      "name": "server-button",
+      "width": 900,
+      "viewport": {
+        "width": 900,
+        "height": 900
+      },
+      "passed": true,
+      "results": [
+        {
+          "selector": ".settings-where .grow",
+          "maxLines": 2,
+          "rows": [
+            {
+              "text": "Settings for server 127.0.0.1:<loopback-port>. Manage local settings and agent lending in each computer’s Tucano app.",
+              "characters": 107,
+              "lines": 2,
+              "visible": true,
+              "width": 350.046875,
+              "height": 37.6875,
+              "contentWidth": 350,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "13px",
+              "lineHeight": "18.85px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        },
+        {
+          "selector": ".settings-where button",
+          "maxLines": 1,
+          "rows": [
+            {
+              "text": "Open computer settings",
+              "characters": 22,
+              "lines": 1,
+              "visible": true,
+              "width": 165.953125,
+              "height": 28,
+              "contentWidth": 144,
+              "font": "\"Inter Variable\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif",
+              "fontSize": "12.5px",
+              "lineHeight": "18.125px",
+              "overflowX": false,
+              "overflowY": false
+            }
+          ]
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "errors": [],
+  "captureCompleted": true,
+  "layoutPassed": true
+}
