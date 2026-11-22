@@ -71,7 +71,7 @@ export function AgentModelsPanel(): ReactNode {
             keep
             onChange={(e) => setEffort(e)}
           />
-          <p className="hint">{L('Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual. Mais esforço pensa mais e gasta mais do plano. Sem modelo escolhido, só o esforço muda e cada agente fica com o modelo dele.', 'When switching harnesses, the agent uses its default login. The reserve model stays the same. More effort thinks longer and uses more of your plan. With no model picked, only the level changes and each agent keeps its own model.')}</p>
+          <p className="hint">{L('Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual. Mais esforço pensa mais e gasta mais do plano. Sem modelo escolhido, só o esforço muda e cada agente fica com o modelo dele.', "Changing runtimes uses the agent’s default login; fallback stays. More effort takes longer and uses more of your plan. No model selected: only effort changes.")}</p>
           <div className="row">
             <button type="button" className="btn btn--primary btn--sm" disabled={!targets.length || (!modelInfo(model)?.id && !effort)} onClick={() => void save(targets.map((a) => a.id), model, effort)}>
               {L(`Aplicar aos selecionados (${targets.length})`, `Apply to selected (${targets.length})`)}

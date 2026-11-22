@@ -12,9 +12,9 @@ import { Icon, Toggle, type IconName } from './ui'
 // What each one promises to fix, in one line, and the glyph that stands for it. The store's own logo would
 // be a second download for a picture, and it is not there before the extension is.
 const LOOK: Record<AddOn, { icon: IconName; fixes: () => string }> = {
-  ads: { icon: 'shield', fixes: () => L('Tira os anúncios da página: o que sobra é a página.', 'Takes the ads off the page: what is left is the page itself.') },
-  cookies: { icon: 'hide', fixes: () => L('Fecha o aviso de cookies sozinho, e o banner sai da frente do artigo.', 'Closes the cookie notice by itself, and the banner leaves the article alone.') },
-  consent: { icon: 'ask', fixes: () => L('Responde o diálogo de consentimento, inclusive as listas de “interesse legítimo”.', 'Answers the consent dialog, including the “legitimate interest” lists.') }
+  ads: { icon: 'shield', fixes: () => L('Tira os anúncios da página: o que sobra é a página.', "Removes ads from pages.") },
+  cookies: { icon: 'hide', fixes: () => L('Fecha o aviso de cookies sozinho, e o banner sai da frente do artigo.', "Closes cookie notices automatically.") },
+  consent: { icon: 'ask', fixes: () => L('Responde o diálogo de consentimento, inclusive as listas de “interesse legítimo”.', "Handles consent dialogs, including “legitimate interest” lists.") }
 }
 
 export function AgentAddOns(): ReactNode {
@@ -28,7 +28,7 @@ export function AgentAddOns(): ReactNode {
         <p className="muted small">
           {L('Baixando o Chrome for Testing', 'Downloading Chrome for Testing')}
           {browser.progress?.total ? ` · ${Math.min(99, Math.round((browser.progress.received / browser.progress.total) * 100))}%` : '…'}{' '}
-          {L('— o navegador continua como está até terminar.', '— the browser works as it is until it lands.')}
+          {L('— o navegador continua como está até terminar.', "— your current browser stays available during the download.")}
         </p>
       )}
       {browser?.state === 'failed' && (
@@ -46,10 +46,10 @@ export function AgentAddOns(): ReactNode {
             <div className="grow">
               <strong>{extension.name}</strong>
               <p className="muted small">{look.fixes()}</p>
-              {step?.state === 'preparing' && <p className="muted small">{L('Baixando — entra no navegador da próxima sessão.', 'Downloading — it joins the next session’s browser.')}</p>}
+              {step?.state === 'preparing' && <p className="muted small">{L('Baixando — entra no navegador da próxima sessão.', "Downloading for the next browser session.")}</p>}
               {step?.state === 'failed' && (
                 <p className="field__error">
-                  {L('Não baixou: ', 'It didn’t download: ')}
+                  {L('Não baixou: ', "Download failed: ")}
                   {step.error ?? ''}
                 </p>
               )}
