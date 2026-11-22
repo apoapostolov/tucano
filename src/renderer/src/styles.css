@@ -18334,12 +18334,11 @@ button.agent-card__now:hover {
   user-select: text;
 }
 
-/* The one line naming it, as the block was read in 0.2.36 — but the word alone: no chevron, nothing
-   to fold, and no background of its own. Small, dim and in full caps, and its left edge is the block's
-   text (3px of margin, the 2px rail, the 14px of padding the reasoning sits in), so the name and the
-   reasoning under it start on the same line. */
+/* The one line naming it, small, dim and in full caps, with no background of its own. The head sits
+   inside `.thought`, so the wrapper's 3px margin, 2px rail and 8px padding already put it on the
+   reasoning's own line: a left margin here would step it in past the text it names. */
 .thought__head {
-  margin: 7px 0 0 19px;
+  margin: 7px 0 0;
   color: var(--text-3);
   font-size: 10px;
   font-weight: 600;
