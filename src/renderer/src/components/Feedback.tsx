@@ -55,7 +55,6 @@ function markSent(id: string): void {
 export function FeedbackDraftCard({ message }: { message: Message }): ReactNode {
   const draft = message.run?.feedbackDraft
   const [sent, setSent] = useState(() => sentFrom().includes(message.id))
-  const [open, setOpen] = useState(false)
   useEffect(() => {
     const seen = (): void => setSent(sentFrom().includes(message.id))
     window.addEventListener(SENT_KEY, seen)
@@ -70,11 +69,11 @@ export function FeedbackDraftCard({ message }: { message: Message }): ReactNode 
           <Icon name="ask" size={18} />
         </span>
         <div className="grow">
-          <strong>{L('Feedback pra quem faz o Tucano', 'Feedback for the people who make Tucano')}</strong>
+          <strong>{L('Feedback pra quem faz o Tucano', 'Feedback draft')}</strong>
           <span className="muted small">{kind.label()}</span>
         </div>
       </div>
-      <p className={`draft-card__instructions ${open ? 'is-open' : ''}`} onClick={() => setOpen(!open)} title={open ? undefined : L('Ver tudo', 'Show all')}>
+      <p className="draft-card__instructions is-open" style={{ cursor: 'auto' }}>
         {draft.message}
       </p>
       <div className="draft-card__actions">

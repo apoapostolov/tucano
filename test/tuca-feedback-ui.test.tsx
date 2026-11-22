@@ -4,6 +4,7 @@ import { parseHTML } from 'linkedom'
 import { act, type ReactNode } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { Message } from '../src/shared/types'
+import { setLang } from '../src/shared/lang'
 const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
 const store = new Map<string, string>()
 const localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) }
@@ -32,6 +33,7 @@ const html = (): string => document.getElementById('root')!.innerHTML
 const button = (label: string): HTMLElement => [...document.querySelectorAll('button')].find((b) => b.textContent === label) as unknown as HTMLElement
 
 beforeEach(() => {
+  setLang('pt')
   store.clear()
   opened.length = 0
   calls.length = 0
@@ -44,6 +46,8 @@ it('shows what he wrote, and opens the feedback window with it', async () => {
   expect(html()).toContain('Feedback pra quem faz o Tucano')
   expect(html()).toContain('Uma ideia')
   expect(html()).toContain('Um botão pra pausar uma rotina só por hoje.')
+  expect(document.querySelector('.draft-card__instructions')?.classList.contains('is-open')).toBe(true)
+  expect(document.querySelector('.draft-card__instructions')?.hasAttribute('title')).toBe(false)
   await act(async () => button('Revisar e enviar').click())
   expect(opened).toEqual([{ kind: 'feedback', draft: { kind: 'idea', message: 'Um botão pra pausar uma rotina só por hoje.' }, from: 'm1' }])
 })
@@ -57,4 +61,17 @@ it('opens the window filled in, sends what the person kept, and the card then sa
   await act(async () => root.render(<FeedbackDraftCard message={reply} />))
   expect(html()).toContain('enviado')
   expect(html()).not.toContain('Revisar e enviar')
+})
+
+it('shows the complete draft with a short English heading', async () => {
+  setLang('en')
+  const message = 'First line.\nSecond line.\nThird line.\nFourth line.\nFinal privacy detail.'
+  const longReply = { ...reply, run: { ...reply.run!, feedbackDraft: { kind: 'idea' as const, message } } }
+  await act(async () => root.render(<FeedbackDraftCard message={longReply} />))
+  expect(document.querySelector('strong')?.textContent).toBe('Feedback draft')
+  const draft = document.querySelector('.draft-card__instructions')!
+  expect(draft.textContent).toBe(message)
+  expect(draft.classList.contains('is-open')).toBe(true)
+  expect(draft.hasAttribute('title')).toBe(false)
+  expect(calls).toEqual([])
 })
