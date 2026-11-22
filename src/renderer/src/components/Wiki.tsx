@@ -4,22 +4,18 @@
 // the sources, what needs care, and the pages by kind) and, beside it, the map of the pages,
 // a page with what links to it, the sources, the review; the editor takes the whole screen.
 import { L, locale } from '../../../shared/lang'
-import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Markdown from 'react-markdown'
 import { safeUrl } from '../links'
 import remarkGfm from 'remark-gfm'
 import { call } from '../rpc'
 import { agentById, amAdmin, navigate, openExternal, personName, setTab, updateSettings, useStore, type State, type View, type WikiChange, type WikiFinding, type WikiGitStatus, type WikiGitTest, type WikiHit, type WikiImport, type WikiPage, type WikiPageInfo, type WikiReview, type WikiSource, type WikiVersion } from '../store'
-import { ModelSelect, Sheet, Toggle } from './Pages'
-import { HubTools } from './hub-context'
+import { Sheet, Toggle } from './Pages'
 import { AdminOnly } from './People'
 import { confirmDialog } from './Dialogs'
 import { AgentAvatar, Icon, type IconName } from './ui'
 import { screenOf } from '../../../shared/screens'
-import { isTeam, wikiAccess } from '../../../shared/types'
-import { Select } from './Select'
-import { SectionStrip } from './SectionStrip'
 
 const DEFAULT_KINDS = (): string[] => [L('Pessoa', 'Person'), L('Projeto', 'Project'), L('Assunto', 'Topic'), L('Decisão', 'Decision')]
 const CODE = /```[\s\S]*?```|`[^`\n]*`/g
@@ -657,7 +653,7 @@ function WikiCanvas({ graph, selected, pending, only, panel }: { graph: Graph; s
         <button title={L('Afastar', 'Zoom out')} onClick={() => zoom(1 / 1.3)}>
           −
         </button>
-        <button title={L('Ver tudo', 'Fit all')} onClick={() => fly(fit(), 500)}>
+        <button title={L('Ver tudo', 'Show all')} onClick={() => fly(fit(), 500)}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
             <path d="M1.5 4.5v-3h3M8.5 1.5h3v3M11.5 8.5v3h-3M4.5 11.5h-3v-3" />
           </svg>
@@ -696,6 +692,9 @@ function WikiShell({ view }: { view: WikiViewState }): ReactNode {
   useEffect(() => void Promise.all([call('wikiChanges', { state: 'pending' }), call('wikiChanges', { state: 'conflict' })]).then(([a, b]) => setPending([...a, ...b].filter((c) => c.by !== 'review'))), [rev])
   useEffect(() => void call('wikiSources').then((l) => setReading(l.filter((s) => s.status === 'reading'))), [rev])
   const panel = !!(view.title || view.source || view.tab)
+  // The panel over the whole map, to read a long page; it stays wide from page to page until it's shrunk or closed.
+  const [wide, setWide] = useState(false)
+  useEffect(() => void (!panel && setWide(false)), [panel])
   const close = (): void => navigate({ kind: 'wiki' })
   const [imported, setImported] = useState<WikiImport | { error: string } | 'busy' | null>(null)
   const startImport = (): void => {
@@ -734,6 +733,7 @@ function WikiShell({ view }: { view: WikiViewState }): ReactNode {
       if (e.key === '/') setSearching(true)
       else if (e.key.toLowerCase() === 'n') navigate({ kind: 'wiki', edit: true, title: '' })
       else if (e.key.toLowerCase() === 'e' && view.title) navigate({ kind: 'wiki', title: view.title, edit: true })
+      else if (e.key === 'Escape' && wide) setWide(false)
       else if (e.key === 'Escape' && panel) close()
       else return
       e.preventDefault()
@@ -768,66 +768,46 @@ function WikiShell({ view }: { view: WikiViewState }): ReactNode {
   const curating = admin ? (view.tab === 'pending' ? <WikiPending /> : view.tab === 'review' ? <WikiReviewPane /> : null) : view.tab === 'pending' || view.tab === 'review' ? <AdminOnly>{L('Só um admin decide o que o curador muda e revisa a wiki.', "Only an admin decides the curator's changes and reviews the wiki.")}</AdminOnly> : null
   const content = view.source ? <WikiSourceView key={view.source} id={view.source} /> : view.title ? <WikiPageView key={view.title} title={view.title} data={data} /> : view.tab === 'sources' ? <WikiSources errors={dropError} /> : curating
 
-  // The line under the Wiki tab: how much there is. It rides with the controls, on the right of the
-  // hub's tab row when the page is inside one.
-  const lede =
-    count > 0
-      ? [count === 1 ? L('1 página', '1 page') : L(`${count} páginas`, `${count} pages`), links === 1 ? L('1 ligação', '1 link') : L(`${links} ligações`, `${links} links`)].join(' · ')
-      : L('O que você e o seu time sabem, em páginas ligadas.', 'What you and your team know, as linked pages.')
-  // The hub's tab row hands the page an element to draw its controls in; standalone, the page draws
-  // them in its own head.
-  const tools = useContext(HubTools)
-
-  // The controls this page owns, drawn either in its own head (standalone) or in the hub's tab
-  // row (inside a hub), which is the same node in one of two places.
-  const controls = (
-    <>
-      {kinds.length > 1 && (
-        <div className="wk-kinds" role="group" aria-label={L('Mostrar só um tipo', 'Show only one kind')}>
-          {kinds.slice(0, 6).map(([k, n]) => (
-            <button key={k} className={only === k ? 'is-on' : only ? 'is-dim' : ''} style={{ ['--k' as string]: kindColor(k) }} title={only === k ? L('Mostrar todas', 'Show all') : `${k} · ${n}`} onClick={() => setOnly(only === k ? null : k)}>
-              <i />
-              {k}
-            </button>
-          ))}
-        </div>
-      )}
-      <button className="wk-search-btn" title={L(`Buscar (${SEARCH_KEY})`, `Search (${SEARCH_KEY})`)} onClick={() => setSearching(true)}>
-        <Icon name="search" size={14} />
-        <kbd>{SEARCH_KEY}</kbd>
-      </button>
-      {admin && (
-        <button className="btn btn--ghost btn--sm wk-icon-btn" title={L('Ajustes da wiki', 'Wiki settings')} onClick={() => setSettings(true)}>
-          <Icon name="gear" size={15} />
-        </button>
-      )}
-      {data?.git?.readOnly && (
-        <span className="wk-ro" title={L('A chave do Tucano só lê o repositório git: a wiki mostra o que está lá e não aceita escrita.', "The repository key is read-only. Wiki editing is disabled.")}>
-          <Icon name="lock" size={12} /> {L('Só leitura', 'Read-only')}
-        </span>
-      )}
-      <button className="btn btn--primary btn--sm" disabled={!!data?.git?.readOnly} title={data?.git?.readOnly ? L('A wiki está só leitura', 'The wiki is read-only') : L('Nova página (N)', 'New page (N)')} onClick={() => navigate({ kind: 'wiki', edit: true, title: '' })}>
-        <Icon name="plus" size={14} /> {L('Nova página', 'New page')}
-      </button>
-    </>
-  )
-
   return (
-    <>
-      {tools &&
-        createPortal(
-          <>
-            <span className="hub__tools-note">{lede}</span>
-            {controls}
-          </>,
-          tools
-        )}
-      <Sheet
+    <Sheet
       fill
-      headless={!!tools}
       title={L('Wiki', 'Wiki')}
-      lede={lede}
-      actions={tools ? undefined : controls}
+      lede={
+        count > 0
+          ? [count === 1 ? L('1 página', '1 page') : L(`${count} páginas`, `${count} pages`), links === 1 ? L('1 ligação', '1 link') : L(`${links} ligações`, `${links} links`)].join(' · ')
+          : L('O que você e o seu time sabem, em páginas ligadas.', 'What you and your team know, as linked pages.')
+      }
+      actions={
+        <>
+          {kinds.length > 1 && (
+            <div className="wk-kinds" role="group" aria-label={L('Mostrar só um tipo', 'Show only one kind')}>
+              {kinds.slice(0, 6).map(([k, n]) => (
+                <button key={k} className={only === k ? 'is-on' : only ? 'is-dim' : ''} style={{ ['--k' as string]: kindColor(k) }} title={only === k ? L('Mostrar todas', 'Show all') : `${k} · ${n}`} onClick={() => setOnly(only === k ? null : k)}>
+                  <i />
+                  {k}
+                </button>
+              ))}
+            </div>
+          )}
+          <button className="wk-search-btn" title={L(`Buscar (${SEARCH_KEY})`, `Search (${SEARCH_KEY})`)} onClick={() => setSearching(true)}>
+            <Icon name="search" size={14} />
+            <kbd>{SEARCH_KEY}</kbd>
+          </button>
+          {admin && (
+            <button className="btn btn--ghost btn--sm wk-icon-btn" title={L('Ajustes da wiki', 'Wiki settings')} onClick={() => setSettings(true)}>
+              <Icon name="gear" size={15} />
+            </button>
+          )}
+          {data?.git?.readOnly && (
+            <span className="wk-ro" title={L('A chave do Tucano só lê o repositório git: a wiki mostra o que está lá e não aceita escrita.', "The repository key is read-only. Wiki editing is disabled.")}>
+              <Icon name="lock" size={12} /> {L('Só leitura', 'Read-only')}
+            </span>
+          )}
+          <button className="btn btn--primary btn--sm" disabled={!!data?.git?.readOnly} title={data?.git?.readOnly ? L('A wiki está só leitura', 'The wiki is read-only') : L('Nova página (N)', 'New page (N)')} onClick={() => navigate({ kind: 'wiki', edit: true, title: '' })}>
+            <Icon name="plus" size={14} /> {L('Nova página', 'New page')}
+          </button>
+        </>
+      }
     >
       {admin && (pending.length > 0 || reading.length > 0 || (data?.findings ?? 0) > 0) && (
         <div className="cal-watch wk-watch">
@@ -862,10 +842,20 @@ function WikiShell({ view }: { view: WikiViewState }): ReactNode {
       <div className="wk-stage" {...drop}>
         {data && count === 0 && !panel ? <WikiEmpty onImport={startImport} /> : data && <WikiCanvas graph={data.graph} selected={view.title} pending={touched} only={only} panel={panel} />}
         {panel && content && (
-          <aside className="wk-panel" key={JSON.stringify([view.title, view.tab, view.source])}>
-            <button className="wk-panel__close" title={L('Fechar (Esc)', 'Close (Esc)')} onClick={close}>
-              <Icon name="x" size={15} />
-            </button>
+          <aside className={`wk-panel ${wide ? 'is-wide' : ''}`} key={JSON.stringify([view.title, view.tab, view.source])}>
+            <div className="wk-panel__tools">
+              <button
+                className="wk-panel__btn"
+                title={wide ? L('Voltar pro lado do mapa', 'Back beside the map') : L('Expandir', 'Expand')}
+                aria-pressed={wide}
+                onClick={() => setWide(!wide)}
+              >
+                <Icon name={wide ? 'shrink' : 'expand'} size={14} />
+              </button>
+              <button className="wk-panel__btn" title={L('Fechar (Esc)', 'Close (Esc)')} onClick={close}>
+                <Icon name="x" size={15} />
+              </button>
+            </div>
             {content}
           </aside>
         )}
@@ -900,8 +890,7 @@ function WikiShell({ view }: { view: WikiViewState }): ReactNode {
       {searching && <WikiSearch pages={data?.pages ?? []} onClose={() => setSearching(false)} />}
       {settings && <WikiSettingsDialog data={data} onClose={() => setSettings(false)} onImport={startImport} />}
       {imported && <ImportResult result={imported} onClose={() => setImported(null)} />}
-      </Sheet>
-    </>
+    </Sheet>
   )
 }
 
@@ -1100,20 +1089,10 @@ function WikiSearch({ pages, onClose }: { pages: WikiPageInfo[]; onClose: () => 
 
 // ---------- settings ----------
 
-// The wiki's settings groups, in the order they read: what the curator keeps, what the resolver
-// does, where the files live, and how to bring an existing vault in. The strip above them walks these.
-export const WIKI_SETTINGS_SECTIONS = (): { id: string; label: string }[] => [
-  { id: 'wiki-curator', label: L('O curador', "Curator") },
-  { id: 'wiki-resolver', label: L('O resolvedor', 'Resolver') },
-  { id: 'wiki-folder', label: L('A pasta', "Storage folder") },
-  { id: 'wiki-import', label: L('Trazer o que você já tem', "Import") }
-]
-
 function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null; onClose: () => void; onImport: () => void }): ReactNode {
   const s = useStore((st) => st.settings)
   const capture = s.wikiCapture !== false
   const edits = s.wikiEdits ?? 'approve'
-  const resolve = s.wikiResolve === true
   const [dir, setDir] = useState(data?.dir ?? '')
   const [error, setError] = useState('')
   const pick = (window.tucano as unknown as { pickFolder?: () => Promise<string | null> }).pickFolder
@@ -1133,9 +1112,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           </button>
         </header>
 
-        <SectionStrip sections={WIKI_SETTINGS_SECTIONS()} label={L('Seções dos ajustes da wiki', 'Wiki settings sections')} />
-
-        <section id="settings-wiki-curator" data-settings-section="wiki-curator" tabIndex={-1}>
+        <section>
           <h4>{L('O curador', "Curator")}</h4>
           <div className="wk-setting">
             <span>
@@ -1167,34 +1144,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           </div>
         </section>
 
-        <section id="settings-wiki-resolver" data-settings-section="wiki-resolver" tabIndex={-1}>
-          <h4>{L('O resolvedor', 'Resolver')}</h4>
-          <div className="wk-setting">
-            <span>
-              <b>{L('Resolver o que a revisão só aponta', 'Resolve review findings')}</b>
-              <small>{L('Um bot de dentro do app, sem conversa: no botão Resolver de um achado, ele lê as páginas inteiras com as fontes de onde vieram e propõe a mudança — ou faz a pergunta que só você pode responder. Nada muda sem você.', 'Review full pages and sources to suggest a fix or ask you a question. Changes require your approval.')}</small>
-            </span>
-            <Toggle on={resolve} onChange={(v) => updateSettings({ wikiResolve: v })} />
-          </div>
-          {resolve && (
-            <div className="wk-setting wk-setting--model">
-              <span>
-                <b>{L('O modelo dele', 'Resolver model')}</b>
-                <small>{L('Vazio: o modelo da memória, e depois o Haiku.', 'Default: memory model, then Haiku.')}</small>
-              </span>
-              <div className="wk-row">
-                <ModelSelect value={s.wikiResolveModel ?? ''} onChange={(v) => updateSettings({ wikiResolveModel: v })} />
-                {s.wikiResolveModel ? (
-                  <button className="btn btn--ghost btn--sm" onClick={() => updateSettings({ wikiResolveModel: '' })}>
-                    {L('Usar o da memória', 'Use memory model')}
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section id="settings-wiki-folder" data-settings-section="wiki-folder" tabIndex={-1}>
+        <section>
           <h4>{L('A pasta', "Storage folder")}</h4>
           <code className="wk-folder" title={dir}>
             <Icon name="folder" size={14} />
@@ -1236,7 +1186,7 @@ function WikiSettingsDialog({ data, onClose, onImport }: { data: WikiData | null
           <GitSync dir={dir} onDir={setDir} />
         </section>
 
-        <section id="settings-wiki-import" data-settings-section="wiki-import" tabIndex={-1}>
+        <section>
           <h4>{L('Trazer o que você já tem', "Import")}</h4>
           <div className="wk-setting">
             <span>
@@ -1538,7 +1488,7 @@ function OpView({ op }: { op: WikiChange['ops'][number] }): ReactNode {
         )}
         <div className={`wiki-diff__new${added.trim() ? '' : ' wiki-diff__new--none'}`}>
           {op.op !== 'create' && <span className="wiki-diff__tag">{L('Entra', "Added")}</span>}
-          {added.trim() ? <div className="md">{md(added)}</div> : <p className="muted">{L('Nada no lugar: o trecho só sai da página.', "This passage will be removed without replacement.")}</p>}
+          {added.trim() ? <div className="md">{md(added)}</div> : <p className="muted">{L('Nada no lugar: o trecho só sai da página.', "This passage will be removed from the page without a replacement.")}</p>}
         </div>
       </div>
       {long && (
@@ -1675,93 +1625,17 @@ const FINDING_LABEL: Record<WikiFinding['kind'], () => string> = {
   broken: () => L('Página por escrever', "Missing page"),
   missing: () => L('Sem página', "Missing page"),
   orphan: () => L('Ninguém liga pra elas', "Unlinked pages"),
-  log: () => L('Parece um registro', "Excessive history"),
+  log: () => L('Parece um registro', "Reads like a log"),
   git: () => L('Repositório git', 'Git repository')
 }
 const FINDING_TONE: Record<WikiFinding['kind'], 'danger' | 'warn' | 'calm'> = { contradiction: 'danger', stale: 'warn', duplicate: 'warn', link: 'calm', broken: 'calm', missing: 'calm', orphan: 'calm', log: 'warn', git: 'warn' }
 const FINDING_ORDER: WikiFinding['kind'][] = ['git', 'contradiction', 'stale', 'duplicate', 'log', 'link', 'broken', 'missing', 'orphan']
 
-// The last agent a finding was handed to, so the next one comes with it picked already.
-let lastAsked: string | undefined
-
-// A finding nobody has written yet: a page the wiki links to and doesn't have, or pages nothing
-// links to. Either goes to an agent, picked here, which gets one message with what it needs; the
-// writing is the agent's own tool, so only the ones with wiki write access are offered.
-export function HandOff({ finding: f }: { finding: WikiFinding }): ReactNode {
-  const agents = useStore((s) => s.agents)
-  const [pick, setPick] = useState<string | null>(lastAsked ?? null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [sent, setSent] = useState(false)
-  const writers = agents.filter((a) => isTeam(a) && wikiAccess(a) === 'read_write')
-  const chosen = writers.find((a) => a.id === pick) ?? writers[0]
-  if (!writers.length)
-    return (
-      <span className="muted small">
-        {L('Nenhum agente escreve na wiki ainda: escolha "Lê e escreve" em Ferramentas nas configurações de um.', 'No agent writes on the wiki yet: choose "Read and write" under Tools in one of their settings.')}
-      </span>
-    )
-  const links = f.kind === 'orphan'
-  const ask = (): void => {
-    if (!chosen) return
-    setBusy(true)
-    setError('')
-    setSent(false)
-    lastAsked = chosen.id
-    void call('wikiAsk', { id: f.id, agentId: chosen.id }).then(
-      () => {
-        setBusy(false)
-        setSent(true)
-      },
-      (e: unknown) => {
-        setBusy(false)
-        setError(e instanceof Error ? e.message : String(e))
-      }
-    )
-  }
-  return (
-    <>
-      <Select
-        className="wk-handoff__agent"
-        aria-label={L('Agente', 'Agent')}
-        value={chosen?.id ?? null}
-        options={writers.map((a) => ({ value: a.id, label: `@${a.handle}`, hint: a.name }))}
-        showHint
-        onChange={(v) => {
-          if (!v) return
-          lastAsked = v
-          setPick(v)
-        }}
-      />
-      <button className={`btn btn--primary btn--sm ${busy ? 'is-busy' : ''}`} disabled={busy || !chosen} onClick={ask}>
-        {busy ? <span className="wk-spin" /> : <Icon name={links ? 'thread' : 'edit'} size={13} />} {links ? L('Ligar as páginas', 'Link the pages') : L('Escrever a página', 'Write the page')}
-      </button>
-      {error && <span className="field__error">{error}</span>}
-      {sent && <span className="muted small">{L('Pedido enviado. Você continua aqui na wiki.', 'Request sent. You can stay here in the wiki.')}</span>}
-    </>
-  )
-}
-
-export function WikiReviewPane(): ReactNode {
+function WikiReviewPane(): ReactNode {
   const rev = useStore((s) => s.wikiRev)
-  const resolveOn = useStore((st) => st.settings.wikiResolve) === true
   const [r, setR] = useState<WikiReview | null>(null)
-  const [busy, setBusy] = useState('') // the finding the resolver is reading now
-  const [said, setSaid] = useState<{ id: string; text: string } | null>(null) // the resolver's answer, under its finding
   useEffect(() => void call('wikiReview').then(setR), [rev])
   if (!r) return null
-  // The resolver reads the whole pages, which takes a minute: the one clicked says so, the rest wait.
-  const resolve = (id: string): void => {
-    setBusy(id)
-    setSaid(null)
-    void call('wikiResolveFinding', { id })
-      .then((a) => {
-        if (a.gone) setSaid({ id, text: L('Essa coisa mudou com a última revisão: veja a lista de novo.', 'That one moved on with the last review: look at the list again.') })
-        else if (a.note) setSaid({ id, text: a.note })
-      })
-      .catch((e: Error) => setSaid({ id, text: e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') }))
-      .finally(() => setBusy(''))
-  }
   const sorted = [...r.findings].sort((a, b) => FINDING_ORDER.indexOf(a.kind) - FINDING_ORDER.indexOf(b.kind))
   const md = (t: string): ReactNode => (
     <Markdown urlTransform={safeUrl} components={{ ...mdLinks(), p: (p) => <span>{p.children}</span> }}>{wikiLinks(t)}</Markdown>
@@ -1791,7 +1665,7 @@ export function WikiReviewPane(): ReactNode {
               ['danger', L('Não batem', "Conflicting facts"), L('Duas páginas dizendo coisas diferentes sobre o mesmo valor, data ou prazo.', "Pages disagree about an amount, date, or deadline.")],
               ['warn', L('Desatualizada', 'Out of date'), L('"Aguardando resposta" numa página, "contrato assinado" em outra.', '"Waiting for an answer" on one page, "contract signed" on another.')],
               ['warn', L('Repetida', 'Duplicate'), L('Duas páginas sobre a mesma pessoa ou o mesmo projeto. Ela junta, sem perder nada.', "Merge duplicate pages about the same person or project, preserving their content.")],
-              ['warn', L('Parece um registro', "Excessive history"), L('Um histórico que virou diário do que foi feito. Ela resume no que vale hoje.', "Condense activity logs into the facts that still apply.")],
+              ['warn', L('Parece um registro', "Reads like a log"), L('Um histórico que virou diário do que foi feito. Ela resume no que vale hoje.', "Condense activity logs into the facts that still apply.")],
               ['calm', L('Solta', "Unresolved links"), L('Links pra páginas que não existem, nomes sem página, páginas que ninguém cita.', "Missing pages, unresolved names, and unlinked pages.")]
             ] as const
           ).map(([tone, t, d]) => (
@@ -1808,7 +1682,7 @@ export function WikiReviewPane(): ReactNode {
       {r.at && !r.running && sorted.length === 0 && (
         <div className="wk-calm">
           <Icon name="check" size={18} />
-          <span>{L('Tudo em ordem. Nada pra cuidar agora.', "No open findings.")}</span>
+          <span>{L('Tudo em ordem. Nada pra cuidar agora.', "Nothing needs attention.")}</span>
         </div>
       )}
       {sorted.map((f) => (
@@ -1821,38 +1695,15 @@ export function WikiReviewPane(): ReactNode {
             <ChangeCard change={f.change} bare />
           ) : (
             <div className="wk-finding__actions">
-              {(f.kind === 'broken' || f.kind === 'missing' || f.kind === 'orphan') && <HandOff finding={f} />}
               {f.name && (f.kind === 'broken' || f.kind === 'missing') && (
-                <button className="btn btn--ghost btn--sm" onClick={() => navigate({ kind: 'wiki', title: f.name!, edit: true })}>
-                  <Icon name="edit" size={13} /> {L('Escrever eu mesmo', 'Write it myself')}
-                </button>
-              )}
-              {f.kind !== 'git' && resolveOn && (
-                <button className={`btn btn--sm ${busy === f.id ? 'is-busy' : ''}`} disabled={!!busy} title={L('Lê as páginas inteiras, com as fontes, e propõe a mudança — ou pergunta.', 'Reads the whole pages, with the sources, and proposes the change — or asks.')} onClick={() => resolve(f.id)}>
-                  {busy === f.id ? <span className="wk-spin" /> : <Icon name="spark" size={13} />} {busy === f.id ? L('Resolvendo…', 'Resolving…') : L('Resolver', 'Resolve')}
+                <button className="btn btn--sm" onClick={() => navigate({ kind: 'wiki', title: f.name!, edit: true })}>
+                  <Icon name="edit" size={13} /> {L('Escrever a página', 'Write the page')}
                 </button>
               )}
               <button className="btn btn--ghost btn--sm" onClick={() => void call('wikiDismissFinding', { id: f.id })}>
                 {L('Deixar assim', "Dismiss")}
               </button>
             </div>
-          )}
-          {!f.change && !f.note && f.kind !== 'git' && !resolveOn && (
-            <small className="wk-finding__note">
-              {L('Pra ela resolver sozinha o que a revisão só aponta, ligue ', 'For it to settle on its own what the review can only point at, turn on ')}
-              <b>{L('O resolvedor', 'Resolver')}</b>
-              {L(' em Ajustes da wiki.', ' in Wiki settings.')}
-            </small>
-          )}
-          {f.note && (
-            <small className="wk-finding__note">
-              <Icon name="spark" size={12} /> {f.note}
-            </small>
-          )}
-          {said?.id === f.id && busy !== f.id && (
-            <small className="wk-finding__note">
-              <Icon name="spark" size={12} /> {said.text}
-            </small>
           )}
         </section>
       ))}

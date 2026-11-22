@@ -41,22 +41,19 @@ const ran = (r: Routine, n: number, status: 'done' | 'failed', error?: string): 
 }
 
 let root: Root
-// A Wednesday morning, fixed: a daily 09:00 routine has a time still to come inside the week the page
-// opening on, on any day this file runs. On a Sunday afternoon (this file's first red run, 22 Nov 2026)
-// the next 09:00 fell outside the week, so the block the test clicks was never drawn.
-const WEDNESDAY = new Date(2026, 10, 18, 8, 0, 0)
 beforeEach(() => {
-  // Only the clock: the timers the test waits on stay real, so a click still settles in 10 ms.
+  // The week is drawn around today, so the clock is fixed: on a Sunday after 09:00 every block of a
+  // 09:00 routine would already be in the past, and there would be no upcoming one to open.
   vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(WEDNESDAY)
+  vi.setSystemTime(new Date(2026, 10, 18, 8, 0))
   const base = getState()
   fake = { ...base, ready: true, agents: [lia], conversations: [{ id: 'd1', kind: 'dm', name: 'a1', members: ['a1'] }], routines: [vigia, briefing], messages: { d1: [...ran(vigia, 0, 'failed', 'O GitHub não respondeu.'), ...ran(briefing, 10, 'done')] }, connectors: [] } as State
   root = createRoot(document.getElementById('root')!)
 })
 afterEach(async () => {
   await act(async () => root.unmount())
-  vi.clearAllMocks()
   vi.useRealTimers()
+  vi.clearAllMocks()
 })
 
 const text = (): string => document.body.textContent ?? ''

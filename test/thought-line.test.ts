@@ -31,7 +31,10 @@ const markup = (working: boolean): string => `
               <li class="step step--done"><span class="step__label">Read the file</span></li>
               <li class="step step--done"><span class="step__label">Ran the tests</span></li>
             </ol>
-            <div class="thought${working ? ' is-working' : ''}" aria-label="What the agent is thinking">
+            <div class="thought is-open${working ? ' is-working' : ''}" aria-label="What the agent is thinking">
+              <button type="button" class="thought__head" aria-expanded="true">
+                <span class="thought__label">${working ? 'Thinking' : 'Thought'}</span>
+              </button>
               <div class="thought__text">Checking ${LONG} before the next step, because the word has to be whole and the line has to end.</div>
             </div>
           </div>

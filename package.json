@@ -1,6 +1,6 @@
 {
   "name": "tucanonext",
-  "version": "0.2.44",
+  "version": "0.2.45",
   "private": true,
   "description": "Tucano: your team of AI agents on your computer, with scopes, approvals and budgets.",
   "homepage": "https://tucano.sh",
@@ -21,7 +21,7 @@
     "dist:win": "npm run build && electron-builder --win nsis --x64 --publish never",
     "install-app": "npm run dist && sh scripts/install-app.sh",
     "release": "sh scripts/release.sh",
-    "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-placement.test.ts test/settings-navigation.test.tsx",
+    "check:settings": "node scripts/check-settings-placement.mjs && vitest run test/settings-structure.test.ts test/settings-navigation.test.tsx test/settings-placement.test.ts",
     "check:copy": "node scripts/check-english-copy.mjs --source",
     "check:copy:render": "node scripts/check-english-copy.mjs",
     "check:copy:approved": "node scripts/maintain-english-copy.mjs check",

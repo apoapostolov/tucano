@@ -2,12 +2,11 @@
 import type { Answer } from './questions'
 import type { HermesPreview } from './hermes-import'
 import type { Lang } from './lang'
-import type { NoticeFeed } from './notice'
-import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion, NodeInfo, NodeLogEntry, QuotasSnapshot } from './types'
+import type { BackupSummary, WikiChange, WikiGitSetup, WikiGitStatus, WikiGitTest, WikiHit, WikiPage, WikiImport, WikiPageInfo, WikiReview, WikiSource, WikiVersion, NodeInfo, NodeLogEntry } from './types'
 import type { AppProvider, CatalogCategory, CatalogView, OwnAppGuide } from './connector-catalog'
 import type { Connectable, HarnessConnect, HarnessKey, HarnessLevel, McpInfo } from './harness-keys'
-import type { Task, TaskInput, Os, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, PersonAccess, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, AgentApp, ReplyTarget, SendMode, LocalSkillFolder, AskEntry, InboxQuestion } from './types'
-import type { EnvPair, KeyRequestAnswer, LoginImport, VaultKey, VaultKeyInput, VaultLogin, VaultLoginInput, VaultUse } from './vault'
+import type { Task, TaskInput, Os, Account, AccountEngine, ActivityEntry, Delegation, Device, Inbox, Agent, BrowserInput, Approval, Artifact, ImageUpload, FileUpload, BrowserView, ComputerInfo, Connector, ConnectorInput, ConnectorTool, HarnessMcp, Conversation, EngineId, Invite, Memory, Person, PersonAccess, Role, MemoryScope, Message, Routine, RoutineInput, Report, Settings, SetupState, LoginKey, LoginScreen, LocalSkill, Skill, SkillInput, SkillVersion, Trigger, UsageReport, LocalInfo, VoiceModelId, VoiceStatus, ProposalsResult, AgentApp } from './types'
+import type { EnvPair, KeyRequestAnswer, VaultKey, VaultKeyInput, VaultLogin, VaultLoginInput, VaultUse } from './vault'
 
 export interface Snapshot {
   webhookPort?: number
@@ -45,34 +44,21 @@ export interface Api {
   artifactText(p: { id: string }): string | null // a text file an agent showed (Markdown, CSV, code), for the side panel
   revealArtifact(p: { id: string }): void // shows an artifact's file in the file manager; never opens it
   saveArtifact(p: { id: string }): void // saves a copy of an artifact's file where the person picks (the desktop's Save dialog)
-  sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: SendMode; steerTo?: string; reply?: ReplyTarget }): void // threadId: a reply in the thread that message started; mode: how it joins a reply already running there; steerTo: the running reply a steer is for, when more than one runs there; reply: to that message, or to the excerpt of it I selected
+  sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: 'steer'; steerTo?: string }): void // threadId: a reply in the thread that message started; mode 'steer': from a running reply's own pill, for that reply (steerTo), not a prompt
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
-  startQueued(p: { messageId: string }): void // a prompt waiting in the queue starts now, cap or no cap
-  reorderQueued(p: { conversationId: string; ids: string[] }): void // the order the queue runs in, as a person put it in the drawer
-  dropQueued(p: { messageId: string }): void // a prompt waiting in the queue is taken back: its row leaves the drawer and its message leaves the room
-  pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
-  resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
-  retryRun(p: { messageId: string }): void
-  followUpRun(p: { messageId: string; text: string }): void // a reply that isn't at work (ended, cut, paused) goes on from where it stopped, in the same row, with what was written
+  retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
-  deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the room with its thread: the ids that went
   continueJob(p: { messageId: string }): void // the note where a job stopped on its brakes: its work goes on (src/core/jobs.ts)
-  setAgentModels(p: { agentIds: string[]; modelId: string; effort?: string }): number // an empty modelId moves only the level, each agent keeping its own model
+  setAgentModels(p: { agentIds: string[]; modelId: string }): number
   saveAgent(p: { agent: Agent; channelIds: string[] }): void
   createChannel(p: { name: string; threads?: boolean }): string
   renameChannel(p: { id: string; name: string }): void // throws a message when the name is taken
   archiveAgent(p: { id: string; archived: boolean }): void // out of the sidebar, its replies stopped and routines off; back with archived: false
   deleteAgent(p: { id: string }): void // an archived agent, for good: its messages stay under its name, struck out; the rest goes
   setTopic(p: { id: string; topic: string }): void
-  setChannelMembers(p: { id: string; agentIds: string[]; mentionOnly?: string[]; listen?: string[] }): void // mentionOnly: those answering only when mentioned; listen: those Jev decides when to bring in
-  // A conversation's history, without deleting the conversation: the screen starts empty and the
-  // next turns stop reading what came before, while the rows and the costs stay.
-  clearConversation(p: { id: string }): void
+  setChannelMembers(p: { id: string; agentIds: string[] }): void
   deleteConversation(p: { id: string }): void // a channel or a DM, with its messages and routines
-  // Settings › History: a bot's history — what it wrote anywhere and every word of its own DMs — or
-  // the whole workspace's when there's no agentId; answers how many messages went.
-  wipeHistory(p: { agentId?: string }): number
   openDm(p: { agentId: string }): string
   tasks(): Task[] // my to-dos on the board (Quadro), in order
   saveTask(p: { task: TaskInput }): Task // new (no id) at the top, or changed; throws why not (an agent I don't see, an empty title)
@@ -119,7 +105,6 @@ export interface Api {
   removeConnector(p: { id: string }): void
   reconnectConnector(p: { id: string }): void
   setConnectorToken(p: { id: string; token: string }): Promise<void>
-  setConnectorIcon(p: { id: string; icon: string }): Promise<void> // the picture it wears; empty goes back
   connectorCatalog(): { categories: { id: CatalogCategory; name: string }[]; entries: CatalogView[]; added: string[] } // the store, as data (the phone); added: the entries already connected
   addCatalogConnector(p: { id: string; values?: Record<string, string> }): Promise<string> // a store entry, with what it asks, filled in by the core
   ownAppGuide(p: { provider: AppProvider }): Promise<{ guide: OwnAppGuide; clientId?: string }> // the steps to make one's own Google or Slack app (the phone)
@@ -150,7 +135,6 @@ export interface Api {
   removeVaultKey(p: { id: string }): Promise<void>
   setVaultKeyAgent(p: { id: string; agentId: string; on: boolean }): VaultKey // gives a key to an agent, or takes it back
   importVaultKeys(p: { lines: EnvPair[]; mine?: boolean; replace: string[] }): Promise<{ saved: number }> // an .env read on the page; replace: names to put over keys already saved
-  importVaultLogins(p: { logins: LoginImport[]; mine?: boolean }): Promise<{ saved: number }> // a browser's export read on the page; an `id` replaces that login
   vaultLogins(): VaultLogin[] // the Cofre's site logins this person sees: sites and usernames, never a password
   saveVaultLogin(p: { login: VaultLoginInput }): Promise<VaultLogin> // password: the value or an op:// reference; left out keeps the saved one
   removeVaultLogin(p: { id: string }): Promise<void>
@@ -170,12 +154,10 @@ export interface Api {
   addNodeFolder(p: { path: string }): Promise<NodeInfo> // lends a folder to the server's agents; throws why not (outside home, Library, a dot folder, Tucano's data)
   removeNodeFolder(p: { path: string }): Promise<NodeInfo>
   nodeLog(p: { limit?: number }): Promise<NodeLogEntry[]> // what the server ran here, newest first (up to 500)
-  setClassifierKey(p: { id: string; key: string | null }): Promise<void> // checks the key with that classifier's provider before saving; null removes it
   engineModels(p: { engine: EngineId }): Promise<{ models: string[]; labels?: Record<string, { label: string; hint?: string }>; error?: string }> // a harness's own list (OpenCode, Pi, a gateway)
   testEngine(p: { model: string }): Promise<{ ok: boolean; message: string; seconds?: number }> // one real reply through that model
   saveSkill(p: { skill: SkillInput }): Skill // throws a message for the form
-  localSkills(): LocalSkill[] // the skills in every folder that's on, plus Claude Code's plugins
-  skillFolders(): LocalSkillFolder[] // the folders skills are read from: the harnesses' and the ones added
+  localSkills(): LocalSkill[] // the skills of the user's Claude Code, its plugins and Codex
   linkSkill(p: { source: string; agents: string[] }): Skill
   decideSkill(p: { id: string; approve: boolean }): void
   restoreSkill(p: { skillId: string; versionId: number }): void
@@ -193,11 +175,6 @@ export interface Api {
   hermesPreview(p: { path?: string }): HermesPreview
   importHermes(p: { path: string; profiles: string[] }): string // the chosen profiles (by key) as agents; what was added
   backupNow(): string // where the copy went
-  // The file itself: what it takes on disk, how much of that is free pages, and whether it reads back sound.
-  dbHealth(): { bytes: number; free: number; sound: boolean; said: string }
-  // Empties the log, rebuilds the file and refreshes the planner, refusing while a reply is at work:
-  // before and after in bytes, the free pages left, and the check's verdict.
-  optimizeDb(): { before: number; after: number; free: number; sound: boolean; said: string }
   // Everything in one .zip, to take this Tucano to a server (desktop): where it went, and what's in it.
   exportBackup(): { path: string } & BackupSummary
   // On a server, the owner: a backup sent up (/upload) checked and set apart; nothing changes yet.
@@ -208,9 +185,6 @@ export interface Api {
   openBackups(): void
   report(p: { week?: number }): Report // the calendar week starting at `week` (a Monday); this one by default
   usage(): UsageReport
-  // What each provider Tucano is signed in to reports left: the last read at once, then a fresh one.
-  quotas(): Promise<QuotasSnapshot>
-  quotasRefresh(): Promise<QuotasSnapshot> // a read now, for the page's own timer and its button
   removeRoutine(p: { id: string }): void
   runRoutine(p: { id: string }): void
   // The wiki: pages in a folder of Markdown, linked, searched and kept with their history.
@@ -246,8 +220,6 @@ export interface Api {
   wikiReview(): WikiReview // the last review and what it found that's still open
   wikiRunReview(): void // reviews now, in the background; a 'wiki' event when done
   wikiDismissFinding(p: { id: string }): void // and refuses its fix
-  wikiAsk(p: { id: string; agentId: string }): string // hands a finding to an agent: its DM's id, with the request sent
-  wikiResolveFinding(p: { id: string }): Promise<{ resolved: boolean; note?: string; gone?: boolean }> // the resolver reads the whole pages: a fix waiting, or what it couldn't settle
   wikiImport(p: { dir: string }): WikiImport // an Obsidian vault copied in, as it is
   wikiImportZip(p: { path: string }): WikiImport // the same, from a .zip sent to a server (src/server's /upload)
   setWikiCapture(p: { conversationId: string; on: boolean }): void
@@ -285,15 +257,11 @@ export interface Api {
   leave(): void // someone (not the owner) leaves on their own: access ends, and their DMs, memories and own routines go now
   activity(p: { personId?: string; kind?: string; before?: number }): ActivityEntry[] // admins: newest first, a page at a time (before: the last page's oldest `at`)
   inbox(): Inbox
-  // The window over every window (src/main/notice.ts) reads only this: how its cards are set, what
-  // waits on me with the buttons to decide it, and the names to say where each card happened.
-  noticeFeed(): NoticeFeed
   answerQuestion(p: { id: string; text: string }): void // a question an agent asked me (or someone I cover for)
-  questionsHistory(p: { limit?: number }): InboxQuestion[] // answered and closed, newest first; a structured ask carries its decisions and answers
   confirmQuestion(p: { id: string; ok: boolean }): void // in my DM: may the agent ask that person?
-  dismissQuestion(p: { id: string }): void // leave a question unanswered for good: it closes and the reply goes on
   answerDecision(p: { messageId: string; index: number; answer: Answer | null }): void // one of a question's decisions answered on the card (null clears it), kept until sent
   submitDecisions(p: { messageId: string }): void // sends the decisions answered on the card, as my message
+  cancelQuestion(p: { messageId: string }): void // dismisses the question on its card: it closes, and the agent isn't woken
   watchRoutine(p: { id: string; on: boolean }): void // "me avise": told of a channel routine's runs
   // To the people who make Tucano, through tucano.sh (core/feedback.ts). image: the window's picture, base64 PNG or JPEG.
   // Throws, in the person's words, when it didn't go.
@@ -339,8 +307,6 @@ export type CoreEvent =
   | { type: 'routine'; routine: Routine }
   | { type: 'routine_removed'; id: string; for?: string } // for: a DM's person, the only one who saw it
   | { type: 'conversation_removed'; id: string; for?: string }
-  | { type: 'message_removed'; id: string; conversationId: string }
-  | { type: 'history_wiped'; conversationIds: string[] } // history went: read these conversations again (src/core/retention.ts)
   | { type: 'skill'; skill: Skill }
   | { type: 'skill_removed'; id: string }
   | { type: 'wiki' } // a page changed: here, by an agent or in another app
@@ -349,8 +315,7 @@ export type CoreEvent =
   | { type: 'delegations'; delegations?: Delegation[] } // work handed down the tree changed (each gets what they may see)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations', 'thinking', 'message_removed', 'history_wiped']
-
+export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'thinking', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

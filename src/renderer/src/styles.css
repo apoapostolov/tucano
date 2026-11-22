@@ -2,6 +2,9 @@
 /* Warm neutrals and the toucan's orange, from the logo. Primary actions are ink
    (cream in the dark); the orange marks focus, links, mentions and what's alive. */
 :root {
+  /* The conversation's column: messages, their lines and the field. A little wider on big screens,
+     never so wide that a line gets hard to follow. */
+  --chat-w: 860px;
   --bg: #f3f0ea;
   --panel: #fffefb;
   --sidebar: #f3f0ea;
@@ -498,6 +501,14 @@ h3 {
   white-space: nowrap;
 }
 .workspace-picker { position: relative; flex: 1; min-width: 0; }
+/* On a server, over its settings: whose they are, and what's set on the person's own computer. */
+.settings-where { display: flex; align-items: center; gap: 10px; margin: 4px 0 18px; padding: 11px 14px; border-radius: 10px; background: var(--hover); font-size: 13px; line-height: 1.45; color: var(--text-2); }
+.settings-where > svg { flex: none; color: var(--text-3); }
+.settings-where b { font-weight: 500; color: var(--text); }
+.settings-where .btn { flex: none; }
+/* On a server: its name, and under it that it's on the server (the way back is in this menu). */
+.workspace__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.workspace__where { display: flex; align-items: center; gap: 4px; font-size: 11.5px; line-height: 1.1; color: var(--text-3); }
 .workspace-picker__check { display: flex; align-items: center; width: 14px; flex-shrink: 0; }
 .workspace-picker__head { display: flex; align-items: center; justify-content: space-between; padding: 2px 8px 5px; }
 .workspace-picker__actions { display: flex; align-items: center; gap: 4px; }
@@ -1321,7 +1332,7 @@ h3 {
   grid-template-columns: 34px 1fr;
   gap: 12px;
   padding: 7px 28px;
-  max-width: 860px;
+  max-width: var(--chat-w);
   margin: 0 auto;
 }
 /* What just arrived comes in, lightly. */
@@ -1339,140 +1350,6 @@ h3 {
 }
 .msg__body {
   min-width: 0;
-}
-.msg__text {
-  min-width: 0;
-  max-width: 100%;
-}
-.msg__text {
-  min-width: 0;
-  max-width: 100%;
-}
-/* A reply's own actions, at the right end of its footer line: the copy glyph and the way to answer it
-   are two presses, so they keep a little air between them instead of reading as one wide control. */
-.msg__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-/* The reply button under a message (and "Reply to selection" once text in it is selected). */
-.msg__replyto {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0;
-  border-radius: var(--radius);
-  color: var(--text-3);
-}
-.msg__replyto:hover,
-.msg__replyto:focus-visible,
-.msg__replyto--excerpt {
-  background: var(--bubble);
-  color: var(--text);
-}
-.msg__replyto--excerpt {
-  padding: 0 8px;
-  font-size: 12px;
-}
-@media (pointer: coarse) {
-  .msg__replyto {
-    min-width: 44px;
-    min-height: 44px;
-  }
-}
-/* The reply as Markdown, left of the way to answer it: the same dim glyph, no frame of its own, and
-   the check it turns into for a moment after the press. */
-.msg__copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
-  padding: 0;
-  border: 0;
-  background: none;
-  border-radius: var(--radius);
-  color: var(--text-3);
-  cursor: pointer;
-}
-.msg__copy:hover,
-.msg__copy:focus-visible,
-.msg__copy.is-copied {
-  background: var(--bubble);
-  color: var(--text);
-}
-@media (pointer: coarse) {
-  .msg__copy {
-    min-width: 44px;
-    min-height: 44px;
-  }
-}
-.reply-quote {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  border-left: 2px solid var(--border-strong);
-  text-align: left;
-  color: var(--text-2);
-  font-size: 12px;
-}
-.reply-quote span {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  color: var(--text-3);
-}
-/* On my own message the bubble is the text, not the body, so the quote carries one of its own:
-   same corner, same tint, so it reads as part of what I sent instead of something floating above it. */
-.msg--me .reply-quote {
-  background: var(--bubble);
-  border: 0;
-  border-left: 2px solid var(--border-strong);
-  border-radius: var(--radius);
-}
-.composer__reply {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 12px 0;
-}
-.composer__reply .reply-quote {
-  flex: 1;
-  margin: 0;
-}
-.forward-preview {
-  margin: 0 0 14px;
-  padding: 8px 12px;
-  border-left: 2px solid var(--border-strong);
-  color: var(--text-2);
-  font-size: 13px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  max-height: 140px;
-  overflow-y: auto;
-}
-.agent-dialog__identity {
-  margin-top: 12px;
-  overflow-wrap: anywhere;
-}
-.agent-dialog__identity .grow {
-  min-width: 0;
-}
-.agent-dialog__identity p {
-  margin: 3px 0 0;
-  max-height: 160px;
-  overflow-y: auto;
 }
 /* My messages: a bubble on the right, no avatar or name. */
 .msg--me {
@@ -1520,23 +1397,12 @@ h3 {
   color: var(--text-3);
   font-size: 11.5px;
 }
-/* A prompt of mine handed into the reply above (runs.ts, `steerIn`): a tag under it. */
+/* A prompt of mine waiting its turn behind the reply above: it goes when that one ends. */
 .msg__queued {
-  display: block;
+  display: inline-block;
   margin-top: 4px;
   color: var(--text-3);
-}
-/* A prompt of mine waiting its turn behind the reply above: one dim full-caps line at the foot of its
-   own bubble, where the prompt is, and not a pill under the message. */
-.msg__queued-line {
-  display: block;
-  margin-top: 6px;
-  color: var(--text-3);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-style: italic;
 }
 .md > :first-child {
   margin-top: 0;
@@ -1643,7 +1509,7 @@ h3 {
   align-items: center;
   gap: 8px;
   padding: 6px 24px 6px 70px;
-  max-width: 860px;
+  max-width: var(--chat-w);
   margin: 0 auto;
   color: var(--text-2);
   font-size: 12.5px;
@@ -1735,6 +1601,71 @@ h3 {
   padding: 2px 0 2px 14px;
   border-left: 2px solid var(--border);
   animation: rise var(--dur-base) var(--ease-out) both;
+}
+/* One row of pills under the chain: a control is a pill in this row, not a row of its own, so the
+   steer and a held reply's pause sit side by side. It lines up with the steps' own text. */
+.steps__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0 3px;
+  padding-left: 14px;
+}
+/* Steer opens from its pill in that row. Its field sits under the box, starting where the steps'
+   text starts and ending where the chain ends. */
+.steps__steer {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 4px;
+  padding-left: 17px;
+  max-width: 600px;
+}
+.steps__steer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-3);
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition-ui);
+}
+.steps__steer-pill:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--hover);
+}
+.steps__steer-note {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: none;
+}
+.steps__steer-note textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+}
+.steps__steer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+/* What the person steered, in the chain: a call's own row, carrying their words whole. */
+.step--steer .step__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+/* Their words, not a tool's arguments: the same row, in the font people read in. */
+.step--steer .step__input {
+  font-family: var(--font);
+  font-size: 12.5px;
 }
 .step {
   display: flex;
@@ -2073,17 +2004,10 @@ h3 {
   padding: 6px 28px 18px;
   flex: none;
   width: 100%;
-  min-width: 0;
-  max-width: 860px;
+  max-width: var(--chat-w);
   margin: 0 auto;
 }
-/* The work above the field: the replies running now, and the prompts queued behind them. It sits
-   inside the composer's wrapper, so it is attached to the box it belongs to. */
 .work-drawer {
-  /* Never wider than the field it sits over, whatever a row carries: the glyphs keep their size and the
-     prompt gives way, so adding a button to a row shortens its words instead of widening the box. */
-  max-width: 100%;
-  min-width: 0;
   margin-bottom: 6px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -2097,7 +2021,6 @@ h3 {
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-width: 0;
   padding: 6px 10px;
   border: 0;
   background: none;
@@ -2111,10 +2034,6 @@ h3 {
 }
 .work-drawer__count {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   text-align: left;
 }
 .work-drawer__more {
@@ -2132,25 +2051,12 @@ h3 {
 .work-drawer__caret.is-open {
   transform: rotate(-90deg);
 }
-.work-row__meta {
-  flex: none;
-  white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-/* Opening the thread a reply lives in, from its row: the glyph alone, so a row stays one line, and as
-   dim as the steer pill beside it — it opens a view, it doesn't stop anything (the x is the bright one). */
-.work-row__thread-btn {
-  color: var(--text-3);
-}
-.work-row__thread-btn:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
 .work-drawer__list {
   display: grid;
   gap: 1px;
+  /* Finished rows stay until they're taken off: the list scrolls rather than eating the conversation. */
+  max-height: min(220px, 32vh);
+  overflow-y: auto;
   padding: 2px 6px 6px;
   border-top: 1px solid var(--border);
 }
@@ -2159,15 +2065,13 @@ h3 {
   align-items: center;
   gap: 4px;
   min-width: 0;
-  max-width: 100%;
 }
 .work-row__go {
   display: flex;
   align-items: center;
   gap: 7px;
-  flex: 1 1 auto;
+  flex: 1;
   min-width: 0;
-  overflow: hidden;
   padding: 4px 6px;
   border: 0;
   border-radius: 8px;
@@ -2181,138 +2085,10 @@ h3 {
 .work-row__go:hover {
   background: var(--hover);
 }
-/* What a row says in the person's words: the one thing that gives way when the row gains a glyph. */
 .work-row__text {
-  flex: 1 1 auto;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.work-row--queued .work-row__text {
-  color: var(--text-2);
-}
-/* A destructive glyph in the drawer arms before it acts, exactly as a row's trash does: the first
-   press turns it red and says what the second does, the second stops the reply, takes the prompt
-   back or takes the row off the list (Conversation.tsx, `ArmedGlyph`). */
-.work-row__stop.is-armed,
-.work-row__drop.is-armed,
-.work-row__remove.is-armed {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-/* The handle a person drags to move a queued prompt: dim until the row is under the pointer. */
-.work-row__grip {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  padding: 3px 1px;
-  border-radius: 6px;
-  color: var(--text-3);
-  cursor: grab;
-}
-.work-row:hover .work-row__grip {
-  color: var(--text-2);
-}
-.work-row__grip:hover {
-  color: var(--text-2);
-  background: var(--hover);
-}
-.work-row__grip:active {
-  cursor: grabbing;
-}
-.work-row__grip:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-/* The row the prompt being dragged would land on: a line where it will go, not a filled row. */
-.work-row--queued.is-over {
-  box-shadow: inset 0 2px 0 var(--accent);
-}
-/* Starting a queued prompt now: the one row action that adds work rather than ending it. */
-.work-row__start:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-/* A working session carries its steer pill, a finished one the follow up at the same place. */
-.work-row__steer .steps__ask,
-.work-row__follow .steps__ask {
-  margin: 0;
-  padding: 0;
-}
-/* The pill keeps the width its words ask for, and the row's own text gives way instead: a shrinkable
-   pill broke "Follow" over two lines as soon as a session's name grew, and a pill cut in half
-   reads as two controls. Nothing in a row may shrink it — the words are what shorten. */
-.work-row__follow {
-  flex: none;
-}
-.work-row__steer .steps__ask-pill,
-.work-row__follow .steps__ask-pill {
-  padding: 2px 6px;
-  font-size: 11px;
-}
-/* Steering from the drawer's row: the field opens on the row's own second line — one line tall, from
-   where the session's name starts (past the pulsing dot) to the row's right end, with the glyph that
-   sends at that end. The row is a grid only while that field is open; shut, it stays the flex line it
-   always was, so nothing about a working row moves until a person steers it. */
-.work-row:has(.steps__ask-note--row) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
-  align-items: center;
-  column-gap: 4px;
-  row-gap: 2px;
-}
-/* The wrapper and its inner grid dissolve, so the pill keeps the row it was on and the field becomes
-   the row's own second line (the trick the chain's Pause row uses, .steps__hold). */
-.work-row:has(.steps__ask-note--row) > .work-row__steer,
-.work-row:has(.steps__ask-note--row) > .work-row__steer > .steps__ask,
-.work-row:has(.steps__ask-note--row) > .work-row__follow,
-.work-row:has(.steps__ask-note--row) > .work-row__follow > .steps__ask {
-  display: contents;
-}
-/* The name starts 19px into the row — the go button's 6px of padding, the 6px dot and its 7px gap —
-   and the field starts where the name does, not at the dot's edge. */
-.work-row:has(.steps__ask-note--row) .steps__ask-note--row {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  margin-left: 19px;
-}
-/* A finished row's name starts past a state glyph a size bigger than the working dot — 6px of
-   padding, 11px of glyph, its 7px gap — so its field starts 24px in, where that name starts. */
-.work-row--done:has(.steps__ask-note--row) .steps__ask-note--row {
-  margin-left: 24px;
-}
-/* Two classes: it is a .steps__ask-note too, and that one is a grid of a field over its buttons —
-   here the field and its glyph are one line, so this rule has to outrank it. */
-/* As the row's own second line it stretches across the row less the 19px it starts in, so it takes
-   no width of its own: 100% plus that margin made it hang 19px past the row's end. */
-.steps__ask-note.steps__ask-note--row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: none;
-}
-/* One line tall: the field never grows, and Enter sends because there is no second line to want one. */
-.steps__ask-note--row input {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 24px;
-  padding: 0 8px;
-  font-size: 12px;
-}
-.steps__ask-send {
-  flex: none;
-  color: var(--text-3);
-}
-/* A row turns its glyphs red under the pointer (that is the stop); the one that sends is not that. */
-.work-row .steps__ask-send:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-.work-row .steps__ask-send:disabled {
-  opacity: 0.45;
-  cursor: default;
-  background: none;
 }
 /* A reply that ended: the glyph says how, and its row stays until the trash takes it off. */
 .work-row__state {
@@ -2330,16 +2106,22 @@ h3 {
 .work-row--done .work-row__text {
   color: var(--text-2);
 }
-/* A row's glyphs answer the pointer in the app's own orange, which is what says "this opens or
-   starts something". Red is kept for the presses that destroy: the x that stops a reply, the x that
-   takes a prompt back and the trash that removes a finished row — nothing else in a row turns red. */
-.work-row .icon-btn:hover {
+.work-row__meta {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+/* Opening the thread a reply lives in, from its row: the glyph alone, so a row stays one line, and as
+   dim, since it opens a view and doesn't stop anything (the x is the bright one). */
+.work-row__thread-btn {
+  color: var(--text-3);
+}
+.work-row__thread-btn:hover {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.work-row .work-row__stop:hover,
-.work-row .work-row__drop:hover,
-.work-row .work-row__remove:hover {
+.work-row .icon-btn:hover {
   color: var(--danger);
   background: var(--danger-soft);
 }
@@ -2351,6 +2133,8 @@ h3 {
   background: var(--accent);
   animation: fade-pulse 1.6s ease-in-out infinite;
 }
+/* A row in a thread says so through its thread button's tooltip, in that thread's own words,
+   rather than through a pill: the row stays one line however long the thread's first message is. */
 .work-drawer__group {
   padding: 4px 6px 2px;
   color: var(--text-2);
@@ -2510,13 +2294,6 @@ h3 {
 .card__head p {
   margin: 2px 0 0;
   font-size: 13px;
-}
-/* An area whose controls take something away for good: Settings › History, and a bot's own. */
-.card--danger {
-  border-color: var(--danger);
-}
-.card--danger .card__head h2 {
-  color: var(--danger);
 }
 .agent-layout {
   display: grid;
@@ -2687,17 +2464,6 @@ h3 {
   flex: 1;
   padding: 6px 10px;
   text-align: center;
-}
-.browser-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.browser-choice .segmented {
-  margin-bottom: 0;
-}
-.browser-choice p {
-  margin: 0;
 }
 .hint--warn {
   color: var(--warn);
@@ -2970,13 +2736,6 @@ h3 {
 .key-row:last-child {
   border-bottom: 0;
 }
-.key-row--form { align-items: flex-start; }
-.key-row__glyph { width: 28px; flex: none; }
-/* A row's subtitle sits directly under its title: the browser's paragraph margins would push it down
-   and leave the row taller than the two lines of text it holds. */
-.key-row__sub {
-  margin: 0;
-}
 .key-row .grow {
   display: flex;
   flex-direction: column;
@@ -2986,20 +2745,6 @@ h3 {
   align-self: flex-start;
   margin-top: 2px;
   flex-shrink: 0;
-}
-
-/* A three-state switch (Global · On · Off) beside a sentence needs more room than a toggle: in a
-   narrow card it drops to its own line, right-aligned, instead of squeezing the sentence into a
-   column of single words (a 900 px window left it 70 px wide and fourteen lines tall). */
-.lrow--switch {
-  flex-wrap: wrap;
-}
-.lrow--switch .lrow__label {
-  flex: 1 1 220px;
-  min-width: 0;
-}
-.lrow--switch .lrow__ctl {
-  margin-left: auto;
 }
 
 /* An error arrives calm: it rises in on a red tint that fades, no shake. */
@@ -3187,10 +2932,7 @@ h3 {
   padding: 1px 4px;
   border-radius: 4px;
 }
-/* An option: a row to pick, with its number (the key), its label and a tick when chosen. It sits a
-   shade above its card, the same raise the finished record uses: on the card's own colour it read as a
-   hole cut through it, and the hover used to replace the fill with a translucent overlay, which made
-   the row darker than at rest. */
+/* An option: a row to pick, with its number (the key), its label and a tick when chosen. */
 .ask-options {
   display: flex;
   flex-direction: column;
@@ -3205,7 +2947,7 @@ h3 {
   padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--text) 7%, var(--panel));
+  background: var(--panel);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -3214,7 +2956,7 @@ h3 {
 }
 .ask-option:hover,
 .ask-option.is-focus {
-  background: color-mix(in srgb, var(--text) 12%, var(--panel));
+  background: var(--hover);
   border-color: var(--border-strong);
 }
 .ask-option:focus-visible,
@@ -3259,163 +3001,6 @@ h3 {
   font-size: 13.5px;
   font-weight: 500;
   overflow-wrap: anywhere;
-}
-/* The label and, when Jev suggests it, its pill: they share a line, and the pill wraps under on a
-   narrow card instead of squeezing the label. */
-.ask-option__line {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
-}
-/* Jev's pick: an accent pill, quiet enough to sit next to a label. It never takes the tick. */
-/* A finished ask, drawn as the widgets its card used: one grey card per question, side by side when
-   they fit and wrapping when they don't. Every card is the same width — a column grid, not a row of
-   content-sized boxes — so two questions never read as one important card and one leftover. No accent
-   anywhere in here: this is the record of a question that is over, not the question itself. */
-.history-questions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
-  align-items: start;
-  gap: 8px;
-}
-.history-question {
-  min-width: 0;
-  max-width: 100%;
-  padding: 9px 11px 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel);
-  /* The record's own wrapping: its ancestor, the approvals history row, sets white-space: nowrap so a
-     long tool name stays on one line, and that inherited value is why an answer never broke. Here the
-     answer is text again — it wraps at spaces, the longest word breaks, and whatever still cannot fit
-     is clipped at the padding edge instead of running over the card's frame. */
-  white-space: normal;
-  overflow-wrap: anywhere;
-  overflow: hidden;
-}
-.history-question__title {
-  margin: 0 0 7px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  overflow-wrap: anywhere;
-}
-.history-question__options {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 6px;
-  min-width: 0;
-  max-width: 100%;
-}
-/* One option, as the card draws it: the number's square beside the answer, and the answer as running
-   text in the column beside it, so a long label wraps onto as many lines as it needs and the agent's tag
-   lands at the end of the last one. An option nobody took is a raised surface on the card, a shade above
-   it: the record's own background read as a black hole punched in it. */
-.history-question__option {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: start;
-  column-gap: 7px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 3px 9px 3px 3px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--text) 7%, var(--panel));
-  color: var(--text-2);
-  overflow-wrap: anywhere;
-}
-/* The answer's text: its own box so the wrap happens here, inside the card, and never outside it. */
-.history-question__body {
-  display: block;
-  min-width: 0;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-.history-question__label,
-.history-question__detail {
-  overflow-wrap: anywhere;
-}
-.history-question__detail {
-  color: var(--text-3);
-  font-size: 11.5px;
-}
-.history-question__number {
-  display: grid;
-  place-items: center;
-  flex: none;
-  /* Centered on the answer's own block: with the text starting at the row's top, a two or three line
-     answer would otherwise leave its number riding the first line alone. */
-  align-self: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.history-question__option.is-recommended {
-  border-color: var(--border-strong);
-}
-/* The tag of the option the agent pointed at: the record's own grey pill, never the working card's
-   accent one, and inline so it rides the end of the answer's last line rather than a column of its
-   own at the row's right edge. */
-.history-question__pill {
-  display: inline-block;
-  padding: 0 7px;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  color: var(--text-3);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 16px;
-  white-space: nowrap;
-  vertical-align: 1px;
-}
-/* The option the person took: the negative of every other row — filled with the text colour and
-   carrying the background's own text on it, so the answer is the one thing that reads as solid. */
-.history-question__option.is-answered {
-  border-color: transparent;
-  background: var(--text-2);
-  color: var(--bg);
-}
-.history-question__option.is-answered .history-question__number {
-  background: transparent;
-  border-color: color-mix(in srgb, var(--bg) 45%, transparent);
-  color: var(--bg);
-}
-.history-question__option.is-answered .history-question__detail,
-.history-question__option.is-answered .history-question__pill {
-  border-color: color-mix(in srgb, var(--bg) 45%, transparent);
-  color: var(--bg);
-  opacity: 0.8;
-}
-/* A typed answer ("Something else", or a text question) is the answer too: its own row, marked so. */
-.history-question__option--said {
-  font-style: italic;
-}
-.ask-option__pill {
-  flex: none;
-  padding: 0 7px;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 16px;
-  white-space: nowrap;
-}
-.ask-list__option {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 .ask-option__tag {
   margin-left: 6px;
@@ -3627,6 +3212,10 @@ h3 {
 .retry {
   margin-top: 6px;
 }
+/* "Try with instructions": the field that opens under the two ways back, and the row that sends it. */
+.retry-note { display: grid; gap: 8px; margin-top: 8px; max-width: 560px; }
+.retry-note textarea { width: 100%; min-height: 58px; resize: vertical; }
+.retry-note__row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 
 .connector__actions {
   margin: 4px 0 12px;
@@ -3756,6 +3345,27 @@ h3 {
   flex: 1;
   min-width: 0;
 }
+/* Big screens: the column grows a little (a maximized window on a 24" or 27" monitor). */
+@media (min-width: 1600px) {
+  :root {
+    --chat-w: 940px;
+  }
+}
+@media (min-width: 2000px) {
+  :root {
+    --chat-w: 1020px;
+  }
+}
+/* A panel expanded over the whole page: the conversation steps aside until it's shrunk or closed. */
+.split.is-wide > .conversation {
+  display: none;
+}
+.side-panel.is-wide {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  border-left: 0;
+}
 /* The side panel slides in from its edge. */
 .side-panel {
   --rise: 0;
@@ -3871,57 +3481,6 @@ h3 {
   padding: 6px 10px;
   font-size: 12px;
   color: var(--text-2);
-}
-
-/* The pictures of one reply, as an album: one large on the left and the others in a column beside
-   it, the two in the golden section (see gallery.ts). One picture keeps the shape above. */
-.artifacts-gallery {
-  display: grid;
-  grid-template-columns: 1.618fr 1fr;
-  gap: 3px;
-  width: min(100%, 420px);
-  aspect-ratio: 1.618 / 1;
-  max-height: 260px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--border);
-}
-.artifacts-gallery .gallery__cell {
-  position: relative;
-  display: block;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: var(--panel);
-  overflow: hidden;
-}
-.artifacts-gallery .gallery__cell img {
-  width: 100%;
-  height: 100%;
-  max-height: none;
-  object-fit: cover;
-  object-position: top;
-  transition: transform 160ms ease;
-}
-.artifacts-gallery .gallery__cell:hover img {
-  transform: scale(1.03);
-}
-.artifacts-gallery .gallery__cell:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.gallery__more {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
 }
 .artifact-card {
   display: flex;
@@ -4061,6 +3620,11 @@ body.is-resizing webview {
 .side-panel--thread .composer-wrap {
   padding-inline: 16px;
 }
+.side-panel--thread.is-wide .thread__lead {
+  width: 100%;
+  max-width: var(--chat-w);
+  margin-inline: auto;
+}
 /* The root sits on the panel's paper, like the conversation it came from. */
 .thread__lead {
   display: grid;
@@ -4175,21 +3739,6 @@ body.is-resizing webview {
 .msg__meta .wiki-keep {
   margin: 0;
 }
-/* The reply-to icon belongs to the footer line, at its right end, not on a row of its own. */
-.msg__meta .msg__actions {
-  /* A glyph's worth of air between the words copied and the way to answer them: two borderless
-     targets side by side read as one if they touch. */
-  gap: 6px;
-  margin: 0 0 0 auto;
-}
-.msg__meta .msg__replyto {
-  min-width: 0;
-  min-height: 0;
-}
-.msg__meta .msg__copy {
-  min-width: 0;
-  min-height: 0;
-}
 
 /* The message whose thread is open on the side, lit, so the two sides read as one. */
 .msg.is-thread-open::before {
@@ -4241,106 +3790,6 @@ body.is-resizing webview {
 .msg:hover .msg__reply,
 .msg__reply:focus-visible {
   opacity: 1;
-}
-/* Every trash is an overlay on its row: the rail, the prompt bubble's left side or the post's
-   outer rail. The header variant opts back into the row below. */
-.msg__delete {
-  position: absolute;
-  opacity: 0;
-  color: var(--text-2);
-  transition: var(--transition-ui);
-}
-.msg__delete.is-armed {
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-/* Inside the thread panel there is no rail: the panel's header carries the session's trash, and a
-   glyph hung past the row's right edge (the -24px below) overflowed the panel. Those rows are drawn
-   with rail={false} (Conversation.tsx), so this column only ever exists in a channel. */
-/* The trash rides the same sticky rail, one row under the thread button. The way back to the
-   prompt takes the row after it, so the three glyphs share one column and never cover each other. */
-.msg__anchor-pin .msg__delete {
-  position: absolute;
-  top: 28px;
-  right: -24px;
-  opacity: 0;
-  color: var(--text-2);
-  transition: var(--transition-ui);
-}
-.msg__anchor-pin--alone .msg__delete {
-  top: 4px;
-}
-.msg:hover .msg__delete,
-.msg__delete:focus-visible,
-.msg__delete.is-armed {
-  opacity: 1;
-}
-/* Back to the prompt this reply answers, right under the trash. */
-.msg__reply--up {
-  top: 28px;
-}
-.msg__anchor-pin .msg__reply--up {
-  top: 52px;
-  right: -24px;
-}
-.msg__anchor-pin--alone .msg__reply--up {
-  top: 28px;
-  right: -24px;
-}
-/* In the thread's own header the trash sits in the row, beside summary and close. */
-.msg__delete--head {
-  position: static;
-  opacity: 1;
-}
-/* A routine's post has no run to ride: its trash sits on the outer rail, under the thread button. */
-.msg__delete--post {
-  top: 28px;
-  right: -24px;
-}
-/* My own prompt carries the pencil, the trash and the thread button on the free space to its left.
-   A tall prompt stands them in one column; a short one fans them out on the same first line. */
-.msg__edit {
-  position: absolute;
-  top: 6px;
-  right: calc(100% + 32px);
-  color: var(--text-2);
-  opacity: 0;
-  transition: var(--transition-ui);
-}
-.msg--me .msg__delete--prompt {
-  top: 6px;
-  right: calc(100% + 58px);
-}
-.msg--me.is-left-stack .msg__edit {
-  top: 30px;
-  right: calc(100% + 6px);
-}
-.msg--me.is-left-stack .msg__delete--prompt {
-  top: 54px;
-  right: calc(100% + 6px);
-}
-.msg:hover .msg__edit,
-.msg__edit:focus-visible,
-.msg:hover .msg__delete--prompt,
-.msg__delete--prompt:focus-visible {
-  opacity: 1;
-}
-.msg__edit-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 2px 0 4px;
-  width: 100%;
-  max-width: 100%;
-}
-.msg__edit-box textarea {
-  box-sizing: border-box;
-  resize: none;
-  min-height: 62px;
-}
-.msg__edit-actions {
-  display: flex;
-  gap: 8px;
 }
 @media (hover: none) {
   .msg__reply {
@@ -6184,32 +5633,6 @@ table.csv th {
 .model-picker .hint {
   flex-basis: 100%;
 }
-/* The thinking level on the model's own row: the harness keeps only its name's width (Claude, Codex,
-   OpenCode, Pi), the model takes what's left, and the level closes the row. */
-.model-picker .select.model-picker__engine,
-.lrow--wide .model-picker .select.model-picker__engine {
-  flex: 0 0 auto;
-  width: auto;
-  min-width: 104px;
-}
-.model-picker .select.model-picker__effort,
-.lrow--wide .model-picker .select.model-picker__effort {
-  flex: 0 0 auto;
-  width: 128px;
-}
-/* Under a model select, where the picks are one below the other (Settings → Models). */
-.select.effort-select--inline {
-  max-width: 220px;
-}
-/* A model and its thinking level in one spot of a card: one under the other, like the agent's page. */
-.field-stack {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-}
-.field-stack > .field {
-  margin-bottom: 0;
-}
 .note--ok {
   color: var(--ok, #1f9d55);
 }
@@ -6469,57 +5892,6 @@ table.csv th {
 .member:hover {
   background: var(--hover);
 }
-/* A row of the channel's agent list: the agent itself, and mention mode beside it. */
-.member-row {
-  display: block;
-  border-bottom: 1px solid var(--border);
-}
-.member-row:last-child {
-  border-bottom: 0;
-}
-.member-row .member {
-  width: 100%;
-  min-width: 0;
-  border-bottom: 0;
-}
-/* Modes belong to an elected agent and sit on their own line under the agent row. */
-.member-row__modes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 16px;
-  padding: 4px 12px 9px 40px;
-}
-.member-row__mention {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.member-row__mention input {
-  margin: 0;
-  accent-color: var(--accent);
-}
-.mode-help {
-  display: inline-grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--text-3);
-  border-radius: 50%;
-  color: var(--text-3);
-  font-size: 9px;
-  line-height: 1;
-  cursor: help;
-  user-select: none;
-}
-@media (max-width: 640px) {
-  .member-row__modes {
-    padding-left: 12px;
-  }
-}
 .member__text {
   display: flex;
   flex-direction: column;
@@ -6570,29 +5942,252 @@ table.csv th {
   font-weight: 600;
   border-color: var(--accent);
 }
-/* Section rail under a settings tab: same line, same weight and same width as the tabs above it. */
-.tabs--sections {
-  position: sticky;
-  top: var(--settings-nav-top, 0px);
-  z-index: 2;
-  margin: -18px 0 18px;
-  padding-top: 0;
+
+/* ---------- Settings: five groups, subjects with a tile, rows in boxes ---------- */
+/* The page is one reading column, like the subjects inside it. */
+.page-body:has(> .settings-page) {
+  max-width: calc(720px + 64px);
 }
-.tabs--sections > a {
+.settings-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 220px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: var(--active);
+  color: var(--text-2);
+  -webkit-app-region: no-drag;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+.settings-search:focus-within {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 3px var(--accent-soft);
+}
+.settings-search input[type='search'] {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  padding: 0;
+}
+.settings-search input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.settings-search__clear {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-3);
+  color: var(--panel);
+}
+/* The groups stay at the top while the page scrolls, on the page's own background. */
+.settings-groups {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  margin: -8px 0 0;
+  padding: 8px 0 12px;
+  background: var(--panel);
+  -webkit-app-region: no-drag;
+}
+.settings-groups__bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--active);
+}
+.settings-groups__bar button {
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.settings-groups__bar button:hover {
+  color: var(--text);
+}
+.settings-groups__bar button.is-active {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(60, 40, 20, 0.1), 0 0 0 1px rgba(60, 40, 20, 0.05);
+}
+.settings-jumps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  margin: 2px 0 6px;
+}
+.settings-jumps > a {
   display: inline-flex;
   align-items: center;
-  padding: 9px 14px;
-  margin-bottom: -1px;
-  font-size: 13.5px;
-  line-height: 1.2;
+  gap: 7px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 12.5px;
   color: var(--text-2);
   text-decoration: none;
   white-space: nowrap;
-  border-bottom: 2px solid transparent;
-  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
-.tabs--sections > a:hover { color: var(--text); }
-.tabs--sections > a[aria-current='location'] { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+.settings-jumps > a:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.settings-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  color: #fff;
+}
+.settings-tile .icon {
+  stroke-width: 2.1;
+}
+.settings-tile--md {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.settings-tile--sm {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+}
+.settings-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+  outline: none;
+  scroll-margin-top: 72px;
+}
+.settings-subject__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-subject__head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+/* A card in a subject: a small heading, its lead, and the rows in one box. */
+.settings-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 4px 6px;
+}
+.settings-group__head h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.settings-group__lead {
+  margin: 0 4px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.settings-group__box,
+.settings-subject > .card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 4px 16px;
+  box-shadow: 0 1px 2px rgba(60, 40, 20, 0.03);
+}
+.settings-group__box > * {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.settings-group__box > * + * {
+  border-top: 1px solid var(--border);
+}
+.settings-group__box > .key-row {
+  border-bottom: 0;
+}
+/* A card with nothing under its heading (the iPhone's, before one is connected) draws no empty box,
+   and a part that renders nothing draws no line. */
+.settings-group__box:empty,
+.settings-group__box > :empty {
+  display: none;
+}
+/* A card drawn by another component without a settings group keeps its head, not a second title. */
+.settings-subject > .card > .card__head h2 {
+  display: none;
+}
+.settings-subject > .card {
+  padding: 16px;
+}
+.settings-results {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+.settings-results__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.settings-results__row + .settings-results__row {
+  border-top: 1px solid var(--border);
+}
+.settings-results__row:hover {
+  background: var(--hover);
+}
+.settings-results__row .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.settings-results__row strong {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.settings-results__row .grow > span {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.settings-results__row > .icon {
+  color: var(--text-3);
+}
+.settings-results__none {
+  margin: 24px 4px 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
 
 /* archived agents */
 .archived-banner {
@@ -7241,326 +6836,6 @@ kbd {
 }
 .usage-ring.is-danger .usage-ring__fill {
   stroke: var(--danger);
-}
-
-/* The panel's headline wears the month's header shape, with the provider count where the month's
-   token total sits; the read-again button keeps the right end of the row. */
-.usage-quotas__head {
-  align-items: flex-start;
-  gap: 16px 24px;
-}
-/* Each provider is a column and the three quotas are rows, so the same quota lines up across
-   providers and a column never wraps into a second one: many providers scroll sideways. */
-.usage-quotas {
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-.usage-quotas__grid {
-  display: grid;
-  gap: 6px 12px;
-  align-items: start;
-}
-.usage-quotas__row {
-  align-self: center;
-  font-size: 12px;
-  color: var(--text-3);
-  white-space: nowrap;
-}
-.usage-quota__head {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
-}
-.usage-quota__head strong {
-  font-size: 13px;
-  font-weight: 600;
-}
-.usage-quota__head.is-off strong {
-  color: var(--text-3);
-}
-/* The rings' way: one card per provider — its name, then its windows as rings inside it — so each
-   provider's rings stay together instead of wrapping into one run across the whole panel. */
-.usage-quotas__rings {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 12px;
-}
-.usage-quota-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-.usage-quota-card .usage-quota {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.usage-quota-card__head {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.usage-quota-card__head strong {
-  font-size: 13px;
-  font-weight: 600;
-}
-.usage-quota__cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  min-height: 34px;
-  font-size: 12px;
-}
-.usage-quota__cell strong {
-  font-size: 15px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.usage-quota__cell.is-empty strong,
-.usage-quota__cell.is-empty {
-  color: var(--text-3);
-}
-.usage-quota__cell.is-warn strong {
-  color: var(--warn);
-}
-.usage-quota__cell.is-danger strong {
-  color: var(--danger);
-}
-.usage-quota__track {
-  height: 4px;
-  border-radius: 99px;
-  background: var(--border);
-  overflow: hidden;
-}
-.usage-quota__track i {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  background: var(--accent);
-  transition: width var(--dur-data) var(--ease-out);
-}
-.usage-quota__cell.is-warn .usage-quota__track i {
-  background: var(--warn);
-}
-.usage-quota__cell.is-danger .usage-quota__track i {
-  background: var(--danger);
-}
-
-/* The session header's little bars: one per provider, only the window that lasts longest (a month
-   outlasts a week, a week outlasts the five hours), so the line says whether the plan runs out
-   before it renews. A wallet has no cap, so it draws no bar. Every bar takes the width of the
-   longest provider name the strip draws, and carries its own name above the track, so two bars read
-   as one strip rather than as two unrelated numbers. In a narrow window only the ones that are
-   actually running low stay, because those are the ones worth the space. */
-.quota-strip {
-  /* Equal columns, one per provider, sized to the longest name this header draws: the tracks line up
-     under one another instead. */
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 5px;
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out);
-}
-.quota-strip:hover {
-  background: var(--hover);
-}
-/* One column per provider: its name above the bar, dim and in small caps, so two bars are never
-   confused for one another. */
-.quota-strip__pill {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 3px;
-}
-.quota-strip__name {
-  font-size: 8px;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--text-3);
-  white-space: nowrap;
-}
-.quota-strip__track {
-  display: block;
-  /* The bar fills its column, so every bar in the strip is the width of the longest name among the
-     pills this header draws. */
-  height: 4px;
-  border-radius: 99px;
-  background: var(--border);
-  overflow: hidden;
-}
-.quota-strip__pill i {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  background: var(--accent);
-  transition: width var(--dur-data) var(--ease-out);
-}
-.quota-strip__pill.is-warn i {
-  background: var(--warn);
-}
-.quota-strip__pill.is-danger i {
-  background: var(--danger);
-}
-/* In the rings' view the pill is the ring itself: a square whose track the svg paints. */
-.quota-strip__pill:has(.quota-strip__ring) {
-  width: 16px;
-  height: 16px;
-  background: none;
-  overflow: visible;
-}
-.quota-strip__ring {
-  display: block;
-}
-.quota-strip__ring circle {
-  fill: none;
-  stroke-width: 2.5;
-}
-.quota-strip__ring-track {
-  stroke: var(--border);
-}
-.quota-strip__ring-fill {
-  stroke: var(--accent);
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: center;
-  transition: stroke-dashoffset var(--dur-data) var(--ease-out);
-}
-.quota-strip__pill.is-warn .quota-strip__ring-fill {
-  stroke: var(--warn);
-}
-.quota-strip__pill.is-danger .quota-strip__ring-fill {
-  stroke: var(--danger);
-}
-@media (max-width: 900px) {
-  .quota-strip__pill:not(.is-warn):not(.is-danger) {
-    display: none;
-  }
-  .quota-strip:not(:has(.is-warn, .is-danger)) {
-    display: none;
-  }
-}
-
-/* The box over the bars: what one provider has left in each of its windows, in the numbers the Usage
-   page spells out. The wrapper is the box's containing block and the one element that hears the
-   pointer leave it, which is what closes it — the box itself takes no pointer. */
-.quota-strip-wrap {
-  position: relative;
-  display: flex;
-}
-.quota-card {
-  position: absolute;
-  top: calc(100% + 8px);
-  /* Under the strip and hung from its right edge, opening left over the page: in this header the
-     actions that follow the strip — the agent stack, the routines pill, Summary, the conversation's
-     settings — all sit to its right, so a box growing rightwards from the strip's left edge would be
-     drawn over them. Keeping them clear depends on the wrapper above being the containing block: with
-     no positioned ancestor `right: 0` resolves against the header or the page and lands under that
-     cluster instead of under the strip. */
-  right: 0;
-  z-index: 60;
-  min-width: 232px;
-  padding: 10px 12px 11px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--panel);
-  box-shadow: var(--shadow-lg);
-  /* The box is read, not pointed at: letting it take the pointer would make it flicker as the
-     pointer crossed its edge. */
-  pointer-events: none;
-  animation: rise var(--dur-enter) var(--ease-out);
-}
-.quota-card__provider + .quota-card__provider {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-.quota-card__name {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  margin-bottom: 7px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-2);
-}
-.quota-card__plan {
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--text-3);
-}
-/* One window: its name and what is left on one line, the bar under them, when it resets under that. */
-.quota-card__window {
-  display: grid;
-  grid-template-columns: 44px 1fr;
-  align-items: center;
-  gap: 3px 10px;
-}
-.quota-card__window + .quota-card__window {
-  margin-top: 8px;
-}
-.quota-card__span {
-  font-size: 11px;
-  color: var(--text-2);
-}
-.quota-card__left {
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--text-1);
-}
-.quota-card__track {
-  grid-column: 1 / -1;
-  display: block;
-  height: 5px;
-  border-radius: 99px;
-  background: var(--border);
-  overflow: hidden;
-}
-.quota-card__track i {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  background: var(--accent);
-}
-.quota-card__track.is-warn i {
-  background: var(--warn);
-}
-.quota-card__track.is-danger i {
-  background: var(--danger);
-}
-.quota-card__reset {
-  grid-column: 1 / -1;
-  font-size: 10px;
-  color: var(--text-3);
-}
-.quota-card__wallet,
-.quota-card__note {
-  font-size: 11px;
-  color: var(--text-2);
-}
-.quota-card__note {
-  color: var(--text-3);
 }
 
 .usage-agents {
@@ -8647,6 +7922,10 @@ kbd {
 .sheet .usage-ring {
   padding: 4px 0;
 }
+.sheet .usage-quota {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+  gap: 32px;
+}
 .sheet .usage-agents,
 .sheet .usage-receipts {
   padding: 0;
@@ -8926,17 +8205,6 @@ kbd {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-/* The facets of a tagged library (metadata.hermes.tags): family:*, tool:*, risk:*… */
-.skill-add__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.skill-add__more {
-  font-size: 11px;
-  color: var(--text-3);
-  align-self: center;
 }
 .skill-add__none {
   padding: 18px 12px;
@@ -9601,44 +8869,67 @@ kbd {
   margin: 4px 8px;
   font-size: 12px;
 }
-.channel-row.is-picked,
-.top-row.is-picked,
-.agent-row.is-picked,
-.agent-row-drag.is-picked,
-.agent-sector__head.is-picked {
-  opacity: 0.55;
+.channel-drop {
+  height: 6px;
 }
-.channel-row.is-over::before,
-.top-row.is-over::before,
-.agent-row.is-over::before,
-.agent-row-drag.is-over::before,
-.agent-sector__head.is-over::before,
-.nav-drop.is-over::before,
-.agent-sector__drop.is-over::before {
+/* Sorting the sidebar by hand (reorder.ts): the row held dims, and an orange line shows where it
+   lands, above the row it would come before. The places that only take a drop (a list's end) take no
+   room at rest, and only listen while a row of their list is carried. */
+/* Positioned only while it shows the line, so a row at rest paints exactly as it always has. */
+.channel-row.is-over,
+.agent-sector__head.is-over,
+.channel-drop.is-over,
+.drop-zone.is-live {
+  position: relative;
+}
+.top-row.is-picked,
+.channel-row.is-picked,
+.agent-row.is-picked,
+.agent-sector__head.is-picked {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+.top-row.is-over::after,
+.channel-row.is-over::after,
+.agent-row.is-over::after,
+.agent-sector__head.is-over::after,
+.channel-drop.is-over::after,
+.drop-zone.is-over::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 4px;
+  right: 4px;
   top: -1px;
   height: 2px;
   border-radius: 2px;
   background: var(--accent);
+  pointer-events: none;
 }
-.channel-row,
-.top-row,
-.agent-row,
-.agent-row-drag,
-.agent-sector__head,
-.nav-drop,
-.agent-sector__drop {
-  position: relative;
+.channel-drop.is-over::after {
+  top: 2px;
 }
-.nav-drop,
-.agent-sector__drop {
-  height: 8px;
+/* Let go on a group's name, a channel goes into the group: the name lights up instead of a line. */
+.channel-group__head.is-over {
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 }
-.channel-drop {
-  height: 6px;
+.drop-zone {
+  height: 0;
+}
+.drop-zone.is-live {
+  z-index: 1;
+}
+.drop-zone.is-live::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 14px;
+}
+.is-folded .drop-zone {
+  display: none;
 }
 
 /* The wiki: what you and the team know, as linked pages */
@@ -9666,8 +8957,12 @@ kbd {
 .wk-kinds button.is-dim { opacity: 0.45; }
 
 .wk-panel { position: absolute; z-index: 3; top: 12px; right: 12px; bottom: 12px; width: 560px; max-width: calc(100% - 24px); overflow-y: auto; background: var(--panel); border-radius: 18px; box-shadow: 0 0 0 1px var(--border), 0 24px 60px -20px rgba(40, 25, 10, 0.28), 0 8px 20px -12px rgba(40, 25, 10, 0.18); --rise: 0; --rise-x: 24px; animation: rise var(--dur-slow) var(--ease-out) both; }
-.wk-panel__close { position: sticky; top: 14px; float: right; margin: 14px 14px -44px 0; z-index: 2; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; border: 0; background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: blur(6px); color: var(--text-3); cursor: pointer; }
-.wk-panel__close:hover { background: var(--hover); color: var(--text); }
+.wk-panel__tools { position: sticky; top: 14px; float: right; margin: 14px 14px -44px 0; z-index: 2; display: flex; gap: 2px; border-radius: 9px; background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: blur(6px); }
+.wk-panel__btn { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; border: 0; background: none; color: var(--text-3); cursor: pointer; }
+.wk-panel__btn:hover { background: var(--hover); color: var(--text); }
+/* Expanded: over the whole map, the page in a reading column. */
+.wk-panel.is-wide { left: 12px; width: auto; max-width: none; }
+.wk-panel.is-wide .wk-page { max-width: 900px; margin-inline: auto; }
 
 .wk-drop { position: absolute; inset: 12px; z-index: 5; display: grid; place-items: center; border-radius: 18px; border: 2px dashed var(--accent); background: color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter: blur(4px); pointer-events: none; animation: rise var(--dur-fast) var(--ease-out) both; }
 .wk-drop div { display: grid; justify-items: center; gap: 8px; color: var(--accent); }
@@ -9766,26 +9061,6 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 /* settings */
 .wk-settings { width: min(560px, 94vw); display: grid; gap: 4px; padding: 22px 24px 24px; background: var(--panel); border-radius: 18px; box-shadow: var(--shadow-lg), 0 0 0 1px var(--border); animation: pop var(--dur-base) var(--ease-out) both; max-height: 88vh; overflow-y: auto; }
 .wk-settings header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-/* The wiki's settings are a modal that scrolls its own box: the strip sticks at that box's top, and
-   the box keeps room under its last group so that group can reach the line like every other one. */
-.wk-settings > .settings-sections {
-  top: 0;
-  margin: 0 0 0;
-  padding-top: 0;
-}
-/* The row's own link padding would inset the first label from the dialog's title; the underline and
-   the divider that closes the row stay where the sections' own hairline runs. */
-.wk-settings > .settings-sections > a:first-child {
-  padding-left: 0;
-}
-/* The row's own hairline already closes it: the first group under it keeps no second one. */
-.wk-settings > .settings-sections + section {
-  border-top: 0;
-  padding-top: 6px;
-}
-.wk-settings {
-  padding-bottom: calc(24px + var(--settings-tail, 0px));
-}
 .wk-settings h2 { margin: 0; font-size: 19px; }
 .wk-settings section { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--border); }
 .wk-settings h4 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
@@ -9854,11 +9129,7 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .wk-finding__kind { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: color-mix(in srgb, var(--tone) 85%, var(--text)); }
 .wk-finding--calm .wk-finding__kind { color: var(--text-3); }
 .wk-finding__text { font-size: 14px; line-height: 1.55; }
-.wk-finding__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.wk-finding__actions .wk-handoff__agent { min-width: 172px; max-width: 220px; }
-.wk-finding__actions .wk-handoff__agent .select__trigger { height: 30px; font-size: 13px; }
-.wk-finding__note { display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
-.wk-finding__note svg { flex: none; margin-top: 2px; color: var(--text-3); }
+.wk-finding__actions { display: flex; gap: 8px; }
 .wk-finding .wiki-change { padding: 0; border: 0; box-shadow: none; background: transparent; }
 
 .wk-add { display: grid; gap: 10px; }
@@ -10101,11 +9372,11 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   }
 }
 /* A group's channels sit a step in, along a thin line, so it's clear where the group ends. */
-.channel-group > [draggable] {
+.channel-group > .channel-row {
   position: relative;
   padding-left: 14px;
 }
-.channel-group > [draggable]::before {
+.channel-group > .channel-row::before {
   content: '';
   position: absolute;
   left: 15px;
@@ -10114,7 +9385,7 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   width: 1px;
   background: var(--border-strong);
 }
-.channel-group > [draggable] .nav-item {
+.channel-group > .channel-row .nav-item {
   padding-left: 12px;
 }
 
@@ -10132,8 +9403,8 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .voice-setup__choices, .choices { display: grid; gap: 6px; width: 100%; }
 /* The two dictation model choices sit side by side until the card gets narrow. */
 .voice-setup__choices { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-/* Workspace name and the name agents use share one line, each with its own label. */
-.settings-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+/* The workspace's name and the name the agents use share one line, each with its own label. */
+.settings-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .settings-pair > .field { min-width: 0; margin-bottom: 0; }
 .voice-choice, .choice { display: grid; gap: 2px; width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); font: inherit; font-size: 13px; color: var(--text); text-align: left; cursor: pointer; }
 .voice-choice small, .choice small { color: var(--text-2); font-size: 12px; }
@@ -10143,12 +9414,12 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .voice-setup__bar i { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.25s; }
 .voice-setup__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .voice-on { display: grid; gap: 8px; }
-.voice-setup__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%; }
-.voice-setup__actions > .row { margin: 0; }
 .voice-on p { margin: 0; display: flex; align-items: center; gap: 6px; }
 /* The card doesn't space its children: the model's line, the microphone and Avançado get a gap here. */
 .voice-prefs { display: grid; gap: 14px; }
-/* Closed, the folded part keeps no room: the gap only between what shows when it's open. */
+.voice-setup__actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; width: 100%; }
+.voice-setup__actions > .row { margin: 0; }
+/* The microphone switch and Avançado share the line under the model choices. */
 .voice-prefs__row { display: flex; align-items: center; gap: 14px; }
 .voice-advanced__toggle { margin-left: auto; border: 0; background: none; padding: 0; cursor: pointer; }
 .voice-advanced__toggle::before { content: "› "; }
@@ -10163,6 +9434,28 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
 .catalog {
   display: grid;
   gap: 18px;
+}
+.catalog__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.catalog__cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.catalog__cats .chip {
+  cursor: pointer;
+}
+.catalog__cats .chip:not(.is-on):hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.catalog__count {
+  opacity: 0.6;
+  margin-left: 2px;
 }
 .catalog__search {
   display: flex;
@@ -10275,27 +9568,6 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   height: 36px;
   background: var(--bg);
   color: var(--text-2);
-}
-/* A connector's own picture: shown whole, whatever its shape, on the tile's own surface. */
-.catalog__logo--pic {
-  overflow: hidden;
-  background: var(--panel);
-}
-.catalog__logo--pic img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-/* The picture and the two buttons that change it, under the connector's state and address. */
-.connector-modal__icon {
-  gap: 8px;
-  margin-bottom: 10px;
-}
-/* The same tile in the steps that pick a connector: it brings its own surface, so the circle goes. */
-.onb-power-row__icon--tile {
-  width: auto;
-  height: auto;
-  background: none;
 }
 .catalog__state {
   display: flex;
@@ -13840,7 +13112,7 @@ button.agent-card__now:hover {
   flex-wrap: wrap;
   row-gap: 4px;
   /* In line with what the messages say: their column, past the face. */
-  max-width: 860px;
+  max-width: var(--chat-w);
   margin: 0 auto;
   padding: 6px 28px 6px 74px;
 }
@@ -14062,519 +13334,112 @@ button.agent-card__now:hover {
   .node-log__row { grid-template-columns: minmax(0, 1fr) auto; }
   .node-log__summary { grid-column: 1 / -1; }
 }
-/* ---------- Settings › Routing ---------- */
-/* The pools on the left, one pool's chain on the right: six destinations visible at once, one
-   editor in front of you. Widened past the other settings panes because a chain row carries a
-   harness, a model and a thinking level side by side. */
-.agent-form--wide {
-  max-width: 980px;
-}
-.routing {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.routing__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.routing__title {
-  margin: 0 0 2px;
-  font-size: 17px;
-  font-weight: 600;
-}
-.routing__status {
-  flex: none;
-  padding: 3px 9px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-3);
-  font-size: 12px;
-}
-.routing__status.is-on {
-  border-color: transparent;
-  background: var(--ok-soft);
-  color: var(--ok);
-}
-.routing__body {
-  display: grid;
-  /* 184px, not 168: "Tier 5 · Ultra premium" needs 122px of label beside the 18px badge, and a
-     name that clips is worse than 16px of the editor's width. */
-  grid-template-columns: 184px minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
-}
-.routing__rail {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  /* Flush: the row is the selection, not a box inside a box. The old rail's 6px padding made the
-     2px accent bar float against nothing; nobody gets to line up against nothing. */
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-.routing__pool {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  /* One line per pool: the count lives in the badge at the right, not in a second row under the
-     name, so six pools and the editor beside them cost 36px a row instead of 52. */
-  height: 36px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--text-2);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out);
-}
-.routing__pool:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-/* The same warm wash as the role pills right below it: selected reads as colour, not as elevation,
-   and there is no stripe to misalign. */
-.routing__pool.is-active {
-  background: var(--accent-soft);
-}
-/* The accent pulled 28% toward the ink, measured, not guessed: the raw accent on its own wash is
-   3.03:1 in the light theme, and the selected row has to be the easiest to read, not the hardest.
-   72/28 measures 4.65:1 light and 7.7:1 dark, over the wash the row actually paints. */
-.routing__pool.is-active .routing__pool-name {
-  color: color-mix(in srgb, var(--accent) 72%, var(--text));
-  font-weight: 600;
-}
-.routing__pool-name {
-  font-size: 13px;
-  font-weight: 500;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* The count is a circle at the right end of the row: dial geometry fixed at 18px, so the badge
-   sits at the same x on every row and the label never has to be short to make room for it. */
-.routing__pool-count {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  /* Translucent, so it reads on the row's own background in all three states (idle, hover,
-     selected) without needing one fill per state. */
-  background: color-mix(in srgb, var(--text) 9%, transparent);
-  color: var(--text-2);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-/* An empty chain is a ring with a 0 in it: same footprint, quieter, and the number is not a lie. */
-.routing__pool-count.is-empty {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--border);
-  /* Not --text-3: a 0 on the bare row measures 3.33:1 at 11px, under the floor. */
-  color: var(--text-2);
-  font-weight: 500;
-}
-.routing__pool:hover .routing__pool-count {
-  color: var(--text);
-}
-.routing__pool.is-active .routing__pool-count {
-  /* The badge keeps the raised surface instead of another tint of the wash: a number tinted into the
-     wash it sits on measured 4.37:1, and the count is 11px. Panel under the same accent mix is 5.7:1. */
-  background: var(--panel);
-  color: color-mix(in srgb, var(--accent) 72%, var(--text));
-}
-.routing__editor {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-  padding: 18px 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--panel);
-}
-.routing__roles {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-.routing__role {
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-2);
-  font-size: 12px;
-  cursor: pointer;
-}
-.routing__role:hover {
-  background: var(--hover);
-}
-.routing__role.is-active {
-  border-color: transparent;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 500;
-}
-.routing__role-more {
-  min-width: 130px;
-}
-.routing__pool-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.routing__chain {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.route-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-/* A step in a chain is a small card: the number and the three buttons on one line, then the harness,
-   the model and the thinking one under the other, each as wide as the card. A third of a row cuts a
-   model's name and its note short, and a list of cut-off names is a list of guesses. */
-.route-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--bg);
-}
-.route-row__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 22px;
-}
-.route-row__fields,
-.route-add__fields {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-/* `.grow` belonged to the horizontal row: in a column it stretched the model field down the card and
-   left the thinking line a hundred pixels below it, so every field keeps its own height and the card is
-   as tall as its three lines. */
-.route-row__fields > .select,
-.route-add__fields > .select {
-  flex: 0 0 auto;
-}
-.route-list > .route-row {
-  flex: 0 0 auto;
-}
-.route-row__n {
-  color: var(--text-3);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-.route-row__actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-.route-row__down .icon {
-  transform: rotate(180deg);
-}
-.route-row__actions .icon-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.routing__chain-head {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-/* Each line takes the column: the note ran beside the title as a narrow strip that read as a label. */
-.routing__chain-head > strong,
-.routing__chain-head > span {
-  width: 100%;
-}
-.route-add {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding-top: 4px;
-}
-/* The shared Select is width:100% by design, and here it keeps it: the card is the line. */
-.route-row__fields > .select,
-.route-add__fields > .select {
-  width: 100%;
-}
 
-/* ---------- the thin line over a reply ---------- */
-.route-line {
-  margin: 0 0 6px;
+/* What the model is thinking, apart from what it said: dim, small, under the steps it belongs to
+   and above anything the reply offers at its bottom. Open and scrolling itself while it arrives, so
+   a long reply can be studied while it is being written; folded to the line it is on once it is over,
+   and, opened again, read in full in the page instead of a box inside a box. */
+.thought {
+  /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
+     border, so the rail runs unbroken from the steps into the reasoning under them. Without the
+     3px the thought's line stood a hair to the left of the one above it, and the two read as one
+     line drawn twice. */
+  margin: 6px 0 0 3px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  color: var(--text-3);
   font-size: 12px;
-  color: var(--text-2);
+  line-height: 1.55;
 }
-.route-line__row {
+.thought__head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
-  min-height: 32px;
-  padding: 4px 6px 4px 0;
+  min-width: 0;
+  padding: 1px 0;
   border: 0;
-  background: transparent;
+  background: none;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
-.route-line__row:hover .route-line__chev {
+.thought__head:hover {
   color: var(--text-2);
 }
-.route-line__jev {
-  flex: none;
-  padding: 1px 6px;
-  border-radius: 5px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.thought__head svg {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: transform var(--dur-base) var(--ease-out);
 }
-.route-line__role {
-  color: var(--text);
-  font-weight: 500;
+.thought__head[aria-expanded='true'] svg {
+  transform: rotate(90deg);
 }
-.route-line__pool {
-  color: var(--text-2);
-}
-.route-line__arrow {
-  color: var(--text-3);
-}
-.route-line__model {
-  color: var(--text);
-}
-.route-line__thinking,
-.route-line__state {
-  color: var(--text-3);
-}
-.route-line__chev {
-  display: inline-flex;
-  color: var(--text-3);
-  transform: rotate(0deg);
-  transition: transform 180ms ease;
-}
-.route-line.is-open .route-line__chev {
-  transform: rotate(180deg);
-}
-.route-line__why {
-  margin: 0 0 4px;
-  color: var(--warn);
-}
-.route-line__detail {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--bg);
-}
-.route-line__group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 180px;
-}
-.route-line__label {
-  color: var(--text-3);
-  font-size: 11px;
+.thought__label {
+  flex-shrink: 0;
+  font: 600 10px/1.4 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  opacity: 0.7;
 }
-.route-line__group ul,
-.route-line__attempts {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  padding: 0 0 0 14px;
-}
-.route-line__warn {
-  color: var(--warn);
-}
-
-/* One bar for what Jev read: complexity and capability weighted together, with the reasoning bonus
-   the core applies, so its length is the demand the tier name beside it comes from. */
-.route-demand {
-  display: inline-block;
-  flex: none;
-  width: 76px;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--border-strong);
+.thought__last {
+  min-width: 0;
   overflow: hidden;
-}
-.route-demand__fill {
-  /* The accent held back a fifth toward the ink, measured against the track it is drawn on: the raw
-     accent on --border-strong is 2.61:1 in the light theme, under the 3:1 a graphic that carries a
-     value has to meet. 80/20 measures 3.53:1 light and 5.71:1 dark. */
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--accent) 80%, var(--text));
-  transition: width 180ms ease;
-}
-/* The three criteria and their sum, only once the line is opened. */
-.route-scores {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin: 2px 0 4px;
-}
-.route-scores__row {
-  display: grid;
-  grid-template-columns: 96px 64px 44px;
-  align-items: center;
-  gap: 8px;
-}
-.route-scores__label {
-  color: var(--text-2);
-  font-size: 11px;
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 0.8;
 }
-.route-scores__track {
-  display: block;
-  height: 5px;
-  border-radius: 3px;
+.thought__text {
+  max-height: 9.5em;
+  overflow-y: auto;
+  /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar
+     on the box whenever a line of reasoning had nowhere to wrap. */
+  overflow-x: hidden;
+  padding: 1px 0 2px;
+  white-space: pre-wrap;
+  /* A path or an address in the model's thinking has no space to break at: it wraps onto the next
+     line instead of pushing the column wider and leaving a horizontal scrollbar in a thread. */
+  overflow-wrap: anywhere;
+  opacity: 0.85;
+  /* Down only, and with the same dim scrollbar the rest of the app wears: the rules under this block
+     draw it in `--border-strong`, as the window's own do. (the standard `scrollbar-*`
+     properties are deliberately left unset: in Chromium they take precedence over `::-webkit-scrollbar`
+     and hand the box back to the overlay bar, which is only there while the wheel turns.) The fade that used to sit over the last line was
+     a `mask-image` on the whole box — scrollbar included — which is why nothing scrolled visibly in
+     it: the bar was there and painted away. */
+}
+.thought__text::-webkit-scrollbar {
+  width: 8px;
+}
+.thought__text::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thought__text::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-clip: content-box;
 }
-.route-scores__fill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: var(--text-2);
+.thought__text::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+  background-clip: content-box;
 }
-.route-scores__value {
-  color: var(--text-3);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
+.thought:not(.is-working) .thought__text {
+  max-height: none;
+  overflow: visible;
+  mask-image: none;
 }
-.route-scores__row--sum .route-scores__label {
-  color: var(--text);
-  font-weight: 600;
+/* A cursor on the line it is writing: it is arriving now, not read back later. */
+.thought__caret {
+  display: inline-block;
+  width: 5px;
+  height: 11px;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: thought-caret 1.1s steps(1, end) infinite;
 }
-.route-scores__row--sum .route-scores__fill {
-  background: color-mix(in srgb, var(--accent) 80%, var(--text));
-}
-.route-scores__row--sum .route-scores__value {
-  color: var(--text-2);
-}
-@media (max-width: 900px) {
-  .routing__body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .routing__rail {
-    flex-direction: row;
-    gap: 4px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .routing__pool {
-    flex: none;
-  }
-}
-
-/* ---------- What a person sees (PersonAccess.tsx) ---------- */
-.modal__card.access-dialog { width: min(580px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; }
-.access { display: flex; flex-direction: column; gap: 20px; }
-.access :where(button) { border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; background: none; }
-.access-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 1.5; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
-.access-chip--all { background: var(--ok-soft); color: var(--ok); }
-.access-cover-hint { margin: 4px 0 8px; color: var(--text-2); }
-.access-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.access-mode { display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid var(--border-strong); border-radius: var(--radius); padding: 12px 14px; }
-.access-mode.is-on { border-color: var(--accent); background: var(--accent-soft); }
-.access-mode__text { display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
-.access-mode__text > span { font-size: 13px; color: var(--text-2); }
-.access-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border-strong); flex: none; margin-top: 1px; display: grid; place-items: center; }
-.access-mode.is-on .access-radio { border-color: var(--accent); }
-.access-mode.is-on .access-radio::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-.access-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-.access-hint { font-size: 12.5px; color: var(--text-3); margin-bottom: 10px; line-height: 1.4; }
-.access-empty { margin: 0; padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-3); font-size: 13px; text-align: center; }
-.access-box { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; flex: none; font-size: 12px; font-weight: 700; line-height: 1; }
-.access-box--on, .access-box--part { background: var(--accent); border-color: var(--accent); color: #fff; }
-.access-sector { border: 1px solid var(--border); border-radius: var(--radius); }
-.access-sector + .access-sector { margin-top: 8px; }
-.access-sector__head { display: flex; align-items: center; }
-.access-sector__check { padding: 11px 0 11px 14px; display: flex; }
-.access-sector__open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 11px 14px; }
-.access-sector__name { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.35; }
-.access-sector__name > span { font-size: 12.5px; color: var(--text-3); }
-.access-count { font-size: 12.5px; color: var(--text-3); white-space: nowrap; }
-.access-chev { color: var(--text-3); display: grid; transform: rotate(-90deg); transition: transform 0.15s; }
-.access-chev.is-open { transform: none; }
-.access-agents { border-top: 1px solid var(--border); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-.access-agent { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px; line-height: 1.3; min-width: 0; }
-.access-agent.is-on { background: var(--accent-soft); }
-.access-agent__text { display: flex; flex-direction: column; min-width: 0; }
-.access-agent__text > span { font-size: 12.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.access-channels { display: flex; flex-wrap: wrap; gap: 8px; }
-.access-channel { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px 6px 10px; line-height: 1.3; }
-.access-channel.is-on { border-color: var(--accent); background: var(--accent-soft); }
-.access-result { border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; line-height: 1.45; }
-.access-no { color: var(--text-3); font-size: 13px; }
-.access-fine { margin: 0; font-size: 12.5px; color: var(--text-3); line-height: 1.4; }
-.access button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (max-width: 560px) { .access-modes, .access-agents { grid-template-columns: 1fr; } }
-
-/* A server it's paired with, and under it whether this computer is lent to it, with how the line is doing. */
-.server-row + .server-row { border-top: 1px solid var(--border); }
-.server-lend { display: flex; align-items: flex-start; gap: 10px; margin: -2px 0 10px 30px; }
-.server-lend .toggle { flex: none; margin-top: 1px; }
-.server-lend p { margin: 2px 0 0; }
-.server-lend__state.is-ok { color: var(--ok, var(--text-2)); }
-.server-lend__state.is-bad { color: var(--danger); }
-/* What this computer lends (NodeCard): folders, apps, and what the servers ran here. */
-.node-card { display: grid; gap: 10px; }
-.node-card__apps { display: grid; gap: 8px; margin-top: 6px; }
-.node-card__apps > p { margin: 0; }
-.node-card__path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.node-card__twice { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 12px; padding: 10px 12px; border-radius: var(--radius); background: var(--warn-soft); font-size: 12.5px; line-height: 1.45; }
-.node-card__twice > span { flex: 1 1 260px; }
-/* What the server ran here: time, tool, what it ran, ok or error. Wraps under the time on a narrow window. */
-.node-log__head { display: flex; align-items: center; gap: 8px; }
-.node-log { display: grid; max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
-.node-log__row { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: baseline; gap: 4px 10px; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 12px; }
-.node-log__row:last-child { border-bottom: 0; }
-.node-log__summary { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
-.node-log__error { grid-column: 1 / -1; color: var(--danger); overflow-wrap: anywhere; }
-@media (max-width: 720px) {
-  .node-log__row { grid-template-columns: minmax(0, 1fr) auto; }
-  .node-log__summary { grid-column: 1 / -1; }
-}
-
 @keyframes thought-caret {
   0%,
   49% {
@@ -15062,7 +13927,7 @@ button.agent-card__now:hover {
 /* Runs in a row of one routine that found nothing new: one line in the text column, a row per run when open. */
 .no-news {
   width: 100%;
-  max-width: 860px;
+  max-width: var(--chat-w);
   margin: 0 auto;
   padding: 3px 28px 3px 74px;
 }
@@ -15442,8 +14307,7 @@ button.agent-card__now:hover {
   line-height: 1.4;
   color: var(--text-3);
 }
-/* The foot: the update note when there is one, then Enviar feedback, Conectores and the Cofre as three
-   rows of one shape, the Cofre sharing its row with the Settings gear. */
+/* The foot: the update note when there is one, then Conectores by name and the Settings gear. */
 .sidebar__foot:empty {
   display: none;
 }
@@ -15469,12 +14333,6 @@ button.agent-card__now:hover {
   color: var(--text-2);
   font-size: 13px;
   text-align: left;
-}
-/* A row of the foot takes its 30px from the row below, not from the space left over: `flex: 1` is
-   there for the Cofre filling the row it shares with the gear, and a column would read it as a
-   zero basis and shrink the row to its text (20px), which is what made the three rows differ. */
-.sidebar__foot-rows > .sidebar__tool {
-  flex: none;
 }
 .sidebar__tool:hover, .sidebar__tool.is-active { background: var(--hover); color: var(--text); }
 .sidebar__gear { color: var(--text-2); }
@@ -15542,10 +14400,10 @@ button.agent-card__now:hover {
   background: var(--hover);
   color: var(--text);
 }
-/* Room for the gear on hover: the row's own cells make way then, so at rest they end where a channel's
-   do, laptop or no laptop. */
+/* Room for the gear on hover. A row with the laptop (last in it) keeps that room always, so the gear coming doesn't push the laptop. */
 .agent-row:hover > .nav-item,
-.agent-row:focus-within > .nav-item {
+.agent-row:focus-within > .nav-item,
+.agent-row:has(.nav-item__mac) > .nav-item {
   padding-right: 32px;
 }
 .agent-row__gear {
@@ -15561,8 +14419,6 @@ button.agent-card__now:hover {
   opacity: 1;
   pointer-events: auto;
 }
-/* The laptop is the row's own last cell, so it ends where a channel's cells end and only makes way, with
-   the rest, for the gear's room on hover. */
 .agent-row .nav-item__mac {
   color: var(--text-3);
 }
@@ -15680,47 +14536,10 @@ button.agent-card__now:hover {
   font-size: 14px;
   color: var(--text-2);
 }
-.hub__tabs-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 20px;
-  margin-top: 18px;
-}
-/* The page's own controls, drawn in the tab row: the taxonomy, the search, the settings gear and the
-   New page button sit beside the tabs they act on, above the hairline, instead of in a band of their
-   own under it. The row is the only place the tabs and the tools meet, so the hairline stays one. */
-.hub__tools {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-}
-.hub__tools:empty {
-  display: none;
-}
-.hub__tools-note {
-  font-size: 12.5px;
-  color: var(--text-3);
-  white-space: nowrap;
-}
-/* Narrow, the count line is the first thing to go: the controls are what the row is for. */
-@media (max-width: 1080px) {
-  .hub__tools-note {
-    display: none;
-  }
-}
-/* Inside a hub the page starts at the hairline: the stage had a border of its own, one line below the
-   hub's, and the canvas began under both. */
-.is-in-hub .wk-stage {
-  border-top: 0;
-}
 .hub__tabs {
-  flex: 1 1 auto;
   display: flex;
   gap: 24px;
-  margin-top: 0;
-  min-width: 0;
+  margin-top: 18px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -17173,10 +15992,6 @@ button.agent-card__now:hover {
   gap: 26px;
   max-width: 760px;
 }
-/* The Routing pane carries more per row than the other panes: it gets the wider column. */
-.agent-sections--wide {
-  max-width: 980px;
-}
 /* A section: its title (and "?"), then its rows in one box. */
 .lgroup__head {
   display: flex;
@@ -17191,6 +16006,41 @@ button.agent-card__now:hover {
 }
 .lgroup__aside {
   margin-left: auto;
+}
+.lgroup__lead {
+  margin: -2px 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+/* "Onde trabalha": one row per place an agent may work, the server and each lent computer. */
+.where-row__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--hover);
+  color: var(--text-2);
+}
+.where-row__dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 1px 1px 2px;
+  border-radius: 50%;
+  background: var(--text-3);
+  vertical-align: middle;
+}
+.where-row__dot.is-on {
+  background: var(--ok);
+}
+.where-foot {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
 }
 .lgroup__box {
   border: 1px solid var(--border);
@@ -17410,614 +16260,6 @@ button.agent-card__now:hover {
 .computer-body > .computer:first-child {
   margin-top: 0;
 }
-
-/* The agent's save state at the tabs' right end, once its head scrolled away. */
-.tabs__aside {
-  margin-left: auto;
-  padding: 0 4px 2px;
-}
-@media (max-width: 760px) {
-  .lrow {
-    flex-wrap: wrap;
-  }
-  .lrow__ctl {
-    max-width: 100%;
-  }
-  .lrow--field .lrow__key {
-    width: 84px;
-  }
-}
-
-
-/* ---------- the chain: what a reply is doing, what it is thinking, and the way on from it ----------
-   The fork's send/steer/follow-up and steps UI, on 0.2.37's own components: the line, the list, the
-   handle that folds it, the reasoning under it, and the pill that acts on a reply that is running.
-   Properties here are the base's own, with the layout they need to shrink and ellipsize added. */
-
-/* The reply's footer line holds the follow up pill first, then the numbers: one row, centred, so a
-   22 px pill and 12 px text share a band instead of hanging from a text baseline. */
-.msg__meta {
-  align-items: center;
-  row-gap: 6px;
-}
-
-.steps__header {
-  display: flex;
-  align-items: center;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.steps__toggle {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  gap: 7px;
-  padding: 3px 9px 3px 7px;
-  margin-left: -7px;
-  border-radius: 8px;
-  color: var(--text-3);
-  transition: var(--transition-ui);
-}
-
-.steps__toggle:hover {
-  background: var(--hover);
-  color: var(--text-2);
-}
-
-.steps__chev {
-  display: inline-flex;
-  flex: none;
-  transition: transform var(--dur-base) var(--ease-out);
-}
-
-/* Done: the label crossfades from the shimmer to the count, the chevron comes back. */
-.steps__chev,
-.steps__summary,
-.steps__failed {
-  animation: fade var(--dur-base) var(--ease-out) backwards;
-}
-
-.steps.is-open .steps__chev {
-  transform: rotate(90deg);
-}
-
-/* Finished: the pulse becomes a green check, with a small bounce. */
-.steps__done {
-  display: inline-flex;
-  color: var(--ok);
-  --pop-scale: 0.5;
-  --pop-y: 0;
-  animation: pop var(--dur-enter) var(--ease-spring) backwards;
-}
-
-.steps__pulse,
-.steps__done {
-  flex: none;
-}
-
-.steps__activity,
-.steps__summary,
-.steps__now {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.steps__now {
-  flex: 0 1 320px;
-  min-width: 3ch;
-  max-width: 320px;
-  font-size: 11.5px;
-  color: var(--text-3);
-}
-
-.steps__toggle:has(.steps__now) .steps__activity {
-  min-width: 4ch;
-  max-width: 40%;
-}
-
-/* The line beside the steps is a handle: a double-click on it folds them, from wherever the run has
-   scrolled to. Its hit area is 18 px over a 2 px line, centred on it, and it stops short of the step
-   icons (the list's own padding), so nothing a person reads is under it. */
-.steps__body {
-  position: relative;
-}
-
-.steps__rail {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -5px;
-  width: 18px;
-  padding: 0;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  cursor: pointer;
-  /* Above the list: it animates in with `rise`, and an animated transform makes a stacking context
-     of its own, which would otherwise sit over the handle and eat the double-click. */
-  z-index: 1;
-  transition: background-color var(--dur-base) var(--ease-out);
-}
-
-/* Hovering or focusing the handle lights the line it sits on, so it reads as something to press. */
-.steps__rail:hover,
-.steps__rail:focus-visible {
-  background: var(--hover);
-  outline: none;
-}
-
-.steps__rail:hover + .steps__list,
-.steps__rail:focus-visible + .steps__list {
-  border-left-color: var(--accent);
-}
-
-/* The latest few (Settings › General): a window that keeps itself at the bottom, the older steps
-   fading into the top edge instead of pushing the new ones off the message. */
-.steps--latest .steps__list {
-  max-height: 232px;
-  /* Down only: this window is the one the app draws a bar on, and a step is wrapped where it stands
-     rather than pushed sideways (a long path or a URL used to add a sideways bar to a two-line box). */
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
-}
-
-/* Every part of a step stays inside the window's width: the label wraps, and a token with no spaces
-   (a path, a URL) breaks instead of widening the row. */
-.steps--latest .step {
-  min-width: 0;
-}
-.steps--latest .step__label,
-.steps--latest .step__detail,
-.steps--latest .step__note,
-.steps--latest .step__output,
-.steps--latest .steps__now {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-/* The three ways a reply can show its steps (Settings › General, and an agent's own page):
-   four buttons on a wide window, two lines of two on a narrow one. */
-.steps-pick {
-  flex-wrap: wrap;
-  gap: 2px;
-}
-
-.steps-pick button {
-  flex: 1 1 auto;
-}
-
-/* The number under the choices, only while the window is the chosen one. */
-.steps-keep {
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.steps-keep input {
-  width: 72px;
-}
-
-.steps__earlier {
-  padding: 2px 0 4px;
-  color: var(--text-3);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.step--fading {
-  transition: opacity var(--dur-base) var(--ease-out);
-}
-
-/* The pill under the chain: a steer while the agent works, a follow up once the reply has ended.
-   Small, dim, out of the way until it's wanted, and lined up with the steps' own rail above it. */
-.steps__ask {
-  display: grid;
-  gap: 8px;
-  margin: 2px 0 4px 3px;
-  padding-left: 14px;
-}
-
-/* Under the thinking block the pill is the last thing in the chain, so it keeps a gap from the box above
-   it instead of sitting on the box's border. */
-.thought + .steps__ask {
-  margin-top: 6px;
-}
-
-/* The follow up pill rides the reply's own footer — the line that fades in under a finished answer,
-   first in it, before the receipt. So it comes in with that line: a reply that has ended shows its
-   answer, not a button, and a hover (or a tab to it) brings the way to go on with the numbers. */
-.msg__meta .steps__ask--reply {
-  flex: 0 0 auto;
-  margin: 0;
-  padding: 0;
-  gap: 8px;
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-
-.msg:hover .msg__meta .steps__ask--reply,
-.msg__meta .steps__ask--reply:focus-within,
-.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
-  opacity: 1;
-}
-
-/* Open, the field needs the row: the pill keeps its place and the receipt goes under it. */
-.msg__meta .steps__ask--reply:has(.steps__ask-pill[aria-expanded='true']) {
-  flex: 1 1 100%;
-}
-
-/* The reply's last row while it is at work: the pause beside the steer pill. Both say something about
-   a reply that is running; under the thinking block the row keeps a gap from the box above it, as the
-   steer pill alone did. */
-.steps__hold {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 2px 0 4px 3px;
-  padding-left: 14px;
-}
-
-.thought + .steps__hold {
-  margin-top: 6px;
-}
-
-.steps__hold .steps__ask {
-  margin: 0;
-  padding: 0;
-  flex: 0 0 auto;
-}
-
-/* Open, only the field takes the row: Pause and the steer pill keep the row they are on, and the field
-   goes under the two of them, from the chain's left edge to its right one. The wrapper is dissolved so
-   its pill and its field are the row's own items: left whole, the field's box took the row and carried
-   the pill down with it, which read as a wrap. Left to itself the note took the width of the textarea's
-   own twenty columns — 200 px, a phone's field, in a 600 px chain. */
-.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) {
-  display: contents;
-}
-
-.steps__hold .steps__ask:has(.steps__ask-pill[aria-expanded='true']) .steps__ask-note {
-  flex: 1 1 100%;
-  width: 100%;
-  max-width: none;
-}
-
-.steps__hold .steps__ask-pill[disabled] {
-  opacity: 0.55;
-  cursor: default;
-}
-
-/* A paused reply: letting it go on is the one thing to do there, so it reads as the choice. */
-.steps__ask-pill--go {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.steps__ask-pill {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 22px;
-  padding: 0 10px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-3);
-  font-size: 11.5px;
-  /* A label on a pill is one line wherever the pill is drawn: a wrapped one reads as two buttons. */
-  white-space: nowrap;
-  transition: var(--transition-ui);
-}
-
-.steps__ask-pill:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--hover);
-}
-/* A phone's row spends its width on the reply's own words: a pill that carries a glyph drops its word
-   and keeps the glyph, which is the whole of what it does (Follow, Continue, Try again, Pause, Resume).
-   The one pill with no glyph keeps its words — it has nothing else to be read by — and every dropped
-   word stays as the button's aria-label, so a screen reader still says it. */
-@media (max-width: 760px) {
-  .steps__ask-pill__word {
-    display: none;
-  }
-}
-/* The way on from a reply that stopped — Continue and Try again under a dead session: the same pill
-   Follow Up is, in its dim colour, and only under the pointer. A row that ended badly reads as its
-   words and its numbers until someone goes near it, and the one thing it owes them is there when they
-   do. It keeps its space while hidden, so nothing below it jumps when it appears. */
-.msg__hire {
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-.msg:hover .msg__hire,
-.msg:focus-within .msg__hire {
-  opacity: 1;
-}
-/* A touch screen has no pointer to hover with: there, the pill is simply there. */
-@media (hover: none) {
-  .msg__hire {
-    opacity: 1;
-  }
-}
-/* The three ways on from a dead reply share the one row under it, in this order: Continue, then Try
-   again, then Follow Up. Try again used to sit on a band of its own above that row, which read as a
-   banner with two buttons under it; now the row is the reply's whole answer to "what now". None of
-   them carries a top margin here: the row has the air, the pill doesn't. */
-.msg__meta .msg__hire {
-  margin-top: 0;
-}
-
-.steps__ask-note {
-  display: grid;
-  gap: 8px;
-  max-width: 520px;
-}
-
-.steps__ask-note textarea {
-  width: 100%;
-  min-height: 54px;
-  resize: vertical;
-}
-
-.steps__ask-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-/* What the person steered, in the chain: a call's own row, carrying their words whole. */
-.step--steer .step__icon {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-/* Their words, not a tool's arguments: the same row, in the font people read in. */
-.step--steer .step__input {
-  font-family: var(--font);
-  font-size: 12.5px;
-}
-
-/* A follow up, in the chain: the instruction a finished reply goes on with, not a tool call. */
-.step--followup {
-  flex-wrap: wrap;
-  row-gap: 2px;
-}
-
-.step--followup .step__icon {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.step__said {
-  flex-basis: 100%;
-  padding-left: 26px; /* under the label, past the icon */
-  color: var(--text-3);
-  font-size: 11.5px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  user-select: text;
-}
-
-/* The one line naming it, as the block was read in 0.2.36 — but the word alone: no chevron, nothing
-   to fold, and no background of its own. Small, dim and in full caps, and its left edge is the block's
-   text (3px of margin, the 2px rail, the 14px of padding the reasoning sits in), so the name and the
-   reasoning under it start on the same line. */
-.thought__head {
-  margin: 7px 0 0 19px;
-  color: var(--text-3);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  line-height: 1.1;
-  text-transform: uppercase;
-  user-select: none;
-}
-
-/* What the model is thinking, apart from what it said: dim, small, and scrolling itself as it
-   arrives, so a long reply can be studied while it is being written. Nothing but the name above it:
-   no chevron and no fold, and the block is the reasoning and nothing else. */
-.thought {
-  /* The block's line is the chain's line: `.steps__list` sits 3px in and carries the same 2px
-     border, so the rail runs unbroken from the steps into the reasoning under them. Without the
-     3px the thought's line stood a hair to the left of the one above it, and the two read as one
-     line drawn twice. */
-  margin: 3px 0 0 3px;
-  /* Settings › The conversation: how many lines show before it scrolls. Counted in lines rather
-     than in a fixed height, so the three sizes mean the same thing at any font size: 6, 12 and 18
-     lines, plus the 8px of padding above and below the text. The plain rule is the middle size, so
-     a copy that predates the setting looks the way it always did. */
-  --thought-lines: 12;
-  max-height: calc(var(--thought-lines) * 1.55em + 16px);
-  overflow-y: auto;
-  /* Down, never sideways: with only `overflow-y` set the browser computed a horizontal scrollbar on
-     the block whenever a line of reasoning had nowhere to wrap. */
-  overflow-x: hidden;
-  /* The text column is the chain's own: `.steps__list` sits 3px in, carries the same 2px border and
-     pads its rows 14px, so a step's row box and this block's text run from 423 to 1004 in a 1280
-     window — the same width. At 10px a side the reasoning read a hair narrower than the steps above
-     it, which is what it looked like. */
-  padding: 8px 0 8px 14px;
-  /* The scrollbar has a column of its own, past the text and never out of it: `::-webkit-scrollbar`
-     is 10px, so the block's box takes those 10px beyond the chain's column (`margin-right`) and the
-     text keeps ending where a step's row ends. `stable` reserves it whether or not the bar shows, so
-     the reasoning does not narrow the moment it starts to scroll. */
-  margin-right: -10px;
-  scrollbar-gutter: stable;
-  border-left: 2px solid var(--border);
-  border-radius: 0 8px 8px 0;
-  color: var(--text-3);
-  font-size: 12px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  /* The bar is the window's own — the global 10px thumb, dim, rounded — and it sits in the column
-     reserved above instead of over the reasoning. Only when the block is shorter than what it holds
-     does it appear; dragged no shorter than its text, it is not drawn at all. */
-}
-
-/* The size is a setting, so it rides on the block as data-size rather than as a class: the class
-   list stays `thought` plus the lifecycle's own, which is what the lifecycle tests read. */
-.thought[data-size='sm'] {
-  --thought-lines: 6;
-}
-
-.thought[data-size='md'] {
-  --thought-lines: 12;
-}
-
-.thought[data-size='lg'] {
-  --thought-lines: 18;
-}
-
-.thought__text {
-  /* A path or an address in the reasoning has no space to break at: it wraps onto the next line
-     instead of running past the box and asking for a sideways scroll, the rule `.md` already has. */
-  overflow-wrap: anywhere;
-  opacity: 0.85;
-}
-/* While it is arriving the newest line fades out at the bottom edge: the reasoning goes on under it
-   now that no scrollbar says so. Read back once the reply is over, nothing fades — the end is the
-   end, and a dimmed last line there reads as one cut off. */
-.thought.is-working .thought__text {
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent 100%);
-}
-
-/* A cursor on the line it is writing: it is arriving now, not read back later. */
-.thought__caret {
-  display: inline-block;
-  width: 5px;
-  height: 11px;
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  background: currentColor;
-  animation: thought-caret 1.1s steps(1, end) infinite;
-}
-
-/* The question still waiting, right above the field it will be answered in: it takes the composer's
-   own column, so the strip lines up with the box under it instead of the window's edges. */
-.ask-strip-wrap {
-  flex: none;
-  width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 0 28px;
-}
-@media (max-width: 720px) {
-  .ask-strip-wrap {
-    padding: 0 14px;
-  }
-}
-
-/* The strip itself: one line, the question in the middle and the way back at its end, so a long
-   reply never leaves the person scrolling to find what is waiting on them. */
-.ask-strip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  margin: 0 0 8px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text-2);
-  text-align: left;
-  font-size: 13px;
-}
-.ask-strip:hover {
-  border-color: var(--border-strong);
-}
-.ask-strip .icon {
-  color: var(--accent);
-  flex: none;
-}
-.ask-strip__who {
-  flex: none;
-  font-weight: 600;
-  color: var(--text);
-}
-.ask-strip__text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.ask-strip__count {
-  flex: none;
-  color: var(--text-3);
-  font-size: 12px;
-}
-.ask-strip__go {
-  flex: none;
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* Where a cleared history starts: the rows before it are still stored (receipts, approvals) and out
-   of the screen, so the conversation says where it begins instead of pretending it always was empty. */
-.messages__cleared {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 6px 0 14px;
-  color: var(--text-3);
-  font-size: 12px;
-  text-align: center;
-}
-.messages__cleared::before,
-.messages__cleared::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-/* Model pickers need their own row so the hint keeps its width and controls stay inside the dialog. */
-.wk-settings .wk-setting--model { flex-direction: column; align-items: stretch; gap: 8px; }
-.wk-settings .wk-setting--model > .wk-row { width: 100%; min-width: 0; }
-.wk-settings .wk-setting--model .model-picker { min-width: 0; }
-.wk-settings .wk-setting--model .model-picker > .select { flex: 1 1 180px; min-width: 0; }
-
-/* A right-click on a picture: the little menu of what can be done with it. Over the album (200), because
-   a picture opened full window is the one most likely to be right-clicked. */
-.image-menu {
-  position: fixed;
-  z-index: 260;
-  min-width: 236px;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.image-menu__item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 7px 9px;
-  border: 0;
-  border-radius: 7px;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 12.5px;
-  text-align: left;
-  cursor: pointer;
-}
 /* On a server: the person's lent computer, a block of its own under the choice (its own row divider). */
 .your-computer {
   display: flex;
@@ -18085,41 +16327,16 @@ button.agent-card__now:hover {
   margin-left: auto;
   padding: 0 4px 2px;
 }
-.image-menu__item:hover,
-.image-menu__item:focus-visible {
-  background: var(--hover);
-  outline: none;
-}
-.image-menu__item svg {
-  flex: none;
-  opacity: 0.6;
-}
-
-/* A session's name, beside the agent's own and before the time (src/core/titles.ts). Cut with an
-   ellipsis rather than wrap: the head line stays one line however long the model's name is. */
-.msg__session {
-  color: var(--text-2);
-  font-size: 12px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* A work row's session name, before the prompt it answers (src/core/titles.ts): the name in the row's
-   own colour, the prompt under it dimmed. The name gives way first on a narrow field, so a row stays
-   one line however long the model's name is. */
-.work-row__name {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-}
-.work-row__text {
-  color: var(--text-2);
+@media (max-width: 760px) {
+  .lrow {
+    flex-wrap: wrap;
+  }
+  .lrow__ctl {
+    max-width: 100%;
+  }
+  .lrow--field .lrow__key {
+    width: 84px;
+  }
 }
 
 /* The logins saved for an agent's browser, in its browser card. */
@@ -18246,24 +16463,6 @@ button.agent-card__now:hover {
   width: 100%;
   font: 12.5px/1.5 var(--mono);
 }
-.vault-import__lines .table__row {
-  flex-wrap: wrap;
-  align-items: baseline;
-}
-/* A browser's export can carry an address of any length, and the reason it stays out can be a
-   sentence. The address shortens with an ellipsis and the state takes the row's second line, so no
-   two of them are ever drawn over each other. */
-.vault-import__lines .table__row > code {
-  flex: 1 1 160px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.vault-import__lines .vault-import__state {
-  flex: 0 0 auto;
-  margin-left: auto;
-}
 .vault-agent .hint {
   margin-top: 8px;
 }
@@ -18283,13 +16482,6 @@ button.agent-card__now:hover {
   max-width: 460px;
   margin: 0;
 }
-/* The settings section rail wraps instead of running past the panel: at 900 px its nine sections
-   measure 913 px inside a 570 px box, and a flex row that cannot wrap leaves the last of them
-   outside it. Nothing scrolls, because the row has no scroll container. */
-.settings-sections {
-  flex-wrap: wrap;
-}
-
 @media (max-width: 640px) {
   .vault-key {
     flex-wrap: wrap;
@@ -18298,3 +16490,55 @@ button.agent-card__now:hover {
     display: none;
   }
 }
+
+/* The agent card: a computer lent to the server that the agent uses, and whether it's on now. */
+.agent-card__lent {
+  display: grid;
+  gap: 2px;
+}
+.agent-card__lent > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.agent-card__live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-3);
+  opacity: 0.6;
+  flex: none;
+}
+.agent-card__live.is-on {
+  background: var(--ok);
+  opacity: 1;
+}
+
+/* Above a DM's field, while a computer its agent uses is off: one quiet line, tucked against the field. */
+.computer-off {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 10px -8px;
+  padding: 8px 12px 14px;
+  border-radius: 12px 12px 0 0;
+  background: var(--hover);
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.computer-off .icon {
+  flex: none;
+  color: var(--text-3);
+}
+.computer-off b {
+  font-weight: 500;
+  color: var(--text);
+}
+.computer-off .text-btn {
+  white-space: nowrap;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
