@@ -1,0 +1,18 @@
+{
+  "before": {
+    "blockLeft": 55,
+    "headLeft": 84,
+    "labelLeft": 100,
+    "chevronLeft": 84,
+    "reasoningLeft": 65,
+    "labelText": "Thought"
+  },
+  "after": {
+    "blockLeft": 55,
+    "headLeft": 65,
+    "labelLeft": 65,
+    "chevronLeft": 119,
+    "reasoningLeft": 65,
+    "labelText": "Thinking"
+  }
+}
