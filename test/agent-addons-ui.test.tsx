@@ -54,9 +54,9 @@ describe('the extensions an agent’s browser can carry', () => {
   it('draws one row for each, with what it fixes and its own switch off', async () => {
     await render()
     expect(rows().map((r) => r.querySelector('strong')?.textContent)).toEqual(['uBlock Origin Lite', "I still don't care about cookies", 'Consent-O-Matic'])
-    expect(rowOf('uBlock Origin Lite').textContent).toContain('Takes the ads off the page')
-    expect(rowOf("I still don't care about cookies").textContent).toContain('Closes the cookie notice by itself')
-    expect(rowOf('Consent-O-Matic').textContent).toContain('Answers the consent dialog')
+    expect(rowOf('uBlock Origin Lite').textContent).toContain('Removes ads from pages.')
+    expect(rowOf("I still don't care about cookies").textContent).toContain('Closes cookie notices automatically.')
+    expect(rowOf('Consent-O-Matic').textContent).toContain('Handles consent dialogs')
     for (const row of rows()) expect(row.querySelector('button.toggle')?.getAttribute('aria-checked')).toBe('false')
     // Nothing is downloading, so nothing says it is.
     expect(document.body.textContent).not.toContain('Downloading')
@@ -98,7 +98,7 @@ describe('the extensions an agent’s browser can carry', () => {
     settings = { ...base, browserAddOns: { ads: true }, addOns: { browser: { state: 'preparing', progress: { received: 50, total: 200 } }, extensions: { ads: { state: 'preparing' } } } }
     await render()
     expect(document.body.textContent).toContain('Downloading Chrome for Testing · 25%')
-    expect(rowOf('uBlock Origin Lite').textContent).toContain('Downloading — it joins the next session’s browser.')
+    expect(rowOf('uBlock Origin Lite').textContent).toContain('Downloading for the next browser session.')
 
     settings = { ...base, browserAddOns: { ads: true }, addOns: { browser: { state: 'failed', error: 'The Chrome for Testing list answered 500.' }, extensions: { ads: { state: 'ready' } } } }
     await render()
