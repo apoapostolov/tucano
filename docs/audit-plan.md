@@ -8,6 +8,15 @@ and delivery. Historical checklists are preserved in [the previous plan](audit-p
 
 ## Current position
 
+22 November copy delivery: phase-2 English PR #622 merged as `e44b6882` with 190
+replacements after five composer strings were superseded by #626. The nine newer
+concurrency/server strings are isolated in [#628](https://github.com/eduwxyz/tucano/pull/628),
+with eight paired frames. TucanoNext 0.2.44 is installed and freshly verified: 72 native
+captures, zero layout errors at DPR 1.5. The copy registry passes with 634 approved
+occurrences and no regressions or unfamiliar variants. Build/install and push gates are
+enabled. See [the scoped delivery record](strings-audit-2026-11-22/phase2-plan.md).
+This does not complete the broader audit or certify parity with newer upstream main.
+
 **TucanoNext 0.2.35 is built, installed and freshly verified** from source `3d0d7b9b`.
 It combines the late published/local next commits, the installed secondary-boss preview,
 upstream 0.2.35 and the Windows Hermes import repair in upstream #512. The shortened boss hint

@@ -192,6 +192,7 @@ function typecheck() {
 // It runs before every build and install, on its own: --no-typecheck skips the slow passes, never this one.
 // Its last line goes into the report, so the record of an install says the check ran and what it found.
 function copyGate() {
+  run('node scripts/maintain-english-copy.mjs check', 'typecheck')
   return run('node scripts/check-english-copy.mjs --source', 'typecheck').trim().split('\n').pop()
 }
 

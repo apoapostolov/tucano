@@ -102,13 +102,10 @@ ordinary check. Use `--base` during ingestion to expose additions instead of cla
 the existing registry covers a new feature. Ten ambiguous historical keys and eleven retired
 keys were deliberately excluded from the initial seed rather than guessed.
 
-The `Approved English` workflow is manual on `next` for now: it runs the safety tests and the
-registry check when dispatched. The check is not wired into the build/install helper yet,
-because the registry describes reviewed wording that partly still lives on the open copy PRs
-(the first run on `next` reported 417 restorations and 8 unfamiliar strings). Until those land,
-packaging would fail on copy this change did not touch. Once `npm run check:copy:approved`
-passes on `next`, add the `push: branches: [next]` trigger and run the check from `self-build`
-before type checking, including when `--no-typecheck` is supplied.
+The `Approved English` workflow runs the safety tests and registry check on every push to
+`next`, and can also be dispatched manually. The registry now passes on the integration
+branch. The build/install helper runs the registry check before typechecking or packaging,
+including when `--no-typecheck` is supplied. A regression or unfamiliar variant stops it.
 
 A push alone cannot change strings; merges, conflict resolution
 and later source edits can. Run the check before pushing and again in the verified remote
@@ -118,5 +115,3 @@ rendered layout review.
 `npm run test:copy-overrides` uses a throwaway Git repository. It checks regression detection,
 restoration, repeated application, unfamiliar text, conflicting approvals, file ownership,
 explicit move aliases, registration and interpolation protection without touching app data.
-The test also inserts a known regression in a fixture and runs the real packaging helper,
-confirming that the copy gate fails before build tools run, even with `--no-typecheck`.

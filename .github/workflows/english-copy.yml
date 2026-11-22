@@ -1,9 +1,8 @@
 name: Approved English
 
-# Manual until next matches the registry: today the check reports the reviewed wording
-# that still lives on the open copy PRs, so a push trigger would go red on every commit.
-# Add `push: branches: [next]` on the day `npm run check:copy:approved` passes on next.
 on:
+  push:
+    branches: [next]
   workflow_dispatch:
 
 permissions:

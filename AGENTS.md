@@ -90,11 +90,10 @@ After merging upstream or resolving copy conflicts, run `npm run check:copy:appr
 never add them to the registry merely to pass the check. Run the check before pushing and
 on the verified pushed head. During ingestion, use `check --base PRE_MERGE_SHA` to expose
 unregistered changes. Keep the tracked registry and editorial review current as described
-in [Preserve reviewed English](docs/copy-overrides.md). The registry is on `next` but its gate is
-not yet wired into the build/install helper or a push trigger, because it still reports the
-reviewed wording that lives on the open copy PRs; wire both once `npm run check:copy:approved`
-passes here. `npm run check:copy` stays the Portuguese-leak source pass; the two checks answer
-different questions.
+in [Preserve reviewed English](docs/copy-overrides.md). The build/install helper checks the
+registry before packaging, including when typechecking is skipped. The Approved English
+workflow also runs on pushes to `next`. Keep both gates enabled. `npm run check:copy` stays
+the Portuguese-leak source pass; the two checks answer different questions.
 
 ## Plan and moderate settings placement
 
@@ -820,6 +819,7 @@ other half, and they belong to the same session.
 | Settings organization and maintained placement rules | | 605 |
 | English labels and hints across Settings and Wiki | 409 | 410 |
 | English interface copy, phase 2 | | 622 |
+| English concurrency and computer-settings copy | | 628 |
 | Versioned locale catalogs (i18n) | 618 | |
 | Skills: read a Hermes library as it is | 102 | 311 |
 | Skills: every harness on the computer | 306 | |
