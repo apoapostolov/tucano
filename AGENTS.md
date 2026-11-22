@@ -62,6 +62,12 @@ wording when merging or resolving conflicts. Follow [the copy guide and tools](d
 - Report the editorial review, layout evidence and any explicit exception in the feature PR.
   Automated measurements cannot judge grammar or meaning. A green tool result alone is not
   copy approval; review both the words and the screenshot before marking this work complete.
+- For a new English-copy overhaul PR, show the existing defects in a gallery of 12–16
+  annotated screenshot frames when that many distinct examples exist. Cover the affected
+  surfaces, identify the original text and proposed replacement, and include measured wrapping
+  where relevant. Use fewer frames when they cover every defect; do not pad the gallery.
+  Capture real rendered states with synthetic data, distinguish wording defects from necessary
+  long warnings, and keep the public description focused on usability and consistency.
 
 ~~~powershell
 # Existing full Settings/Wiki check; requires a fresh npm run build.
