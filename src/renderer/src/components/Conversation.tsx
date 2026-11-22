@@ -3858,9 +3858,8 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
   }
   const [voice, voiceControls] = useDictation(insert, setNote, key)
 
-  const sendMode = useStore((st) => st.settings?.sendMode ?? 'parallel')
-  // How this one joins a reply that's already running here: the setting says what Enter does, and
-  // the modifier keys say the rest (see `send` in src/core/runs.ts). Nothing running: all the same.
+  // How this one joins a reply that's already running here is the core's to decide (see `send` in
+  // src/core/runs.ts): the field sends a prompt, and the conversation's own limit and queue do the rest.
   const submit = async (mode?: SendMode): Promise<void> => {
     if (submitting.current || (!text.trim() && images.length === 0)) return
     submitting.current = true
@@ -3873,7 +3872,7 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
         threadId,
         images.filter(isFile).map(({ name, data }) => ({ name, data })),
         replyTarget,
-        mode ?? sendMode
+        mode
       )
       if (!sent) return
       if (getState().replyTo[key] === replyTarget) setReplyTo(key)
@@ -4000,17 +3999,12 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
                 if (e.key === 'Enter' || e.key === 'Tab') return (e.preventDefault(), pick(options[active]!))
                 if (e.key === 'Escape') return setMention(null)
               }
-              // Enter as the setting says; the modifiers pick a mode whatever the setting says. Ctrl+Enter
-              // keeps the line break, which Shift+Enter used to be before these four modes took it.
-              if (e.key === 'Enter' && e.nativeEvent.isComposing) return
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              // Enter sends a plain prompt and Shift+Enter is the field's own line break. No key steers,
+              // queues or interrupts a reply: how a prompt joins the reply running here is the core's to
+              // decide (Settings › Agents › Replies, and the drawer for what waits its turn).
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault()
-                insert('\n')
-                return
-              }
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                void submit(e.altKey && e.shiftKey ? 'interrupt' : e.altKey ? 'steer' : e.shiftKey ? 'queue' : undefined)
+                void submit()
               }
             }}
           />
@@ -4034,18 +4028,6 @@ export function Composer({ conversationId, threadId, members, mentionOnly, liste
           <span className={`composer__hint ${note ? 'composer__hint--warn' : ''}`}>
             {tools && !note ? '' : composerNote({ note, members, thread: !!threadId, dm: isDm, mentionOnly, listening })}
           </span>
-          {sendMode !== 'parallel' ? (
-            <button
-              className="btn btn--sm btn--ghost composer__mode"
-              onClick={() => updateSettings({ sendMode: 'parallel' })}
-              title={L(
-                'Enquanto uma resposta corre aqui, o Enter manda assim. Clique para voltar ao normal; os atalhos continuam valendo uma vez cada (Shift+Enter fila, Alt+Enter entrega, Shift+Alt+Enter interrompe).',
-                "Enter uses this mode during a reply. Select to restore parallel replies. Shortcuts apply to one send: Shift+Enter queues; Alt+Enter steers; Shift+Alt+Enter interrupts."
-              )}
-            >
-              {sendMode === 'queue' ? L('Enter: na fila', 'Enter: queued') : sendMode === 'steer' ? L('Enter: entregue à resposta', "Enter: steer") : L('Enter: interrompe', 'Enter: interrupts')}
-            </button>
-          ) : null}
           {working.length > 0 ? (
             <button className="btn btn--sm" onClick={() => working.forEach((id) => stopRun(id))}>
               <Icon name="stop" size={12} /> {L('Parar', 'Stop')}

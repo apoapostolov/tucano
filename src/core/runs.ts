@@ -465,7 +465,7 @@ const bareModelFor = (engine: EngineId, model: string): string => {
 }
 export class Runner {
   private recovering = new Set<string>()
-  private queue: { job: () => Promise<unknown>; urgent: boolean; solo?: string }[] = []
+  private queue: { job: () => Promise<unknown>; urgent: boolean; solo?: string; begun?: () => void }[] = []
   private active = 0
   // Agents that go one at a time (Agent.oneAtATime), with a reply running now: their next one waits.
   private soloRunning = new Set<string>()
@@ -846,6 +846,10 @@ export class Runner {
     // full; the rest wait with the queued ones. No mode (or a steer that found nothing to go into)
     // goes as a reply always does, and several called by name go one after another in the order
     // written: each answers my message and reads what the ones before it answered (routedHistory).
+    // An agent that goes one at a time (Agent.oneAtATime) is held in the scheduler while another reply
+    // of its runs, wherever that one is (enqueue's `solo`): that is a wait like any other, and the
+    // message says so until its reply begins, the same mark a prompt queued behind the cap carries.
+    if (responders.some((a) => a.oneAtATime && this.soloRunning.has(a.id)) && !mine.sendMode) this.update(mine, { sendMode: 'queue' })
     let before: Promise<unknown> | undefined
     for (const agent of responders) {
       // Checked per responder: mentioning two agents past the cap queues the second one too.
@@ -867,7 +871,12 @@ export class Runner {
           { urgent: true, merge: !wait, parallel: goesBeside }
         )
       if (wait) this.runIn(conv.id, () => start(beside || slot > 0), true, queued ? mine : undefined, false, slot, start, mine.id)
-      else if (beside) void start(true)
+      else if (beside) {
+        void start(true)
+        // Said only once the reply is really under way: whoever sent draws what it started, and a send
+        // that answers before the reply has begun is a message that reads as answered by nobody.
+        await new Promise<void>((go) => setImmediate(go))
+      }
       else before = before ? before.then(() => start(false), () => start(false)) : start(false)
     }
   }
@@ -1829,15 +1838,21 @@ export class Runner {
           throw e
         }),
       p.urgent,
-      p.agent
+      p.agent,
+      // The wait this prompt carried ends the moment its reply really begins, whether the scheduler
+      // held it behind the conversation's cap or behind its agent's own one-at-a-time turn.
+      () => {
+        const at = p.opts.replyTo ? this.deps.db.message(p.opts.replyTo) : undefined
+        if (at?.sendMode === 'queue') this.unmark(at)
+      }
     )
   }
 
   // `urgent`: it answers something the person just did (see MAX_CONCURRENT_URGENT).
   // `agent`: whose reply it is. One that goes one at a time (Agent.oneAtATime) waits here while another
   // reply of its runs, wherever that one is: what it waits behind says so (the prompt's waiting mark).
-  private enqueue(job: () => Promise<unknown>, urgent = false, agent?: Agent): void {
-    this.queue.push({ job, urgent, ...(agent?.oneAtATime ? { solo: agent.id } : {}) })
+  private enqueue(job: () => Promise<unknown>, urgent = false, agent?: Agent, begun?: () => void): void {
+    this.queue.push({ job, urgent, ...(agent?.oneAtATime ? { solo: agent.id } : {}), begun })
     this.pump()
   }
 
@@ -1849,8 +1864,10 @@ export class Runner {
       const first = this.queue.findIndex(free)
       const at = this.active < MAX_CONCURRENT ? (urgent >= 0 ? urgent : first) : this.active < MAX_CONCURRENT_URGENT ? urgent : -1
       if (at < 0) return
-      const { job, solo } = this.queue.splice(at, 1)[0]!
+      const { job, solo, begun } = this.queue.splice(at, 1)[0]!
       if (solo) this.soloRunning.add(solo)
+      // A prompt that was waiting says so no more: its reply is on its way now.
+      begun?.()
       if (this.active++ === 0) this.deps.onBusy?.(true)
       void job()
         .catch((e: unknown) => console.error('[runner]', e))
