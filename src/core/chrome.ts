@@ -945,7 +945,7 @@ export class ChromeBrowsers {
 const extensionsRefusal = (): string =>
   L(
     'Este navegador está com extensões, e elas leem o que é digitado na página: o login do Cofre não foi preenchido. Peça pra fechar a janela do navegador e tente de novo.',
-    'This browser has extensions in it, and they read what is typed on the page: the Cofre login was not filled in. Ask for the browser window to be closed, then try again.'
+    'This browser has extensions in it, and they read what is typed on the page: the Vault login was not filled in. Ask for the browser window to be closed, then try again.'
   )
 
 export const hasChrome = (bin = CHROME): boolean => !!bin && existsSync(bin)
