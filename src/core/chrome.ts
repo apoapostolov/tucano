@@ -797,9 +797,14 @@ export class ChromeBrowsers {
   // the browser is still on about:blank: a site that redirected somewhere of its own is left alone, and a
   // real window that came up on the page (see launch) is not reloaded under whoever is looking at it.
   private async navigate(tab: Tab, url: string): Promise<void> {
+    // A page that came up already on the address it was given (a real window, see launch) is left as it
+    // is: asking again would reload it under whoever is looking at it. Anywhere else the address is asked
+    // for, including a lane that is open on another page — an agent that says "open this" goes there, and
+    // a lane left on the page before would answer with it.
+    const same = (href: string): boolean => href === url || href === `${url}/`
     for (let attempt = 0; ; attempt++) {
       const at = await tab.run<string>('location.href').catch(() => '')
-      if (at === 'about:blank' || attempt > 0) {
+      if (attempt > 0 || !same(at)) {
         const r = (await tab.cmd('Page.navigate', { url })) as { errorText?: string }
         if (r.errorText && !/ERR_ABORTED/.test(r.errorText)) throw new Error(L(`não abriu: ${r.errorText}`, `didn't open: ${r.errorText}`))
       }
