@@ -136,6 +136,7 @@ export interface State {
   platform: Os
   packaged: boolean
   isolatedComputers: boolean
+  browserExtensions: boolean
   panel: Panel | null // the side panel next to a conversation
   panelWide: boolean // that panel over the whole page, the conversation set aside until it's shrunk or closed
   dialog: Dialog | null // a small window: a channel's members, name or topic; archived agents; new channel; search
@@ -223,6 +224,7 @@ let state: State = {
   platform: 'mac',
   packaged: false,
   isolatedComputers: true,
+  browserExtensions: false, // until the core says: a server must never draw the card, even for a moment
   panel: null,
   panelWide: false,
   dialog: null,
@@ -817,6 +819,7 @@ export async function start(): Promise<void> {
       platform: snap.platform,
       packaged: snap.packaged,
       isolatedComputers: snap.isolatedComputers,
+      browserExtensions: snap.browserExtensions === true,
       demoServer: snap.demoServer,
       you: snap.you,
       inbox: snap.inbox ?? { approvals: [], questions: [] },

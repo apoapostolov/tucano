@@ -766,23 +766,8 @@ export interface Account {
 }
 
 // What the main process does in an agent's browser for the core, and what it answers (spec §24).
-export type BrowserOp =
-  | 'open'
-  | 'snapshot'
-  | 'click'
-  | 'type'
-  | 'fill'
-  | 'key'
-  | 'scroll'
-  | 'back'
-  | 'text'
-  | 'frame'
-  | 'show'
-  | 'hide'
-  | 'close'
-  | 'clear'
-  | 'input'
-  | 'headful' // the page is a bot check: the same lane, in a real window (chrome.ts)
+export type BrowserOp = 'open' | 'snapshot' | 'click' | 'type' | 'prepare_login' | 'fill' | 'key' | 'scroll' | 'back' | 'text' | 'frame' | 'show' | 'hide' | 'close' | 'clear' | 'input'
+
 
 // The extensions an agent's browser can carry (shared/addons.ts lists them), each with its own switch.
 export type AddOn = 'ads' | 'cookies' | 'consent' | 'popups' | 'clutter'
@@ -834,6 +819,7 @@ export interface BrowserReply {
   headful?: boolean // drawn in a real window because this site only lets a real browser through (not a takeover)
   point?: { x: number; y: number } // where it just clicked or typed, as a fraction of the viewport
   signs?: PageSigns // what the page is when it isn't the page: a bot check, a refusal, a wall (shared/wall.ts)
+  reopened?: boolean // prepare_login: the lane came back without its extensions, so the page is a new one
 }
 
 // An agent's browser as the side panel shows it (spec §24): the last frame and what it did.
