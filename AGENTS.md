@@ -32,6 +32,8 @@ before delivery.** This applies to every feature: Settings, Wiki, agent profiles
 buttons, menus, tooltips, empty states, errors and notifications. Do not reintroduce verbose
 wording when merging or resolving conflicts. Follow [the copy guide and tools](docs/interface-copy.md).
 
+- Every UI PR must be accompanied by a frame (screenshot) of the changed surface, where possible.
+
 - Write calm, professional, grammatical English. Name the action or setting directly; use
   sentence case, active verbs and established product terms. Avoid chatty narration, rhetorical
   questions, metaphors, filler, unexplained jargon and instructions about clicking when the
