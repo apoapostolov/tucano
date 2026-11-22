@@ -4716,6 +4716,41 @@ export function SettingsPage(): ReactNode {
           </Card>
         )}
 
+        {pane('agentes') && admin && (
+          <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
+            <div className="grid2">
+              <Field
+                label={L('Um novo prompt com uma resposta em curso', 'Send mode while replying')}
+                hint={L(
+                  'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
+                  'Enter follows this choice. Ctrl+Enter queues, Alt+Enter steers the running reply, and Shift+Alt+Enter interrupts it, each just once. Shift+Enter adds a line.'
+                )}
+              >
+                <Select
+                  value={settings.sendMode ?? 'parallel'}
+                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                  options={[
+                    { value: 'parallel', label: L('Sessões paralelas em execução', 'Parallel Running Sessions') },
+                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') }
+                  ]}
+                  placeholder={L('Escolha', 'Pick')}
+                />
+              </Field>
+              {settings.sendMode === 'parallel' && (
+                <Field label={L('Sessões paralelas por canal', 'Parallel sessions per channel')} hint={L('As demais esperam na fila.', 'Replies past this limit wait in the queue.')}>
+                  <NumberInput
+                    aria-label={L('Sessões paralelas por canal', 'Parallel sessions per channel')}
+                    min={1}
+                    max={MAX_PARALLEL_SESSIONS}
+                    value={maxParallelSessionsCap(settings.maxParallelSessions)}
+                    onChange={(n) => updateSettings(maxParallelSessionsPatch(n))}
+                  />
+                </Field>
+              )}
+            </div>
+          </Card>
+        )}
+
         {/* Recovery: the setting #391 brings, beside the rest of what the agents do. It carries no
             section anchor of its own, like the browser card below: `agents-recovery` stays in
             settings-structure.ts without a card in the strip until the page grows one with it. */}
@@ -4758,41 +4793,6 @@ export function SettingsPage(): ReactNode {
                   {v ? 'Jev (TypeSafe)' : L('Só pelo texto da página', "Page text only")}
                 </button>
               ))}
-            </div>
-          </Card>
-        )}
-
-        {pane('agentes') && admin && (
-          <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
-            <div className="grid2">
-              <Field
-                label={L('Um novo prompt com uma resposta em curso', 'Send mode while replying')}
-                hint={L(
-                  'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
-                  'Enter follows this choice. Ctrl+Enter queues, Alt+Enter steers the running reply, and Shift+Alt+Enter interrupts it, each just once. Shift+Enter adds a line.'
-                )}
-              >
-                <Select
-                  value={settings.sendMode ?? 'parallel'}
-                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
-                  options={[
-                    { value: 'parallel', label: L('Sessões paralelas em execução', 'Parallel Running Sessions') },
-                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') }
-                  ]}
-                  placeholder={L('Escolha', 'Pick')}
-                />
-              </Field>
-              {settings.sendMode === 'parallel' && (
-                <Field label={L('Sessões paralelas por canal', 'Parallel sessions per channel')} hint={L('As demais esperam na fila.', 'Replies past this limit wait in the queue.')}>
-                  <NumberInput
-                    aria-label={L('Sessões paralelas por canal', 'Parallel sessions per channel')}
-                    min={1}
-                    max={MAX_PARALLEL_SESSIONS}
-                    value={maxParallelSessionsCap(settings.maxParallelSessions)}
-                    onChange={(n) => updateSettings(maxParallelSessionsPatch(n))}
-                  />
-                </Field>
-              )}
             </div>
           </Card>
         )}
