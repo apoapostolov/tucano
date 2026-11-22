@@ -37,7 +37,11 @@ Each version is written in two parts. **Original Changes** is what the version c
 > - **Mudou:** uma **rotina desligada** continua na semana, apagada, em vez de sumir; e a engrenagem de uma DM abre a página do agente.
 > - **Mudou:** a interface em **inglês** ficou completa e mais clara.
 
-### Added
+### Original Changes
+
+Upstream Tucano's own notes for this version, as they came.
+
+#### Added
 
 - **A new prompt runs beside the replies already working, up to a limit.** A second message to an agent that was still answering used to wait for that reply to end, folded into one answer with the others. Now it starts its own reply beside the ones running in that conversation, up to the limit in **Settings › Agents › Replies** (one at a time, up to 2, 3, 4, or 6, the default). Past the limit it waits in the queue, says so on the message, and survives a restart. On an agent's page, **One reply at a time** makes the next prompt for that agent wait for the running reply, in any conversation, while other agents still go in parallel. Enter only sends: a reply is steered from its own pill and stopped with Stop. A routine, a retry and a reply going on after its budget pause also start beside the reply running there. Two replies of one agent in one place share its session, so the second one reads the whole conversation instead. Thanks to Apostol Apostolov. (#261)
 - **Steering a reply that is still working.** A reply at work could be stopped, but not directed: what to do next had to be a message of its own, answered after it finished. Now a compact **Orientar** (steer) sub-button sits beside Stop in the steps row of a working reply; it opens a field under the box, and what the person writes reaches that reply at its next tool call, sent with Ctrl+Enter or the button, and Esc closes it without sending. A steer is not a prompt: nothing of it is posted in the channel or the DM, and it becomes a row of that reply's chain in their words, marked as taken when the reply reads it at the following call. A reply that ends before reading one leaves its row in the chain, marked as not read, instead of turning into a message. With nothing running in that place, the same text is an ordinary prompt. The steer carries the reply's id, so a second reply of the same agent in a DM isn't steered by what was written for the first. Agents read it with the tool result that follows, said in so many words as what the person wrote while they worked.
@@ -47,7 +51,7 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **Tuca writes feedback for the people who make Tucano.** When you report a bug in Tucano or have an idea for it, Tuca writes it up as a card under his reply. **Review and send** opens the Send feedback window filled in (kind, text and the screen-picture option), and you send it from there; he never sends anything himself. It's only offered where sending feedback is on. (#616)
 - **An agent's DM says when a computer it uses is off.** On a server, an agent can use a computer someone lent it, and that computer can be off because the Tucano app is closed there. Now a quiet line above the DM's field says so while it's off ("MacBook do Edu is off. Nina answers, but only uses it once it's back on"), with **See computers** when the computer is yours. The agent's card lists each lent computer it uses as connected or off. The sidebar and avatars stay as they were. (#617)
 
-### Changed
+#### Changed
 
 - **The Skills screens finish their English.** A skill's steps are its **Instructions** (they were the "Recipe"), its agents are **Assigned agents**, and **Performance** and **Restore version** replace "How it's going" and "Restore this one". Portuguese is unchanged. Thanks to Apostol Apostolov. (#608)
 - **Clearer English interface copy.** Settings, Memory, routines, Vault and related dialogs use explicit actions and consequences, with shorter hints and clearer recovery messages. Portuguese wording and application behavior are unchanged. Thanks to Apostol Apostolov. (#622)
@@ -59,11 +63,28 @@ Each version is written in two parts. **Original Changes** is what the version c
 - **An agent's Tools tab says where it works.** The "Computer" card became **Where it works**. A line on top names where its commands run, and that its conversations and memory stay on the server. On a server, the server is a row of its own (**No / Isolated Linux / Right on the server**), and every computer lent to the server has a row with who lent it and whether it's connected: yours turns on and off for that agent, and someone else's shows read-only ("only Ana can change"), since only whoever lent a computer picks its agents. In the desktop app the same card has a **This computer** row. (#627)
 - **A wider chat on big screens, expanding side panels, and connector filters.** The conversation grows to 940 px from a 1600 px window and 1020 px from 2000 px (it was 860 px everywhere). A thread, a file, a service or an agent's browser in the side panel, and a Wiki page opened beside the map, have an **Expand** button that puts them over the whole page; Esc brings the conversation back. Connectors have chips on top (All, and each category with its count) instead of one long scroll. On a server, an agent that runs on the host says "on the server" instead of "on your computer". (#614)
 
-### Fixed
+#### Fixed
 
 - **The steer field is as wide as the chain.** The pill opened a 520 px field inside a 583 px chain, and its box ran to the edge of the message body instead of stopping with the chain. The field now runs from where the steps' text starts to where the chain ends, with the pill on the steps' rail, in a wide or a narrow window, without sideways scrolling.
 - **A DM's settings show where the agent answers again.** Since teams came in, the "Conversation with …" window (from a DM's menu in the sidebar, or the gear on the agent's card) showed only Cancel and Save. It shows the choice between answers in the conversation and answers in threads again.
 - **In English, the Vault is the Vault.** With the app in English, the sidebar, the search, the Vault page, an agent's page, the step that used a key, the activity log and the card that asks for a key all said "Cofre". They say "Vault" now, and so do the errors and the outcome a person reads when a key is missing or saved. The few other spots that stayed in Portuguese in English are English too: the dictation shortcut ("⌥ Space"), the placeholder for a Whisper model's path, "Invalid URL" on a screenshot and "Error" on a connector's sign-in page. A test now reads the screen's code and fails on Portuguese in an English string, or on Portuguese shown with no English beside it.
+
+### Added
+
+- **The agent's browser tells a wall from a page, and stops clicking at it.** When a navigation lands on a bot check (Cloudflare, a captcha gate, a login wall), the agent is told which wall it hit and what gets past it — a real window, the person's own session — instead of retrying the same click. A page that merely carries a captcha mark stays the page it is, so ordinary sites don't read as blocked. A row of the chain names the wall, and the run stops there instead of burning its steps.
+- **A real window, on demand, for the sites that only let a real browser through.** The agent's lane normally runs headless; a site that blocks headless gets a headful window opened for it, with the same cookies, and the agent carries on in it. Measured on this machine: 4 of 11 sample sites (backerkit, idealo, linkedin, reddit) were hard-blocked headless and pass headful.
+- **An ad blocker and the cookie notices, inside the agent's browser.** The lane loads uBlock Origin Lite, "I still don't care about cookies" and Consent-O-Matic as extensions, each with its own switch in Settings › Agents › Browser Extensions, the card reading inside the agents' browser card and taking no row of the section strip. This needs Chrome for Testing: branded Chrome 158 ignores `--load-extension` and the External Extensions mechanism, Chrome for Testing 158.0.8127.36 honours both in `--headless=new`.
+- **The Vault takes the passwords a browser already saved.** A CSV exported from a browser is imported with a dry run first: each row says whether it will be kept or why it stays out, the address and the reason never drawn over each other, and only then does Keep write them.
+
+### Changed
+
+- **English copy, reviewed and held.** The window's English was audited string by string, 416 of them restored to the reviewed wording, and a registry now keeps that wording through an ingest instead of letting the merge decide it. `npm run check:copy` reads the window for Portuguese before a build.
+- **The settings sections that read inside another card take no row of the strip.** A section declared `nav: false` still renders, still keeps its anchor, and the strip lists no row for it: the wiki's settings and the browser extensions are the first two.
+
+### Fixed
+
+- **The wiki's settings scroll with their own strip.** The strip stays at the modal's top and the box keeps room under its last group, so a group can be reached like any other.
+- **A vault import row is one row.** A long address shortens with an ellipsis and its state takes the second line, instead of the two being drawn over each other.
 
 ## [0.2.44] - 2026-11-21
 
@@ -119,6 +140,8 @@ Each version is written in two parts. **Original Changes** is what the version c
 ### Fixed
 
 - **A database that had counted past its migrations now gets the tables they would have made.** On this build a reply died on the `jobs` table and the Cofre's page on `vault_keys`. The file's schema count stood at 44 while the build's list had 40 for a few days (the initiative feature left the schema on 17 November), so every migration added since was skipped: the counter is an index into the list, and a list that got shorter left the file counted as done with migrations it never ran. The tables and indexes a migration declares are now made on start when the counter has already run past them, and a file counted past the list says so in the app's log. A file that has them is not touched.
+- **A switch turned on while a lane is open now reaches that lane, and a fresh lane lands on the page it was given.** Turning an extension on used to leave the browser a lane had started with for as long as that lane lived, so the switch was read and nothing changed until the app restarted. The lane now restarts on its next call when the set of extensions changed, and comes back on the page it was on. On the same day, Chrome for Testing could cancel the very first navigation a new lane was handed, leaving the agent on `about:blank` and reading a site with nothing on it: 5 of 6 first opens on this computer, 0 of 6 once the lane asks a second time. A page a fresh lane is given is now asked for again while the browser is still at `about:blank`, and a real window opened for a wall keeps the page Chrome placed it on.
+- **The agent's browser goes where it is told.** A lane already open on a site ignored the next address it was given, so an agent following a link read the page before it and saw nothing had changed; a lane closed while idle came back on the first page it had opened instead of the one it left. The address is asked for unless the lane is already on it.
 - **The Cofre is the Vault in English.** The page, its tabs, the sidebar row, the request cards, the keys on an agent's page and the guide all say Vault in English; Portuguese keeps Cofre, and the `[cofre:NOME]` marker a command's output carries is unchanged.
 - **Enviar feedback, Connectors and the Vault are three rows of one shape at the foot of the sidebar.** The Vault had been left in the row that holds the Settings gear while Connectors moved to a row of its own, so its icon, label and box were set like the others but its row was not; all three now use the same row markup and spacing, and the gear keeps its place at the end of the Vault's row.
 - **A hidden-quota hint pointed at a section that is not called that in English.** It said *Settings › Cotas*; the section reads **Quotas**.

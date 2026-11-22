@@ -265,7 +265,7 @@ export function LookPicker({ agent, patch }: { agent: Pick<Agent, 'name' | 'colo
             onChange={(e) => {
               const file = e.target.files?.[0]
               e.target.value = ''
-              if (file) pictureFrom(file).then((picture) => (setError(''), patch({ picture, avatar: undefined })), () => setError(L('Essa imagem não abriu. Tente outra, em PNG ou JPG.', "That image didn't open. Try another one, in PNG or JPG.")))
+              if (file) pictureFrom(file).then((picture) => (setError(''), patch({ picture, avatar: undefined })), () => setError(L('Essa imagem não abriu. Tente outra, em PNG ou JPG.', "Could not open this image. Choose a PNG or JPG.")))
             }}
           />
         </label>
@@ -283,9 +283,9 @@ export function LookPicker({ agent, patch }: { agent: Pick<Agent, 'name' | 'colo
   )
 }
 const MEMORY_MODES = (): { value: MemoryMode; label: string; hint: string }[] => [
-  { value: 'auto', label: L('Grava sozinho', 'Saves on its own'), hint: L('Guarda e avisa na mensagem, com Desfazer.', 'Keeps it and says so in the message, with Undo.') },
-  { value: 'approve', label: L('Pede aprovação', 'Asks for approval'), hint: L('Cada memória nova espera você guardar.', 'Each new memory waits for you to keep it.') },
-  { value: 'read', label: L('Só lê', 'Read only'), hint: L('Usa as memórias, mas não guarda novas.', 'Uses memories but doesn’t keep new ones.') }
+  { value: 'auto', label: L('Grava sozinho', "Save automatically"), hint: L('Guarda e avisa na mensagem, com Desfazer.', 'Keeps it and says so in the message, with Undo.') },
+  { value: 'approve', label: L('Pede aprovação', "Ask for approval"), hint: L('Cada memória nova espera você guardar.', 'Each new memory waits for you to keep it.') },
+  { value: 'read', label: L('Só lê', "Read-only"), hint: L('Usa as memórias, mas não guarda novas.', 'Uses memories but doesn’t keep new ones.') }
 ]
 const LEVELS = (): { value: GrantLevel; label: string }[] => [
   { value: 'none', label: L('Sem acesso', 'No access') },
@@ -716,14 +716,14 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                 <input value={draft.role} placeholder={L('Ex.: Engenharia', 'E.g. Engineering')} onChange={(e) => patch({ role: e.target.value })} onBlur={() => timer.current && void flush()} />
               </label>
               <div className="lrow lrow--field">
-                <span className="lrow__key">{L('Aparência', 'Look')}</span>
+                <span className="lrow__key">{L('Aparência', "Appearance")}</span>
                 <span className="look-sum">
                   <AgentAvatar agent={{ ...draft, name: draft.name || '?' }} size={24} still />
                   <span>
                     {draft.customColor ? L('Cor própria', 'Own color') : COLOR_NAME()[draft.color]} · {draft.picture ? L('imagem', 'picture') : draft.avatar ? draft.avatar.name : L('rosto padrão', 'default face')}
                   </span>
                 </span>
-                <Popover label={L('Mudar ›', 'Change ›')} title={L('Aparência', 'Look')} className="text-btn" panelClass="popover__panel--end look-pop" disabled={!admin}>
+                <Popover label={L('Mudar ›', 'Change ›')} title={L('Aparência', "Appearance")} className="text-btn" panelClass="popover__panel--end look-pop" disabled={!admin}>
                   {() => (
                     <>
                       <span className="field__label">{L('Cor', 'Color')}</span>
@@ -738,7 +738,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           )}
 
           {pane('perfil') && (
-            <Section bare title={L('Instruções', 'Instructions')} help={L('Escreva como escreveria pra um colega novo: o que fazer, o que evitar, quando perguntar.', 'Write it as you would for a new colleague: what to do, what to avoid, when to ask.')}>
+            <Section bare title={L('Instruções', 'Instructions')} help={L('Escreva como escreveria pra um colega novo: o que fazer, o que evitar, quando perguntar.', "Describe the agent’s tasks, limits, and when to ask for help.")}>
               <textarea
                 className="instructions"
                 rows={9}
@@ -755,7 +755,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
 
           {pane('perfil') && (
             <Section
-              title={L('Onde roda e modelo', 'Where it runs and model')}
+              title={L('Onde roda e modelo', "Runtime and model")}
               help={L('O agente roda no Claude Code, no Codex ou em outro que você já usa, do jeito que você configurou: no seu plano, no gateway da empresa ou no seu provedor.', 'The agent runs in Claude Code, Codex or another configured runtime, using your plan, company gateway or provider.')}
             >
               <Row label={L('Modelo', 'Model')} className="lrow--wide">
@@ -803,7 +803,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
               {/* On: its replies never run two at once, in any conversation (src/core/runs.ts, enqueue); stored only when on. */}
               <Row
                 label={L('Uma resposta por vez', 'One reply at a time')}
-                sub={L(`Ligado, um prompt novo para ${name} espera a resposta em curso terminar, em qualquer conversa. Desligado, segue Configurações › Agentes › Respostas.`, `New prompts for ${name} wait until its current reply finishes, across all conversations. When off, Settings › Agents › Replies applies.`)}
+                sub={L(`Ligado, um prompt novo para ${name} espera a resposta em curso terminar, em qualquer conversa. Desligado, segue Configurações › Agentes › Respostas.`, `On, a new prompt for ${name} waits for the running reply to end, in any conversation. Off, it follows Settings › Agents › Replies.`)}
               >
                 <Toggle label={L('Uma resposta por vez', 'One reply at a time')} on={draft.oneAtATime === true} onChange={(v) => patch({ oneAtATime: v ? true : undefined }, true)} />
               </Row>
@@ -812,7 +812,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           )}
 
           {pane('canais') && (
-            <Section title={L('Onde participa', 'Where it takes part')} help={L(`Nos canais ligados, ${name} lê e responde quando é com ele. Fora deles, chame com @${draft.handle || 'handle'} ou mande DM.`, `In enabled channels, ${name} reads messages and replies when relevant. Elsewhere, mention @${draft.handle || 'handle'} or send a DM.`)}>
+            <Section title={L('Onde participa', "Channels")} help={L(`Nos canais ligados, ${name} lê e responde quando é com ele. Fora deles, chame com @${draft.handle || 'handle'} ou mande DM.`, `In enabled channels, ${name} reads messages and replies when relevant. Elsewhere, mention @${draft.handle || 'handle'} or send a DM.`)}>
               {channels.length === 0 && <Row label={<span className="muted">{L('Nenhum canal ainda.', 'No channels yet.')}</span>} />}
               {channels.map((c) => (
                 <Row
@@ -887,7 +887,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                           )}
                         </span>
                       ) : level === 'none' ? (
-                        L('Nenhuma ferramenta exposta', 'No tools exposed')
+                        L('Nenhuma ferramenta exposta', "No tools available")
                       ) : level === 'read' ? (
                         L(`${c.tools.filter((t) => t.cls === 'read' && t.enabled).length} ferramentas de leitura`, `${c.tools.filter((t) => t.cls === 'read' && t.enabled).length} read tools`)
                       ) : (
@@ -1011,7 +1011,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           {pane('ferramentas') && (
             <Section
               title={L('Apps do computador', 'Computer apps')}
-              help={L('Os seus apps (Notas, Calendário, Mail…) que ele pode usar como uma pessoa, sem mexer no seu mouse. Em cada um, só ler ou também mexer; clique que envia, paga, publica ou apaga pede sua aprovação.', 'Your apps (Notes, Calendar, Mail…) it may use like a person, without moving your mouse. For each, read only or also change things; a click that sends, pays, publishes or deletes asks for your approval.')}
+              help={L('Os seus apps (Notas, Calendário, Mail…) que ele pode usar como uma pessoa, sem mexer no seu mouse. Em cada um, só ler ou também mexer; clique que envia, paga, publica ou apaga pede sua aprovação.', "Set read or write access per app. Agents work without moving your mouse; sending, paying, publishing, and deleting require approval.")}
             >
               <div className="lgroup__pad">
                 <AppsCard apps={draft.apps ?? []} onChange={(apps) => patch({ apps }, true)} />
@@ -1043,7 +1043,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           )}
 
           {pane('memoria') && (
-            <Section title={L('Memória', 'Memory')} help={L('Memórias sobre você valem pra todos os agentes; as notas de trabalho são só dele.', 'Memories about you apply to every agent; work notes are its own.')}>
+            <Section title={L('Memória', 'Memory')} help={L('Memórias sobre você valem pra todos os agentes; as notas de trabalho são só dele.', "All agents share memories about you. Work notes belong to this agent.")}>
               <Row label={L('Memórias novas', 'New memories')} sub={MEMORY_MODES().find((m) => m.value === draft.memory)?.hint}>
                 <Select aria-label={L('Memórias novas', 'New memories')} value={draft.memory} onChange={(v) => v && patch({ memory: v as MemoryMode }, true)} options={MEMORY_MODES().map((m) => ({ value: m.value, label: m.label }))} />
               </Row>
@@ -1528,7 +1528,7 @@ function LentFolders({ agentId }: { agentId: string }): ReactNode {
       <div className="row row--between">
         <strong className="small">{windowless() ? L('Pastas do servidor', 'Folders on the server') : L('Pastas do seu computador', 'Folders from your computer')}</strong>
         <button className="btn btn--sm" onClick={() => void lendFolder(agentId).then(setError)}>
-          {L('Emprestar pasta…', 'Lend a folder…')}
+          {L('Emprestar pasta…', "Share a folder…")}
         </button>
       </div>
       {folders.length === 0 ? (
@@ -1546,12 +1546,12 @@ function LentFolders({ agentId }: { agentId: string }): ReactNode {
                 <div className="segmented" role="radiogroup" aria-label={L(`Acesso a ${f.name}`, `Access to ${f.name}`)}>
                   {(['read_write', 'read_only'] as const).map((a) => (
                     <button key={a} role="radio" aria-checked={f.readOnly === (a === 'read_only')} className={f.readOnly === (a === 'read_only') ? 'is-active' : ''} onClick={() => f.readOnly !== (a === 'read_only') && folderAction(agentId, f.name, a)}>
-                      {a === 'read_only' ? L('Só ler', 'Read only') : L('Pode mudar', 'Can change')}
+                      {a === 'read_only' ? L('Só ler', "Read-only") : L('Pode mudar', 'Can change')}
                     </button>
                   ))}
                 </div>
                 <button className="btn btn--sm btn--ghost" onClick={() => folderAction(agentId, f.name, 'return')}>
-                  {L('Devolver', 'Give back')}
+                  {L('Devolver', "Remove access")}
                 </button>
               </div>
             ))}
@@ -1612,18 +1612,18 @@ function AutonomyControls({ own, inherited, perAgent, readOnly, onChange }: { ow
       <div className="key-row">
         <Icon name="shield" />
         <div className="grow">
-          <strong>{L('Depois de ler algo de fora, pedir antes do que não tem volta', 'Require approval for irreversible actions after reading external content')}</strong>
+          <strong>{L('Depois de ler algo de fora, pedir antes do que não tem volta', "Approve irreversible actions after external content")}</strong>
           <p className="muted small">
             {L(
               'Um e-mail, uma página ou uma issue podem trazer instruções escritas por outra pessoa. Com isso ligado, depois de ler algo assim, enviar, publicar, pagar, apagar e clicar no que é arriscado pedem sua aprovação, mesmo onde uma regra deixa fazer sozinho.',
-              'An email, a page or an issue can carry instructions someone else wrote. With this on, after reading something like that, sending, publishing, paying, deleting and risky clicks ask for your approval, even where a rule lets it do them alone.'
+              "After reading external content, sending, publishing, paying, deleting, and risky clicks need approval, even if a rule allows them."
             )}
           </p>
         </div>
         <Toggle on={guard} onChange={(v) => !readOnly && onChange({ outsideGuard: v })} />
       </div>
       <details className="autonomy__rules">
-        <summary>{L('Ajustar ação por ação', 'Fine-tune action by action')}</summary>
+        <summary>{L('Ajustar ação por ação', "Action rules")}</summary>
         <ActionRulesList rules={own.actionRules ?? {}} fallback={(k) => actionMode(k, base)} readOnly={readOnly} onChange={(actionRules) => onChange({ actionRules })} />
       </details>
     </div>
@@ -1645,7 +1645,7 @@ function AutonomyRows({ own, inherited, readOnly, onChange, finerOpen, onFiner, 
   }
   const base: Policy = { agentLevel: level, globalRules: inherited.actionRules, globalLevel: inherited.autonomy }
   const own_ = Object.keys(own.actionRules ?? {}).length
-  const label = L('Depois de ler algo de fora, pedir antes do que não dá pra desfazer', 'Require approval for irreversible actions after reading external content')
+  const label = L('Depois de ler algo de fora, pedir antes do que não dá pra desfazer', "Approve irreversible actions after external content")
   return (
     <>
       <Row
@@ -1671,13 +1671,13 @@ function AutonomyRows({ own, inherited, readOnly, onChange, finerOpen, onFiner, 
         label={label}
         help={L(
           'Um e-mail, uma página ou uma issue podem trazer instruções escritas por outra pessoa. Com isso ligado, depois de ler algo assim, enviar, publicar, pagar, apagar e clicar no que é arriscado pedem sua aprovação, mesmo onde uma regra deixa fazer sozinho.',
-          'An email, a page or an issue can carry instructions someone else wrote. With this on, after reading something like that, sending, publishing, paying, deleting and risky clicks ask for your approval, even where a rule lets it do them alone.'
+          "After reading external content, sending, publishing, paying, deleting, and risky clicks need approval, even if a rule allows them."
         )}
       >
         <Toggle label={label} on={guard} disabled={readOnly} onChange={(v) => onChange({ outsideGuard: v })} />
       </Row>
       {children}
-      <Disclosure label={L('Ajustar ação por ação', 'Fine-tune action by action')} value={own_ ? L(`${own_} com regra própria`, `${own_} with their own rule`) : L('pelo nível', 'by the level')} open={finerOpen} onToggle={onFiner}>
+      <Disclosure label={L('Ajustar ação por ação', "Action rules")} value={own_ ? L(`${own_} com regra própria`, `${own_} with their own rule`) : L('pelo nível', 'by the level')} open={finerOpen} onToggle={onFiner}>
         <ActionRulesList rules={own.actionRules ?? {}} fallback={(k) => actionMode(k, base)} readOnly={readOnly} onChange={(actionRules) => onChange({ actionRules })} />
       </Disclosure>
     </>
@@ -1876,7 +1876,7 @@ function PendingApproval({ approval, where }: { approval: Approval; where: strin
         </span>
         {there && (
           <button className="link" onClick={() => navigate({ kind: 'conversation', id: approval.conversationId })}>
-            {L('Ver na conversa', 'See in the conversation')}
+            {L('Ver na conversa', "View in conversation")}
           </button>
         )}
       </div>
@@ -1885,7 +1885,7 @@ function PendingApproval({ approval, where }: { approval: Approval; where: strin
 }
 
 // Nothing waiting: the toucan asleep, small, on one line.
-function NothingWaiting({ why }: { why: string }): ReactNode {
+export function NothingWaiting({ why }: { why: string }): ReactNode {
   return (
     <div className="rest-line">
       <SleepingToucan size={44} />
@@ -1958,7 +1958,7 @@ export function HistoryRow({ group }: { group: HistoryGroup }): ReactNode {
                 </span>
                 {conversations.some((c) => c.id === a.conversationId) && (
                   <button className="link link--quiet" onClick={() => navigate({ kind: 'conversation', id: a.conversationId })}>
-                    {L('Ver na conversa', 'See in the conversation')}
+                    {L('Ver na conversa', "View in conversation")}
                   </button>
                 )}
               </li>
@@ -2091,14 +2091,14 @@ export function InboxPage(): ReactNode {
       </span>
       {conversationId && conversations.some((c) => c.id === conversationId) && (
         <button className="link" onClick={() => navigate({ kind: 'conversation', id: conversationId })}>
-          {L('Ver na conversa', 'See in the conversation')}
+          {L('Ver na conversa', "View in conversation")}
         </button>
       )}
     </div>
   )
   return (
     <Page title={L('Pra você', 'For you')} subtitle={L('O que espera por você: aprovações que você decide e perguntas dos agentes a você.', 'Approvals and questions from agents that need your response.')} actions={<AlwaysRulesLink />}>
-      {nothing && <NothingWaiting why={L('Quando um agente precisar da sua aprovação ou te fizer uma pergunta, aparece aqui e na conversa.', 'When an agent needs your approval or asks you something, it shows up here and in the conversation.')} />}
+      {nothing && <NothingWaiting why={L('Quando um agente precisar da sua aprovação ou te fizer uma pergunta, aparece aqui e na conversa.', "New approval requests and questions appear here and in the conversation.")} />}
       <HarnessNotices />
       {inbox.approvals.length > 0 && (
         <>
@@ -2142,7 +2142,7 @@ export function InboxPage(): ReactNode {
       )}
       {asked.length > 0 && (
         <>
-          <div className="caps-title">{L('Você pediu, esperando outra pessoa', 'You asked, waiting on someone else')}</div>
+          <div className="caps-title">{L('Você pediu, esperando outra pessoa', "Your pending requests")}</div>
           <div className="stack-list">
             {asked.map((a) => (
               <PendingApproval key={a.id} approval={a} where={where(a.conversationId, a.agentId)} />
@@ -2204,7 +2204,7 @@ export function ConnectorsPage(): ReactNode {
   // Connectors are the admins': a member sees which the agents have, and how they are.
   if (!admin)
     return (
-      <Page title={L('Conectores', 'Connectors')} subtitle={L('Os serviços com que os agentes do time trabalham. Cada chamada passa pelas permissões e aprovações.', 'The services the team’s agents work with. Every call goes through permissions and approvals.')}>
+      <Page title={L('Conectores', 'Connectors')} subtitle={L('Os serviços com que os agentes do time trabalham. Cada chamada passa pelas permissões e aprovações.', "Services your team’s agents can use, subject to permissions and approval rules.")}>
         <MyComputers />
         {connectors.length === 0 ? (
           <p className="muted">{L('Nenhum conector ainda.', 'No connectors yet.')}</p>
@@ -2230,7 +2230,7 @@ export function ConnectorsPage(): ReactNode {
       title={L('Conectores', 'Connectors')}
       subtitle={L(
         'Os serviços com que seus agentes trabalham. O login é pelo navegador e o acesso fica neste computador (menos nos que passam por terceiros, como a Composio); cada chamada dos agentes passa pelas permissões e aprovações.',
-        'The services your agents work with. You sign in through the browser and the access stays on this computer (except for those that go through a third party, like Composio); every call the agents make goes through permissions and approvals.'
+        "Connect services through your browser. Access stays local except with third-party providers such as Composio. Permission and approval rules apply to every call."
       )}
       actions={
         !adding && (
@@ -2323,7 +2323,7 @@ function ConnectorDetails({ c, onClose }: { c: Connector; onClose: () => void })
             onClick={() =>
               void confirmDialog({
                 title: L(`Remover ${c.name}?`, `Remove ${c.name}?`),
-                body: L('Os agentes perdem acesso às ferramentas dele. Pra voltar, é só adicionar o conector de novo.', 'The agents lose access to its tools. To get it back, just add the connector again.'),
+                body: L('Os agentes perdem acesso às ferramentas dele. Pra voltar, é só adicionar o conector de novo.', "Agents lose access to these tools. Add the connector again to restore access."),
                 confirm: L(`Remover ${c.name}`, `Remove ${c.name}`)
               }).then((ok) => ok && (removeConnector(c.id), onClose()))
             }
@@ -2373,7 +2373,7 @@ function ConnectorDetails({ c, onClose }: { c: Connector; onClose: () => void })
             </div>
           )
         })}
-        <p className="hint">{L('Ferramentas novas que o servidor publicar depois entram desligadas até você revisar. Sensíveis sempre pedem aprovação.', 'New tools the server publishes later come in off until you review them. Sensitive ones always ask for approval.')}</p>
+        <p className="hint">{L('Ferramentas novas que o servidor publicar depois entram desligadas até você revisar. Sensíveis sempre pedem aprovação.', "New tools stay disabled until reviewed. Sensitive tools require approval.")}</p>
       </div>
       {changing && own && <OwnAppSetup provider={own.provider} onClose={() => setChanging(false)} />}
     </Modal>
@@ -2537,7 +2537,7 @@ function AgentSkills({ agentId, name }: { agentId: string; name: string }): Reac
         <p className="muted small">
           {L('Nenhuma skill ainda.', 'No skills yet.')}{' '}
           <button className="link" onClick={() => navigate({ kind: 'skills' })}>
-            {L('Criar ou trazer do Claude Code', 'Create one or bring it from Claude Code')}
+            {L('Criar ou trazer do Claude Code', "Create a skill or import one from Claude Code")}
           </button>
         </p>
       ) : (
@@ -2608,6 +2608,14 @@ function AgentSkills({ agentId, name }: { agentId: string; name: string }): Reac
     </Section>
   )
 }
+
+// How tall the reasoning preview is before it scrolls, in lines: the fork's own setting, carried
+// through the 0.2.45 merge (upstream has no height control; Thought.tsx still reads thinkingSize).
+export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
+  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines before scrolling.') },
+  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines before scrolling.') },
+  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines before scrolling.') }
+]
 
 // ---------- tabs ----------
 
@@ -2730,10 +2738,10 @@ function ReserveModel({ draft, patch }: { draft: Agent; patch: (p: Partial<Agent
             value={reserveAccount?.id ?? null}
             onChange={(v) => patch({ fallbackAccountId: v || undefined }, true)}
             options={[
-              { value: '', label: L(`A de sempre do ${ENGINES[reserve.engine].label}`, `${ENGINES[reserve.engine].label}’s usual one`) },
+              { value: '', label: L(`A de sempre do ${ENGINES[reserve.engine].label}`, `Default ${ENGINES[reserve.engine].label} account`) },
               ...reserveAccounts.map((a) => ({ value: a.id, label: a.name + (a.loggedIn ? '' : L(' (falta entrar)', ' (not signed in)')) }))
             ]}
-            placeholder={L(`A de sempre do ${ENGINES[reserve.engine].label}`, `${ENGINES[reserve.engine].label}’s usual one`)}
+            placeholder={L(`A de sempre do ${ENGINES[reserve.engine].label}`, `Default ${ENGINES[reserve.engine].label} account`)}
           />
         </Row>
       )}
@@ -2825,7 +2833,7 @@ function TeamCard(): ReactNode {
     setNote(L('Lendo o arquivo…', 'Reading the file…'))
     const path = window.tucano.pathOf?.(file)
     if (path) return void importAgents({ path }).then(setNote, failed)
-    if (file.size > MAX_UPLOAD) return setNote(L('Arquivo grande demais pra mandar pelo navegador. Importe no app do computador, ou exporte sem os arquivos.', 'File too big to send through the browser. Import it in the desktop app, or export without the files.'))
+    if (file.size > MAX_UPLOAD) return setNote(L('Arquivo grande demais pra mandar pelo navegador. Importe no app do computador, ou exporte sem os arquivos.', "This file exceeds the browser upload limit. Use the desktop app or export without files."))
     void file
       .arrayBuffer()
       .then((b) => {
@@ -2837,7 +2845,7 @@ function TeamCard(): ReactNode {
       .then(setNote, failed)
   }
   return (
-    <Card title={L('Time', 'Team')} lead={L('O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.', 'Export agents, skills, channels and routines as .md, without credentials or conversations. OpenBot, Grok Bot and Hermes imports have no connectors or web search.')}>
+    <Card title={L('Time', 'Team')} lead={L('O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.', "Export agents, skills, channels and routines as .md. No credentials or chats. OpenBot, Grok Bot and Hermes imports: no connectors or web search.")}>
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn--sm" onClick={download}>
           {L('Exportar time', 'Export team')}
@@ -2867,7 +2875,7 @@ function TeamCard(): ReactNode {
         {owner && <button
           className="btn btn--sm"
           onClick={() => (setNote(''), setHermes(true))}
-          title={L('Lê a pasta do Hermes Agent (normalmente ~/.hermes) e mostra o que entra antes de importar.', 'Reads the Hermes Agent folder (usually ~/.hermes) and shows what comes in before importing.')}
+          title={L('Lê a pasta do Hermes Agent (normalmente ~/.hermes) e mostra o que entra antes de importar.', "Preview agents from your Hermes folder (usually ~/.hermes) before importing.")}
         >
           {L('Importar do Hermes…', 'Import from Hermes…')}
         </button>}
@@ -3059,7 +3067,7 @@ function WorkspaceDangerArea(): ReactNode {
     <Card title={L('Área de perigo', 'Danger zone')}>
       <div className="workspace-danger__section">
         <h3>{L('Backups', 'Backups')}</h3>
-        <p className="small muted">{L('Faça uma cópia antes de apagar dados. O backup automático guarda as últimas 7 cópias diárias.', 'Make a copy before deleting data. Automatic backup keeps the last 7 daily copies.')}</p>
+        <p className="small muted">{L('Faça uma cópia antes de apagar dados. O backup automático guarda as últimas 7 cópias diárias.', "Back up before deleting data. Automatic backups retain the last 7 daily copies.")}</p>
         <div className="row">
           <button className="btn btn--sm" disabled={busy} onClick={() => { backupNow().then((file) => setNote(L(`Backup feito: ${file.split('/').pop()}`, `Backup done: ${file.split('/').pop()}`))).catch((e: unknown) => setError(String(e))) }}>{L('Fazer backup agora', 'Back up now')}</button>
           <button className="btn btn--sm btn--ghost" onClick={openBackups}>{L('Abrir pasta', 'Open folder')}</button>
@@ -3112,7 +3120,7 @@ function PhoneCard({ info }: { info?: TelegramInfo }): ReactNode {
       .finally(() => setBusy(false))
   }
   return (
-    <Card title={L('Celular (Telegram)', 'Phone (Telegram)')} lead={L('Aprovações com botões, as perguntas dos agentes (é só responder a mensagem) e o fim das rotinas, no seu Telegram. Útil pra rotina que pede aprovação de madrugada.', 'Receive approval requests with buttons, agent questions and routine results in Telegram. Reply directly to question messages.')}>
+    <Card title={L('Celular (Telegram)', "Telegram")} lead={L('Aprovações com botões, as perguntas dos agentes (é só responder a mensagem) e o fim das rotinas, no seu Telegram. Útil pra rotina que pede aprovação de madrugada.', 'Receive approval requests with buttons, agent questions and routine results in Telegram. Reply directly to question messages.')}>
       {!info?.bot ? (
         <>
           <ol className="small steps-list">
@@ -3168,7 +3176,7 @@ function PhoneCard({ info }: { info?: TelegramInfo }): ReactNode {
         )
       )}
       <p className="hint">
-        <Icon name="shield" size={13} /> {L('O Telegram recebe o texto das aprovações e perguntas (ferramenta, argumentos, motivo) e as respostas das rotinas. O token fica no cofre do sistema. Uma ação de alto risco pede dois toques.', 'Telegram receives the text of approvals and questions (tool, arguments, reason) and the routines’ replies. The token stays in the system’s vault. A high-risk action takes two taps.')}
+        <Icon name="shield" size={13} /> {L('O Telegram recebe o texto das aprovações e perguntas (ferramenta, argumentos, motivo) e as respostas das rotinas. O token fica no cofre do sistema. Uma ação de alto risco pede dois toques.', "Telegram receives approval details, questions, and routine replies. The token stays in the system vault. High-risk actions need two taps.")}
       </p>
     </Card>
   )
@@ -3196,7 +3204,7 @@ export function JevKey({ saved, hint }: { saved: boolean; hint?: string }): Reac
       {saved ? (
         <div className="row">
           <span className="tag tag--ok">{L('Chave salva', 'Key saved')}</span>
-          <span className="muted small grow">{L('Guardada no cofre do sistema.', 'Kept in the system’s vault.')}</span>
+          <span className="muted small grow">{L('Guardada no cofre do sistema.', "Stored in the system vault.")}</span>
           <button className="btn btn--sm btn--ghost" disabled={busy} onClick={() => save(null)}>
             {L('Remover chave', 'Remove key')}
           </button>
@@ -3235,11 +3243,11 @@ function VoiceCard(): ReactNode {
   const micLabel = (
     <label className="row row--center small">
       <input type="checkbox" checked={!voice?.hidden} onChange={(e) => save({ hidden: !e.target.checked })} />
-      {L('Mostrar o microfone no campo de mensagem', 'Show the microphone in the message field')}
+      {L('Mostrar o microfone no campo de mensagem', "Show microphone in composer")}
     </label>
   )
   return (
-    <Card title={L('Ditado', 'Dictation')} section="app-dictation" lead={`${L('Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.', 'Use the microphone or ⌥ Space (Mac), Ctrl+Space elsewhere; select it again to stop.')} ${VOICE_WHERE()} ${L('O texto fica no campo para você revisar antes de enviar.', 'Review text in the field before sending.')}`}>
+    <Card title={L('Ditado', 'Dictation')} section="app-dictation" lead={`${L('Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.', "Use the microphone, ⌥ Space (Mac) or Ctrl+Space to dictate; repeat to stop.")} ${VOICE_WHERE()} ${L('O texto fica no campo para você revisar antes de enviar.', "Review the text before sending.")}`}>
       {status && !status.ready && <VoiceSetup status={status} after={<>{micLabel}{advancedToggle}</>} />}
       <div className="voice-prefs">
         {status?.ready && (
@@ -3262,7 +3270,7 @@ function VoiceCard(): ReactNode {
                 </div>
                 {status.ownModel && (
                   <button className="btn btn--ghost btn--sm" onClick={() => void voiceRemoveModel(status.ownModel!)}>
-                    {L('Remover o modelo', 'Remove the model')}
+                    {L('Remover o modelo', "Remove model")}
                   </button>
                 )}
               </>
@@ -3277,10 +3285,10 @@ function VoiceCard(): ReactNode {
               <input type="checkbox" checked={!!voice?.detect} onChange={(e) => save({ detect: e.target.checked })} />
               {L('Detectar o idioma, em vez de usar o do app', 'Detect language instead of using app language')}
             </label>
-            <Field label={L('Caminho do whisper-cli', 'Path to whisper-cli')} hint={status?.bin && !voice?.bin ? L(`Em uso: ${status.bin}`, `In use: ${status.bin}`) : L('Opcional: sem isso, o app usa o que veio com ele.', 'Optional. If omitted, the app uses its bundled executable.')}>
+            <Field label={L('Caminho do whisper-cli', "whisper-cli path")} hint={status?.bin && !voice?.bin ? L(`Em uso: ${status.bin}`, `In use: ${status.bin}`) : L('Opcional: sem isso, o app usa o que veio com ele.', 'Optional. If omitted, the app uses its bundled executable.')}>
               <input defaultValue={voice?.bin ?? ''} placeholder="/opt/homebrew/bin/whisper-cli" onBlur={(e) => save({ bin: e.target.value.trim() || undefined })} />
             </Field>
-            <Field label={L('Caminho do modelo', 'Path to the model')} hint={status?.model && !voice?.model ? L(`Em uso: ${status.model}`, `In use: ${status.model}`) : L('Opcional: um modelo ggml (.bin) que você já tenha.', 'Optional: a ggml model (.bin) you already have.')} error={error}>
+            <Field label={L('Caminho do modelo', "Model path")} hint={status?.model && !voice?.model ? L(`Em uso: ${status.model}`, `In use: ${status.model}`) : L('Opcional: um modelo ggml (.bin) que você já tenha.', "Optional path to an existing ggml model (.bin).")} error={error}>
               <input defaultValue={voice?.model ?? ''} placeholder={L('/caminho/para/ggml-large-v3-turbo.bin', '/path/to/ggml-large-v3-turbo.bin')} onBlur={(e) => save({ model: e.target.value.trim() || undefined })} />
             </Field>
           </div>
@@ -3370,7 +3378,7 @@ export function SettingsPage(): ReactNode {
         {/* ---------- You ---------- */}
         {on('geral') && admin && (
           <SectionAnchor id="workspace-context" sections={structure}>
-            <Card title="Workspace" section="workspace-context" lead={L('Agentes, conversas, conectores e memórias ficam neste workspace. Os logins do Claude Code e OpenCode continuam compartilhados no computador. Um workspace não é uma sandbox do sistema.', 'Agents, conversations, connectors and memories stay in this workspace. Claude Code and OpenCode sign-ins are still shared on this computer. A workspace is not an OS sandbox.')}>
+            <Card title="Workspace" section="workspace-context" lead={L('Agentes, conversas, conectores e memórias ficam neste workspace. Os logins do Claude Code e OpenCode continuam compartilhados no computador. Um workspace não é uma sandbox do sistema.', "Workspace data is separate; Claude Code and OpenCode logins are shared. Workspaces are not sandboxes.")}>
               <div className="settings-pair">
                 {window.tucano.workspaces && (
                   <Field label={L('Nome do workspace', 'Workspace name')}>
@@ -3378,7 +3386,7 @@ export function SettingsPage(): ReactNode {
                   </Field>
                 )}
                 {owner && (
-                  <Field label={L('Como os agentes te chamam', 'What the agents call you')}>
+                  <Field label={L('Como os agentes te chamam', "Your name")}>
                     <input value={settings.workspaceName} onChange={(e) => updateSettings({ workspaceName: e.target.value })} />
                   </Field>
                 )}
@@ -3394,7 +3402,7 @@ export function SettingsPage(): ReactNode {
               <div className="row">
                 {/* What the person already set (the short sidebar, the tour) stays as it was. */}
                 <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: false } })}>
-                  {L('Rever a introdução', 'See the introduction again')}
+                  {L('Rever a introdução', "Review introduction")}
                 </button>
                 {settings.onboarding?.checklistHidden && (
                   <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding, done: true, checklistHidden: false } })}>
@@ -3403,7 +3411,7 @@ export function SettingsPage(): ReactNode {
                 )}
                 {settings.onboarding?.fresh && !settings.onboarding.showAll && (
                   <button className="btn btn--sm" onClick={() => updateSettings({ onboarding: { ...settings.onboarding!, showAll: true } })}>
-                    {L('Mostrar a barra lateral inteira', 'Show the whole sidebar')}
+                    {L('Mostrar a barra lateral inteira', "Show full sidebar")}
                   </button>
                 )}
               </div>
@@ -3483,6 +3491,20 @@ export function SettingsPage(): ReactNode {
                 </div>
                 <Toggle on={settings.showThinking === true} onChange={(v) => updateSettings({ showThinking: v })} />
               </div>
+              <div className="key-row">
+                <Icon name="expand" />
+                <div className="grow">
+                  <strong>{L('O tamanho do raciocínio', 'Reasoning panel height')}</strong>
+                  <p className="muted small">{THINKING_SIZES().find((c) => c.value === (settings.thinkingSize ?? 'md'))!.hint}</p>
+                </div>
+                <div className="segmented" role="radiogroup" aria-label={L('Tamanho do raciocínio', 'Reasoning panel height')}>
+                  {THINKING_SIZES().map((c) => (
+                    <button key={c.value} type="button" role="radio" aria-checked={(settings.thinkingSize ?? 'md') === c.value} className={(settings.thinkingSize ?? 'md') === c.value ? 'is-active' : ''} onClick={() => updateSettings({ thinkingSize: c.value })}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </Card>
             <Card title={L('Falar com quem faz o Tucano', 'Talk to the people who make Tucano')}>
               {owner && (
@@ -3529,14 +3551,14 @@ export function SettingsPage(): ReactNode {
           <SectionAnchor id="agents-replies" sections={structure}>
             <Card title={L('Respostas', 'Replies')} section="agents-replies">
               <Field
-                label={L('Respostas ao mesmo tempo numa conversa', "Concurrent replies per conversation")}
+                label={L('Respostas ao mesmo tempo numa conversa', 'Replies at once in a conversation')}
                 hint={L(
                   'Cada prompt ganha uma resposta própria, ao lado das que já estão em curso. Passando deste número, o prompt espera na fila até uma terminar. Um agente pode ir uma por vez na página dele.',
-                  "New prompts start separate replies up to this limit, then queue until one finishes. An agent can override this with “One reply at a time”."
+                  'Each prompt gets its own reply beside the running ones. Past this number, it waits in the queue until one ends. An agent can go one at a time on its own page.'
                 )}
               >
                 <Select
-                  aria-label={L('Respostas ao mesmo tempo numa conversa', "Concurrent replies per conversation")}
+                  aria-label={L('Respostas ao mesmo tempo numa conversa', 'Replies at once in a conversation')}
                   value={String(settings.repliesAtOnce ?? 6)}
                   onChange={(v) => { if (v) updateSettings({ repliesAtOnce: Number(v) }) }}
                   options={[
@@ -3544,7 +3566,7 @@ export function SettingsPage(): ReactNode {
                     { value: '2', label: L('Até 2', 'Up to 2') },
                     { value: '3', label: L('Até 3', 'Up to 3') },
                     { value: '4', label: L('Até 4', 'Up to 4') },
-                    { value: '6', label: L('Até 6, o máximo do app', "Up to 6 (app maximum)") }
+                    { value: '6', label: L('Até 6, o máximo do app', 'Up to 6, the app’s most') }
                   ]}
                   placeholder={L('Escolha', 'Pick')}
                 />
@@ -3557,7 +3579,7 @@ export function SettingsPage(): ReactNode {
           <SectionAnchor id="agents-limits" sections={structure}>
             <Card title={L('Limites', 'Limits')} section="agents-limits">
               <div className="grid2">
-                <Field label={L('Limite padrão por agente (milhões de tokens/mês)', 'Default limit per agent (millions of tokens/month)')}>
+                <Field label={L('Limite padrão por agente (milhões de tokens/mês)', "Monthly limit per agent (million tokens)")}>
                   <NumberInput
                     min={0}
                     step={0.5}
@@ -3565,7 +3587,7 @@ export function SettingsPage(): ReactNode {
                     onChange={(n) => updateSettings({ defaultLimit: safeLimit(n * 1_000_000) })}
                   />
                 </Field>
-                <Field label={L('Limite por resposta (% do limite do mês)', 'Limit per reply (% of the monthly limit)')} hint={L('Chegou nele, o agente pausa. Se estava avançando, segue sozinho (veja Continuar sozinho, abaixo); senão, você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', 'Pauses at the limit. With no monthly limit, the percentage uses 10 million tokens.')}>
+                <Field label={L('Limite por resposta (% do limite do mês)', "Reply limit (% of monthly limit)")} hint={L('Chegou nele, o agente pausa. Se estava avançando, segue sozinho (veja Continuar sozinho, abaixo); senão, você decide se continua. Num agente sem limite mensal, a conta é sobre 10 milhões de tokens.', 'Pauses at the limit. With no monthly limit, the percentage uses 10 million tokens.')}>
                   <NumberInput
                     min={1}
                     max={100}
@@ -3612,16 +3634,16 @@ export function SettingsPage(): ReactNode {
 
         {on('agentes') && admin && (
           <SectionAnchor id="agents-routines" sections={structure}>
-            <Card title={L('Rotinas', 'Routines')} section="agents-routines" lead={L('As rotinas rodam enquanto o app está aberto, mesmo com a janela fechada.', 'Routines run while the app is open, even with the window closed.')}>
+            <Card title={L('Rotinas', 'Routines')} section="agents-routines" lead={L('As rotinas rodam enquanto o app está aberto, mesmo com a janela fechada.', "Routines require Tucano to keep running, even with its window closed.")}>
               <div className="key-row">
                 <Icon name="clock" />
                 <div className="grow">
-                  <strong>{L('Abrir ao ligar o computador', 'Open when the computer starts')}</strong>
-                  <p className="muted small">{packaged ? L('Assim nenhuma rotina depende de você lembrar de abrir o app.', 'Starts Tucano so scheduled routines can run without opening it manually.') : L('Só no app instalado. Rodando com npm run dev, fica desligado.', 'Only in the installed app. Running with npm run dev, it stays off.')}</p>
+                  <strong>{L('Abrir ao ligar o computador', "Launch at login")}</strong>
+                  <p className="muted small">{packaged ? L('Assim nenhuma rotina depende de você lembrar de abrir o app.', 'Starts Tucano so scheduled routines can run without opening it manually.') : L('Só no app instalado. Rodando com npm run dev, fica desligado.', "Available in the installed app; disabled in development.")}</p>
                 </div>
                 <Toggle on={!!settings.openAtLogin && packaged && defaultWorkspace} onChange={(v) => packaged && defaultWorkspace && updateSettings({ openAtLogin: v })} />
               </div>
-              {!defaultWorkspace && <p className="muted small">{L('Abrir ao ligar o computador é uma configuração do app: ajuste no workspace padrão. Todos os workspaces iniciam juntos.', 'Opening at login is an app setting: change it in the default workspace. All workspaces start together.')}</p>}
+              {!defaultWorkspace && <p className="muted small">{L('Abrir ao ligar o computador é uma configuração do app: ajuste no workspace padrão. Todos os workspaces iniciam juntos.', "Change login startup in the default workspace. All workspaces start together.")}</p>}
               <div className="key-row">
                 <Icon name="moon" />
                 <div className="grow">
@@ -3668,7 +3690,7 @@ export function SettingsPage(): ReactNode {
               <div className="segmented segmented--wide" role="radiogroup" aria-label={L('Navegador dos agentes', 'Agents’ browser')}>
                 {[false, true].map((v) => (
                   <button key={String(v)} role="radio" aria-checked={!!settings.browserJev === v} className={!!settings.browserJev === v ? 'is-active' : ''} onClick={() => updateSettings({ browserJev: v })}>
-                    {v ? 'Jev (TypeSafe)' : L('Só pelo texto da página', 'Only by the page’s text')}
+                    {v ? 'Jev (TypeSafe)' : L('Só pelo texto da página', "Page text only")}
                   </button>
                 ))}
               </div>
@@ -3696,7 +3718,7 @@ export function SettingsPage(): ReactNode {
               section="models-runtimes"
               lead={L(
                 'Onde os agentes rodam: um endpoint seu, sem instalar nada, ou um programa como você configurou (no seu plano, no gateway da empresa ou nos seus provedores). Dos programas, o Tucano nunca vê nem guarda as credenciais; a chave de um endpoint fica guardada aqui, cifrada.',
-                'Use your endpoint without installing software, or a runtime on your plan, company gateway or provider. Tucano never sees or stores runtime credentials; endpoint keys stay encrypted here.'
+                "Endpoints need no installation. Runtimes use your plan, gateway or provider. Tucano stores no runtime logins; endpoint keys stay encrypted here."
               )}
               action={
                 <button className="btn btn--ghost btn--sm" onClick={refreshEngines}>
@@ -3716,7 +3738,7 @@ export function SettingsPage(): ReactNode {
               section="models-accounts"
               lead={L(
                 'Mais de um login do Claude Code, do Codex ou do Antigravity, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
-                'More than one Claude Code, Codex or Antigravity login, like a work account and a personal one. Each agent picks its account on its page. You sign in through the CLI itself: Tucano never sees or stores the password.'
+                "Add work or personal Claude Code, Codex or Antigravity accounts; select one per agent. Sign in through the CLI. Tucano never sees or stores passwords."
               )}
             >
               <AccountsCard />
@@ -3738,19 +3760,19 @@ export function SettingsPage(): ReactNode {
 
         {on('modelos') && admin && (
           <SectionAnchor id="knowledge-memory" sections={structure}>
-            <Card title={L('Memória', 'Memory')} section="knowledge-memory" lead={L('Um modelo pequeno resume o que sai da janela de cada conversa e, do mesmo trecho, tira o que vale lembrar sobre você.', 'A small model summarizes what leaves each conversation’s window and, from the same stretch, picks what’s worth remembering about you.')}>
+            <Card title={L('Memória', 'Memory')} section="knowledge-memory" lead={L('Um modelo pequeno resume o que sai da janela de cada conversa e, do mesmo trecho, tira o que vale lembrar sobre você.', "Summarize older messages and extract lasting facts about you.")}>
               <div className="grid2">
-                <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', 'Runs every ~20 messages in a long conversation.')}>
+                <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', "Runs about every 20 messages in long conversations.")}>
                   <ModelSelect value={settings.memoryModel} onChange={(memoryModel) => updateSettings({ memoryModel })} />
                 </Field>
-                <Field label={L('O que ele aprende sobre você', 'What it learns about you')} hint={L('Só conta o que você disse, nunca o que um agente supôs.', 'Only what you said counts, never what an agent assumed.')}>
+                <Field label={L('O que ele aprende sobre você', "Memory learning")} hint={L('Só conta o que você disse, nunca o que um agente supôs.', "Learns from your messages, not agent assumptions.")}>
                   <Select
                     value={settings.memoryLearning ?? null}
                     onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
                     options={[
-                      { value: 'approve', label: L('Vira sugestão pra você aprovar', 'A suggestion for you to approve') },
-                      { value: 'auto', label: L('Grava sozinho', 'Saved on its own') },
-                      { value: 'off', label: L('Nada (só resume)', 'Nothing (just summarizes)') }
+                      { value: 'approve', label: L('Vira sugestão pra você aprovar', "Ask for approval") },
+                      { value: 'auto', label: L('Grava sozinho', "Save automatically") },
+                      { value: 'off', label: L('Nada (só resume)', "Summaries only") }
                     ]}
                     placeholder={L('Escolha', 'Pick')}
                   />
@@ -3803,16 +3825,16 @@ export function SettingsWhere(): ReactNode {
     <div className="settings-where" role="note">
       <Icon name="laptop" size={16} />
       <span className="grow">
-        {L('Estes ajustes são do servidor ', "Settings for server ")}
+        {L('Estes ajustes são do servidor ', 'These are the settings of the server ')}
         <b>{host}</b>
         {L(
           ' e valem lá, de qualquer computador. O que é só do seu computador, como emprestá-lo aos agentes, fica no app do Tucano nele.',
-          ". Manage local settings and agent lending in each computer’s Tucano app."
+          ', and they apply there, from any computer. What belongs to your own computer, like lending it to the agents, is in the Tucano app on it.'
         )}
       </span>
       {open && (
         <button className="btn btn--sm" onClick={() => open()}>
-          {L('Abrir no meu computador', "Open computer settings")}
+          {L('Abrir no meu computador', 'Open on my computer')}
         </button>
       )}
     </div>
@@ -3825,9 +3847,9 @@ export function notifyHint(state: NotifyState | 'shown', mac: boolean): string |
     'Pra ser avisado, use o app do Tucano no computador (Configurações › Servidores), o app do iPhone ou o Telegram (Configurações › Celular).',
     'Or use the desktop app (Settings › Servers), iPhone app or Telegram (Settings › Phone).'
   )
-  if (state === 'insecure') return L('O navegador não mostra notificações de um endereço sem HTTPS (como o do Tailscale, http://100.…). ', "Browsers don't show notifications from an address without HTTPS (like Tailscale's, http://100.…). ") + elsewhere
+  if (state === 'insecure') return L('O navegador não mostra notificações de um endereço sem HTTPS (como o do Tailscale, http://100.…). ', "Browser notifications require HTTPS. ") + elsewhere
   if (state === 'blocked') return L('O navegador bloqueou as notificações deste endereço. Libere nas permissões do site e recarregue a página. ', 'Unblock site notifications, then reload. ') + elsewhere
-  if (state === 'unsupported') return L('Aqui não dá pra mostrar notificações. ', "Notifications can't be shown here. ") + elsewhere
+  if (state === 'unsupported') return L('Aqui não dá pra mostrar notificações. ', "Notifications are unavailable here. ") + elsewhere
   if (state === 'shown')
     return mac
       ? L('Mandei uma. Se não apareceu, confira Ajustes do Sistema › Notificações › Tucano (permitir, e o estilo Faixas ou Alertas) e se um modo Foco está ligado.', 'Notification sent. If it did not appear, check System Settings › Notifications › Tucano (allow notifications with Banners or Alerts) and Focus.')

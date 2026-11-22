@@ -19,12 +19,14 @@
       "files": [
         "src/renderer/src/components/Conversation.tsx"
       ],
-      "approved": "After a few quiet minutes, this thread is summarized and personal memories are extracted.",
+      "approved": "After a few idle minutes, this thread is summarized here and used to learn memories about you.",
       "previous": [
-        "Once the thread is quiet for a few minutes, what was said becomes a summary here, and the memories about you come from it."
+        "Once the thread is quiet for a few minutes, what was said becomes a summary here, and the memories about you come from it.",
+        "After a few quiet minutes, this thread is summarized and personal memories are extracted."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -45,12 +47,14 @@
       "files": [
         "src/renderer/src/components/Conversation.tsx"
       ],
-      "approved": "awaiting an answer",
+      "approved": "waiting for an answer",
       "previous": [
-        "waiting on an answer"
+        "waiting on an answer",
+        "awaiting an answer"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -58,12 +62,14 @@
       "files": [
         "src/renderer/src/components/Conversation.tsx"
       ],
-      "approved": "The final result is returned to the requester.",
+      "approved": "the final answer goes back to whoever asked",
       "previous": [
-        "what this thread ends with goes back to whoever asked"
+        "what this thread ends with goes back to whoever asked",
+        "The final result is returned to the requester."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -110,12 +116,14 @@
       "files": [
         "src/renderer/src/components/Harness.tsx"
       ],
-      "approved": "Complete installation in the terminal. Tucano detects it automatically.",
+      "approved": "Finish installing in the terminal. Tucano picks it up on its own.",
       "previous": [
-        "Installing in the terminal that opened. Once it finishes, it shows up here on its own."
+        "Installing in the terminal that opened. Once it finishes, it shows up here on its own.",
+        "Complete installation in the terminal. Tucano detects it automatically."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -162,12 +170,14 @@
       "files": [
         "src/renderer/src/components/Memory.tsx"
       ],
-      "approved": "Excluded from prompts and blocked from relearning. Permanent deletion also removes that block.",
+      "approved": "Excluded from prompts; records prevent relearning. Permanent deletion removes that safeguard.",
       "previous": [
-        "Out of the prompt. The record keeps them from being learned again; deleting for good removes even that."
+        "Out of the prompt. The record keeps them from being learned again; deleting for good removes even that.",
+        "Excluded from prompts and blocked from relearning. Permanent deletion also removes that block."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -504,12 +514,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Set access per connector. Unavailable tools are hidden from the model.",
+      "approved": "Set each connector’s access level. Excluded tools are not exposed to the model.",
       "previous": [
-        "One level per connector. What’s left out doesn’t even reach the model."
+        "One level per connector. What’s left out doesn’t even reach the model.",
+        "Set access per connector. Unavailable tools are hidden from the model."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -634,12 +646,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Use Claude Code, Codex, or another configured runtime with your plan, gateway, or provider.",
+      "approved": "The agent runs in Claude Code, Codex or another configured runtime, using your plan, company gateway or provider.",
       "previous": [
-        "The agent runs in Claude Code, Codex or another one you already use, the way you set it up: on your plan, your company’s gateway or your provider."
+        "The agent runs in Claude Code, Codex or another one you already use, the way you set it up: on your plan, your company’s gateway or your provider.",
+        "Use Claude Code, Codex, or another configured runtime with your plan, gateway, or provider."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -647,12 +661,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Higher effort takes more time and uses more of your plan.",
+      "approved": "More effort means longer reasoning and uses more of your plan.",
       "previous": [
-        "More effort thinks longer and uses more of your plan."
+        "More effort thinks longer and uses more of your plan.",
+        "Higher effort takes more time and uses more of your plan."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -686,12 +702,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Share a project folder. Changes affect real files; use Git to keep them reversible.",
+      "approved": "Lend a project folder for the agent to work in. It changes real files; use Git to undo changes.",
       "previous": [
-        "Lend it a project folder to work in. It changes the real files, so use git to be able to undo."
+        "Lend it a project folder to work in. It changes the real files, so use git to be able to undo.",
+        "Share a project folder. Changes affect real files; use Git to keep them reversible."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -740,12 +758,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "The external-content guard still requires approval for consequential actions.",
+      "approved": "With the guard below enabled, irreversible actions also need approval after reading external content.",
       "previous": [
-        "With the guard below on, what can’t be undone after reading something from outside asks too."
+        "With the guard below on, what can’t be undone after reading something from outside asks too.",
+        "The external-content guard still requires approval for consequential actions."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -848,12 +868,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Approval requests and questions from your agents.",
+      "approved": "Approvals and questions from agents that need your response.",
       "previous": [
-        "What waits on you: approvals you decide and the agents’ questions to you."
+        "What waits on you: approvals you decide and the agents’ questions to you.",
+        "Approval requests and questions from your agents."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1004,15 +1026,17 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'the agent'} tries the main model again.",
+      "approved": "At the main model’s 5-hour or weekly subscription limit, the reply continues with the fallback model, using another runtime or account if needed. On the next reply, ${draft.name || 'the agent'} tries the main model again.",
       "previous": [
         "When the main model’s subscription hits its limit (the 5-hour or the weekly one), the reply goes on with the reserve, which can be in another program (Claude Code, Codex…) or another account. On the next reply, ${draft.name || 'the agent'} tries the main one again.",
         "Continue on a fallback account or runtime when a subscription limit is reached. ${draft.name || 'The agent'} retries the main model next reply.",
-        "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'The agent'} tries the main model again."
+        "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'The agent'} tries the main model again.",
+        "Continue on a fallback account or runtime when a subscription limit is reached. On the next reply, ${draft.name || 'the agent'} tries the main model again."
       ],
       "reviews": [
         "docs/english-copy-proposal.md",
-        "docs/strings-audit-2026-11-22/phase2-next-review.json"
+        "docs/strings-audit-2026-11-22/phase2-next-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ],
       "englishExpressionLiterals": true
     },
@@ -1047,12 +1071,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Sign in under Settings › Models to enable this fallback account.",
+      "approved": "This account is not signed in. Sign in under Settings › Models to use it as a fallback.",
       "previous": [
-        "This account isn’t signed in yet: the reserve only works once you sign in under Settings › Models."
+        "This account isn’t signed in yet: the reserve only works once you sign in under Settings › Models.",
+        "Sign in under Settings › Models to enable this fallback account."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1060,12 +1086,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "The fallback uses the same model and account, so it will not be used.",
+      "approved": "The fallback uses the same model and account as the main model, so it will not be used.",
       "previous": [
-        "It’s the same model, on the same account as the main one: the reserve won’t be used."
+        "It’s the same model, on the same account as the main one: the reserve won’t be used.",
+        "The fallback uses the same model and account, so it will not be used."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1073,12 +1101,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "The fallback shares this account’s subscription limit. Choose a different account or runtime.",
+      "approved": "The fallback uses the same runtime and account, so it also reaches the subscription limit.",
       "previous": [
-        "It’s the same program, on the same account as the main one: if the limit is the subscription’s, it’ll be out too."
+        "It’s the same program, on the same account as the main one: if the limit is the subscription’s, it’ll be out too.",
+        "The fallback shares this account’s subscription limit. Choose a different account or runtime."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1165,12 +1195,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Receive approvals, questions, and routine results in Telegram. Use buttons to approve, or reply to answer.",
+      "approved": "Receive approval requests with buttons, agent questions and routine results in Telegram. Reply directly to question messages.",
       "previous": [
-        "Approvals with buttons, the agents’ questions (just reply to the message) and routine results, in your Telegram. Handy for a routine that asks for approval in the middle of the night."
+        "Approvals with buttons, the agents’ questions (just reply to the message) and routine results, in your Telegram. Handy for a routine that asks for approval in the middle of the night.",
+        "Receive approvals, questions, and routine results in Telegram. Use buttons to approve, or reply to answer."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1178,12 +1210,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Waiting for this code in Telegram. Only the sender can pair.",
+      "approved": "Only the person who sends this code can use the bot. Waiting…",
       "previous": [
-        "Only whoever sends this code gets the bot. Waiting…"
+        "Only whoever sends this code gets the bot. Waiting…",
+        "Waiting for this code in Telegram. Only the sender can pair."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1349,12 +1383,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Optional. Defaults to the bundled executable.",
+      "approved": "Optional. If omitted, the app uses its bundled executable.",
       "previous": [
-        "Optional: without it, the app uses the one it came with."
+        "Optional: without it, the app uses the one it came with.",
+        "Optional. Defaults to the bundled executable."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1537,12 +1573,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Play a sound when agents need you or finish. Notifications remain visible when muted.",
+      "approved": "Plays a sound when an agent needs you or finishes. When off, notifications still appear silently.",
       "previous": [
-        "The chirp when an agent needs you and when it’s done. Off, notifications still show up, silently."
+        "The chirp when an agent needs you and when it’s done. Off, notifications still show up, silently.",
+        "Play a sound when agents need you or finish. Notifications remain visible when muted."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1576,12 +1614,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Show reasoning below the steps, including after completion. Available for Pi agents only.",
+      "approved": "Shows reasoning below the steps, during and after replies. When off, only steps and answers appear. Currently available only with Pi.",
       "previous": [
-        "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning."
+        "While an agent replies, its reasoning shows in small, dim text under the steps, and it stays there once the reply ends. Off, you see only the steps and the answer. For now only agents running on Pi send their reasoning.",
+        "Show reasoning below the steps, including after completion. Available for Pi agents only."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1776,12 +1816,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval.",
+      "approved": "Set default autonomy and approvals for all agents; override them on each agent’s page. Requests appear in the conversation. Reading and investigation never need approval.",
       "previous": [
-        "For every agent: how far they go on their own and what asks for your approval first, with a button in the conversation. On each agent’s page you can change it for that agent only. Reading and looking into things never asks."
+        "For every agent: how far they go on their own and what asks for your approval first, with a button in the conversation. On each agent’s page you can change it for that agent only. Reading and looking into things never asks.",
+        "Default approval rules for all agents; override them on each agent’s page. Reading never needs approval."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -1789,12 +1831,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Find controls by page text at no cost. If no match is found, agents use element numbers.",
+      "approved": "Finds the element an agent asks to click. Text matching is free; when it fails, the agent uses the element number.",
       "previous": [
-        "How the app finds what the agent asks to click (“the Search button”). By text it’s free and handles most cases; when it can’t find it, the agent uses the element’s number."
+        "How the app finds what the agent asks to click (“the Search button”). By text it’s free and handles most cases; when it can’t find it, the agent uses the element’s number.",
+        "Find controls by page text at no cost. If no match is found, agents use element numbers."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2062,12 +2106,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Start Tucano automatically so routines can run.",
+      "approved": "Starts Tucano so scheduled routines can run without opening it manually.",
       "previous": [
-        "So no routine depends on you remembering to open the app."
+        "So no routine depends on you remembering to open the app.",
+        "Start Tucano automatically so routines can run."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2142,12 +2188,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Inactivity timeout (minutes)",
+      "approved": "Treat as stuck after (minutes inactive)",
       "previous": [
-        "Treat as stuck after (min with no sign)"
+        "Treat as stuck after (min with no sign)",
+        "Inactivity timeout (minutes)"
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2328,13 +2376,15 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Other options: desktop, iPhone, or Telegram.",
+      "approved": "Or use the desktop app (Settings › Servers), iPhone app or Telegram (Settings › Phone).",
       "previous": [
         "Alternatives: desktop, iPhone, or Telegram (Settings › Phone).",
-        "To be told, use the Tucano app on your computer (Settings › Servers), the iPhone app or Telegram (Settings › Phone)."
+        "To be told, use the Tucano app on your computer (Settings › Servers), the iPhone app or Telegram (Settings › Phone).",
+        "Other options: desktop, iPhone, or Telegram."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2386,12 +2436,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Test sent. If missing, allow Tucano banners or alerts in System Settings › Notifications, and check Focus.",
+      "approved": "Notification sent. If it did not appear, check System Settings › Notifications › Tucano (allow notifications with Banners or Alerts) and Focus.",
       "previous": [
-        "Sent one. If it didn’t show, check System Settings › Notifications › Tucano (allowed, with Banners or Alerts) and whether a Focus is on."
+        "Sent one. If it didn’t show, check System Settings › Notifications › Tucano (allowed, with Banners or Alerts) and whether a Focus is on.",
+        "Test sent. If missing, allow Tucano banners or alerts in System Settings › Notifications, and check Focus."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2399,12 +2451,14 @@
       "files": [
         "src/renderer/src/components/Pages.tsx"
       ],
-      "approved": "Test sent. If missing, check Tucano’s system/browser notification settings and Do Not Disturb.",
+      "approved": "Notification sent. If it did not appear, check the system and browser notification settings for Tucano and Do Not Disturb.",
       "previous": [
-        "Sent one. If it didn’t show, check the system’s and the browser’s notification settings for Tucano, and Do Not Disturb."
+        "Sent one. If it didn’t show, check the system’s and the browser’s notification settings for Tucano, and Do Not Disturb.",
+        "Test sent. If missing, check Tucano’s system/browser notification settings and Do Not Disturb."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -2412,12 +2466,14 @@
       "files": [
         "src/renderer/src/components/People.tsx"
       ],
-      "approved": "Manage workspace access and roles. Each person’s DMs remain private.",
+      "approved": "Who has access to this Tucano and what each person can do. Each person’s DMs stay private.",
       "previous": [
-        "Who has access to this Tucano and what each one can do. Each person’s DMs are theirs alone."
+        "Who has access to this Tucano and what each one can do. Each person’s DMs are theirs alone.",
+        "Manage workspace access and roles. Each person’s DMs remain private."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -3101,12 +3157,14 @@
       "files": [
         "src/renderer/src/components/Update.tsx"
       ],
-      "approved": "Automatic update failed. Download the latest version from Releases.",
+      "approved": "Couldn’t update on its own. Download the latest version from Releases.",
       "previous": [
-        "Couldn’t update on its own. Download the new version from Releases."
+        "Couldn’t update on its own. Download the new version from Releases.",
+        "Automatic update failed. Download the latest version from Releases."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -3114,12 +3172,14 @@
       "files": [
         "src/renderer/src/components/Update.tsx"
       ],
-      "approved": "Could not check for updates while offline. Tucano will retry automatically.",
+      "approved": "No internet connection. Tucano will try checking for updates again later.",
       "previous": [
-        "No internet to look for a new version. Tucano tries again on its own later."
+        "No internet to look for a new version. Tucano tries again on its own later.",
+        "Could not check for updates while offline. Tucano will retry automatically."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -3127,12 +3187,14 @@
       "files": [
         "src/renderer/src/components/Update.tsx"
       ],
-      "approved": "Could not check for updates. Try again later.",
+      "approved": "Couldn’t check for updates. Try again later.",
       "previous": [
-        "Couldn’t look for a new version just now. Try again later."
+        "Couldn’t look for a new version just now. Try again later.",
+        "Could not check for updates. Try again later."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -3699,12 +3761,14 @@
       "files": [
         "src/renderer/src/components/Wiki.tsx"
       ],
-      "approved": "This passage will be removed without replacement.",
+      "approved": "This passage will be removed from the page without a replacement.",
       "previous": [
-        "Nothing in its place: the passage just leaves the page."
+        "Nothing in its place: the passage just leaves the page.",
+        "This passage will be removed without replacement."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -3933,12 +3997,14 @@
       "files": [
         "src/renderer/src/components/Wiki.tsx"
       ],
-      "approved": "No open findings.",
+      "approved": "Nothing needs attention.",
       "previous": [
-        "All in order. Nothing to look after now."
+        "All in order. Nothing to look after now.",
+        "No open findings."
       ],
       "reviews": [
-        "docs/english-copy-proposal.md"
+        "docs/english-copy-proposal.md",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -4533,12 +4599,13 @@
       "files": [
         "src/core/runs.ts"
       ],
-      "approved": "You no longer have Wiki access.",
+      "approved": "You do not have wiki access now.",
       "previous": [
-        "You do not have wiki access now."
+        "You no longer have Wiki access."
       ],
       "reviews": [
-        "docs/english-copy-round2-review.json"
+        "docs/english-copy-round2-review.json",
+        ".tucano-local/copy-overrides/review-runs.json"
       ]
     },
     {
@@ -7369,12 +7436,14 @@
       "files": [
         "src/renderer/src/components/Harness.tsx"
       ],
-      "approved": "Use an OpenAI-compatible API (/chat/completions) and key. Agents use selected models directly, without Claude Code or Codex.",
+      "approved": "Enter an OpenAI-compatible address (/chat/completions) and its key. Agents run directly on the selected models, without Claude Code or Codex.",
       "previous": [
-        "An address in OpenAI’s format (/chat/completions) and its key. Agents run straight on it, with no Claude Code or Codex, each on one of the models you tick."
+        "An address in OpenAI’s format (/chat/completions) and its key. Agents run straight on it, with no Claude Code or Codex, each on one of the models you tick.",
+        "Use an OpenAI-compatible API (/chat/completions) and key. Agents use selected models directly, without Claude Code or Codex."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7421,12 +7490,14 @@
       "files": [
         "src/renderer/src/components/Harness.tsx"
       ],
-      "approved": "Tool calling is required for delegation, questions, and connectors.",
+      "approved": "The model must support tool calls so the agent can ask other agents or you, and use connectors.",
       "previous": [
-        "The model must handle tool calls: that’s how an agent asks another, asks you and uses connectors."
+        "The model must handle tool calls: that’s how an agent asks another, asks you and uses connectors.",
+        "Tool calling is required for delegation, questions, and connectors."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7555,12 +7626,14 @@
       "files": [
         "src/renderer/src/components/Invite.tsx"
       ],
-      "approved": "Copy this link before closing. Each new invite creates a different link.",
+      "approved": "Share this link before closing this screen. A new invite creates a different link.",
       "previous": [
-        "Send it however you like. It leaves this screen when you close it: a new invite makes another link."
+        "Send it however you like. It leaves this screen when you close it: a new invite makes another link.",
+        "Copy this link before closing. Each new invite creates a different link."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7620,12 +7693,14 @@
       "files": [
         "src/renderer/src/components/OrgSectors.tsx"
       ],
-      "approved": "Help other sector heads route requests here.",
+      "approved": "Other sector heads use this to decide when to send work here.",
       "previous": [
-        "The other heads read this to know when to send something here."
+        "The other heads read this to know when to send something here.",
+        "Help other sector heads route requests here."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7659,12 +7734,14 @@
       "files": [
         "src/renderer/src/components/OrgSectors.tsx"
       ],
-      "approved": "Leads this sector and assigns incoming requests.",
+      "approved": "The sector head leads the branch and assigns requests within the sector.",
       "previous": [
-        "They are at the top of the branch. They decide who in the sector does it."
+        "They are at the top of the branch. They decide who in the sector does it.",
+        "Leads this sector and assigns incoming requests."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7711,12 +7788,14 @@
       "files": [
         "src/renderer/src/components/People.tsx"
       ],
-      "approved": "Coverage requires access to the entire team to handle approvals from any agent.",
+      "approved": "Only people who can see the whole team are listed; they may need to approve actions from any agent.",
       "previous": [
-        "Who doesn’t see the whole team isn’t listed: covering for you means deciding approvals from any agent."
+        "Who doesn’t see the whole team isn’t listed: covering for you means deciding approvals from any agent.",
+        "Coverage requires access to the entire team to handle approvals from any agent."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
@@ -7880,12 +7959,14 @@
       "files": [
         "src/shared/errors.ts"
       ],
-      "approved": "The endpoint rejected the key. Check it in Settings › Models.",
+      "approved": "The endpoint rejected the key. Check the key in Settings › Models.",
       "previous": [
-        "The endpoint refused the key. Check its key in Settings › Models."
+        "The endpoint refused the key. Check its key in Settings › Models.",
+        "The endpoint rejected the key. Check it in Settings › Models."
       ],
       "reviews": [
-        "docs/english-copy-round3-review.json"
+        "docs/english-copy-round3-review.json",
+        ".tucano-local/copy-overrides/review-upstream-0.2.45.json"
       ]
     },
     {
