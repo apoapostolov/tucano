@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Root } from 'react-dom/client'
 import { setLang } from '../src/shared/lang'
 import { SettingsLayout } from '../src/renderer/src/components/SettingsLayout'
-import { settingsStructure, type SettingsAccess, type SettingsSectionId } from '../src/renderer/src/settings-structure'
+import { inStrip, settingsStructure, type SettingsAccess, type SettingsSectionId } from '../src/renderer/src/settings-structure'
 
 const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
@@ -162,6 +162,24 @@ describe('settings section navigation', () => {
     expect(document.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('App')
     expect([...document.querySelectorAll('[role="tab"]')].map(el => el.textContent)).toEqual(['App', 'Workspace'])
     expect(document.querySelector('[data-settings-section="app-sidebar"]')).not.toBeNull()
+  })
+
+  it('keeps a card that reads inside the one above it out of the strip', async () => {
+    // The extensions are a card of their own inside Agents, under the browser's; a section row of
+    // its own would be a second way to one place, so it is declared `nav: false`. Its card still
+    // renders and still carries its anchor (settings-placement holds that), the strip just skips it.
+    const agents = settingsStructure(access).filter(section => section.visible && section.page === 'agents')
+    expect(agents.map(section => section.id)).toContain('agents-addons')
+    expect(agents.find(section => section.id === 'agents-addons')).toMatchObject({ keys: ['browserAddOns'], nav: false })
+
+    // Embedded — the shape Settings › Agents really draws — the strip follows the page's own cards.
+    const cards = (): ReactNode => <>{agents.map(section => <section key={section.id} data-settings-section={section.id} />)}</>
+    await act(async () => root.render(<div className="page__scroll"><SettingsLayout embedded sections={settingsStructure(access)} />{cards()}</div>))
+    const strip = [...document.querySelectorAll('nav a')].map(link => link.textContent)
+    expect(strip).toEqual(agents.filter(inStrip).map(section => section.label))
+    expect(strip).not.toContain('Browser Extensions')
+    expect(strip).toContain('Agents browser')
+    expect(document.querySelector('[data-settings-section="agents-addons"]')).not.toBeNull()
   })
 
   it('preserves normal modified-link behavior and cancels pending frames on unmount', async () => {

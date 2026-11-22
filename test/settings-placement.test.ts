@@ -26,9 +26,10 @@ describe('settings placement', () => {
     const report = inspectSettingsPlacement(root)
     expect(report.failures).toEqual([])
     expect(report.passed).toBe(true)
-    expect(report.sections).toBe(40)
+    // 41 since the extensions got a card of their own under the agents' browser (agents-addons).
+    expect(report.sections).toBe(41)
     expect(report.tabs).toBe(8) // upstream's Harnesses page
-    expect(report.renderedSections).toBe(29)
+    expect(report.renderedSections).toBe(30)
     expect(report.panes).toEqual(['agentes', 'atividade', 'geral', 'harnesses', 'integracoes', 'modelos', 'pessoas', 'servidores'])
     expect(report.unownedCards).toEqual(['Talk to the people who make Tucano', 'Sidebar', 'Recovery', 'Browser Use', 'Skill folders'])
   })

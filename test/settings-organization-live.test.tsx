@@ -78,6 +78,7 @@ const { getState } = await import('../src/renderer/src/store')
 const { setLang } = await import('../src/shared/lang')
 const { createRoot } = await import('react-dom/client')
 const { SettingsPage } = await import('../src/renderer/src/components/Pages')
+const { inStrip, settingsStructure } = await import('../src/renderer/src/settings-structure')
 
 type Person = State['people'][number]
 const OWNER: Person = { id: 'ana', name: 'Ana', role: 'owner', about: '' }
@@ -150,7 +151,10 @@ describe('settings sections inside the 0.2.37 tabs', () => {
 
     await render('agentes')
     // Recovery, Collaboration and Skills have no card on this tab: no links to nothing. Replies has one.
-    // 0.2.41 puts Tuca's on-by-default row and the agents' browser between Permissions and Replies.
+    // 0.2.41 puts Tuca's on-by-default row and the agents' browser between Permissions and Replies, and
+    // the extensions' card sits on its own right after the browser's.
+    // The extensions' card reads inside the browser's, under it, with no row of its own in the strip
+    // (Apo, 22 Nov): the card is there, the name above it already says where it is.
     expect(labels()).toEqual(['Permissions', 'Tuca', 'Agents browser', 'Replies', 'Automation', 'Limits'])
 
     await render('integracoes')
@@ -178,8 +182,16 @@ describe('settings sections inside the 0.2.37 tabs', () => {
         const target = document.getElementById(link.getAttribute('href')!.slice(1))
         expect(target?.dataset.settingsSection, `${tab} ${link.textContent}`).toBeTruthy()
       }
-      // No link without a card, and no card left out of the strip.
-      expect(list).toHaveLength(anchors().length)
+      // No link without a card, and no card left out of the strip — except the sections the
+      // structure keeps out on purpose (`nav: false`, a card that reads inside the one above it).
+      const out = new Set<string>(settingsStructure({ admin: true, owner: true, team: true, servers: true })
+        .filter(section => !inStrip(section)).map(section => section.id))
+      const linked = new Set(list.map(link => link.getAttribute('href')!.replace(/^#settings-/, '')))
+      for (const anchor of anchors()) {
+        const id = anchor.dataset.settingsSection!
+        expect(linked.has(id), `${tab} ${id}`).toBe(!out.has(id))
+      }
+      expect(list).toHaveLength(anchors().filter(anchor => !out.has(anchor.dataset.settingsSection!)).length)
       // One anchor per section: no card is two sections, and no id repeats in the pane.
       const ids = anchors().map((element) => element.id)
       expect(new Set(ids).size, tab).toBe(ids.length)
@@ -188,6 +200,16 @@ describe('settings sections inside the 0.2.37 tabs', () => {
     // The strip is a named landmark, not another tab bar.
     expect(strip()!.tagName).toBe('NAV')
     expect(strip()!.getAttribute('aria-label')).toBe('Settings sections')
+  })
+
+  it('draws the extensions card after Browser Use, at the foot of the Agents tab', async () => {
+    // Apo's read on the installed build: the extensions' card sat above Browser Use, between the
+    // reply settings and the card that picks who finds the click. It reads under it, as its last card.
+    await render('agentes')
+    const titles = cards()
+    const use = titles.indexOf('Browser Use')
+    expect(use).toBeGreaterThan(-1)
+    expect(titles.indexOf('Browser Extensions')).toBe(use + 1)
   })
 
   it('walks to a card and focuses it when the person picks it', async () => {

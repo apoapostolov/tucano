@@ -88,6 +88,7 @@ import { Browser, browserTools, CHAT_ONLY_BROWSER_TOOLS, type BrowserHost } from
 import { downloadsFolder } from './downloads'
 import { findOnPath, isWin, loginShell, onPath, openWindowsConsole, osOf, shellCommand, terminalCommand } from './platform'
 import { ChromeBrowsers, hasChrome } from './chrome'
+import { AddOns } from './chrome-addons'
 import { checkFolder, Computers, folderName, type Shooter } from './computer'
 import { Memories } from './memory'
 import { Titles } from './titles'
@@ -340,6 +341,11 @@ const classifierKeySaved = (c: ClassifierConfig): boolean =>
 const classifierKeyOf = async (c: ClassifierConfig): Promise<string | undefined> =>
   (await secrets.get(classifierSecret(c.id))) ?? (c.id === JEV_CLASSIFIER.id ? await secrets.get(JEV_SECRET) : undefined)
 
+// The agents' ad blocker and cookie-notice removers (Settings › Agents), one switch each, which need Chrome
+// for Testing and three extensions from the store: a download into the data folder, on the switch, never
+// on the way of a reply — the lane works as it does today until it lands, and if it never does.
+const addOns = new AddOns(join(dataDir, 'navegador-extra'), () => emit({ type: 'settings', settings: settings() }))
+
 const settings = (): Settings => {
   const s = db.getSettings(DEFAULTS)
   setLang(s.language)
@@ -354,6 +360,7 @@ const settings = (): Settings => {
     ...(s.endpoint ? { endpoint: { ...s.endpoint, hasKey: db.getSecret(ENDPOINT_SECRET) !== undefined } } : {}),
     jevKey: classifiers.some((c) => c.provider === 'typesafe' && classifierKeySaved(c)),
     telegram: telegram?.info(),
+    ...(addOns.info ? { addOns: addOns.info } : {}),
     accounts: (s.accounts ?? []).map((a) => ({ ...a, ...accountLogins.get(a.id) }))
   }
 }
@@ -849,6 +856,9 @@ const electronHost: BrowserHost = (agentId, op, args) =>
     process.parentPort.postMessage({ type: 'browser', id, agentId, op, args })
     setTimeout(() => pages.get(id) && (pages.delete(id), reject(new Error(L('o navegador não respondeu em 60 s', "the browser didn't answer in 60 s")))), 60_000).unref()
   })
+// Each extension's switch, as they were left: what is on is here already, or downloads on this start.
+if (!fake && hasChrome()) bg(addOns.set(settings().browserAddOns), 'browserAddOns')
+
 // Google Chrome when the Mac has it (Google refuses logins in embedded browsers); Electron's Chromium otherwise.
 const chrome =
   !fake && hasChrome()
@@ -859,7 +869,8 @@ const chrome =
         (agentId, jpeg) => browser.frame(agentId, jpeg),
         serverMode,
         serverMode ? 10 * 60_000 : undefined, // on a server, an idle agent's Chrome gives its memory back
-        (agentId) => downloadsFolder(dataDir, agentId)
+        (agentId) => downloadsFolder(dataDir, agentId),
+        addOns
       )
     : undefined
 const host: BrowserHost = chrome ? (agentId, op, args) => chrome.run(agentId, op, args) : electronHost
@@ -2815,7 +2826,7 @@ const api: Handlers = {
   voiceRemoveModel: ({ model }) => modelDownload.remove(model),
   cancelTranscribe: ({ id }) => transcriber.cancel(id),
 
-  updateSettings: ({ patch: { jevKey: _computed, telegram: _phone, accounts: _own, endpoint: _endpoint, ...all } }, ctx) => {
+  updateSettings: ({ patch: { jevKey: _computed, telegram: _phone, accounts: _own, endpoint: _endpoint, addOns: _addOns, ...all } }, ctx) => {
     // Only the settings there are, each of its kind and size: what's kept goes to everyone, every snapshot.
     const bad = settingsPatchError(all)
     if (bad) throw new Error(bad)
@@ -2865,6 +2876,7 @@ const api: Handlers = {
     if (!serverMode && patch.theme !== undefined) toMain({ type: 'theme', theme: patch.theme })
     if (patch.paused !== undefined) runner.setPaused(patch.paused)
     if (patch.openAtLogin !== undefined || patch.launchMinimized !== undefined) toMain({ type: 'login_item', open: !!settings().openAtLogin, minimized: !!settings().launchMinimized })
+    if (patch.browserAddOns !== undefined) bg(addOns.set(patch.browserAddOns), 'browserAddOns') // on downloads it, off removes it
     if (patch.onboarding?.done) bg(enginesReady.then(() => ensureTuca()), 'ensureTuca') // skipping the introduction still gets the Tuca
     if (patch.language || 'clock' in patch) toMain({ type: 'lang', lang: patch.language ?? db.getSettings(DEFAULTS).language, clock: patch.clock ?? db.getSettings(DEFAULTS).clock })
     if (!serverMode && patch.notice !== undefined) toMain({ type: 'notice-pref', ...noticePrefs() })

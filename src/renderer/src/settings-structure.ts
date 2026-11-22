@@ -17,6 +17,9 @@ type Section = {
   keys: readonly (keyof Settings)[]
   scope: Scope
   visible: boolean
+  // `false`: the card is drawn where it belongs, and the strip under the tabs lists no row for it.
+  // A section that reads inside the card above it has no place of its own to jump to.
+  nav?: boolean
 }
 
 // Order and ownership are deliberate. New controls must extend this structure, not append
@@ -43,6 +46,7 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'agents-limits', page: 'agents', label: L('Limites', 'Limits'), keys: ['defaultLimit', 'runBudgetPct', 'autoContinue'], scope: 'workspace', visible: admin },
     { id: 'agents-tuca', page: 'agents', label: L('Tuca', 'Tuca'), keys: ['tucaApplyNow'], scope: 'workspace', visible: admin },
     { id: 'agents-browser', page: 'agents', label: L('Navegador dos agentes', 'Agents browser'), keys: ['browserJev'], scope: 'workspace', visible: admin },
+    { id: 'agents-addons', page: 'agents', label: L('Extensões do navegador', 'Browser Extensions'), keys: ['browserAddOns'], scope: 'workspace', visible: admin, nav: false },
     { id: 'agents-automation', page: 'agents', label: L('Automação', 'Automation'), keys: ['quietHours'], scope: 'workspace', visible: admin },
     { id: 'agents-collaboration', page: 'agents', label: L('Colaboração', 'Collaboration'), keys: ['teamUpDays'], scope: 'workspace', visible: admin },
     { id: 'agents-skills', page: 'agents', label: L('Skills', 'Skills'), keys: ['skillFolders', 'skillFoldersOff'], scope: 'workspace', visible: admin },
@@ -67,6 +71,11 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
 }
 
 export type SettingsSection = ReturnType<typeof settingsStructure>[number]
+// Whether the strip under the tabs lists a section. One declared `nav: false` reads inside the card
+// above it, so its own name there would be a second way to the same place: the card still renders
+// and keeps its anchor, the strip just gets no row for it. The structure is `as const`, so a section
+// without the flag carries no property to read and the cast is how the default stays `true`.
+export const inStrip = (section: SettingsSection): boolean => (section as { nav?: boolean }).nav !== false
 export type SettingsSectionId = SettingsSection['id']
 export type SettingsPageId = SettingsSection['page']
 
@@ -92,7 +101,7 @@ const legacy: Readonly<Record<string, string>> = {
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['app-appearance', 'workspace-context', 'app-quotas', 'app-dictation', 'app-notifications', 'app-conversation', 'app-updates', 'workspace-transfer', 'workspace-backups', 'workspace-danger'],
   modelos: ['models-agents', 'models-session-names', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'models-classifier-uses', 'knowledge-memory'],
-  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser'],
+  agentes: ['agents-permissions', 'agents-replies', 'agents-automation', 'agents-limits', 'agents-tuca', 'agents-browser', 'agents-addons'],
   integracoes: ['connections-phone'],
   pessoas: ['workspace-people'],
   atividade: ['workspace-activity'],

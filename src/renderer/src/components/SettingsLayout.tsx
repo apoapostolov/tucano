@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
-import { settingsDestination, settingsPages, type SettingsSection, type SettingsSectionId } from '../settings-structure'
+import { inStrip, settingsDestination, settingsPages, type SettingsSection, type SettingsSectionId } from '../settings-structure'
 
 export const SETTINGS_SCROLL_MS = 280
 export const settingsEase = (t: number): number => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -38,9 +38,13 @@ export function SettingsLayout({ requested, sections, content, onNavigate, embed
   const available = present
     ? present.map(id => listed.find(s => s.id === id)).filter((section): section is SettingsSection => section !== undefined)
     : listed
+  // A section declared `nav: false` belongs to the card above it: its card still renders and keeps
+  // its anchor, but the strip gets no row of its own for it — two names for one place read as two.
+  const links = available.filter(inStrip)
   const [current, setCurrent] = useState<string>(destination.section)
-  const currentId = available.some(s => s.id === current) ? current : available[0]?.id ?? destination.section
+  const currentId = links.some(s => s.id === current) ? current : links[0]?.id ?? destination.section
   const ids = listed.map(s => s.id).join('|')
+  const linkIds = links.map(s => s.id).join('|')
 
   const cancel = (): void => {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
@@ -138,7 +142,9 @@ export function SettingsLayout({ requested, sections, content, onNavigate, embed
         tracking = null
         if (movingTo.current) return
         const scope = embedded ? scroller : root.current
+        const shown = new Set<string>(links.map(s => s.id))
         const targets = [...(scope?.querySelectorAll<HTMLElement>('[data-settings-section]') ?? [])]
+          .filter(el => !el.dataset.settingsSection || shown.has(el.dataset.settingsSection))
         const line = scroller.getBoundingClientRect().top + (navigation.current?.getBoundingClientRect().height ?? 0) + (embedded ? above.current : 0) + 24
         const atEnd = scroller.scrollHeight > scroller.clientHeight && scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight - 2
         const selected = atEnd ? targets.at(-1) : targets.filter(el => el.getBoundingClientRect().top <= line).at(-1) ?? targets[0]
@@ -165,7 +171,7 @@ export function SettingsLayout({ requested, sections, content, onNavigate, embed
       scroller.removeEventListener('keydown', interruptKey)
       window.removeEventListener('resize', interrupt)
     }
-  }, [destination.page, ids])
+  }, [destination.page, ids, linkIds])
 
   // Horizontal navigation follows selection without scrolling the containing page.
   useEffect(() => {
@@ -213,7 +219,7 @@ export function SettingsLayout({ requested, sections, content, onNavigate, embed
           </div>
         )}
         <nav className={embedded ? `${EMBEDDED_TABS} settings-sections` : 'settings-sections'} aria-label={L('Seções de configurações', 'Settings sections')}>
-          {available.map(section => (
+          {links.map(section => (
             <a key={section.id} href={`#settings-${section.id}`} aria-current={currentId === section.id ? 'location' : undefined}
               onClick={event => chooseSection(event, section.id)}>{section.label}</a>
           ))}

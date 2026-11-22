@@ -128,7 +128,8 @@ import { accountLabel, ApprovalCard, QuestionCard, questionDrafts, toolWords } f
 import { ProposalCard } from './Tuca'
 import { confirmDeleteAgent, confirmDialog, ContextMenu, type MenuItem, type MenuState } from './Dialogs'
 import { Modal } from './Modal'
-import { AgentAvatar, AVATARS, Icon, NumberInput, SleepingToucan, time, tokens, UsageBar } from './ui'
+import { AgentAvatar, AVATARS, Icon, NumberInput, SleepingToucan, time, tokens, Toggle, UsageBar } from './ui'
+import { AgentAddOns } from './AgentAddOns'
 import { Select } from './Select'
 import { clock } from '../../../shared/clock'
 import { stepsKeep, STEPS_LATEST_MAX, STEPS_LATEST_MIN, type StepsMode } from '../../../shared/steps'
@@ -1735,7 +1736,7 @@ function AutonomyControls({ own, inherited, perAgent, readOnly, onChange }: { ow
       <div className="key-row">
         <Icon name="shield" />
         <div className="grow">
-          <strong>{L('Depois de ler algo de fora, pedir antes do que não tem volta', 'Require approval for irreversible actions after reading external content')}</strong>
+          <strong>{L('Depois de ler algo de fora, pedir antes do que não tem volta', "Approve irreversible actions after external content")}</strong>
           <p className="muted small">
             {L(
               'Um e-mail, uma página ou uma issue podem trazer instruções escritas por outra pessoa. Com isso ligado, depois de ler algo assim, enviar, publicar, pagar, apagar e clicar no que é arriscado pedem sua aprovação, mesmo onde uma regra deixa fazer sozinho.',
@@ -1768,7 +1769,7 @@ function AutonomyRows({ own, inherited, readOnly, onChange, finerOpen, onFiner, 
   }
   const base: Policy = { agentLevel: level, globalRules: inherited.actionRules, globalLevel: inherited.autonomy }
   const own_ = Object.keys(own.actionRules ?? {}).length
-  const label = L('Depois de ler algo de fora, pedir antes do que não dá pra desfazer', 'Require approval for irreversible actions after reading external content')
+  const label = L('Depois de ler algo de fora, pedir antes do que não dá pra desfazer', "Approve irreversible actions after external content")
   return (
     <>
       <Row
@@ -3225,10 +3226,9 @@ export function ModelSelect(p: { value: string; onChange: (v: string) => void; j
   return <ModelPicker {...p} />
 }
 
-// `label` names it for a screen reader when no text sits next to it (a card's action, say).
-export function Toggle({ on, onChange, disabled, label }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean; label?: string }): ReactNode {
-  return <button className={`toggle ${on ? 'is-on' : ''}`} role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)} />
-}
+// The switch itself lives in ui.tsx (this page's cards and the extensions' card beside them draw the same
+// one); it is re-exported here because the screens that already draw a card take it from this file.
+export { Toggle }
 
 // ---------- Settings ----------
 
@@ -3309,7 +3309,7 @@ function TeamCard(): ReactNode {
       .then(setNote, failed)
   }
   return (
-    <Card title={L('Time', 'Team')} section="workspace-transfer" lead={L('O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.', 'Export agents, skills, channels and routines as .md, without credentials or conversations. OpenBot, Grok Bot and Hermes imports have no connectors or web search.')}>
+    <Card title={L('Time', 'Team')} section="workspace-transfer" lead={L('O time num arquivo .md (agentes, skills, canais e rotinas, sem credenciais nem conversas), pra guardar ou levar pra outro computador. Os agentes do OpenBot, do Grok Bot e do Hermes também entram, sem nenhum conector e com a busca na web desligada.', "Export agents, skills, channels and routines as .md. No credentials or chats. OpenBot, Grok Bot and Hermes imports: no connectors or web search.")}>
       <div className="row" style={{ flexWrap: 'wrap' }}>
         <button className="btn btn--sm" onClick={download}>
           {L('Exportar time', 'Export team')}
@@ -4141,7 +4141,7 @@ const micLabel = (
     </label>
   )
   return (
-    <Card title={L('Ditado', 'Dictation')} section="app-dictation" lead={`${L('Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.', 'Use the microphone or ⌥ Space (Mac), Ctrl+Space elsewhere; select it again to stop.')} ${VOICE_WHERE()} ${L('O texto fica no campo para você revisar antes de enviar.', 'Review text in the field before sending.')}`}>
+    <Card title={L('Ditado', 'Dictation')} section="app-dictation" lead={`${L('Fale em vez de digitar: clique no microfone do campo de mensagem, ou ⌥ Espaço no Mac e Ctrl+Espaço nos outros, e clique de novo para terminar.', "Use the microphone, ⌥ Space (Mac) or Ctrl+Space to dictate; repeat to stop.")} ${VOICE_WHERE()} ${L('O texto fica no campo para você revisar antes de enviar.', "Review the text before sending.")}`}>
       {status && !status.ready && <VoiceSetup status={status} after={<>{micLabel}{advancedToggle}</>} />}
        <div className="voice-prefs">
         {status?.ready && (
@@ -4459,7 +4459,7 @@ export function SettingsPage(): ReactNode {
                 <p className="muted small">
                   {L(
                     `Com um trecho selecionado numa mensagem, ${key} começa uma resposta a ele, sem procurar o botão. Desligado, o atalho não faz nada e o botão da mensagem responde ao trecho do mesmo jeito.`,
-                    `With text selected in a message, ${key} starts a reply to that excerpt without hunting for the button. Off, the shortcut does nothing and the message’s own button still replies to it.`
+                    `Select message text and press ${key} to reply to that excerpt. When off, use the message’s Reply button.`
                   )}
                 </p>
               </div>
@@ -4597,7 +4597,7 @@ export function SettingsPage(): ReactNode {
         )}
 
         {pane('modelos') && admin && (
-          <Card title={L('Nomes das sessões', 'Session names')} section="models-session-names" lead={L('Cada sessão ganha um nome quando começa, feito por um modelo pequeno numa chamada só: ele aparece na linha do agente, ao lado do nome dela, e vira o nome da thread. Sem nada escolhido, usa o modelo da memória.', 'Every session gets a name as it starts, made by a small model in one call: it shows on the agent’s line, beside its name, and becomes the thread’s name. With nothing picked, it uses the memory model.')}>
+          <Card title={L('Nomes das sessões', 'Session names')} section="models-session-names" lead={L('Cada sessão ganha um nome quando começa, feito por um modelo pequeno numa chamada só: ele aparece na linha do agente, ao lado do nome dela, e vira o nome da thread. Sem nada escolhido, usa o modelo da memória.', "A small model names each session in one call. The name appears beside the agent and becomes the thread title. Uses the memory model when unset.")}>
             <div className="field-stack">
               <Field label={L('Modelo dos nomes', 'Naming model')} hint={L('Uma chamada curta por sessão: prefira um modelo rápido e barato.', 'One short call per session: go for a fast, cheap model.')}>
                 <ModelSelect value={settings.sessionNameModel || settings.memoryModel} onChange={(sessionNameModel) => updateSettings({ sessionNameModel })} />
@@ -4619,7 +4619,7 @@ export function SettingsPage(): ReactNode {
             section="models-runtimes"
             lead={L(
               'Onde os agentes rodam: um endpoint seu, sem instalar nada, ou um programa como você configurou (no seu plano, no gateway da empresa ou nos seus provedores). Dos programas, o Tucano nunca vê nem guarda as credenciais; a chave de um endpoint fica guardada aqui, cifrada.',
-              'Use your endpoint without installing software, or a runtime on your plan, company gateway or provider. Tucano never sees or stores runtime credentials; endpoint keys stay encrypted here.'
+              "Endpoints need no installation. Runtimes use your plan, gateway or provider. Tucano stores no runtime logins; endpoint keys stay encrypted here."
             )}
             action={
               <button className="btn btn--ghost btn--sm" onClick={refreshEngines}>
@@ -4637,7 +4637,7 @@ export function SettingsPage(): ReactNode {
             section="models-accounts"
             lead={L(
               'Mais de um login do Claude Code, do Codex ou do Antigravity, como a conta do trabalho e a pessoal. Cada agente escolhe a conta na página dele. O login acontece no próprio CLI: o Tucano não vê nem guarda a senha.',
-              'More than one Claude Code, Codex or Antigravity login, like a work account and a personal one. Each agent picks its account on its page. You sign in through the CLI itself: Tucano never sees or stores the password.'
+              "Add work or personal Claude Code, Codex or Antigravity accounts; select one per agent. Sign in through the CLI. Tucano never sees or stores passwords."
             )}
           >
             <AccountsCard />
@@ -4650,7 +4650,7 @@ export function SettingsPage(): ReactNode {
             section="models-classifiers"
             lead={L(
               'Modelos que respondem perguntas fechadas — uma opção entre várias, um sim/não, uma nota — em menos de um segundo e com a probabilidade de cada resposta. O Jev, do TypeSafe, foi o primeiro; a Luna, da OpenAI, e a Decision 1, do Google, fazem o mesmo trabalho, e o Jev também é vendido pelo OpenRouter. Cada um serve um trabalho: quem responde num canal, o que o agente clica numa página.',
-              'Models that answer closed questions — one option out of several, a yes/no, a score — in under a second and with each answer’s probability. TypeSafe’s Jev was the first; OpenAI’s Luna and Google’s Decision 1 do the same job, and Jev is also sold through OpenRouter. Each one serves a job: who replies in a channel, what an agent clicks in a page.'
+              "Fast models choose who replies or what to click. They return a choice, yes/no answer or score with probabilities in under a second."
             )}
           >
             <ClassifiersCard />
@@ -4716,6 +4716,41 @@ export function SettingsPage(): ReactNode {
           </Card>
         )}
 
+        {pane('agentes') && admin && (
+          <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
+            <div>
+              <Field
+                label={L('Um novo prompt com uma resposta em curso', 'Send mode while replying')}
+                hint={L(
+                  'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
+                  'Enter follows this choice. Shift+Enter queues, Alt+Enter steers, and Shift+Alt+Enter interrupts, each for one send. Ctrl+Enter or Command+Enter adds a line.'
+                )}
+              >
+                <Select
+                  value={settings.sendMode ?? 'parallel'}
+                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
+                  options={[
+                    { value: 'parallel', label: L('Sessões paralelas em execução', 'Parallel Running Sessions') },
+                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') }
+                  ]}
+                  placeholder={L('Escolha', 'Pick')}
+                />
+              </Field>
+              {settings.sendMode === 'parallel' && (
+                <Field label={L('Sessões paralelas por canal', 'Parallel sessions per channel')} hint={L('As demais esperam na fila.', 'Replies past this limit wait in the queue.')}>
+                  <NumberInput
+                    aria-label={L('Sessões paralelas por canal', 'Parallel sessions per channel')}
+                    min={1}
+                    max={MAX_PARALLEL_SESSIONS}
+                    value={maxParallelSessionsCap(settings.maxParallelSessions)}
+                    onChange={(n) => updateSettings(maxParallelSessionsPatch(n))}
+                  />
+                </Field>
+              )}
+            </div>
+          </Card>
+        )}
+
         {/* Recovery: the setting #391 brings, beside the rest of what the agents do. It carries no
             section anchor of its own, like the browser card below: `agents-recovery` stays in
             settings-structure.ts without a card in the strip until the page grows one with it. */}
@@ -4762,42 +4797,20 @@ export function SettingsPage(): ReactNode {
           </Card>
         )}
 
+        {pane('agentes') && <BrowserClickCard />}
+
         {pane('agentes') && admin && (
-          <Card title={L('Respostas dos agentes', 'Agent replies')} section="agents-replies">
-            <div className="grid2">
-              <Field
-                label={L('Um novo prompt com uma resposta em curso', 'Send mode while replying')}
-                hint={L(
-                  'Enter segue esta escolha. Ctrl+Enter põe na fila, Alt+Enter entrega à resposta em curso e Shift+Alt+Enter a interrompe: cada um só uma vez. Shift+Enter quebra a linha.',
-                  "Enter follows this choice. Shift+Enter queues, Alt+Enter steers, and Shift+Alt+Enter interrupts, each for one send. Ctrl+Enter or Command+Enter adds a line."
-                )}
-              >
-                <Select
-                  value={settings.sendMode ?? 'parallel'}
-                  onChange={(v) => { if (v) updateSettings({ sendMode: v as SendMode }) }}
-                  options={[
-                    { value: 'parallel', label: L('Sessões paralelas em execução', 'Parallel Running Sessions') },
-                    { value: 'queue', label: L('Na fila, quando a resposta acabar', 'Queue until replies finish') }
-                  ]}
-                  placeholder={L('Escolha', 'Pick')}
-                />
-              </Field>
-              {settings.sendMode === 'parallel' && (
-                <Field label={L('Sessões paralelas por canal', 'Parallel sessions per channel')} hint={L('As demais esperam na fila.', 'Replies past this limit wait in the queue.')}>
-                  <NumberInput
-                    aria-label={L('Sessões paralelas por canal', 'Parallel sessions per channel')}
-                    min={1}
-                    max={MAX_PARALLEL_SESSIONS}
-                    value={maxParallelSessionsCap(settings.maxParallelSessions)}
-                    onChange={(n) => updateSettings(maxParallelSessionsPatch(n))}
-                  />
-                </Field>
-              )}
-            </div>
+          <Card
+            title={L('Extensões do navegador', 'Browser Extensions')}
+            section="agents-addons"
+            lead={L(
+              'O navegador dos agentes roda com as extensões que você ligar, para o agente ler a própria página: nenhum aviso de cookies ou anúncio fica por cima dela. Cada uma é um interruptor; as três dividem 215 MB de Chrome for Testing.',
+              "Enabled extensions remove ads and cookie notices. They share a 215 MB Chrome for Testing download."
+            )}
+          >
+            <AgentAddOns />
           </Card>
         )}
-
-        {pane('agentes') && <BrowserClickCard />}
 
         {pane('integracoes') && (
           <SectionAnchor id="connections-phone" label={sectionLabel('connections-phone')}>

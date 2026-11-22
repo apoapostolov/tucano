@@ -7,6 +7,7 @@ import type { NoticeSettings } from './notice'
 import type { ChannelLayout } from './channel-layout'
 import type { RouteTrace, RoutingConfig } from './routing'
 import type { Answer, Decision } from './questions'
+import type { PageSigns } from './wall'
 import { L, lang, locale, type Lang } from './lang'
 
 export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green' | 'teal' | 'graphite'
@@ -635,7 +636,10 @@ export interface Settings {
   channelLayout?: ChannelLayout // the person's order and groups in the sidebar
   orgLayout?: Record<string, { x: number; y: number }> // the organogram's cards placed by hand (an agent's id, or 'me'); unset: laid out on its own
   browserJev?: boolean // Jev finds what agents click in their browsers (each click sends the page to TypeSafe)
-
+  // The extensions the agents' browser carries (core/chrome-addons.ts), one switch each: what is on is
+  // downloaded and loaded into the next session's browser, what is off leaves the disk.
+  browserAddOns?: BrowserAddOns
+  addOns?: AddOnsInfo // computed: where each of them is, for the rows' own lines
   memoryModel: string // summarizes conversations and extracts memories
   memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model
@@ -748,7 +752,41 @@ export interface Account {
 }
 
 // What the main process does in an agent's browser for the core, and what it answers (spec §24).
-export type BrowserOp = 'open' | 'snapshot' | 'click' | 'type' | 'fill' | 'key' | 'scroll' | 'back' | 'text' | 'frame' | 'show' | 'hide' | 'close' | 'clear' | 'input'
+export type BrowserOp =
+  | 'open'
+  | 'snapshot'
+  | 'click'
+  | 'type'
+  | 'fill'
+  | 'key'
+  | 'scroll'
+  | 'back'
+  | 'text'
+  | 'frame'
+  | 'show'
+  | 'hide'
+  | 'close'
+  | 'clear'
+  | 'input'
+  | 'headful' // the page is a bot check: the same lane, in a real window (chrome.ts)
+
+// The extensions an agent's browser can carry (shared/addons.ts lists them), each with its own switch.
+export type AddOn = 'ads' | 'cookies' | 'consent'
+export type BrowserAddOns = Partial<Record<AddOn, boolean>>
+
+// Where one of them is. On means downloaded and loaded into the browser of the next session; off removes
+// the folder, so the switch is the install. 'waiting' is the moment between the switch and the download.
+export interface AddOnStep {
+  state: 'waiting' | 'preparing' | 'ready' | 'failed'
+  error?: string // why it didn't land: the lane keeps working without it
+}
+
+// What the settings page shows of them: Chrome for Testing, which the three share (the branded build has
+// refused a folder of extensions since version 158), and each switched-on extension.
+export interface AddOnsInfo {
+  browser: AddOnStep & { progress?: { received: number; total: number } } // bytes of the browser
+  extensions: Partial<Record<AddOn, AddOnStep>>
+}
 
 // What I do on the agent's browser from the panel, when it has no window of its own
 // (Tucano as a server): x and y are fractions of the screen.
@@ -778,7 +816,9 @@ export interface BrowserReply {
   elements?: BrowserElement[]
   text?: string
   shown?: boolean // the window is open for me
+  headful?: boolean // drawn in a real window because this site only lets a real browser through (not a takeover)
   point?: { x: number; y: number } // where it just clicked or typed, as a fraction of the viewport
+  signs?: PageSigns // what the page is when it isn't the page: a bot check, a refusal, a wall (shared/wall.ts)
 }
 
 // An agent's browser as the side panel shows it (spec §24): the last frame and what it did.

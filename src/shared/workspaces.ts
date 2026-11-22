@@ -35,6 +35,7 @@ export const GENERAL_SETTINGS = [
   'thinkingSize',
   'clock',
   'browserJev',
+  'browserAddOns',
   'classifiers',
   'classifierJobs',
   'wikiCapture',
