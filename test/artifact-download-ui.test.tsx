@@ -18,11 +18,11 @@ vi.mock('../src/renderer/src/rpc', async (original) => ({ ...(await original<typ
 let fake: State
 vi.mock('../src/renderer/src/store', async (original) => {
   const real = await original<typeof import('../src/renderer/src/store')>()
-  return { ...real, useStore: <T,>(select: (s: State) => T): T => select(fake), getState: () => fake ?? real.getState(), openPanel: vi.fn(), openLightbox: vi.fn() }
+  return { ...real, useStore: <T,>(select: (s: State) => T): T => select(fake), getState: () => fake ?? real.getState(), openPanel: vi.fn(), openLightbox: vi.fn(), widenPanel: vi.fn((wide: boolean) => { fake.panelWide = wide }) }
 })
 const store = await import('../src/renderer/src/store')
 const { createRoot } = await import('react-dom/client')
-const { ArtifactCard } = await import('../src/renderer/src/components/Panel')
+const { ArtifactCard, SidePanel } = await import('../src/renderer/src/components/Panel')
 
 const ana: Person = { id: 'ana', name: 'Ana', role: 'owner', about: '' }
 const bia: Person = { id: 'bia', name: 'Bia', role: 'member', about: '' }
@@ -116,4 +116,25 @@ describe('on the desktop', () => {
     expect(fire).toHaveBeenCalledWith('saveArtifact', { id: 'a1' })
     expect(links).toEqual([])
   })
+})
+
+
+it('Escape restores an expanded file panel and leaves an open dialog in control', async () => {
+  fake = { ...store.getState(), people: [ana], you: ana.id, artifacts: [], panel: { kind: 'artifact', id: 'gone' }, panelWide: true }
+  await act(async () => root.render(<SidePanel />))
+  const dialog = realCreate('div')
+  dialog.className = 'modal'
+  document.body.append(dialog)
+  const escape = (): Event => {
+    const event = new window.Event('keydown', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'key', { value: 'Escape' })
+    window.dispatchEvent(event)
+    return event
+  }
+  expect(escape().defaultPrevented).toBe(false)
+  expect(fake.panelWide).toBe(true)
+  dialog.remove()
+  expect(escape().defaultPrevented).toBe(true)
+  expect(store.widenPanel).toHaveBeenCalledWith(false)
+  expect(fake.panel).toEqual({ kind: 'artifact', id: 'gone' })
 })

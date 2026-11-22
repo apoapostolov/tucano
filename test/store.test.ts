@@ -108,6 +108,9 @@ describe('the side panel over the whole page', () => {
     store.openThread('x1')
     store.widenPanel(true)
     expect(store.getState().panelWide).toBe(true)
+    store.openThread('x1', 'reply-focus')
+    store.navigate({ kind: 'conversation', id: 'c2' })
+    expect(store.getState()).toMatchObject({ panelWide: true, panel: { kind: 'thread', id: 'x1', message: 'reply-focus' } })
     store.openPanel({ kind: 'artifact', id: 'f1' }) // another panel in its place stays wide
     expect(store.getState().panelWide).toBe(true)
     store.openPanel(null)
