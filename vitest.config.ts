@@ -8,7 +8,10 @@ import { configDefaults, defineConfig } from 'vitest/config'
 // worker was starved, not stuck. A real hang now costs 30 s more before it's called.
 export default defineConfig({
   test: {
-    exclude: [...configDefaults.exclude, 'site/**'],
+    // quarantine/ holds the tests of the fork's own surfaces that upstream 0.2.45 replaced (the reply
+    // queue, the hold, follow-up, the settings placement, the steps modes). They are kept as the spec
+    // of what each wave re-applies, not run: a test there names behaviour this build no longer has.
+    exclude: [...configDefaults.exclude, 'site/**', 'quarantine/**'],
     testTimeout: process.platform === 'win32' ? 60_000 : 5_000,
     hookTimeout: process.platform === 'win32' ? 60_000 : 10_000
   }

@@ -7,7 +7,7 @@ import Markdown from 'react-markdown'
 import { safeUrl } from '../links'
 import remarkGfm from 'remark-gfm'
 import { openImageMenu } from '../image-menu'
-import { agentById, amAdmin, amOwner, canSaveArtifact, getState, openLightbox, artifactUrl, saveArtifact, saveLabel, browserAction, browserInput, browserOf, reachable, windowless, computerOf, openExternal, openPanel, revealArtifact, stopService, useFrame, useStore, workingAgents, type Artifact } from '../store'
+import { agentById, amAdmin, amOwner, canSaveArtifact, getState, openLightbox, artifactUrl, saveArtifact, saveLabel, browserAction, browserInput, browserOf, reachable, windowless, computerOf, openExternal, openPanel, revealArtifact, widenPanel, stopService, useFrame, useStore, workingAgents, type Artifact } from '../store'
 import { galleryLayout } from '../gallery'
 import { call } from '../rpc'
 import { Icon, ownColor, type IconName } from './ui'
@@ -449,6 +449,17 @@ function BrowserPanel({ agentId }: { agentId: string }): ReactNode {
   )
 }
 
+// The panel over the whole page, for reading or working in it at full size, and back beside the conversation.
+export function WidenButton(): ReactNode {
+  const wide = useStore((s) => s.panelWide)
+  const label = wide ? L('Voltar pro lado da conversa', 'Back beside the conversation') : L('Expandir', 'Expand')
+  return (
+    <button className={`icon-btn ${wide ? 'is-active' : ''}`} title={label} aria-label={label} aria-pressed={wide} onClick={() => widenPanel(!wide)}>
+      <Icon name={wide ? 'shrink' : 'expand'} size={14} />
+    </button>
+  )
+}
+
 export function SidePanel(): ReactNode {
   const panel = useStore((s) => s.panel)
   const artifact = useStore((s) => (s.panel?.kind === 'artifact' ? s.artifacts.find((a) => a.id === (s.panel as { id: string }).id) : undefined))
@@ -487,6 +498,7 @@ export function SidePanel(): ReactNode {
             </button>
           </>
         )}
+        <WidenButton />
         <button className="icon-btn" title={L('Fechar', 'Close')} onClick={() => openPanel(null)}>
           <Icon name="x" size={14} />
         </button>

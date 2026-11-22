@@ -1,6 +1,7 @@
-// Frames for the steer pill (#330 / this PR): at the bottom of a reply's steps while the agent
-// works, a small dim pill opens a field, and what the person writes goes to the running reply —
-// which says so in the chain, in their words, and carries on.
+// Frames for the steer pill (#330 / this PR): while the agent works, a small dim pill sits under the
+// run's box and outside it, so the steps and anything they stream below them — the thinking block —
+// stay above it. It opens a field, and what the person writes goes to the running reply, which says
+// so in the chain, in their words, and carries on.
 // The fake engine holds between two tool calls (TUCANO_FAKE_HOLD_MS) because a real one answers in
 // milliseconds: that pause is the only way to shoot a reply that is still working.
 import { _electron as electron } from 'playwright'
@@ -16,16 +17,20 @@ const HOLD = 15_000
 const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_FAKE_HOLD_MS: String(HOLD), TUCANO_LOCALE: 'en-US' }
 const errors = []
 
-// TUCANO_ELECTRON runs the installed app instead of this checkout's build: the same flow, in the
-// window the person actually opens.
 const launch = async () => {
-  const installed = env.TUCANO_ELECTRON
-  const app = await electron.launch({ args: installed ? [] : ['.'], ...(installed ? { executablePath: installed } : {}), env })
+  const app = await electron.launch({ args: ['.'], env })
   const win = await app.firstWindow()
   await win.setViewportSize({ width: 1280, height: 880 })
   await win.waitForSelector('.sidebar')
   win.on('pageerror', (e) => errors.push(String(e)))
   win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+  // The core's own crash, if one happens: it runs in the app's main process, not in the window.
+  app.process().stderr?.on('data', (d) => {
+    const line = String(d)
+    // Chromium's own GPU chatter is not the app: anything else, in the core's words, is kept.
+    if (/error|exception|unhandled/i.test(line) && !/gpu|command_buffer|GLES|vulkan/i.test(line))
+      errors.push(`main: ${line.trim().slice(0, 300)}`)
+  })
   return { app, win }
 }
 
@@ -65,13 +70,20 @@ const waitWorking = async (win, want = true) => {
 // small, and out of the steps' way.
 const pillLook = (win) =>
   win.evaluate(() => {
-    const steps = [...document.querySelectorAll('.steps')].filter((s) => s.querySelector('.steps__toggle')).pop()
-    const pill = steps?.querySelector('.steps__ask-pill')
-    const list = steps?.querySelector('.steps__list')
-    if (!steps || !pill) return { pill: false }
+    const msgs = [...document.querySelectorAll('.msg--agent')]
+    const msg = msgs[msgs.length - 1]
+    const steps = msg?.querySelector('.steps')
+    const holder = msg?.querySelector('.steps__steer')
+    const pill = holder?.querySelector('.steps__steer-pill')
+    if (!steps || !pill) return { pill: false, steps: !!steps, holder: !!holder }
     const p = pill.getBoundingClientRect()
+    const b = steps.getBoundingClientRect()
+    const list = steps.querySelector('.steps__list')
     const l = list?.getBoundingClientRect()
+    const thought = steps.querySelector('.thought')
+    const th = thought?.getBoundingClientRect()
     const st = getComputedStyle(pill)
+    const hs = getComputedStyle(holder)
     return {
       pill: true,
       tag: pill.tagName,
@@ -81,8 +93,15 @@ const pillLook = (win) =>
       radius: st.borderRadius,
       fontSize: st.fontSize,
       color: st.color,
-      chainAbove: l ? Math.round(p.top - l.bottom) : null,
-      under: l ? p.top >= l.bottom - 1 : null,
+      holder: holder.className,
+      holderPaddingLeft: hs.paddingLeft,
+      insideTheBox: steps.contains(pill),
+      underTheBox: Math.round(p.top) >= Math.round(b.bottom) - 1,
+      gapBelowTheBox: Math.round(p.top - b.bottom),
+      belowTheList: l ? Math.round(p.top - l.bottom) : null,
+      leftAgainstTheBox: Math.round(p.left - b.left),
+      thoughtInTheBox: !!thought,
+      thoughtAboveThePill: th ? Math.round(p.top - th.bottom) : null,
       rows: steps.querySelectorAll('.step').length,
       working: !!steps.querySelector('.steps__stop'),
       pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
@@ -91,7 +110,7 @@ const pillLook = (win) =>
 
 const fieldLook = (win) =>
   win.evaluate(() => {
-    const note = document.querySelector('.steps__ask-note')
+    const note = document.querySelector('.steps__steer-note')
     if (!note) return { open: false }
     const ta = note.querySelector('textarea')
     const send = [...note.querySelectorAll('button')].find((b) => b.className.includes('btn--primary'))
@@ -127,9 +146,8 @@ const chainLook = (win) =>
       steerText: row?.querySelector('.step__input')?.textContent ?? null,
       steerLabel: row?.querySelector('.step__label')?.textContent ?? null,
       steerClass: row?.className ?? null,
-      steerRows: rows.filter((r) => r.classList.contains('step--steer')).length,
       // The words as they are drawn: two lines clamped, and the row clicked open shows all of them.
-      clamp: row?.querySelector('.step__clamp')?.getBoundingClientRect().height ?? null,
+      clampHeight: row?.querySelector('.step__clamp')?.getBoundingClientRect().height ?? null,
       summary: steps?.querySelector('.steps__summary')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
       working: !!steps?.querySelector('.steps__stop')
     }
@@ -157,53 +175,52 @@ await channel(win, 'engineering')
 await ask(win, "Lia, sem pressa com a skill `steer-demo`: leia e faça o trabalho")
 await win.waitForTimeout(1200)
 console.log('while it works, the pill:', JSON.stringify(await pillLook(win)))
-await win.screenshot({ path: `${out}/01-the-pill-under-the-chain.png` })
+await win.screenshot({ path: `${out}/01-the-pill-under-the-box.png` })
 
 // Opening it: a field, nothing sent, the send asleep while it's empty.
-await win.locator('.steps__ask-pill').click()
+await win.locator('.steps__steer-pill').click()
 await win.waitForTimeout(200)
 console.log('the field it opens:', JSON.stringify(await fieldLook(win)))
 await win.screenshot({ path: `${out}/02-the-field-it-opens.png` })
 
 // What the person writes, and sending it.
-await win.locator('.steps__ask-note textarea').fill('Skip the history and only look at the two last commits')
+await win.locator('.steps__steer-note textarea').fill('Skip the history and only look at the two last commits, and read the notes on them too, sem pressa, and when you write it up say which file each change touched and why it matters for the people reading the changelog')
 await win.waitForTimeout(150)
 console.log('typed:', JSON.stringify(await fieldLook(win)))
 await win.screenshot({ path: `${out}/03-what-they-write.png` })
 const repliesBefore = await replies(win)
 const mineBefore = await mineCount(win)
-await win.locator('.steps__ask-note button.btn--primary').click()
+await win.locator('.steps__steer-note button.btn--primary').click()
 await win.waitForTimeout(400)
 console.log('after sending, the field is', JSON.stringify(await fieldLook(win)))
-
-// It is the reply's own row from the moment it is given: nothing of it is posted in the conversation.
+// It is the reply's own row from the moment it is given: nothing of it is posted in the channel.
 console.log(
   'straight after sending:',
   JSON.stringify({ steerRows: await steerRows(win), personMessages: { before: mineBefore, after: await mineCount(win) }, replies: { before: repliesBefore, after: await replies(win) }, chain: await chainLook(win) })
 )
 await win.screenshot({ path: `${out}/04-the-steer-in-the-chain.png` })
 
-// The words as they are drawn: the part in two lines, and all of it once the row is clicked.
+// The words as they are drawn: the whole of it on a click, and it stays the same row afterwards.
 const saidBefore = await win.evaluate(() => {
   const box = document.querySelector('.step--steer .step__clamp')
-  return { px: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
+  return { lines: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
 })
 await win.locator('.step--steer .step__input').first().click()
 await win.waitForTimeout(200)
 const saidAfter = await win.evaluate(() => {
   const box = document.querySelector('.step--steer .step__clamp')
-  return { px: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
+  return { lines: box ? Math.round(box.getBoundingClientRect().height) : null, whole: !!document.querySelector('.step--steer .step__input.is-whole') }
 })
 console.log('the words, clamped and whole:', JSON.stringify({ before: saidBefore, after: saidAfter }))
 
-// A second steer while it still works: two rows, and still no message of the person's.
-await win.locator('.steps__ask-pill').last().click()
-await win.locator('.steps__ask-note textarea').fill('segunda orientação: só o último commit')
-await win.locator('.steps__ask-note button.btn--primary').click()
+// A second steer while it still works: two rows, both the person's, and still no message in the channel.
+await win.locator('.steps__steer-pill').click()
+await win.locator('.steps__steer-note textarea').fill('segunda orientação: só o último commit')
+await win.locator('.steps__steer-note button.btn--primary').click()
 await win.waitForTimeout(300)
 console.log('two steers, before the next call:', JSON.stringify({ steerRows: await steerRows(win), personMessages: await mineCount(win), replies: await replies(win), chain: await chainLook(win) }))
 
-// Both turn read at the tool call that follows them, and the reply goes on.
+// The steers in the chain: each one turns done at the tool call that came after it, and the reply goes on.
 for (let i = 0; i < 140; i++) {
   const done = await win.evaluate(() => {
     const rows = [...document.querySelectorAll('.step--steer')]
@@ -216,8 +233,8 @@ console.log('the steers in the chain:', JSON.stringify(await chainLook(win)))
 await win.screenshot({ path: `${out}/05-the-steers-read.png` })
 
 await waitWorking(win, false)
-console.log('when it is done:', JSON.stringify({ ...(await chainLook(win)), pillsLeft: await win.evaluate(() => document.querySelectorAll('.steps__ask-pill').length) }))
-console.log('the reply it kept:', JSON.stringify({ before: repliesBefore, after: await replies(win), text: await lastReply(win), personMessages: { before: mineBefore, after: await mineCount(win) } }))
+console.log('when it is done:', JSON.stringify({ ...(await chainLook(win)), pillsLeft: await win.evaluate(() => document.querySelectorAll('.steps__steer-pill').length) }))
+console.log('the reply it kept:', JSON.stringify({ before: repliesBefore, after: await replies(win), text: await lastReply(win) }))
 await win.screenshot({ path: `${out}/06-done-after-the-steer.png` })
 
 // 420 px: the pill and the field inside the column, nothing sideways.
@@ -225,10 +242,31 @@ await win.setViewportSize({ width: 420, height: 880 })
 await win.waitForTimeout(400)
 await ask(win, "Lia, sem pressa com a skill `steer-demo`: leia e faça o trabalho")
 await win.waitForTimeout(1200)
-await win.locator('.steps__ask-pill').last().click()
+await win.locator('.steps__steer-pill').last().click()
 await win.waitForTimeout(300)
 console.log('at 420, the pill and the field:', JSON.stringify({ pill: await pillLook(win), field: await fieldLook(win) }))
 await win.screenshot({ path: `${out}/07-at-420.png` })
+
+// From the composer, while it works: the same steer, and still nothing of it in the conversation.
+const composerSteer = async () => {
+  const before = { mine: await mineCount(win), rows: await steerRows(win) }
+  await win.locator('.composer textarea').fill('pelo campo de baixo: nao pare o que esta fazendo')
+  await win.keyboard.press('Alt+Enter')
+  await win.waitForTimeout(500)
+  return { before, after: { mine: await mineCount(win), rows: await steerRows(win) }, chain: await chainLook(win) }
+}
+await ask(win, "Lia, sem pressa com a skill `steer-demo`: leia e faca o trabalho")
+await win.waitForTimeout(1200)
+console.log('the composer\'s steer, while it works:', JSON.stringify(await composerSteer()))
+
+// With nothing running there is nothing to steer: the same key sends an ordinary prompt, which is a
+// message of theirs in the conversation and gets a reply of its own.
+await waitWorking(win, false)
+const fallbackBefore = { mine: await mineCount(win), replies: await replies(win) }
+await win.locator('.composer textarea').fill('sem ninguem trabalhando aqui, isto e um pedido normal')
+await win.keyboard.press('Alt+Enter')
+await win.waitForTimeout(800)
+console.log('with nothing running, the steer key is a prompt:', JSON.stringify({ before: fallbackBefore, after: { mine: await mineCount(win), replies: await replies(win) }, steerRows: await steerRows(win) }))
 
 console.log('page errors:', JSON.stringify(errors.slice(0, 6)))
 await app.close()

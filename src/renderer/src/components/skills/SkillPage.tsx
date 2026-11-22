@@ -1,5 +1,5 @@
 import { L } from '../../../../shared/lang'
-import { skillHarnessName } from '../../../../shared/skill-groups'
+import { skillOrigin } from '../../../../shared/skill-groups'
 import { useState, type ReactNode } from 'react'
 import Markdown from 'react-markdown'
 import { safeUrl } from '../../links'
@@ -23,8 +23,9 @@ export function result(r?: SkillReport): string {
 }
 
 export const from = (k: Skill): string => {
-  const who = skillHarnessName(k.source)
-  if (!who) return L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`)
+  const origin = skillOrigin(k.source)
+  if (!origin) return L(`mudou ${ago(k.updatedAt)}`, `changed ${ago(k.updatedAt)}`)
+  const who = origin === 'codex' ? 'Codex' : origin === 'claude' ? 'Claude Code' : 'Hermes'
   return L(`do seu ${who}`, `from your ${who}`)
 }
 
@@ -55,18 +56,18 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
     >
       <dl className="skill-facts">
         <div>
-          <dt>{L('Quem usa', "Assigned agents")}</dt>
+          <dt>{L('Quem usa', 'Assigned agents')}</dt>
           <dd>
             <Who ids={k.agents} />
             {admin && (
               <button className="text-btn" onClick={() => setPicking(!picking)}>
-                {picking ? L('pronto', "Done") : L('mudar', "Change")}
+                {picking ? L('pronto', 'done') : L('mudar', 'change')}
               </button>
             )}
           </dd>
         </div>
         <div>
-          <dt>{L('Como está indo', "Performance")}</dt>
+          <dt>{L('Como está indo', 'Performance')}</dt>
           <dd>
             {result(stat)}
             {changed && (
@@ -79,7 +80,7 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
         </div>
         <div>
           <dt>{L('De onde', 'Source')}</dt>
-          <dd>{k.source ? <span title={k.source}>{L(`Lida do arquivo, ${from(k)}: o que você muda lá vale na próxima vez`, `Source file ${from(k)}; edits apply on next use.`)}</span> : L(`Escrita aqui, ${from(k)}`, `Created here; ${from(k)}`)}</dd>
+          <dd>{k.source ? <span title={k.source}>{L(`Lida do arquivo, ${from(k)}: o que você muda lá vale na próxima vez`, `Read from the file, ${from(k)}: what you change there applies next time`)}</span> : L(`Escrita aqui, ${from(k)}`, `Written here, ${from(k)}`)}</dd>
         </div>
       </dl>
       {picking && (
@@ -88,14 +89,14 @@ export function SkillPage({ skill: k, stat, onBack, onEdit }: { skill: Skill; st
         </div>
       )}
       <section className="read-group">
-        <h2>{L('Receita', "Instructions")}</h2>
+        <h2>{L('Receita', 'Instructions')}</h2>
         {k.source && k.body.length > RECOMMENDED_SKILL_BODY_LENGTH && <p className="hint hint--warn" role="status">{skillLengthNote(k.body.length)}</p>}
         {k.body.trim() ? (
           <article className="recipe">
             <Markdown urlTransform={safeUrl} remarkPlugins={[remarkGfm]}>{k.body}</Markdown>
           </article>
         ) : (
-          <p className="read-empty">{L(`A receita é lida de ${k.source} a cada uso.`, `Instructions are read from ${k.source} on each use.`)}</p>
+          <p className="read-empty">{L(`A receita é lida de ${k.source} a cada uso.`, `The recipe is read from ${k.source} on every use.`)}</p>
         )}
       </section>
       {admin && !k.source && (

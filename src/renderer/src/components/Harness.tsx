@@ -16,7 +16,6 @@ import {
   startsPicked,
   codexValue,
   customModel,
-  EFFORTS,
   engineModels,
   harnessMcps,
   importHarnessMcp,
@@ -35,7 +34,6 @@ import {
   type Account,
   type AccountEngine,
   type Agent,
-  type Effort,
   type EngineId,
   type EngineStatus,
   type HarnessMcp,
@@ -109,45 +107,13 @@ const providerOf = (value: string): string => {
   return L('Outros', 'Others')
 }
 
-// The thinking level, in the same four names and the same order everywhere a model is picked (an
-// agent's page, Settings → Models): low, medium, high, max. A compact control, made to sit in a row
-// beside a harness and a model, or under them. With no level chosen it says so (Keep): passing one is
-// what changes it, so a control nobody touched never sets one by looking like it did.
-// With `keep`, Keep is also an option of its own, not only what an untouched control shows: a level
-// already picked can be given back, and the control reports null for it. That is what a place that
-// applies a level onto agents which have one each needs — "Keep" there means leave them as they are.
-const KEEP = 'keep'
-export function EffortSelect({ value, onChange, className = '', label, placeholder, keep, 'aria-label': ariaLabel }: { value?: Effort | null; onChange: (e: Effort | null) => void; keep?: boolean; className?: string; label?: string; placeholder?: string; 'aria-label'?: string }): ReactNode {
-  const options = EFFORTS.map((e) => ({ value: e.id, label: e.label }))
-  return (
-    <Select
-      className={`effort-select ${className}`.trim()}
-      label={label}
-      placeholder={placeholder ?? L('Manter', 'Keep')}
-      aria-label={ariaLabel ?? label ?? L('Esforço de raciocínio', 'Reasoning effort')}
-      value={value ?? null}
-      onChange={(v) => {
-        const found = EFFORTS.find((e) => e.id === v)
-        if (found) onChange(found.id)
-        else if (keep && v === KEEP) onChange(null)
-      }}
-      options={keep ? [{ value: KEEP, label: placeholder ?? L('Manter', 'Keep') }, ...options] : options}
-    />
-  )
-}
-
 // A model to run with: the harness, then its model from the list, or another by name.
-// jev adds TypeSafe's Jev (the router); routing adds "Smart routing", where Jev picks the model from
-// the person's pools for each prompt ('smart' is never a model id: the agent keeps its own as baseline).
-// Engines limits the harnesses offered.
-// With `onEffort`, the thinking level rides along on the same row, after the model: the harness gives
-// up width for it (its names are short, and the level's are shorter still).
-export function ModelPicker({ value, onChange, engines, jev, routing, effort, onEffort }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean; routing?: boolean; effort?: Effort | null; onEffort?: (e: Effort) => void }): ReactNode {
+// jev adds TypeSafe's Jev (the router). Engines limits the harnesses offered.
+export function ModelPicker({ value, onChange, engines, jev }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean }): ReactNode {
   const usable = useStore((s) => usableEngines(s.settings))
   const statuses = useStore((s) => s.settings.engines)
   const choices = (engines ?? usable).filter((e) => usable.includes(e))
-  const smart = value === 'smart'
-  const m = value && value !== 'jev' && !smart ? modelInfo(value) : undefined
+  const m = value && value !== 'jev' ? modelInfo(value) : undefined
   const engine: EngineId | undefined = m && choices.includes(m.engine) ? m.engine : choices[0]
   const { options, loading, error } = useEngineModels(engine)
   const inList = options.some((o) => o.value === value)
@@ -157,8 +123,8 @@ export function ModelPicker({ value, onChange, engines, jev, routing, effort, on
 
   // Engine/harness choices for the first pick.
   const engineOptions = useMemo(
-    () => [...choices.map((e) => ({ value: e, label: ENGINES[e].label })), ...(jev ? [{ value: 'jev', label: 'TypeSafe · Jev' }] : []), ...(routing ? [{ value: 'smart', label: L('Roteamento inteligente', 'Smart routing') }] : [])],
-    [choices, jev, routing]
+    () => [...choices.map((e) => ({ value: e, label: ENGINES[e].label })), ...(jev ? [{ value: 'jev', label: 'TypeSafe · Jev' }] : [])],
+    [choices, jev]
   )
   // The models, grouped by provider (part before "/", or before ":") when there's more than one;
   // "Other model…" last either way.
@@ -172,8 +138,8 @@ export function ModelPicker({ value, onChange, engines, jev, routing, effort, on
   }, [options])
 
   // A harness's own card passes just that harness: it's already chosen there, so no select.
-  const fixed = engines?.length === 1 && !jev && !routing
-  if (!engine && !jev && !routing)
+  const fixed = engines?.length === 1 && !jev
+  if (!engine && !jev)
     return (
       <p className="hint hint--warn">
         {L('Nenhum Claude Code ou Codex pronto ainda.', 'No Claude Code or Codex ready yet.')}{' '}
@@ -186,20 +152,18 @@ export function ModelPicker({ value, onChange, engines, jev, routing, effort, on
     <div className="model-picker">
       {!fixed && (
         <Select
-          className="model-picker__engine"
-          value={smart ? 'smart' : value === 'jev' ? 'jev' : engine}
+          value={value === 'jev' ? 'jev' : engine}
           onChange={(v) => {
             setTyping(false)
             const vv = v ?? ''
             // On a plan, the harness's first model; otherwise the person picks from its list.
-            const plan = vv !== 'jev' && vv !== 'smart' && statuses[vv as EngineId].route === 'plan' ? MODELS.find((x) => x.engine === vv) : undefined
-            onChange(vv === 'jev' || vv === 'smart' ? vv : (plan?.id ?? customModel(vv as EngineId, '')))
+            const plan = vv !== 'jev' && statuses[vv as EngineId].route === 'plan' ? MODELS.find((x) => x.engine === vv) : undefined
+            onChange(vv === 'jev' ? 'jev' : (plan?.id ?? customModel(vv as EngineId, '')))
           }}
           options={engineOptions}
         />
       )}
-      {smart && <span className="hint">{L('O Jev escolhe um modelo dos seus pools a cada pedido.', 'Jev chooses from your routing pools for each prompt.')}</span>}
-      {value !== 'jev' && !smart && engine && (
+      {value !== 'jev' && engine && (
         <>
           <Select
             className="grow"
@@ -222,8 +186,6 @@ export function ModelPicker({ value, onChange, engines, jev, routing, effort, on
           )}
         </>
       )}
-      {/* Cursor's models carry the effort in the name (…-high, …-xhigh): there it would be a second one. */}
-      {onEffort && engine && engine !== 'cursor' && <EffortSelect className="model-picker__effort" value={effort} onChange={(e) => { if (e) onEffort(e) }} />}
       {error && other && <span className="hint">{L('Não deu pra pegar a lista', 'Couldn’t get the list')}: {error}</span>}
     </div>
   )
@@ -330,7 +292,7 @@ function HarnessRow({ engine, st, picked, toggle }: { engine: EngineId; st: Engi
           <code className="harness__cmd">{manual}</code>
         </div>
       )}
-      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', "Complete installation in the terminal. Tucano detects it automatically.")}</p>}
+      {!st.installed && install === 'started' && <p className="hint harness__body">{L('Instalando no terminal que abriu. Quando terminar, ele aparece aqui sozinho.', "Finish installing in the terminal. Tucano picks it up on its own.")}</p>}
       {!st.installed && install === 'node' && (
         <p className="hint hint--warn harness__body">
           {L(`O ${ENGINES[engine].label} precisa do Node.js. Instale o Node.js e depois clique em Instalar de novo.`, `${ENGINES[engine].label} needs Node.js. Install Node.js, then click Install again.`)}{' '}
@@ -435,7 +397,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
         </button>
         <label className="grow harness__name" htmlFor={checkId}>
           <strong>{L('Endpoint próprio', 'Your own endpoint')}</strong>
-          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', "OpenRouter, OmniRoute, Ollama; no installation required")}</span>
+          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', 'OpenRouter, OmniRoute, Ollama… nothing to install')}</span>
         </label>
         {st.installed && <span className="tag tag--ok">endpoint</span>}
         {picked && st.loggedIn && !open && (
@@ -452,7 +414,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           <p className="hint">
             {L(
               'Um endereço no padrão da OpenAI (/chat/completions) e a chave dele. Os agentes rodam direto nele, sem Claude Code nem Codex, e cada um usa um dos modelos que você marcar.',
-              "Use an OpenAI-compatible API (/chat/completions) and key. Agents use selected models directly, without Claude Code or Codex."
+              'Enter an OpenAI-compatible address (/chat/completions) and its key. Agents run directly on the selected models, without Claude Code or Codex.'
             )}
           </p>
           <div className="endpoint__presets">
@@ -472,7 +434,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           </label>
           <div className="endpoint__actions">
             <button className="btn btn--sm" disabled={!url.trim() || busy !== null} onClick={() => void probe()}>
-              {busy === 'probe' ? L('Buscando…', "Loading…") : L('Buscar os modelos', "Load models")}
+              {busy === 'probe' ? L('Buscando…', 'Fetching…') : L('Buscar os modelos', 'Fetch the models')}
             </button>
             {saved && (
               <button className="btn btn--ghost btn--sm" disabled={busy !== null} onClick={() => void setEndpoint('', []).then(() => (setUrl(''), setListed(null), setChosen([]), setOpen(false)))}>
@@ -484,7 +446,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
           {listed && listed.length > 0 && (
             <>
               <div className="endpoint__head">
-                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Allowed models (${chosen.length} of ${listed.length})`)}</span>
+                <span className="field__label">{L(`Modelos que os agentes podem usar (${chosen.length} de ${listed.length})`, `Models the agents may use (${chosen.length} of ${listed.length})`)}</span>
                 {listed.length > 8 && <input className="endpoint__filter" value={filter} placeholder={L('Filtrar…', 'Filter…')} onChange={(e) => setFilter(e.target.value)} />}
               </div>
               <div className="endpoint__models" role="group" aria-label={L('Modelos', 'Models')}>
@@ -495,7 +457,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
                   </label>
                 ))}
               </div>
-              <p className="hint">{L('O modelo precisa saber chamar ferramentas: é por elas que um agente pede a outro, pergunta a você e usa os conectores.', "Tool calling is required for delegation, questions, and connectors.")}</p>
+              <p className="hint">{L('O modelo precisa saber chamar ferramentas: é por elas que um agente pede a outro, pergunta a você e usa os conectores.', 'The model must support tool calls so the agent can ask other agents or you, and use connectors.')}</p>
             </>
           )}
           <div className="endpoint__actions">

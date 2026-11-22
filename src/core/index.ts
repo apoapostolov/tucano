@@ -57,7 +57,7 @@ import { ConnectorManager, notAuthorized } from './connectors'
 import { harnessMcps, publicMcp, type FoundMcp } from './harness-mcp'
 import { Gateway } from './gateway'
 import { createServer } from 'node:http'
-import { classifierFor, classifierJobsOf, classifierList, JEV_CLASSIFIER, type ClassifierConfig } from '../shared/classifiers'
+import { classifierFor, classifierJobsOf, classifierList, JEV_CLASSIFIER, type ClassifierConfig, type ClassifierJob } from '../shared/classifiers'
 import { checkClassifierKey, classifierSecret } from './classifiers'
 import { checkJevKey, JEV_MODEL, JEV_SECRET } from './jev'
 import { LISTEN_STUB_KEY, listenStub } from './jev-fake'
@@ -1159,6 +1159,7 @@ setInterval(() => {
 
 const runner = new Runner({
   db,
+  feedbackOn: () => feedback.on,
   engines: engineImpls,
   settings: () => enginesReady.then(settings),
   emit,
@@ -1178,24 +1179,22 @@ const runner = new Runner({
   models: () => availableModels(settings(), allListed()),
   applyNow: (messageId, personId) => applyNow(messageId, personId),
   // Approvals and questions reach the phone with their buttons, through toPhone; a finished reply stays on the Mac.
-  notify: (title, body, conversationId, kind, threadId, to, messageId) => {
-    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}), ...(messageId ? { messageId } : {}) })
+  notify: (title, body, conversationId, kind, threadId, to) => {
+    if (!kind) return notifyAll(title, body, conversationId, undefined, { threadId, ...(to ? { to } : {}) })
     const who = notifyTo(conversationId, to)
-    const pictures = messageId ? noticePictures(messageId) : []
-    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), ...(messageId ? { messageId } : {}), ...(pictures.length ? { pictures } : {}), sound: settings().sounds !== false })
+    toMain({ type: 'notify', title, body, conversationId, threadId, kind, ...(who ? { to: who } : {}), sound: settings().sounds !== false })
     void push.send({ title, body, ...(conversationId ? { conversationId } : {}), ...(threadId ? { threadId } : {}), kind }, who)
   },
   // A job's key: the classifier chosen for it, and Jev's where none is. The fake listen key, when the
   // built app runs without one, answers every job it is asked for.
   jev: {
-    key: async (job) => {
+    key: async (job?: ClassifierJob) => {
       if (fakeListen) return LISTEN_STUB_KEY
       // A job reads the classifier chosen for it; with no job, Jev's own classifier, which is also
       // what an install from before the classifiers keeps using.
       const c = job ? classifierFor(settings(), job) : JEV_CLASSIFIER
       return c ? classifierKeyOf(c) : undefined
     },
-    target: (job) => classifierFor(settings(), job ?? 'routing'),
     ...(fakeListen ? { fetch: listenStub(fakeListen) } : {})
   },
   onBusy: (busy) => toMain({ type: 'busy', busy }),
@@ -1208,11 +1207,9 @@ runner.setPaused(!!settings().paused)
 // Keeping the history only as long as its period says (Settings › History), and the two wipes a person asks
 // for: the whole workspace's, or one bot's. What a reply spent stays in the receipts.
 const retention = new Retention(db, settings, {
-  deleted: (ids) =>
-    ids.forEach((id) => {
-      runner.forget(id) // nothing answers what the period took away
-      runner.drop(id)
-    }),
+  // A message the period took away is gone from the file; upstream's runner keeps nothing waiting on
+  // one (it holds no queue of prompts per conversation), so there is nothing to drop here.
+  deleted: () => {},
   forgetSessions: (of) => runner.forgetSessions(of),
   cleared: (conversationIds) => {
     emit({ type: 'history_wiped', conversationIds })
@@ -1344,10 +1341,9 @@ void ready.then(async () => {
   returnChannelFolders()
   for (const a of db.agents()) if (a.computer && !a.archived) void computers.refresh(a)
   await enginesReady
-  await runner.resumeInterrupted()
   routines.start()
   // A prompt of mine that was still queued when the app closed goes now (runs.ts, resumeQueued).
-  runner.resumeQueued()
+  void runner.resumeQueued()
   // A Tucano that had more people (or an invite out) before the heritage existed gets it now.
   if (db.people({ removed: true }).length > 1 || db.invites().length) inherit()
 }).catch((e: unknown) => {
@@ -2085,22 +2081,10 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
     reach(ctx, conversationId)
-    // `mode`: how this one joins a reply already running here (the window sends what Enter or the
-    // modifier keys said); without it, as replies have always gone, one at a time there.
-    const how = mode === 'parallel' || mode === 'queue' || mode === 'steer' || mode === 'interrupt' ? mode : undefined
-    const sent = runner.send(conversationId, text, images, threadId, ctx.person.id, {
-      ...(files?.length ? { files } : {}),
-      ...(how ? { mode: how } : {}),
-      ...(steerTo ? { steerTo } : {}),
-      ...(reply ? { reply } : {})
-    })
-    // A failure here is logged, never a crash (0.2.39: on a server, an unhandled rejection ends
-    // everyone's Tucano) and a reply it can't take still comes back to whoever wrote it, so the
-    // draft isn't lost as if it had been sent.
-    bg(sent, 'sendMessage')
-    return sent
+    // `mode` 'steer': written in a running reply's own pill, for that reply (`steerTo`), not a prompt.
+    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}) }), 'sendMessage')
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {
@@ -2110,26 +2094,6 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
-  // A prompt waiting in the queue (the work drawer): Start sends it now, even with the channel's cap
-  // used up; the order is what a person made by dragging the rows.
-  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
-  reorderQueued: ({ conversationId, ids }, ctx) => {
-    reach(ctx, conversationId)
-    if (ids.length > 500) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
-    runner.reorderQueued(conversationId, ids)
-  },
-  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
-  // waiting in goes, and the message goes with it — the row and the pill it already put in the
-  // conversation are one message, so both leave in the same step (runs.ts, `dropQueued`).
-  dropQueued: ({ messageId }, ctx) => {
-    const m = db.message(messageId)
-    if (!m) return
-    reach(ctx, m.conversationId)
-    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
-    if (!own) manage(ctx, m.conversationId) // someone else's prompt in a channel: only whoever runs it
-    runner.dropQueued(messageId)
-  },
-
   // A session's reply, a routine's post or my own prompt can leave the room. Only the message and
   // the thread it started go; the prompt it answered and its receipts stay.
   deleteMessage: ({ messageId }, ctx) => {
@@ -2137,26 +2101,13 @@ const api: Handlers = {
     const m = db.message(messageId)
     if (!m || (m.author.kind !== 'agent' && m.author.kind !== 'routine' && m.author.kind !== 'person')) return []
     manage(ctx, m.conversationId)
-    // What still held those messages lets go first: a queued prompt waiting to answer one of them must
-    // not start once a slot frees (runs.ts, `forget`), whatever deleted it.
-    for (const id of [messageId]) runner.forget(id)
     const gone = db.deleteMessage(messageId)
-    // A finished parent can still have replies running in the thread that went with it.
-    for (const id of gone) runner.forget(id)
-    for (const id of gone) runner.drop(id)
     for (const id of gone) emit({ type: 'message_removed', id, conversationId: m.conversationId })
     record(ctx, 'session.deleted', m.conversationId, { message: messageId, went: gone.length })
     return gone
   },
 
-  // A reply put on hold keeps its session and its place; the next work starts when it's let go.
-  pauseRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.pause(messageId)),
-
-  resumeRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.resume(messageId)),
-
   retryRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.retry(messageId)),
-
-  followUpRun: ({ messageId, text }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.followUp(messageId, text)),
 
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), bg(runner.continue(messageId), 'continueRun')),
   // The note a job left where it stopped on its brakes: Continuar, by whoever can see it.
@@ -2219,6 +2170,7 @@ const api: Handlers = {
     if (!isAutonomy(clean.autonomy)) delete clean.autonomy
     if (typeof clean.outsideGuard !== 'boolean') delete clean.outsideGuard
     if (clean.proactive !== false) delete clean.proactive // on unless turned off
+    if (clean.oneAtATime !== true) delete clean.oneAtATime // as many at once unless turned on
     // Whom it answers to (src/shared/org.ts): another agent that isn't itself, below it, archived or the Tuca. Anything else: no one.
     // One that already answered to the same agent keeps doing so: only a change is checked.
     if (!clean.reportsTo || clean.kind === 'tuca' || (db.agent(clean.id)?.reportsTo !== clean.reportsTo && !possibleBosses(db.agents(), clean.id).some((a) => a.id === clean.reportsTo))) delete clean.reportsTo
@@ -3490,10 +3442,11 @@ const api: Handlers = {
   answerQuestion: ({ id, text }, ctx) => runner.answer(id, text, ctx.person),
   questionsHistory: ({ limit }, ctx) => people.history(ctx.person, limit), // answered and closed, newest first: the Asks page's History
   confirmQuestion: ({ id, ok }, ctx) => runner.confirm(id, ok, ctx.person),
-  dismissQuestion: ({ id }, ctx) => runner.dismiss(id, ctx.person), // leave an ask unanswered: it closes and the reply goes on
+  dismissQuestion: ({ id }, ctx) => runner.cancelQuestion(id, ctx.person), // leave an ask unanswered: it closes and the reply goes on
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),
+  cancelQuestion: ({ messageId }, ctx) => runner.cancelQuestion(messageId, ctx.person),
   runRoutine: ({ id }, ctx) => {
     const r = db.routine(id)
     if (!r) throw new Error(L('Essa rotina não existe mais.', 'That routine no longer exists.'))

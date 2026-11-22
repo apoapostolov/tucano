@@ -48,13 +48,7 @@ export interface Api {
   sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: SendMode; steerTo?: string; reply?: ReplyTarget }): void // threadId: a reply in the thread that message started; mode: how it joins a reply already running there; steerTo: the running reply a steer is for, when more than one runs there; reply: to that message, or to the excerpt of it I selected
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
-  startQueued(p: { messageId: string }): void // a prompt waiting in the queue starts now, cap or no cap
-  reorderQueued(p: { conversationId: string; ids: string[] }): void // the order the queue runs in, as a person put it in the drawer
-  dropQueued(p: { messageId: string }): void // a prompt waiting in the queue is taken back: its row leaves the drawer and its message leaves the room
-  pauseRun(p: { messageId: string }): void // a running reply waits before its next tool call or turn; nothing it did is lost
-  resumeRun(p: { messageId: string }): void // the held reply goes on, on the same session and model
   retryRun(p: { messageId: string }): void
-  followUpRun(p: { messageId: string; text: string }): void // a reply that isn't at work (ended, cut, paused) goes on from where it stopped, in the same row, with what was written
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
   deleteMessage(p: { messageId: string }): string[] // a session's reply leaves the room with its thread: the ids that went
   continueJob(p: { messageId: string }): void // the note where a job stopped on its brakes: its work goes on (src/core/jobs.ts)
@@ -294,6 +288,7 @@ export interface Api {
   dismissQuestion(p: { id: string }): void // leave a question unanswered for good: it closes and the reply goes on
   answerDecision(p: { messageId: string; index: number; answer: Answer | null }): void // one of a question's decisions answered on the card (null clears it), kept until sent
   submitDecisions(p: { messageId: string }): void // sends the decisions answered on the card, as my message
+  cancelQuestion(p: { messageId: string }): void // dismisses the question on its card: it closes, and the agent isn't woken
   watchRoutine(p: { id: string; on: boolean }): void // "me avise": told of a channel routine's runs
   // To the people who make Tucano, through tucano.sh (core/feedback.ts). image: the window's picture, base64 PNG or JPEG.
   // Throws, in the person's words, when it didn't go.
@@ -349,8 +344,7 @@ export type CoreEvent =
   | { type: 'delegations'; delegations?: Delegation[] } // work handed down the tree changed (each gets what they may see)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations', 'thinking', 'message_removed', 'history_wiped']
-
+export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations', 'thinking', 'message_removed', 'history_wiped'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

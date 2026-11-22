@@ -1,12 +1,16 @@
+// The jump row under the settings groups: it names the subjects of the open group in the order they
+// read, takes the page to one over an interruptible 280 ms ease-in-out, and moves at once for a
+// keyboard activation or a reduced-motion preference. A subject the page did not draw gets no link,
+// so the row never offers a dead anchor. The search's answer opens a group at a subject.
 import { parseHTML } from 'linkedom'
-import { act, useState, type ReactNode } from 'react'
+import { act, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Root } from 'react-dom/client'
 import { setLang } from '../src/shared/lang'
-import { SettingsLayout } from '../src/renderer/src/components/SettingsLayout'
-import { inStrip, settingsStructure, type SettingsAccess, type SettingsSectionId } from '../src/renderer/src/settings-structure'
+import { SettingsJumps, SettingsResults } from '../src/renderer/src/components/SettingsLayout'
+import { searchSettings, settingsGroups, settingsStructure } from '../src/renderer/src/settings-structure'
 
-const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>')
+const { window, document } = parseHTML('<!doctype html><html><body><div id="root"></div></body></html>')
 Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, Node: window.Node, IS_REACT_ACT_ENVIRONMENT: true })
 let focus: HTMLElement | null = null
 let reduced = false
@@ -18,178 +22,169 @@ Object.assign(globalThis, {
   cancelAnimationFrame: (id: number) => { frames.delete(id) },
   ResizeObserver: class { observe(): void {} disconnect(): void {} }
 })
+// The groups bar measures 40 px; every subject stands 600 px below the one above it. The scroller is
+// 500 px tall over 5000 px of content.
+const CARD_TOP = 120
+const CARD_STRIDE = 600
+const ROW = 40
+const INSET = ROW + 16
 window.HTMLElement.prototype.focus = function () { focus = this as unknown as HTMLElement }
 window.HTMLElement.prototype.getBoundingClientRect = function () {
   const element = this as unknown as HTMLElement
   const scroller = document.querySelector<HTMLElement>('.page__scroll')
-  const targets = [...document.querySelectorAll('[data-settings-section]')]
-  const index = targets.indexOf(element)
-  const top = index >= 0 ? 40 + 120 + index * 600 - (scroller?.scrollTop || 0) : 40
-  const height = element.classList.contains('settings-navigation') ? 88 : index >= 0 ? 500 : 500
+  const top = scroller && element === scroller ? 0 : CARD_TOP + [...document.querySelectorAll('[data-settings-section]')].indexOf(element) * CARD_STRIDE - (scroller?.scrollTop || 0)
+  const height = element.classList.contains('card') ? 500 : ROW
   return { top, bottom: top + height, left: 0, right: 720, width: 720, height, x: 0, y: top, toJSON: () => ({}) }
 }
+// linkedom has no scroll boxes: a plain property that starts at 0 is what the code reads and writes.
+const offsets = new WeakMap<HTMLElement, number>()
+Object.defineProperty(window.HTMLElement.prototype, 'scrollTop', {
+  configurable: true,
+  get() { return offsets.get(this as unknown as HTMLElement) ?? 0 },
+  set(value: number) { offsets.set(this as unknown as HTMLElement, value) }
+})
 Object.defineProperty(window.HTMLElement.prototype, 'clientHeight', { configurable: true, get() { return 500 } })
 Object.defineProperty(window.HTMLElement.prototype, 'scrollHeight', { configurable: true, get() { return 5000 } })
 const { createRoot } = await import('react-dom/client')
+
+const access = { admin: true, owner: true, team: false, servers: false }
+const ALL = settingsStructure(access)
+const SECTIONS = ALL.filter(section => section.visible)
 let root: Root
-let access: SettingsAccess
-let requested: string
-const navigated: string[] = []
+let skipped: string | null = null
+
 function Harness(): ReactNode {
-  const [route, setRoute] = useState(requested)
-  const sections = settingsStructure(access)
-  const content = Object.fromEntries(sections.map(section => [section.id,
-    <div className="card"><h2>{section.id}</h2><button>{`Control ${section.id}`}</button></div>
-  ])) as Record<SettingsSectionId, ReactNode>
-  return <div className="page__scroll"><SettingsLayout requested={route} sections={sections} content={content} onNavigate={id => { navigated.push(id); setRoute(id) }} /></div>
+  return (
+    <div className="page__scroll">
+      <div className="settings-groups" />
+      <SettingsJumps sections={SECTIONS} />
+      {SECTIONS.filter(section => section.id !== skipped).map(section => (
+        <div key={section.id} className="card" id={`settings-${section.id}`} data-settings-section={section.id} tabIndex={-1} />
+      ))}
+    </div>
+  )
 }
-const render = async (): Promise<void> => { await act(async () => root.render(<Harness />)) }
+const render = async (node: ReactNode = <Harness />): Promise<void> => {
+  await act(async () => root.render(node))
+}
 const tick = async (at: number): Promise<void> => {
   await act(async () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(callback => callback(at)) })
 }
-const click = async (selector: string, detail = 1, extra: Record<string, unknown> = {}): Promise<Event> => {
+const click = async (selector: string, detail = 1): Promise<Event> => {
   const event = new window.Event('click', { bubbles: true, cancelable: true })
-  Object.entries({ button: 0, detail, ...extra }).forEach(([key, value]) => Object.defineProperty(event, key, { value }))
+  Object.entries({ button: 0, detail }).forEach(([key, value]) => Object.defineProperty(event, key, { value }))
   await act(async () => document.querySelector(selector)!.dispatchEvent(event))
   return event
 }
 const scroller = (): HTMLElement => document.querySelector('.page__scroll')!
+const links = (): HTMLAnchorElement[] => [...document.querySelectorAll<HTMLAnchorElement>('.settings-jumps a')]
+const reached = (index: number): number => CARD_TOP + index * CARD_STRIDE - INSET
+
 beforeEach(() => {
   setLang('en')
   document.getElementById('root')!.innerHTML = ''
   root = createRoot(document.getElementById('root')!)
-  access = { admin: true, owner: true, team: false, servers: false }
-  requested = 'app'
   reduced = false
+  skipped = null
   frames.clear()
-  navigated.length = 0
   focus = null
 })
 afterEach(async () => { await act(async () => root.unmount()); frames.clear() })
 
-describe('settings section navigation', () => {
-  it('keeps sections together with links, and uses tabs only for different page panels', async () => {
+describe('settings jump row', () => {
+  it('names the subjects in the order they read, as links and not tabs', async () => {
     await render()
-    expect(document.querySelectorAll('[role="tablist"]')).toHaveLength(1)
-    expect(document.querySelectorAll('nav a')).toHaveLength(8)
-    expect(document.querySelectorAll('[data-settings-section]')).toHaveLength(8)
-    expect(document.querySelector('[role="tabpanel"]:not([hidden])')?.id).toBe('settings-panel-app')
-    expect(document.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1)
+    expect(document.querySelectorAll('[role="tablist"]')).toHaveLength(0)
+    expect(links()).toHaveLength(SECTIONS.length)
+    expect(links().map(link => link.textContent)).toEqual(SECTIONS.map(section => section.label))
   })
 
-  it('animates pointer navigation with ease-in-out and focuses the target without a second scroll', async () => {
+  it('drops a subject the page did not draw', async () => {
+    skipped = SECTIONS[1]!.id
     await render()
-    await click('a[href="#settings-app-sidebar"]')
-    expect(navigated).toEqual(['app-sidebar'])
-    expect(focus?.id).toBe('settings-app-sidebar')
+    expect(links()).toHaveLength(SECTIONS.length - 1)
+    expect(links().map(link => link.getAttribute('href'))).not.toContain(`#settings-${SECTIONS[1]!.id}`)
+  })
+
+  it('animates a pointer selection with ease-in-out, parks the subject under the groups and focuses it without a second scroll', async () => {
+    await render()
+    const index = 3
+    const event = await click(`a[href="#settings-${SECTIONS[index]!.id}"]`)
+    expect(event.defaultPrevented).toBe(true)
+    expect(focus?.id).toBe(`settings-${SECTIONS[index]!.id}`)
     await tick(0)
     expect(scroller().scrollTop).toBe(0)
     await tick(140)
-    expect(scroller().scrollTop).toBeCloseTo(608)
+    expect(scroller().scrollTop).toBeCloseTo(reached(index) / 2, 0)
     await tick(280)
-    expect(scroller().scrollTop).toBeCloseTo(1216)
-    expect(document.querySelector('[aria-current="location"]')?.textContent).toBe('Sidebar')
+    expect(scroller().scrollTop).toBeCloseTo(reached(index), 0)
+    expect(frames.size).toBe(0)
   })
 
-  it('moves immediately for keyboard activation and for reduced motion', async () => {
+  it('moves immediately for a keyboard activation, and for a reduced-motion preference', async () => {
     await render()
-    await click('a[href="#settings-app-sidebar"]', 0)
-    expect(scroller().scrollTop).toBeCloseTo(1216)
+    await click(`a[href="#settings-${SECTIONS[2]!.id}"]`, 0)
+    expect(scroller().scrollTop).toBeCloseTo(reached(2), 0)
     expect(frames.size).toBe(0)
     reduced = true
-    await click('a[href="#settings-app-notifications"]')
-    expect(scroller().scrollTop).toBeCloseTo(1816)
+    await click(`a[href="#settings-${SECTIONS[4]!.id}"]`)
+    expect(scroller().scrollTop).toBeCloseTo(reached(4), 0)
     expect(frames.size).toBe(0)
   })
 
-  it('cancels an old animation on another selection or wheel input', async () => {
+  it('cancels a running glide when another subject is chosen, and on wheel input', async () => {
     await render()
-    await click('a[href="#settings-app-sidebar"]')
+    await click(`a[href="#settings-${SECTIONS[4]!.id}"]`)
     await tick(0)
     await tick(140)
-    await click('a[href="#settings-app-notifications"]')
+    expect(scroller().scrollTop).toBeGreaterThan(0)
+    // A second selection replaces the first: the page never reaches the abandoned target.
+    await click(`a[href="#settings-${SECTIONS[2]!.id}"]`)
     await tick(200)
+    await tick(340)
+    expect(scroller().scrollTop).toBeLessThan(reached(4))
     await tick(480)
-    expect(scroller().scrollTop).toBeCloseTo(1816)
-    await click('a[href="#settings-app-appearance"]')
-    await tick(500)
-    await tick(600)
-    const stopped = scroller().scrollTop
-    await act(async () => scroller().dispatchEvent(new window.Event('wheel', { bubbles: true })))
-    await tick(900)
-    expect(scroller().scrollTop).toBe(stopped)
-  })
-
-  it('tracks manual scrolling without moving focus or writing navigation state', async () => {
-    await render()
-    const control = document.querySelector<HTMLElement>('button')!
-    control.focus()
-    scroller().scrollTop = 900
-    await act(async () => scroller().dispatchEvent(new window.Event('scroll')))
+    expect(scroller().scrollTop).toBeCloseTo(reached(2), 0)
+    // Wheel input stops a glide where it is, without jumping to its target.
+    await click(`a[href="#settings-${SECTIONS[5]!.id}"]`)
     await tick(0)
-    expect(document.querySelector('[aria-current="location"]')?.textContent).toBe('Conversation')
-    expect(focus).toBe(control)
-    expect(navigated).toEqual([])
+    await tick(140)
+    await act(async () => scroller().dispatchEvent(new window.Event('wheel')))
+    const stopped = scroller().scrollTop
+    expect(stopped).toBeGreaterThan(reached(2))
+    expect(stopped).toBeLessThan(reached(5))
+    await tick(700)
+    expect(scroller().scrollTop).toBeCloseTo(stopped, 5)
+  })
+})
+
+describe('settings search and groups', () => {
+  it('finds a control by what a person calls it, ignoring accents and case, and names where it is', async () => {
+    setLang('pt')
+    const pt = settingsStructure(access)
+    const hits = searchSettings(pt, 'HORARIO de silencio')
+    expect(hits.map(hit => [hit.term, hit.section.id])).toEqual([['Horário de silêncio', 'agents-routines']])
+    let picked: string | null = null
+    await render(<SettingsResults hits={hits} query="horario de silencio" onPick={section => { picked = section.id }} />)
+    const row = document.querySelector<HTMLButtonElement>('.settings-results__row')!
+    expect(row.textContent).toContain('Agentes › Rotinas')
+    await act(async () => row.click())
+    expect(picked).toBe('agents-routines')
   })
 
-  it('supports main-tab arrows, Home and End while preserving focus on the tab', async () => {
-    await render()
-    const press = async (key: string): Promise<void> => {
-      const event = new window.Event('keydown', { bubbles: true, cancelable: true })
-      Object.defineProperty(event, 'key', { value: key })
-      await act(async () => document.querySelector('[role="tab"][aria-selected="true"]')!.dispatchEvent(event))
-    }
-    await press('ArrowRight')
-    expect(focus?.id).toBe('settings-tab-workspace')
-    expect(document.querySelector('[role="tabpanel"]:not([hidden])')?.id).toBe('settings-panel-workspace')
-    await press('End')
-    expect(focus?.id).toBe('settings-tab-connections')
-    await press('Home')
-    expect(focus?.id).toBe('settings-tab-app')
+  it('finds a subject by its name first, at most three places per subject, and says so when nothing matches', async () => {
+    const hits = searchSettings(settingsStructure(access), 'limit')
+    expect(hits[0]).toMatchObject({ term: 'Limits', section: { id: 'agents-limits' } })
+    expect(hits.filter(hit => hit.section.id === 'agents-limits').length).toBeLessThanOrEqual(3)
+    await render(<SettingsResults hits={[]} query="zzz" onPick={() => {}} />)
+    expect(document.querySelector('.settings-results__none')?.textContent).toContain('No results for “zzz”')
   })
 
-  it('maps legacy destinations to available sections and rejects inaccessible remembered pages', async () => {
-    requested = 'roteamento'
-    await render()
-    expect(document.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('Models')
-    expect(document.querySelector('[aria-current="location"]')?.textContent).toBe('Routing')
-    expect(focus?.id).toBe('settings-models-routing')
-    await act(async () => root.unmount())
-    root = createRoot(document.getElementById('root')!)
-    access = { admin: false, owner: false, team: true, servers: false }
-    requested = 'models-routing'
-    await render()
-    expect(document.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('App')
-    expect([...document.querySelectorAll('[role="tab"]')].map(el => el.textContent)).toEqual(['App', 'Workspace'])
-    expect(document.querySelector('[data-settings-section="app-sidebar"]')).not.toBeNull()
-  })
-
-  it('keeps a card that reads inside the one above it out of the strip', async () => {
-    // The extensions are a card of their own inside Agents, under the browser's; a section row of
-    // its own would be a second way to one place, so it is declared `nav: false`. Its card still
-    // renders and still carries its anchor (settings-placement holds that), the strip just skips it.
-    const agents = settingsStructure(access).filter(section => section.visible && section.page === 'agents')
-    expect(agents.map(section => section.id)).toContain('agents-addons')
-    expect(agents.find(section => section.id === 'agents-addons')).toMatchObject({ keys: ['browserAddOns'], nav: false })
-
-    // Embedded — the shape Settings › Agents really draws — the strip follows the page's own cards.
-    const cards = (): ReactNode => <>{agents.map(section => <section key={section.id} data-settings-section={section.id} />)}</>
-    await act(async () => root.render(<div className="page__scroll"><SettingsLayout embedded sections={settingsStructure(access)} />{cards()}</div>))
-    const strip = [...document.querySelectorAll('nav a')].map(link => link.textContent)
-    expect(strip).toEqual(agents.filter(inStrip).map(section => section.label))
-    expect(strip).not.toContain('Browser Extensions')
-    expect(strip).toContain('Agents browser')
-    expect(document.querySelector('[data-settings-section="agents-addons"]')).not.toBeNull()
-  })
-
-  it('preserves normal modified-link behavior and cancels pending frames on unmount', async () => {
-    await render()
-    const event = await click('a[href="#settings-app-sidebar"]', 1, { ctrlKey: true })
-    expect(event.defaultPrevented).toBe(false)
-    expect(navigated).toEqual([])
-    await click('a[href="#settings-app-sidebar"]')
-    expect(frames.size).toBeGreaterThan(0)
-    await act(async () => root.unmount())
-    expect(frames.size).toBe(0)
+  it('searches only what this person sees, and shows only the groups they have something in', () => {
+    const member = settingsStructure({ admin: false, owner: false, team: true, servers: true })
+    expect(searchSettings(member, 'autonomy')).toEqual([])
+    expect(searchSettings(member, 'sounds').map(hit => hit.section.id)).toEqual(['app-notifications'])
+    expect(settingsGroups(member)).toEqual(['geral', 'conexoes', 'workspace'])
+    expect(settingsGroups(ALL)).toEqual(['geral', 'agentes', 'modelos', 'conexoes', 'workspace'])
   })
 })

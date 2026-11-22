@@ -45,6 +45,7 @@ export function AskCard({
   byline,
   answeredInText,
   recommended,
+  cancelled,
   children,
   onSend
 }: {
@@ -56,6 +57,8 @@ export function AskCard({
   byline?: string
   answeredInText?: boolean
   recommended?: (number | null)[] | undefined
+  // Nobody answered it: it was let go from its card (Cancelar), so it reads as cancelled, not answered.
+  cancelled?: boolean | undefined
   children?: ReactNode
   // A card the app drew for a look (Settings' test): there is nothing behind it to answer, so
   // choosing and sending stay on the card and this is what Send does.
@@ -64,18 +67,18 @@ export function AskCard({
   if (mode === 'answer') return <Answering id={id} questions={questions} saved={saved} badge={badge} byline={byline} recommended={recommended} extra={children} onSend={onSend} />
   return (
     <section className={`ask ask--${mode}`} aria-label={badge}>
-      <Head badge={badge} byline={byline} done={mode === 'done'} />
-      {mode === 'done' ? <Summary questions={questions} answers={saved} answeredInText={answeredInText} /> : <Asked questions={questions} recommended={recommended} />}
+      <Head badge={badge} byline={byline} done={mode === 'done'} cancelled={cancelled} />
+      {mode === 'done' ? <Summary questions={questions} answers={saved} answeredInText={answeredInText} cancelled={cancelled} /> : <Asked questions={questions} recommended={recommended} />}
       {children}
     </section>
   )
 }
 
-function Head({ badge, byline, done, nav }: { badge: string; byline?: string | undefined; done?: boolean; nav?: ReactNode }): ReactNode {
+function Head({ badge, byline, done, cancelled, nav }: { badge: string; byline?: string | undefined; done?: boolean; cancelled?: boolean | undefined; nav?: ReactNode }): ReactNode {
   return (
     <div className="ask__head">
       <span className="ask__badge">
-        <Icon name={done ? 'check' : 'ask'} size={13} />
+        <Icon name={cancelled ? 'x' : done ? 'check' : 'ask'} size={13} />
         {badge}
       </span>
       {byline && <span className="ask__byline">{byline}</span>}
@@ -120,7 +123,7 @@ function Asked({ questions, recommended }: { questions: Decision[]; recommended?
 }
 
 // Answered: each decision and what was chosen. Answered in writing: the questions, and a note.
-function Summary({ questions, answers, answeredInText }: { questions: Decision[]; answers?: (Answer | null)[] | undefined; answeredInText?: boolean | undefined }): ReactNode {
+function Summary({ questions, answers, answeredInText, cancelled }: { questions: Decision[]; answers?: (Answer | null)[] | undefined; answeredInText?: boolean | undefined; cancelled?: boolean | undefined }): ReactNode {
   const any = !!answers?.some(isAnswered)
   return (
     <>
@@ -130,7 +133,7 @@ function Summary({ questions, answers, answeredInText }: { questions: Decision[]
           return (
             <div key={i} className="ask-summary__row">
               <dt>{isLong(q) ? <Prose className="ask__prose" text={q.question} /> : q.question}</dt>
-              <dd className={!a || !isAnswered(a) || a.skipped ? 'is-muted' : ''}>{a && isAnswered(a) ? answerLabel(q, a) : any ? L('respondida em texto', 'answered in text') : L('respondida na mensagem abaixo', 'answered in the message below')}</dd>
+              <dd className={cancelled || !a || !isAnswered(a) || a.skipped ? 'is-muted' : ''}>{cancelled ? L('(cancelada)', '(cancelled)') : a && isAnswered(a) ? answerLabel(q, a) : any ? L('respondida em texto', 'answered in text') : L('respondida na mensagem abaixo', 'answered in the message below')}</dd>
             </div>
           )
         })}

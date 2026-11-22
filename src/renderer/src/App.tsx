@@ -6,7 +6,8 @@ import { SidebarResize } from './components/SidebarResize'
 import { ConversationView } from './components/Conversation'
 import { Lightbox } from './components/Lightbox'
 import { ImageMenu } from './components/ImageMenu'
-import { AgentPage, ApprovalsPage, AsksPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { AgentPage, ApprovalsPage, ConnectorsPage, SettingsPage } from './components/Pages'
+import { AsksPage } from './components/AsksPage'
 import { VaultPage } from './components/Vault'
 import { UsagePage } from './components/Usage'
 import { MemoryPage } from './components/Memory'
@@ -34,7 +35,8 @@ export function App(): ReactNode {
   const language = useStore((s) => s.settings.language)
   const intro = useStore((s) => s.ready && s.settings.onboarding?.done === false)
   const guest = useStore(guestWelcome)
-  const mac = useStore((s) => s.platform === 'mac')
+  // A server's page in the desktop app on a Mac: the window's buttons are over it, as over the app's own.
+  const mac = useStore((s) => s.platform === 'mac') || window.tucano?.places?.os === 'darwin'
   const navOpen = useStore((s) => s.navOpen)
   const tab = hubTab(view)
 

@@ -32,6 +32,8 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   jevNextSteps: { kind: 'boolean', max: 10, nullable: true },
   memoryLearning: { kind: ['approve', 'auto', 'off'], max: 20 },
   sendMode: { kind: ['parallel', 'queue', 'steer', 'interrupt'], max: 20, nullable: true },
+  // How many replies one conversation runs at once (upstream 0.2.45); an agent's own one-at-a-time wins.
+  repliesAtOnce: { kind: 'number', max: 10, nullable: true },
   // How the quota panels draw, and which providers they draw (src/shared/quota-view.ts).
   quotaView: { kind: ['rings', 'table'], max: 20, nullable: true },
   quotaHidden: { kind: 'array', max: 1_000, nullable: true },

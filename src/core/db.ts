@@ -709,7 +709,9 @@ const COLUMNS: [string, string, string][] = [
   // The note a job left where it stopped on its brakes (src/core/jobs.ts): the job it carries Continuar for.
   ['messages', 'stop_job', 'TEXT'],
   // When an agent was deleted for good (retireAgent): it stays only as a name for its old messages.
-  ['agents', 'deleted_at', 'INTEGER']
+  ['agents', 'deleted_at', 'INTEGER'],
+  // An agent whose replies go one at a time (Agent.oneAtATime): 1; unset, as many as the app runs.
+  ['agents', 'one_at_a_time', 'INTEGER']
 ]
 
 // Every table a migration makes, and every index, read out of MIGRATIONS itself so the two cannot
@@ -1081,7 +1083,8 @@ export class Db {
       ...(r['sector_name'] ? { sectorName: str(r['sector_name']) } : {}),
       ...(r['sector_does'] ? { sectorDoes: str(r['sector_does']) } : {}),
       ...(r['entry'] ? { entry: true as const } : {}),
-      ...(r['proactive'] === 0 ? { proactive: false } : {})
+      ...(r['proactive'] === 0 ? { proactive: false } : {}),
+      ...(r['one_at_a_time'] === 1 ? { oneAtATime: true as const } : {})
     }
   }
 
@@ -1107,7 +1110,7 @@ export class Db {
       .run(a.id, a.name, a.handle, a.role, a.color, a.instructions, a.modelId, a.fallbackModelId || null, a.fallbackAccountId || null, a.accountId || null, a.effort, safeLimit(a.limit), routineCap(a.maxRoutines), JSON.stringify(a.grants), a.memory ?? 'auto', a.computer ? 1 : 0, a.computerKind === 'mac' ? 'mac' : 'linux', a.web === false ? 0 : 1, a.browser ? 1 : 0, JSON.stringify(a.apps ?? []), JSON.stringify(a.autoApprove ?? []), JSON.stringify(cleanRules(a.actionRules)), isAutonomy(a.autonomy) ? a.autonomy : null, a.outsideGuard === undefined ? null : a.outsideGuard ? 1 : 0, a.smartRouting === true ? 1 : a.smartRouting === false ? 0 : null, cleanRetentionDays(a.retentionDays) ?? null, a.archived ? 1 : 0, a.kind ?? null, a.customColor ?? null, a.picture ?? null, a.avatar ? JSON.stringify(a.avatar) : null, isWikiAccess(a.wiki) ? a.wiki : null, Date.now())
     // An agent made without one belongs to the Tucano's owner; a save that doesn't say keeps it.
     this.db.prepare('UPDATE agents SET owner = COALESCE(?, owner, (SELECT id FROM people WHERE role = ?)) WHERE id = ?').run(a.owner ?? null, 'owner', a.id)
-    this.db.prepare('UPDATE agents SET reports_to = ?, sector_name = ?, sector_does = ?, entry = ?, proactive = ? WHERE id = ?').run(a.reportsTo || null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.proactive === false ? 0 : null, a.id)
+    this.db.prepare('UPDATE agents SET reports_to = ?, sector_name = ?, sector_does = ?, entry = ?, proactive = ?, one_at_a_time = ? WHERE id = ?').run(a.reportsTo || null, a.sectorName || null, a.sectorDoes || null, a.entry ? 1 : null, a.proactive === false ? 0 : null, a.oneAtATime ? 1 : null, a.id)
   }
 
   // Kept apart from saveAgent: folders change only after the core checks them.

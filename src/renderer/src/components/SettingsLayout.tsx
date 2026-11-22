@@ -1,236 +1,172 @@
-import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
+import { createContext, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
-import { inStrip, settingsDestination, settingsPages, type SettingsSection, type SettingsSectionId } from '../settings-structure'
+import { settingsGroupLabel, type SettingsHit, type SettingsPageId, type SettingsSection } from '../settings-structure'
+import { Icon, type IconName } from './ui'
 
 export const SETTINGS_SCROLL_MS = 280
 export const settingsEase = (t: number): number => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 
-// The strip inside a page that already has tabs of its own: a sticky line of section names under
-// them, in the app's own colours, that scrolls sideways when the window is narrow.
-// Embedded, the strip reuses the page's tab styling: full page width, directly under the tabs.
-const EMBEDDED_TABS = 'tabs tabs--sections'
+// The name of the subject a card is drawn in. A card inside a subject is one of its groups: its
+// title is the small heading over the group, and a title that only repeats the subject's is left out.
+export const SettingsSubjectTitle = createContext<string | null>(null)
 
-// A page's sections and the strip that walks them. On its own it owns the page tabs and the panels
-// too; `embedded`, it stays inside a page that already has a tab bar — only the section strip
-// renders, and the cards stay where that page put them (they carry the `data-settings-section`
-// anchors the strip scrolls to).
-export function SettingsLayout({ requested, sections, content, onNavigate, embedded = false }: {
-  requested?: string
-  sections: readonly SettingsSection[]
-  content?: Record<SettingsSectionId, ReactNode>
-  onNavigate?: (destination: string) => void
-  embedded?: boolean
-}): ReactNode {
-  const visible = sections.filter(s => s.visible)
-  const destination = settingsDestination(requested, embedded ? visible : sections)
-  const listed = embedded ? visible : visible.filter(s => s.page === destination.page)
-  const root = useRef<HTMLDivElement>(null)
-  const navigation = useRef<HTMLDivElement>(null)
-  const frame = useRef<number | null>(null)
-  const movingTo = useRef<string | null>(null)
-  const handled = useRef<string | undefined>(undefined)
-  const previousPage = useRef<string | null>(null)
-  // Embedded, the page's own tabs stick above the strip: both are taken out of the scroll maths.
-  const above = useRef(0)
-  // Embedded, the cards belong to the page: the strip lists the sections that were really
-  // rendered, in the order they read, so a section still waiting for its card gets no link.
+// The tile by a subject's name, the same in its heading, the jump row and a search result.
+export function SettingsTile({ section, size = 'md' }: { section: SettingsSection; size?: 'sm' | 'md' }): ReactNode {
+  return (
+    <span className={`settings-tile settings-tile--${size}`} style={{ background: section.color }} aria-hidden>
+      <Icon name={section.icon as IconName} size={size === 'sm' ? 11 : 15} />
+    </span>
+  )
+}
+
+// One subject of a group: its tile and name, then its cards as groups of rows. The page scrolls to
+// it from the jump row and from a search result, so it carries the anchor and takes the focus.
+export function SettingsSubject({ section, children }: { section: SettingsSection; children: ReactNode }): ReactNode {
+  return (
+    <section className="settings-subject" id={`settings-${section.id}`} data-settings-section={section.id} aria-labelledby={`settings-${section.id}-title`} tabIndex={-1}>
+      <header className="settings-subject__head">
+        <SettingsTile section={section} />
+        <h2 id={`settings-${section.id}-title`}>{section.label}</h2>
+      </header>
+      <SettingsSubjectTitle.Provider value={section.label}>{children}</SettingsSubjectTitle.Provider>
+    </section>
+  )
+}
+
+// The five groups, as one segmented control: picking one shows its subjects in place of the others.
+export function SettingsGroups({ groups, current, onPick }: { groups: readonly SettingsPageId[]; current: string | null; onPick: (group: SettingsPageId) => void }): ReactNode {
+  return (
+    <div className="settings-groups">
+      <div className="settings-groups__bar" role="tablist" aria-label={L('Grupos de configurações', 'Settings groups')}>
+        {groups.map((group) => (
+          <button key={group} type="button" role="tab" aria-selected={current === group} className={current === group ? 'is-active' : ''} onClick={() => onPick(group)}>
+            {settingsGroupLabel(group)}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Under the groups, one link per subject of the open group, to go straight to it. A pointer click
+// glides there over an interruptible 280 ms ease-in-out; a keyboard activation and a reduced-motion
+// preference move at once; wheel, touch, pointer or key input, or another link, stops a glide. The
+// subject it lands on takes the focus without a second scroll. Only subjects the page really drew get
+// a link, so a subject this person's role leaves out is never a dead anchor.
+export function SettingsJumps({ sections }: { sections: readonly SettingsSection[] }): ReactNode {
   const [present, setPresent] = useState<readonly string[] | null>(null)
-  const available = present
-    ? present.map(id => listed.find(s => s.id === id)).filter((section): section is SettingsSection => section !== undefined)
-    : listed
-  // A section declared `nav: false` belongs to the card above it: its card still renders and keeps
-  // its anchor, but the strip gets no row of its own for it — two names for one place read as two.
-  const links = available.filter(inStrip)
-  const [current, setCurrent] = useState<string>(destination.section)
-  const currentId = links.some(s => s.id === current) ? current : links[0]?.id ?? destination.section
-  const ids = listed.map(s => s.id).join('|')
-  const linkIds = links.map(s => s.id).join('|')
+  const listed = sections.filter((section) => section.visible)
+  const available = present ? listed.filter((section) => present.includes(section.id)) : listed
+  const root = useRef<HTMLElement>(null)
+  const frame = useRef<number | null>(null)
+  const ids = listed.map((section) => section.id).join('|')
 
   const cancel = (): void => {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
     frame.current = null
-    movingTo.current = null
     root.current?.removeAttribute('data-settings-scrolling')
   }
 
-  const showSection = (id: string, animated: boolean, focus: boolean): void => {
-    cancel()
-    const scroller = root.current?.closest<HTMLElement>('.page__scroll')
-    const target = (embedded ? scroller : root.current)?.querySelector<HTMLElement>(`[data-settings-section="${id}"]`)
-    if (!scroller || !target) return
-    setCurrent(id)
-    const inset = (navigation.current?.getBoundingClientRect().height ?? 0) + (embedded ? above.current : 0) + 16
-    const destinationTop = (): number => Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
-      scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - inset))
-    const top = destinationTop()
-    if (focus) target.focus({ preventScroll: true })
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    const start = scroller.scrollTop
-    if (!animated || reduced || Math.abs(top - start) < 1) {
-      scroller.scrollTop = top
-      return
-    }
-    movingTo.current = id
-    root.current?.setAttribute('data-settings-scrolling', id)
-    let began: number | null = null
-    const step = (at: number): void => {
-      began ??= at
-      const progress = Math.min(1, (at - began) / SETTINGS_SCROLL_MS)
-      scroller.scrollTop = start + (destinationTop() - start) * settingsEase(progress)
-      if (progress < 1) frame.current = requestAnimationFrame(step)
-      else { frame.current = null; movingTo.current = null; root.current?.removeAttribute('data-settings-scrolling') }
-    }
-    frame.current = requestAnimationFrame(step)
-  }
-
   useLayoutEffect(() => {
-    const element = root.current
-    const scroller = element?.closest<HTMLElement>('.page__scroll')
-    if (!element || !scroller) return
-    // Enough trailing room lets the final section reach the same top edge as every other one.
-    const size = (): void => {
-      element.style.setProperty('--settings-last-height', `${Math.max(0, scroller.clientHeight - (navigation.current?.getBoundingClientRect().height ?? 0) - 16)}px`)
-      // Embedded under the page's own tabs, the strip parks right below them.
-      if (embedded) {
-        above.current = scroller.querySelector<HTMLElement>('.tabs')?.getBoundingClientRect().height ?? 0
-        element.style.setProperty('--settings-nav-top', `${above.current}px`)
-      }
-    }
-    size()
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(size)
-    observer?.observe(scroller)
-    if (navigation.current) observer?.observe(navigation.current)
-    return () => observer?.disconnect()
-  }, [embedded, destination.page, ids])
-
-  // Which sections the page really rendered, in the order their cards appear. A section without a
-  // card, or one this person's role doesn't get, never reaches the strip.
-  useLayoutEffect(() => {
-    if (!embedded) return
     const scroller = root.current?.closest<HTMLElement>('.page__scroll')
     if (!scroller) return
-    const wanted = new Set<string>(listed.map(s => s.id))
-    const seen: string[] = []
-    for (const element of Array.from(scroller.querySelectorAll<HTMLElement>('[data-settings-section]'))) {
-      const id = element.dataset.settingsSection
-      if (id && wanted.has(id) && !seen.includes(id)) seen.push(id)
-    }
-    setPresent(previous => previous && previous.join('|') === seen.join('|') ? previous : seen)
-  }, [embedded, ids])
-
-  useLayoutEffect(() => {
-    if (handled.current === requested && previousPage.current === destination.page) return
-    handled.current = requested
-    const changed = previousPage.current !== destination.page
-    previousPage.current = destination.page
-    cancel()
-    if (destination.explicit) showSection(destination.section, false, true)
-    else if (changed) {
-      const scroller = root.current?.closest<HTMLElement>('.page__scroll')
-      if (scroller) scroller.scrollTop = 0
-      setCurrent(destination.section)
-    }
-  }, [requested, destination.page, destination.section, ids])
+    const drawn = new Set(Array.from(scroller.querySelectorAll<HTMLElement>('[data-settings-section]')).map((element) => element.dataset.settingsSection))
+    const seen = listed.map((section) => section.id).filter((id) => drawn.has(id))
+    setPresent((previous) => (previous && previous.join('|') === seen.join('|') ? previous : seen))
+  }, [ids])
 
   useEffect(() => {
     const scroller = root.current?.closest<HTMLElement>('.page__scroll')
     if (!scroller) return
-    let tracking: number | null = null
-    const track = (): void => {
-      if (tracking !== null) return
-      tracking = requestAnimationFrame(() => {
-        tracking = null
-        if (movingTo.current) return
-        const scope = embedded ? scroller : root.current
-        const shown = new Set<string>(links.map(s => s.id))
-        const targets = [...(scope?.querySelectorAll<HTMLElement>('[data-settings-section]') ?? [])]
-          .filter(el => !el.dataset.settingsSection || shown.has(el.dataset.settingsSection))
-        const line = scroller.getBoundingClientRect().top + (navigation.current?.getBoundingClientRect().height ?? 0) + (embedded ? above.current : 0) + 24
-        const atEnd = scroller.scrollHeight > scroller.clientHeight && scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight - 2
-        const selected = atEnd ? targets.at(-1) : targets.filter(el => el.getBoundingClientRect().top <= line).at(-1) ?? targets[0]
-        if (selected?.dataset.settingsSection) setCurrent(selected.dataset.settingsSection)
-      })
-    }
-    const interrupt = (): void => { cancel(); track() }
     const interruptKey = (event: KeyboardEvent): void => {
-      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Escape'].includes(event.key)) interrupt()
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Escape'].includes(event.key)) cancel()
     }
-    scroller.addEventListener('scroll', track, { passive: true })
-    scroller.addEventListener('wheel', interrupt, { passive: true })
-    scroller.addEventListener('touchstart', interrupt, { passive: true })
-    scroller.addEventListener('pointerdown', interrupt, { passive: true })
+    scroller.addEventListener('wheel', cancel, { passive: true })
+    scroller.addEventListener('touchstart', cancel, { passive: true })
+    scroller.addEventListener('pointerdown', cancel, { passive: true })
     scroller.addEventListener('keydown', interruptKey)
-    window.addEventListener('resize', interrupt)
+    window.addEventListener('resize', cancel)
     return () => {
       cancel()
-      if (tracking !== null) cancelAnimationFrame(tracking)
-      scroller.removeEventListener('scroll', track)
-      scroller.removeEventListener('wheel', interrupt)
-      scroller.removeEventListener('touchstart', interrupt)
-      scroller.removeEventListener('pointerdown', interrupt)
+      scroller.removeEventListener('wheel', cancel)
+      scroller.removeEventListener('touchstart', cancel)
+      scroller.removeEventListener('pointerdown', cancel)
       scroller.removeEventListener('keydown', interruptKey)
-      window.removeEventListener('resize', interrupt)
+      window.removeEventListener('resize', cancel)
     }
-  }, [destination.page, ids, linkIds])
+  }, [ids])
 
-  // Horizontal navigation follows selection without scrolling the containing page.
-  useEffect(() => {
-    for (const selector of ['[aria-current="location"]', '[role="tab"][aria-selected="true"]']) {
-      const link = navigation.current?.querySelector<HTMLElement>(selector)
-      const strip = link?.parentElement
-      if (!link || !strip) continue
-      if (link.offsetLeft < strip.scrollLeft) strip.scrollLeft = link.offsetLeft
-      else if (link.offsetLeft + link.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = link.offsetLeft + link.offsetWidth - strip.clientWidth
-    }
-  }, [currentId, destination.page])
-
-  const chooseSection = (event: MouseEvent<HTMLAnchorElement>, id: string): void => {
+  const go = (event: MouseEvent<HTMLAnchorElement>, id: string): void => {
+    // A modified click belongs to the person's browser, not to this row.
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return
     event.preventDefault()
-    handled.current = id
-    previousPage.current = destination.page
-    onNavigate?.(id)
-    showSection(id, event.detail > 0, true)
+    cancel()
+    const scroller = root.current?.closest<HTMLElement>('.page__scroll')
+    if (!scroller) return
+    // A keyboard activation arrives with no click count, and it moves at once.
+    glideTo(scroller, id, event.detail > 0, frame, () => root.current?.setAttribute('data-settings-scrolling', id), () => root.current?.removeAttribute('data-settings-scrolling'))
   }
 
-  const pages = settingsPages().filter(([id]) => sections.some(s => s.visible && s.page === id))
-
+  if (available.length < 2) return null
   return (
-    <div className="settings-layout" ref={root} style={embedded ? { position: 'sticky', top: 'var(--settings-nav-top, 0px)', zIndex: 2, background: 'var(--panel)' } : undefined}>
-      <div className="settings-navigation" ref={navigation}>
-        {/* Embedded, the page's own tabs are already above this one: no second tablist. */}
-        {!embedded && (
-          <div className="settings-pages" role="tablist" aria-label={L('Páginas de configurações', 'Settings pages')}>
-            {pages.map(([id, label], index) => (
-              <button key={id} type="button" id={`settings-tab-${id}`} role="tab" aria-controls={`settings-panel-${id}`} aria-selected={destination.page === id} tabIndex={destination.page === id ? 0 : -1}
-                onClick={() => onNavigate?.(id)} onKeyDown={event => {
-                  let next: number | undefined
-                  if (event.key === 'ArrowRight') next = (index + 1) % pages.length
-                  if (event.key === 'ArrowLeft') next = (index - 1 + pages.length) % pages.length
-                  if (event.key === 'Home') next = 0
-                  if (event.key === 'End') next = pages.length - 1
-                  if (next === undefined) return
-                  event.preventDefault()
-                  const id = pages[next]![0]
-                  onNavigate?.(id)
-                  navigation.current?.querySelector<HTMLElement>(`#settings-tab-${id}`)?.focus({ preventScroll: true })
-                }}>{label}</button>
-            ))}
-          </div>
-        )}
-        <nav className={embedded ? `${EMBEDDED_TABS} settings-sections` : 'settings-sections'} aria-label={L('Seções de configurações', 'Settings sections')}>
-          {links.map(section => (
-            <a key={section.id} href={`#settings-${section.id}`} aria-current={currentId === section.id ? 'location' : undefined}
-              onClick={event => chooseSection(event, section.id)}>{section.label}</a>
-          ))}
-        </nav>
-      </div>
-      {!embedded && pages.map(([id]) => (
-        <div key={id} role="tabpanel" id={`settings-panel-${id}`} aria-labelledby={`settings-tab-${id}`} hidden={destination.page !== id} className="settings-panel">
-          {destination.page === id && <div className="agent-form settings-content">
-            {available.map(section => <section key={section.id} id={`settings-${section.id}`} data-settings-section={section.id} aria-label={section.label} tabIndex={-1}>{content?.[section.id]}</section>)}
-          </div>}
-        </div>
+    <nav className="settings-jumps" aria-label={L('Ir para', 'Go to')} ref={root}>
+      {available.map((section) => (
+        <a key={section.id} href={`#settings-${section.id}`} onClick={(event) => go(event, section.id)}>
+          <SettingsTile section={section} size="sm" />
+          {section.label}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+// Takes the page to a subject: it parks under the groups bar, which stays at the top while the page
+// scrolls, and the subject takes the focus without a second scroll.
+export function glideTo(scroller: HTMLElement, id: string, animated: boolean, frame: { current: number | null }, began?: () => void, ended?: () => void): void {
+  const target = scroller.querySelector<HTMLElement>(`[data-settings-section="${id}"]`)
+  if (!target) return
+  const bar = scroller.querySelector<HTMLElement>('.settings-groups')?.getBoundingClientRect().height ?? 0
+  const destination = (): number => Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
+    scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - bar - 16))
+  target.focus({ preventScroll: true })
+  const start = scroller.scrollTop
+  const top = destination()
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (!animated || reduced || Math.abs(top - start) < 1) {
+    scroller.scrollTop = top
+    return
+  }
+  began?.()
+  let first: number | null = null
+  const step = (at: number): void => {
+    first ??= at
+    const progress = Math.min(1, (at - first) / SETTINGS_SCROLL_MS)
+    scroller.scrollTop = start + (destination() - start) * settingsEase(progress)
+    if (progress < 1) frame.current = requestAnimationFrame(step)
+    else {
+      frame.current = null
+      ended?.()
+    }
+  }
+  frame.current = requestAnimationFrame(step)
+}
+
+// The search's answer, in place of the group: one row per place a word was found, with the group and
+// subject it is in. Picking one opens that group at that subject.
+export function SettingsResults({ hits, query, onPick }: { hits: readonly SettingsHit[]; query: string; onPick: (section: SettingsSection) => void }): ReactNode {
+  if (hits.length === 0)
+    return <p className="settings-results__none">{L(`Nada com “${query.trim()}”. Tente outra palavra, como “limite”, “modelo” ou “som”.`, `No results for “${query.trim()}”. Try “limit”, “model” or “sound”.`)}</p>
+  return (
+    <div className="settings-results" role="list" aria-label={L('Resultados da busca', 'Search results')}>
+      {hits.map((hit, i) => (
+        <button key={`${hit.section.id}-${i}`} type="button" role="listitem" className="settings-results__row" onClick={() => onPick(hit.section)}>
+          <SettingsTile section={hit.section} />
+          <span className="grow">
+            <strong>{hit.term}</strong>
+            <span>{settingsGroupLabel(hit.section.page)} › {hit.section.label}</span>
+          </span>
+          <Icon name="chevron" size={14} />
+        </button>
       ))}
     </div>
   )

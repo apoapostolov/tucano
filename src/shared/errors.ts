@@ -246,7 +246,7 @@ export function friendly(e: unknown, ctx: FriendlyContext = {}): Friendly {
     return mapped(
       L(
         "O endpoint recusou a chave. Confira a chave dele em Configurações › Modelos.",
-        "The endpoint rejected the key. Check it in Settings › Models."
+        "The endpoint rejected the key. Check the key in Settings › Models."
       )
     );
   if (AUTH.test(raw))

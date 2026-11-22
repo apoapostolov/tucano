@@ -91,8 +91,8 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
 
   return (
     <div className="access">
-      <div className="access-modes" role="radiogroup" aria-label={L('O que a pessoa vê', "Access")}>
-        {mode('all', L('Vê tudo', "Full access"), L('Todos os agentes e canais, como hoje.', 'All agents and channels.'))}
+      <div className="access-modes" role="radiogroup" aria-label={L('O que a pessoa vê', 'What they see')}>
+        {mode('all', L('Vê tudo', 'Sees everything'), L('Todos os agentes e canais, como hoje.', 'All agents and channels.'))}
         {mode('picked', L('Só o que eu escolher', 'Only what I pick'), L(`${who ? firstName(who) : 'A pessoa'} vê só o que você marcar.`, who ? `${firstName(who)} sees only what you mark.` : 'They see only what you mark.'))}
       </div>
 
@@ -153,7 +153,7 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
             <div className="access-label">{L('Canais', 'Channels')}</div>
             <div className="access-hint">{who ? L(`${firstName(who)} lê tudo o que é dito nos canais que vê.`, `${firstName(who)} reads everything said in the channels they see.`) : L('A pessoa lê tudo o que é dito nos canais que vê.', 'They read everything said in the channels they see.')}</div>
             {channels.length === 0 ? (
-              <p className="access-empty">{L('Ainda não há canais.', "No channels yet.")}</p>
+              <p className="access-empty">{L('Ainda não há canais.', 'There are no channels yet.')}</p>
             ) : (
               <div className="access-channels">
                 {channels.map((c) => (
@@ -173,11 +173,11 @@ export function AccessChoice({ value, onChange, who }: { value: PersonAccess; on
         ) : (
           <>
             <span>
-              {who ? firstName(who) : L('Quem entrar', "New members")} {L('vai ver:', "can access:")} {seeing.length ? <strong>{sentence(some(seeing, 5))}</strong> : <strong>{L('nenhum agente nem canal', "no agents or channels")}</strong>}.
+              {who ? firstName(who) : L('Quem entrar', 'Whoever joins')} {L('vai ver:', 'will see:')} {seeing.length ? <strong>{sentence(some(seeing, 5))}</strong> : <strong>{L('nenhum agente nem canal', 'no agent or channel')}</strong>}.
             </span>
             {hiddenText.length > 0 && (
               <span className="access-no">
-                {L('Não vai ver:', "Excluded:")} {sentence(hiddenText)}. {L(`Os agentes que ficam de fora também não são chamados a pedido dessa pessoa.`, 'Excluded agents cannot be called on this person’s behalf.')} {L('Na wiki, também não vê as páginas que vieram desses canais.', 'They also cannot see wiki pages derived from excluded channels.')}
+                {L('Não vai ver:', "Won't see:")} {sentence(hiddenText)}. {L(`Os agentes que ficam de fora também não são chamados a pedido dessa pessoa.`, 'Excluded agents cannot be called on this person’s behalf.')} {L('Na wiki, também não vê as páginas que vieram desses canais.', 'They also cannot see wiki pages derived from excluded channels.')}
               </span>
             )}
           </>
@@ -206,7 +206,7 @@ export function PersonAccessDialog({ person, onClose }: { person: Person; onClos
     )
   }
   return (
-    <Modal title={L(`O que ${name} vê`, `${name}’s access`)} onClose={onClose} className="access-dialog">
+    <Modal title={L(`O que ${name} vê`, `What ${name} sees`)} onClose={onClose} className="access-dialog">
       <AccessChoice value={draft} onChange={(a) => (setDraft(a), setError(''))} who={name} />
       {error && <p className="note note--error">{error}</p>}
       <footer className="modal__foot">

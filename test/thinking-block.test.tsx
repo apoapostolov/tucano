@@ -1,7 +1,6 @@
-// The block that shows the model's thinking follows the reply it belongs to: the reasoning whole,
-// while it thinks and after it stops, with nothing over it — no label line and no fold, since the
-// text is the point. A cursor on the line it is writing says it is still arriving, and it stays out
-// of the way of what the reply offers at its bottom.
+// The block that shows the model's thinking follows the reply it belongs to: open and scrolling
+// while it thinks, folded to the last line it thought once the reply is over, and the whole of it
+// one click away. It stays out of the way of what the reply offers at its bottom.
 import { parseHTML } from 'linkedom'
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -26,6 +25,12 @@ const draw = async (working: boolean): Promise<void> => {
   await act(async () => root.render(<Thought message={message} working={working} />))
 }
 const block = (): Element | null => document.querySelector('.thought')
+const head = (): Element => document.querySelector('.thought__head')!
+const click = async (el: Element): Promise<void> => {
+  await act(async () => {
+    el.dispatchEvent(new window.Event('click', { bubbles: true }))
+  })
+}
 
 beforeEach(() => {
   fake = { settings: { showThinking: true } as Settings }
@@ -37,29 +42,39 @@ afterEach(async () => {
 })
 
 describe('the thinking block', () => {
-  it('is the reasoning with only its name over it while it arrives: no fold, no chevron, a cursor on the line it writes', async () => {
+  it('is open and arriving while the reply works: the whole text, and a cursor on the line it is writing', async () => {
     await draw(true)
+    expect(block()!.className).toContain('is-open')
     expect(block()!.className).toContain('is-working')
     expect(document.querySelector('.thought__text')!.textContent).toContain('primeiro a conta.')
     expect(document.querySelector('.thought__caret')).not.toBeNull()
-    // The name came back, the chrome did not: one line over the block, nothing to click, no fold.
-    const head = document.querySelector('.thought__head')!
-    expect(head.textContent).toBe('Pensando')
-    expect(head.hasAttribute('aria-hidden')).toBe(true)
-    expect(head.querySelector('button, svg, img')).toBeNull()
-    expect(document.querySelector('.thought__label')).toBeNull()
-    expect(block()!.querySelector('button')).toBeNull()
-    expect(block()!.textContent).not.toContain('Pensando')
+    expect(head().getAttribute('aria-expanded')).toBe('true')
+    expect(head().textContent).toContain('Pensando')
   })
 
-  it('keeps the whole of it once the reply is over, with no cursor and nothing folded away', async () => {
+  it('folds itself once the reply is over, saying only the line it ended on', async () => {
     await draw(false)
-    expect(block()!.className).not.toContain('is-working')
     expect(block()!.className).not.toContain('is-open')
-    expect(document.querySelector('.thought__text')!.textContent).toContain('o pedido tem duas partes.')
+    expect(head().getAttribute('aria-expanded')).toBe('false')
+    expect(head().textContent).toContain('Pensou')
+    expect(document.querySelector('.thought__last')!.textContent).toBe('primeiro a conta.')
+    expect(document.querySelector('.thought__text')).toBeNull()
     expect(document.querySelector('.thought__caret')).toBeNull()
-    expect(document.querySelector('.thought__head')!.textContent).toBe('Pensou')
-    expect(block()!.textContent).not.toContain('Pensou')
+  })
+
+  it('opens again on a click, the whole of it, and folds back on the next', async () => {
+    await draw(false)
+    await click(head())
+    expect(document.querySelector('.thought__text')!.textContent).toContain('o pedido tem duas partes.')
+    expect(head().getAttribute('aria-expanded')).toBe('true')
+    await click(head())
+    expect(document.querySelector('.thought__text')).toBeNull()
+  })
+
+  it('keeps a person’s choice while the reply is still working', async () => {
+    await draw(true)
+    await click(head())
+    expect(document.querySelector('.thought__text')).toBeNull()
   })
 
   it('is nothing at all while it has thought nothing, or with the switch off', async () => {
