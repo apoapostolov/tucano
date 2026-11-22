@@ -21,6 +21,8 @@ type Section = {
   keys: readonly (keyof Settings)[]
   scope: Scope
   visible: boolean
+  // A card that reads inside the card above it gets no row of its own in the strip (see inStrip).
+  nav?: boolean
 }
 
 // Every subject of the page, once: the group it sits in, its name and tile, the settings keys it
@@ -32,13 +34,14 @@ export function settingsStructure({ admin, owner, team, servers }: SettingsAcces
     { id: 'app-appearance', page: 'geral', label: L('Aparência', 'Appearance'), icon: 'sun', color: 'var(--c-amber)', keys: ['theme', 'language'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'geral', label: L('Notificações', 'Notifications'), icon: 'bell', color: 'var(--c-rose)', keys: ['sounds'], scope: 'personal', visible: true },
     { id: 'app-dictation', page: 'geral', label: L('Ditado', 'Dictation'), icon: 'mic', color: 'var(--c-sky)', keys: ['voice'], scope: 'mixed', visible: admin },
-    { id: 'app-conversation', page: 'geral', label: L('Conversas', 'Conversations'), icon: 'thread', color: 'var(--c-indigo)', keys: ['stepsOpen', 'showThinking', 'thinkingSize'], scope: 'personal', visible: true },
+    { id: 'app-conversation', page: 'geral', label: L('Conversas', 'Conversations'), icon: 'thread', color: 'var(--c-indigo)', keys: ['stepsOpen', 'steps', 'stepsLatest', 'showThinking', 'thinkingSize'], scope: 'personal', visible: true },
     { id: 'agents-permissions', page: 'agentes', label: L('Autonomia', 'Autonomy'), icon: 'shield', color: 'var(--accent)', keys: ['autonomy', 'actionRules', 'outsideGuard'], scope: 'workspace', visible: admin },
     { id: 'agents-replies', page: 'agentes', label: L('Respostas', 'Replies'), icon: 'send', color: 'var(--c-sky)', keys: ['repliesAtOnce'], scope: 'workspace', visible: admin },
     { id: 'agents-limits', page: 'agentes', label: L('Limites', 'Limits'), icon: 'gauge', color: 'var(--c-amber)', keys: ['defaultLimit', 'runBudgetPct', 'runStallMinutes', 'approvalTtlHours', 'autoContinue'], scope: 'workspace', visible: admin },
     { id: 'agents-routines', page: 'agentes', label: L('Rotinas', 'Routines'), icon: 'clock', color: 'var(--c-violet)', keys: ['openAtLogin', 'quietHours'], scope: 'mixed', visible: admin },
     { id: 'agents-tuca', page: 'agentes', label: L('Tuca', 'Tuca'), icon: 'spark', color: 'var(--accent)', keys: ['tucaApplyNow'], scope: 'workspace', visible: admin },
     { id: 'agents-browser', page: 'agentes', label: L('Navegador', 'Browser'), icon: 'globe', color: 'var(--c-teal)', keys: ['browserJev'], scope: 'workspace', visible: admin },
+    { id: 'agents-addons', page: 'agentes', label: L('Extensões do navegador', 'Browser Extensions'), icon: 'plug', color: 'var(--c-indigo)', keys: ['browserAddOns', 'browserAccessibility'], scope: 'workspace', visible: admin, nav: false },
     { id: 'models-agents', page: 'modelos', label: L('Modelos dos agentes', 'Agent models'), icon: 'layers', color: 'var(--c-indigo)', keys: [], scope: 'workspace', visible: admin },
     { id: 'models-runtimes', page: 'modelos', label: L('Harnesses', 'Harnesses'), icon: 'terminal', color: 'var(--c-graphite)', keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'modelos', label: L('Contas', 'Accounts'), icon: 'key', color: 'var(--c-green)', keys: ['accounts'], scope: 'mixed', visible: admin },
@@ -68,7 +71,7 @@ export type SettingsPageId = SettingsSection['page']
 // what most people change first, what can't be undone last.
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['workspace-context', 'app-appearance', 'app-notifications', 'app-dictation', 'app-conversation'],
-  agentes: ['agents-permissions', 'agents-replies', 'agents-limits', 'agents-routines', 'agents-tuca', 'agents-browser'],
+  agentes: ['agents-permissions', 'agents-replies', 'agents-limits', 'agents-routines', 'agents-tuca', 'agents-browser', 'agents-addons'],
   modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-router', 'knowledge-memory'],
   conexoes: ['connections-phone', 'connections-servers', 'harnesses-keys'],
   workspace: ['workspace-people', 'workspace-activity', 'workspace-team', 'workspace-backups', 'app-updates', 'workspace-danger']
@@ -107,13 +110,14 @@ function settingsTerms(): Readonly<Record<SettingsSectionId, readonly string[]>>
     'app-appearance': [L('Tema claro ou escuro', 'Light or dark theme'), L('Idioma', 'Language')],
     'app-notifications': [L('Sons', 'Sounds'), L('Testar uma notificação', 'Test a notification')],
     'app-dictation': [L('Modelo do ditado', 'Dictation model'), L('Microfone', 'Microphone'), L('Detectar o idioma', 'Detect the language'), 'whisper'],
-    'app-conversation': [L('Mostrar os passos do agente', 'Show the agent’s steps'), L('O que o modelo pensa', "Show reasoning"), L('O tamanho do raciocínio', 'Reasoning panel height'), L('Raciocínio', 'Reasoning'), L('Pesquisas', 'Surveys'), L('Enviar feedback', 'Send feedback')],
+    'app-conversation': [L('Mostrar os passos do agente', 'Show the agent’s steps'), L('O que o modelo pensa', "Show reasoning"), L('O tamanho do raciocínio', 'Reasoning panel height'), L('Quantos passos mostrar', 'Steps shown'), L('Raciocínio', 'Reasoning'), L('Pesquisas', 'Surveys'), L('Enviar feedback', 'Send feedback')],
     'agents-permissions': [L('Aprovações', 'Approvals'), L('Cuidadoso, normal ou sem travas', 'Careful, normal or no locks'), L('Ajustar ação por ação', 'Adjust action by action'), L('Pedir antes depois de ler algo de fora', 'Ask first after reading something from outside')],
     'agents-replies': [L('Respostas ao mesmo tempo numa conversa', 'Replies at once in a conversation'), L('Em paralelo', 'Parallel'), L('Fila', 'Queue'), L('Uma por vez', 'One at a time'), L('Ao mesmo tempo', 'At once')],
     'agents-limits': [L('Limite por agente', 'Limit per agent'), L('Limite por resposta', 'Limit per reply'), L('Tokens por mês', 'Tokens per month'), L('Considerar travado', 'Treat as stuck'), L('Expiração das aprovações', 'Approvals expire'), L('Continuar sozinho', 'Keep going on its own')],
     'agents-routines': [L('Abrir ao ligar o computador', 'Open when the computer starts'), L('Horário de silêncio', 'Quiet hours')],
     'agents-tuca': [L('Aplicar mudanças do Tuca na hora', 'Apply Tuca’s changes right away'), L('Desfazer', 'Undo')],
     'agents-browser': [L('Navegador dos agentes', 'Agents’ browser'), 'Jev', 'TypeSafe'],
+    'agents-addons': [L('Extensões do navegador', 'Browser Extensions'), 'uBlock', 'PopUpOFF', 'Unclutter', 'cookies', L('Acessibilidade extra', 'Additional accessibility')],
     'models-agents': [L('Modelo de cada agente', 'Each agent’s model'), L('Trocar o modelo de vários agentes', 'Change models for several agents')],
     'models-runtimes': ['Claude Code', 'Codex', 'OpenCode', 'Antigravity', L('Endpoint', 'Endpoint')],
     'models-accounts': [L('Login', 'Sign-in'), L('Conta do trabalho e pessoal', 'Work and personal account')],

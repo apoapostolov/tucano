@@ -1,4 +1,5 @@
 import { captureThoughtLine, restoreThoughtLine, type ThoughtLine } from '../thought-reading'
+import { stepsModeFor, stepsWindow } from '../../../shared/steps'
 import { L, lang, locale } from '../../../shared/lang'
 import { overMonthlyLimit } from '../../../shared/limits'
 import { sectorName } from '../../../shared/org'
@@ -1685,6 +1686,11 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // Open while the agent works, so its steps read as they go, unless the person closes it or turned
   // that off in Settings (several agents at once would fill the screen); closed after.
   const stepsOpen = useStore((s) => s.settings.stepsOpen) !== false
+  // A run that goes on for a while keeps only its newest steps, in a window, when the person asked
+  // for that in Settings › Conversations: the count still names every step the reply took.
+  const mode = useStore((s) => stepsModeFor(s.settings))
+  const keep = useStore((s) => s.settings.stepsLatest)
+  const shown = stepsWindow(run.steps, mode, keep)
   const [toggled, setOpen] = useState<boolean | null>(null)
   const working = run.status === 'working'
   // The steer is a pill in the row under this chain: it opens a field under the box, still held by
@@ -1771,7 +1777,10 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
         )}
         {open && (
           <ol className="steps__list">
-            {run.steps.map((st) => (
+            {shown.hidden > 0 && (
+              <li className="steps__more">{L(`${shown.hidden} passo${shown.hidden === 1 ? '' : 's'} mais antigo${shown.hidden === 1 ? '' : 's'} fora da lista`, `${shown.hidden} older step${shown.hidden === 1 ? '' : 's'} out of the list`)}</li>
+            )}
+            {shown.shown.map((st) => (
               <StepRow key={st.id} step={st} />
             ))}
           </ol>

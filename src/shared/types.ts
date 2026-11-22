@@ -650,6 +650,9 @@ export interface Settings {
   // downloaded and loaded into the next session's browser, what is off leaves the disk.
   browserAddOns?: BrowserAddOns
   addOns?: AddOnsInfo // computed: where each of them is, for the rows' own lines
+  // For a page that moves on its own and a video that starts talking: the agent's browser asks for less
+  // motion and for nothing to play by itself, so a click lands where the element was.
+  browserAccessibility?: boolean
   memoryModel: string // summarizes conversations and extracts memories
   memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model
@@ -782,7 +785,7 @@ export type BrowserOp =
   | 'headful' // the page is a bot check: the same lane, in a real window (chrome.ts)
 
 // The extensions an agent's browser can carry (shared/addons.ts lists them), each with its own switch.
-export type AddOn = 'ads' | 'cookies' | 'consent'
+export type AddOn = 'ads' | 'cookies' | 'consent' | 'popups' | 'clutter'
 export type BrowserAddOns = Partial<Record<AddOn, boolean>>
 
 // Where one of them is. On means downloaded and loaded into the browser of the next session; off removes
@@ -790,6 +793,7 @@ export type BrowserAddOns = Partial<Record<AddOn, boolean>>
 export interface AddOnStep {
   state: 'waiting' | 'preparing' | 'ready' | 'failed'
   error?: string // why it didn't land: the lane keeps working without it
+  note?: string // landed, but not set up the way the app sets it up: the store's build moved a line
 }
 
 // What the settings page shows of them: Chrome for Testing, which the three share (the branded build has

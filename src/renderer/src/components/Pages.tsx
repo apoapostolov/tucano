@@ -109,10 +109,12 @@ import { openFeedback } from './Feedback'
 import type { NotifyState } from '../rpc'
 import { hasServers, NodeCard, ServersCard } from './Servers'
 import { HomePhoneCard } from './HomePhone'
+import { AgentAddOns } from './AgentAddOns'
 import { useWorkspaceList } from './Workspaces'
 import { SettingsGroups, SettingsJumps, SettingsResults, SettingsSubject, SettingsSubjectTitle, glideTo } from './SettingsLayout'
 import { searchSettings, settingsGroups, settingsGroupLabel, settingsStructure, settingsTabAliases, settingsTabStructure, type SettingsPageId, type SettingsSection, type SettingsSectionId } from '../settings-structure'
 import { workspaceLabel } from '../../../shared/workspaces'
+import { STEPS_LATEST_MAX, STEPS_LATEST_MIN, stepsKeep, stepsModeFor, type StepsMode } from '../../../shared/steps'
 import exportSkill from '../assets/tucano-export-skill.md?raw'
 import { dayLabel, daySummary, exceptionCount, groupHistory, type HistoryGroup, type HistoryStatus } from '../approval-history'
 import { ACCESS_REQUEST, type Approval } from '../../../shared/types'
@@ -286,6 +288,24 @@ const MEMORY_MODES = (): { value: MemoryMode; label: string; hint: string }[] =>
   { value: 'auto', label: L('Grava sozinho', "Save automatically"), hint: L('Guarda e avisa na mensagem, com Desfazer.', 'Keeps it and says so in the message, with Undo.') },
   { value: 'approve', label: L('Pede aprovação', "Ask for approval"), hint: L('Cada memória nova espera você guardar.', 'Each new memory waits for you to keep it.') },
   { value: 'read', label: L('Só lê', "Read-only"), hint: L('Usa as memórias, mas não guarda novas.', 'Uses memories but doesn’t keep new ones.') }
+]
+// How a long reply's steps read: every one, or the newest few in a window. The label carries the
+// number the person chose, since that is what "the newest few" means on this computer.
+const STEPS_CHOICES = (keep = stepsKeep(undefined)): { value: StepsMode; label: string; hint: string }[] => [
+  { value: 'all', label: L('Todos', 'All steps'), hint: L('Cada passo, do jeito que sempre foi.', 'Show every step.') },
+  {
+    value: 'latest',
+    label: L(`Últimos ${keep}`, `Last ${keep}`),
+    hint: L('A resposta mostra só os mais novos; os mais antigos saem da lista.', 'Show recent steps only; older steps leave the list.')
+  }
+]
+// How tall the reasoning preview is before it scrolls, chosen in Settings › Conversations. A function
+// because `L()` reads the language when it is called: a table built at import kept the Portuguese
+// labels in an English window.
+export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
+  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines before scrolling.') },
+  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines before scrolling.') },
+  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines before scrolling.') }
 ]
 const LEVELS = (): { value: GrantLevel; label: string }[] => [
   { value: 'none', label: L('Sem acesso', 'No access') },
@@ -2609,14 +2629,6 @@ function AgentSkills({ agentId, name }: { agentId: string; name: string }): Reac
   )
 }
 
-// How tall the reasoning preview is before it scrolls, in lines: the fork's own setting, carried
-// through the 0.2.45 merge (upstream has no height control; Thought.tsx still reads thinkingSize).
-export const THINKING_SIZES = (): { value: 'sm' | 'md' | 'lg'; label: string; hint: string }[] => [
-  { value: 'sm', label: L('Pequeno', 'Small'), hint: L('6 linhas, o resto rolando.', '6 lines before scrolling.') },
-  { value: 'md', label: L('Médio', 'Medium'), hint: L('12 linhas, o resto rolando.', '12 lines before scrolling.') },
-  { value: 'lg', label: L('Grande', 'Large'), hint: L('18 linhas, o resto rolando.', '18 lines before scrolling.') }
-]
-
 // ---------- tabs ----------
 
 type TabList = readonly (readonly [string, string])[]
@@ -3479,6 +3491,32 @@ export function SettingsPage(): ReactNode {
                 <Toggle on={settings.stepsOpen !== false} onChange={(v) => updateSettings({ stepsOpen: v })} />
               </div>
               <div className="key-row">
+                <Icon name="menu" />
+                <div className="grow">
+                  <strong>{L('Os passos de uma resposta longa', 'Steps in a long reply')}</strong>
+                  <p className="muted small">{STEPS_CHOICES(stepsKeep(settings.stepsLatest)).find((c) => c.value === stepsModeFor(settings))!.hint}</p>
+                  <div className="segmented segmented--wide" role="radiogroup" aria-label={L('Como a resposta mostra os passos', 'Step display')}>
+                    {STEPS_CHOICES(stepsKeep(settings.stepsLatest)).map((c) => (
+                      <button key={c.value} type="button" role="radio" aria-checked={stepsModeFor(settings) === c.value} className={stepsModeFor(settings) === c.value ? 'is-active' : ''} onClick={() => updateSettings({ steps: c.value })}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                  {stepsModeFor(settings) === 'latest' && (
+                    <label className="row row--center">
+                      <span className="muted small">{L('Quantos passos mostrar', 'Steps shown')}</span>
+                      <NumberInput
+                        min={STEPS_LATEST_MIN}
+                        max={STEPS_LATEST_MAX}
+                        value={stepsKeep(settings.stepsLatest)}
+                        aria-label={L('Quantos passos mostrar na janela', 'Number of visible steps')}
+                        onChange={(n) => updateSettings({ stepsLatest: stepsKeep(n) })}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+              <div className="key-row">
                 <Icon name="spark" />
                 <div className="grow">
                   <strong>{L('O que o modelo pensa', "Show reasoning")}</strong>
@@ -3706,6 +3744,19 @@ export function SettingsPage(): ReactNode {
               )}
             </Card>
           </SectionAnchor>
+        )}
+
+        {on('agentes') && admin && (
+          <Card
+            title={L('Extensões do navegador', 'Browser Extensions')}
+            section="agents-addons"
+            lead={L(
+              'O navegador dos agentes roda com as extensões que você ligar, para o agente ler a própria página: nenhum anúncio, aviso de cookies ou camada por cima dela. Cada uma é um interruptor; as cinco dividem um Chrome for Testing, e esse navegador guarda logins próprios.',
+              'The agents’ browser runs with the extensions you turn on, so what an agent reads is the page: no ad, cookie notice or overlay on top. Each has a switch; the five share one Chrome for Testing, and that browser keeps its own sign-ins.'
+            )}
+          >
+            <AgentAddOns />
+          </Card>
         )}
 
         {/* ---------- Models ---------- */}
