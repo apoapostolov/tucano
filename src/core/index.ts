@@ -98,7 +98,7 @@ import { NodeLinks, NodeUplink, type LinkPort } from './node-link'
 import { nodeOf } from '../shared/node-link'
 import { findLocalSkills, skillFolders } from './local-skills'
 import { Routines } from './routines'
-import { Runner } from './runs'
+import { Runner, SendRefusal } from './runs'
 import { agentFromDraft, availableModels, freeHandle, tucaAgent, tucaHello, tucaUpToDate } from './tuca'
 import { guideIndex, readGuide } from './guide'
 import { McpDoor, type McpCaller, type McpHttpOut, type RunLine } from './mcp'
@@ -2083,10 +2083,19 @@ const api: Handlers = {
     return people.pageFor(ctx.person, [root, ...db.recentMessages(root.conversationId, 100_000, rootId)])
   },
 
-  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo }, ctx) => {
+  sendMessage: ({ conversationId, text, images, files, threadId, mode, steerTo, reply }, ctx) => {
     reach(ctx, conversationId)
     // `mode` 'steer': written in a running reply's own pill, for that reply (`steerTo`), not a prompt.
-    bg(runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}) }), 'sendMessage')
+    // The reply this answers was checked here, before a message of mine exists: the core refuses one it
+    // can't stand behind, and the field keeps what was written (runs.ts: SendRefusal).
+    return runner.send(conversationId, text, images, threadId, ctx.person.id, { ...(files?.length ? { files } : {}), ...(mode === 'steer' ? { mode } : {}), ...(steerTo ? { steerTo } : {}), ...(reply ? { reply } : {}) }).catch((e: unknown) => {
+      // A refusal never became a message: it goes back, and the composer keeps the draft and the quote.
+      if (e instanceof SendRefusal) throw e
+      // Anything else here came after the save (a file whose text couldn't be kept, EACCES or ENOSPC): the
+      // message is written and on screen, so reporting it as unsent kept the draft and a second Enter posted
+      // the same message twice. It is a line in the log, not a send that failed.
+      console.error('[core] sendMessage', e)
+    })
   },
 
   typing: ({ conversationId, threadId, opened }, ctx) => {
