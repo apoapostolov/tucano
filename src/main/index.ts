@@ -25,7 +25,7 @@ import { suggestWorkspaceCopyName, workspaceParts, type Workspace, type Workspac
 import { autostartEntry, autostartFile, electronPasswordStore, onPath } from '../core/platform'
 import { proxyFromPac } from '../core/network'
 
-const NAME = 'Tucano'
+const NAME = 'TucanoNext'
 app.setName(NAME)
 const launch = (() => {
   try {
