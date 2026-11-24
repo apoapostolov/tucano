@@ -1,6 +1,7 @@
-// The steer sub-button, beside Stop in a working reply's steps row: it opens a field under the box,
-// and what the person writes goes to that reply (send mode `steer`) instead of becoming a message of
-// its own. The chain then says so in their words — as what it is, not as a tool call.
+// The steer: a pill in the working reply's footer, the row a reply that stopped carries Continue and
+// Try again in, under everything the reply drew. It opens the same field "Try with instructions"
+// opens, and what the person writes goes to that reply (send mode `steer`) instead of becoming a
+// message of its own. The chain then says so in their words — as what it is, not as a tool call.
 import { parseHTML } from 'linkedom'
 import { act } from 'react'
 import type { Root } from 'react-dom/client'
@@ -42,7 +43,7 @@ vi.mock('../src/renderer/src/store', async (original) => {
 
 const { createRoot } = await import('react-dom/client')
 const { getState } = await import('../src/renderer/src/store')
-const { RunBlock } = await import('../src/renderer/src/components/Conversation')
+const { RunBlock, ReplyFooter } = await import('../src/renderer/src/components/Conversation')
 
 const step = (id: string, extra: Partial<Step> = {}): Step => ({ id, label: `read ${id}.ts`, status: 'done', ms: 120, ...extra })
 
@@ -64,12 +65,23 @@ beforeEach(() => {
 })
 afterEach(() => act(() => root.unmount()))
 
+// The reply's body as the app draws it: what it did, then its footer.
 const draw = async (message: Message): Promise<void> => {
-  await act(async () => root.render(<RunBlock message={message} />))
+  await act(async () =>
+    root.render(
+      <>
+        <RunBlock message={message} />
+        <ReplyFooter message={message} />
+      </>
+    )
+  )
+}
+const footer = async (message: Message): Promise<void> => {
+  await act(async () => root.render(<ReplyFooter message={message} />))
 }
 const pill = (): HTMLElement | null => document.querySelector('.steps__steer-pill')
-const field = (): HTMLTextAreaElement | null => document.querySelector('.steps__steer-note textarea')
-const buttons = (): HTMLElement[] => [...document.querySelectorAll('.steps__steer-row button')] as HTMLElement[]
+const field = (): HTMLTextAreaElement | null => document.querySelector('.retry-note textarea')
+const buttons = (): HTMLElement[] => [...document.querySelectorAll('.retry-note__row button')] as HTMLElement[]
 // Typing as React sees it: the value set past React's own tracker, then the input event.
 const type = async (text: string): Promise<void> => {
   const ta = field()!
@@ -93,28 +105,57 @@ const key = async (k: string, extra: { ctrlKey?: boolean } = {}): Promise<void> 
 }
 
 describe('the steer pill', () => {
-  it('is one pill in the row under the chain of a reply at work, not a control inside its header', async () => {
+  it('is the working reply’s footer, in the one row every reply ends with', async () => {
     await draw(reply('working'))
-    const pills = document.querySelector('.steps__pills')!
-    const steer = pills.querySelector<HTMLElement>('.steps__steer-pill')!
+    const row = document.querySelector('.msg__meta')!
+    const steer = row.querySelector<HTMLElement>('.steps__steer-pill')!
     expect(steer.textContent?.trim()).toBe('Orientar')
     expect(steer.getAttribute('title')).toMatch(/Dizer como seguir|Say how to go on/)
-    expect(document.querySelectorAll('.steps__pills')).toHaveLength(1) // one row, not one row per control
+    expect(document.querySelectorAll('.msg__meta')).toHaveLength(1) // one footer, not one row per control
     expect(document.querySelectorAll('.steps__steer-pill')).toHaveLength(1) // not a second steer control
     expect(document.querySelectorAll('.steps__stop')).toHaveLength(1) // Stop stays the stop action
-    // The header keeps Stop alone: a pill inside it would also fire the header's own toggle.
-    expect(document.querySelector('.steps__toggle')!.querySelector('.steps__steer-pill')).toBeNull()
+    // It carries the footer's pill, and it is not part of the chain: the chain keeps Stop alone, and
+    // the steer is not drawn between the steps and what the reply thought.
+    expect(steer.className).toContain('steps__ask-pill')
+    expect(document.querySelector('.steps .steps__steer-pill')).toBeNull()
     expect(document.querySelector('.steps__list')).not.toBeNull()
-    expect(document.querySelector('.steps__steer')).toBeNull() // no field until it is opened
-    // The row sits inside the box, under the header and above the steps it opened.
-    expect(pills.parentElement!.className).toContain('steps')
-    expect(pills.nextElementSibling!.className).toBe('steps__list')
+    expect(field()).toBeNull() // no field until it is opened
     await act(async () => steer.click())
-    expect(document.querySelector('.steps')!.nextElementSibling?.className).toBe('steps__steer')
+    // Opened, the field takes the line under the pill, in the same footer row.
+    expect(document.querySelector('.msg__meta .retry-note')).not.toBeNull()
+    expect(field()!.parentElement!.className).toBe('retry-note')
     expect(stopped).toHaveLength(0) // steering did not stop the reply
     expect(document.querySelector('.steps__list')).not.toBeNull() // and did not toggle the steps
     await draw(reply('done'))
     expect(pill()).toBeNull()
+  })
+
+  it('is the same row and the same field a reply that stopped opens its ways back in', async () => {
+    // One footer for every reply: the pill, the row, and the note under it are the ones Continue and
+    // Try with instructions use, so the two states read as the same band under the reply.
+    await footer(reply('stopped'))
+    const row = document.querySelector('.msg__meta')!
+    const pills = [...row.querySelectorAll<HTMLElement>('button.retry')]
+    expect(pills.length).toBeGreaterThanOrEqual(2) // Continue and the two ways back, in this one row
+    for (const p of pills) expect(p.className).toContain('steps__ask-pill')
+    const withNote = pills[pills.length - 1]! // "Try with instructions": the one that opens a note
+    await act(async () => withNote.click())
+    const note = document.querySelector('.msg__meta .retry-note')!
+    expect(note.querySelector('textarea')).not.toBeNull()
+    expect(note.querySelector('.retry-note__row')).not.toBeNull()
+    // The same note the steer opens, in the same place in the same row.
+    await footer(reply('working'))
+    await act(async () => pill()!.click())
+    expect(document.querySelector('.msg__meta .retry-note')).not.toBeNull()
+  })
+
+  it('is there from the first second, before the reply has written a word', async () => {
+    // A reply that just started has nothing to say yet and a whole run ahead of it: the way to direct
+    // it is in its footer from the start, not after the first sentence arrives.
+    const started: Message = { ...reply('working'), text: '' }
+    await footer(started)
+    expect(pill()).not.toBeNull()
+    expect(document.querySelectorAll('.msg__meta')).toHaveLength(1)
   })
 
   it('opens a field, and sends nothing until something is written', async () => {

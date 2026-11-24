@@ -564,9 +564,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
   const quiet = message.author.kind === 'agent' && !!message.run?.delegations?.length && message.run.status === 'done' && questionsOf(message.run).length === 0
   // Each request once: a reply saved before follow-ups stopped being listed again may hold one twice.
   const handedTo = (message.run?.delegations ?? []).filter((d, i, all) => all.findIndex((x) => x.id === d.id) === i)
-  const hasFooter = !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
-  const resumable = !!message.run && (message.run.status === 'paused' || (CUT.includes(message.run.status) && canContinue(message.run)))
-  const retryable = !!message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit))))
 
   // The same object between renders, or every link would start over.
   const agentMarkdown = useMemo(() => ({ pre: CodeBlock, a: localLinkFor(message.id), span: MentionSpan }), [message.id])
@@ -719,22 +716,7 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
             {L(`Aumentar o limite de ${agent.name}`, `Raise ${agent.name}’s limit`)}
           </button>
         )}
-        {(hasFooter || resumable || retryable) && (
-          <div className="msg__meta">
-            {resumable && (
-              <button className="steps__ask-pill retry msg__hire" aria-label={L('Continuar', 'Continue')} onClick={() => continueRun(message.id)}>
-                <Icon name="play" size={11} /><span className="steps__ask-pill__word">{L('Continuar', 'Continue')}</span>
-              </button>
-            )}
-            {retryable && <TryAgain messageId={message.id} />}
-            {hasFooter && (
-              <>
-                {message.run?.receipt && <ReceiptLine receipt={message.run.receipt} />}
-                {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
-              </>
-            )}
-          </div>
-        )}
+        <ReplyFooter message={message} />
         {message.author.kind === 'person' && !message.threadId && <AskedFromHere message={message} />}
         {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
         {/* The routine's message had a thread of its own: still there, under the reply that carries it. */}
@@ -755,6 +737,99 @@ function AskedFromHere({ message }: { message: Message }): ReactNode {
         <DelegationChip key={d.id} at={{ id: d.id, to: d.to, conversationId: d.conversationId, rootId: d.rootId, ...(d.threadId ? { threadId: d.threadId } : {}) }} from={d.from} asked />
       ))}
     </div>
+  )
+}
+
+// One footer for a reply, whatever it is doing, in one place: under everything the reply drew — its
+// steps, what it thought, its words — and not between them. A reply at work carries the steer, one
+// that stopped carries the two ways back, one that finished carries its receipt. The controls stay
+// the same pill in the same row, and the field each one opens is the same field under it.
+export function ReplyFooter({ message }: { message: Message }): ReactNode {
+  const agent = useStore((s) => (message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
+  const working = message.run?.status === 'working'
+  const hasFooter = !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
+  const resumable = !!message.run && (message.run.status === 'paused' || (CUT.includes(message.run.status) && canContinue(message.run)))
+  const retryable = !!message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit))))
+  if (!working && !hasFooter && !resumable && !retryable) return null
+  return (
+    <div className="msg__meta">
+      {working && <Steer message={message} />}
+      {resumable && (
+        <button className="steps__ask-pill retry msg__hire" aria-label={L('Continuar', 'Continue')} onClick={() => continueRun(message.id)}>
+          <Icon name="play" size={11} /><span className="steps__ask-pill__word">{L('Continuar', 'Continue')}</span>
+        </button>
+      )}
+      {retryable && <TryAgain messageId={message.id} />}
+      {hasFooter && (
+        <>
+          {message.run?.receipt && <ReceiptLine receipt={message.run.receipt} />}
+          {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
+        </>
+      )}
+    </div>
+  )
+}
+
+// A reply at work, sent a direction without stopping it: the footer's pill opens the same field
+// "Try with instructions" opens, and what the person writes goes to this reply (send mode `steer`)
+// instead of becoming a message of its own. It stays in sight while the reply works: unlike the ways
+// back from a reply that stopped, it is the live control, not a repair.
+function Steer({ message }: { message: Message }): ReactNode {
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const typed = note.trim()
+  const steer = (text: string): void => {
+    sendMessage(message.conversationId, text, [], message.threadId, [], 'steer', message.id)
+    setOpen(false)
+    setNote('')
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className="steps__ask-pill steps__steer-pill"
+        aria-label={L('Orientar', 'Steer')}
+        aria-expanded={open}
+        title={L('Dizer como seguir, sem parar a resposta', 'Say how to go on without stopping the reply')}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Icon name="pointer" size={11} /><span className="steps__ask-pill__word">{L('Orientar', 'Steer')}</span>
+      </button>
+      {open && (
+        <div className="retry-note">
+          <textarea
+            aria-label={L('Orientação para a resposta em curso', 'Instructions for the current reply')}
+            placeholder={L('Como ele deve seguir?', 'How should it go on?')}
+            rows={2}
+            value={note}
+            autoFocus
+            onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && typed) steer(typed)
+              if (e.key === 'Escape') {
+                setOpen(false)
+                setNote('')
+              }
+            }}
+          />
+          <div className="retry-note__row">
+            <button className="btn btn--primary btn--xs" disabled={!typed} onClick={() => steer(typed)}>
+              {L('Orientar', 'Steer')}
+            </button>
+            <button
+              className="link"
+              onClick={() => {
+                setOpen(false)
+                setNote('')
+              }}
+            >
+              {L('Cancelar', 'Cancel')}
+            </button>
+            <span className="muted small">{L('Ctrl+Enter envia', 'Ctrl+Enter sends')}</span>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -1753,16 +1828,6 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   const stepsOpen = useStore((s) => s.settings.stepsOpen) !== false
   const [toggled, setOpen] = useState<boolean | null>(null)
   const working = run.status === 'working'
-  // The steer is a pill in the row under this chain: it opens a field under the box, still held by
-  // this reply's id so it cannot direct another reply of the same agent.
-  const [steerOpen, setSteerOpen] = useState(false)
-  const [steerNote, setSteerNote] = useState('')
-  const steerTyped = steerNote.trim()
-  const steer = (text: string): void => {
-    sendMessage(message.conversationId, text, [], message.threadId, [], 'steer', message.id)
-    setSteerOpen(false)
-    setSteerNote('')
-  }
   const open = toggled ?? (working && stepsOpen)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
@@ -1820,21 +1885,6 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
             </span>
           )}
         </button>
-        {/* One row of pills under the chain, not one row per control: the steer opens here, and the
-            pause pill of a held reply joins the same row instead of drawing a second one. */}
-        {working && (
-          <div className="steps__pills">
-            <span
-              className="steps__steer-pill"
-              role="button"
-              aria-expanded={steerOpen}
-              title={L('Dizer como seguir, sem parar a resposta', 'Say how to go on without stopping the reply')}
-              onClick={() => setSteerOpen((v) => !v)}
-            >
-              <Icon name="pointer" size={11} /> {L('Orientar', 'Steer')}
-            </span>
-          </div>
-        )}
         {open && (
           <ol className="steps__list">
             {run.steps.map((st) => (
@@ -1844,42 +1894,6 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
         )}
         <Thought message={message} working={working} />
       </div>
-      {working && steerOpen && (
-        <div className="steps__steer">
-          <div className="steps__steer-note">
-            <textarea
-              aria-label={L('Orientação para a resposta em curso', "Instructions for the current reply")}
-              placeholder={L('Como ele deve seguir?', 'How should it go on?')}
-              rows={2}
-              value={steerNote}
-              autoFocus
-              onChange={(e) => setSteerNote(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && steerTyped) steer(steerTyped)
-                if (e.key === 'Escape') {
-                  setSteerOpen(false)
-                  setSteerNote('')
-                }
-              }}
-            />
-            <div className="steps__steer-row">
-              <button className="btn btn--primary btn--xs" disabled={!steerTyped} onClick={() => steer(steerTyped)}>
-                {L('Orientar', 'Steer')}
-              </button>
-              <button
-                className="link"
-                onClick={() => {
-                  setSteerOpen(false)
-                  setSteerNote('')
-                }}
-              >
-                {L('Cancelar', 'Cancel')}
-              </button>
-              <span className="muted small">{L('Ctrl+Enter envia', 'Ctrl+Enter sends')}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

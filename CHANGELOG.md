@@ -15,6 +15,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Right-click an image to save it, copy it, or send it back to the prompt.** The context menu offers **Save as…**, **Save to {Folder}** for a one-click save into the last folder, **Copy to clipboard**, and **Send to prompt** on reply images. The remembered folder is a personal setting; when it is missing, Tucano falls back to the dialog and explains why. Gallery cells and the lightbox image get the same menu. Thanks to Apostol Apostolov. (#335, #336)
 - **Copy any attachment to the clipboard.** A **Copy** button on an attachment card copies an image as an image, text as text, or another file as a file for the file manager, with a path fallback when a file copy is not possible. The toast says what was copied and where it can be pasted. Thanks to Apostol Apostolov.
 
+### Fixed
+
+- **The steer sits in the reply's footer, under everything the reply drew.** While a reply worked, its pill stood between the steps and what the agent was thinking, where the ways on from a finished reply never are. It now ends the reply in the same row, the same pill, and with the same note field **Continue** and **Try with instructions** use, under the steps and the thinking block.
+
 ## [0.2.47] - 2026-11-24
 
 > **Em português:**

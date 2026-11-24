@@ -1606,60 +1606,12 @@ h3 {
   border-left: 2px solid var(--border);
   animation: rise var(--dur-base) var(--ease-out) both;
 }
-/* One row of pills under the chain: a control is a pill in this row, not a row of its own, so the
-   steer and a held reply's pause sit side by side. It lines up with the steps' own text. */
-.steps__pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 2px 0 0 3px;
-  padding-left: 14px;
-}
-/* Steer opens from its pill in that row. Its field sits under the box, starting where the steps'
-   text starts and ending where the chain ends. */
-.steps__steer {
-  display: grid;
-  gap: 8px;
-  margin: 2px 0 4px;
-  padding-left: 17px;
-  max-width: 600px;
-}
-.steps__steer-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 20px;
-  padding: 0 7px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-3);
-  font-size: 11px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: var(--transition-ui);
-}
-.steps__steer-pill:hover {
+/* Steer is the footer's pill, in the footer's row (.msg__meta): it takes no shape of its own here,
+   only the lit state of the pill whose field is open. */
+.steps__steer-pill[aria-expanded='true'] {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--hover);
-}
-.steps__steer-note {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  max-width: none;
-}
-.steps__steer-note textarea {
-  width: 100%;
-  min-height: 54px;
-  resize: vertical;
-}
-.steps__steer-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
 }
 /* What the person steered, in the chain: a call's own row, carrying their words whole. */
 .step--steer .step__icon {
@@ -4022,7 +3974,9 @@ body.is-resizing webview {
   margin-top: 2px;
 }
 
-/* A reply's receipt and "Guardar na wiki", on one quiet line that shows on hover. */
+/* A reply's footer: one quiet row under everything the reply drew, whatever state the reply is in.
+   A reply at work carries the steer there, one that stopped the ways back, one that finished its
+   receipt. */
 .msg__meta {
   display: flex;
   flex-wrap: wrap;
@@ -4040,9 +3994,10 @@ body.is-resizing webview {
   align-items: center;
   row-gap: 6px;
 }
-/* The way on from a reply that stopped: Continue, Try again, Try with instructions. Same pill, dim colour, and only
-   under the pointer. A row that ended badly reads as its words and its numbers until someone goes
-   near it. It keeps its space while hidden, so nothing below it jumps when it appears. */
+/* The way on from a reply that stopped: Continue, Try again, Try with instructions. Same pill, dim
+   colour, and only under the pointer. A row that ended badly reads as its words and its numbers
+   until someone goes near it. It keeps its space while hidden, so nothing below it jumps when it
+   appears. The steer of a reply still working is the live control: it stays in sight. */
 .msg__hire {
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out);
