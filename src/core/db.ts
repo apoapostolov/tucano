@@ -717,7 +717,9 @@ const COLUMNS: [string, string, string][] = [
   // What a conversation with the Tuca is about, in a few words: the person has several, one per request.
   ['conversations', 'title', 'TEXT'],
   // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
-  ['approvals', 'result', 'TEXT']
+  ['approvals', 'result', 'TEXT'],
+  // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
+  ['messages', 'reply', 'TEXT']
 ]
 
 
@@ -1358,7 +1360,8 @@ export class Db {
       ...(r['send_mode'] === 'queue' ? { sendMode: 'queue' as const } : {}),
       ...(r['title'] ? { title: str(r['title']) } : {}),
       ...(r['via'] ? { via: str(r['via']) } : {}),
-      ...(r['stop_job'] ? { stop: { job: str(r['stop_job']) } } : {})
+      ...(r['stop_job'] ? { stop: { job: str(r['stop_job']) } } : {}),
+      reply: r['reply'] ? (JSON.parse(str(r['reply'])) as Message['reply']) : undefined
     }
   }
 
@@ -1518,8 +1521,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, via, stop_job, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, stop_job = excluded.stop_job, send_mode = excluded.send_mode`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, via, stop_job, send_mode, reply) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, stop_job = excluded.stop_job, send_mode = excluded.send_mode, reply = excluded.reply`
       )
       .run(
         m.id,
@@ -1533,7 +1536,8 @@ export class Db {
         m.threadId ?? null,
         m.via ?? null,
         m.stop?.job ?? null,
-        m.sendMode ?? null
+        m.sendMode ?? null,
+        m.reply ? JSON.stringify(m.reply) : null
       )
   }
 
