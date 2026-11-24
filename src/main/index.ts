@@ -10,6 +10,7 @@ import { basename, dirname, join, normalize, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { homedir, hostname } from 'node:os'
 import { L, langOf, setLang, type Lang } from '../shared/lang'
+import { APP_ID } from '../shared/app-identity'
 import { chirpOf, type BrowserOp, type Settings } from '../shared/types'
 import { isAppPage, isOutsideLink } from '../shared/links'
 import { Browsers } from './browser'
@@ -45,8 +46,10 @@ if (passwordStore && !app.commandLine.hasSwitch('password-store')) app.commandLi
 // it. In a login shell with mise, that made `mise activate zsh` open the AppImage again, and the
 // shell never came back.
 delete process.env['ARGV0']
-// Windows shows notifications only for an app with an id, the same as the installer's.
-if (process.platform === 'win32') app.setAppUserModelId('dev.tucano.app')
+// Windows shows notifications only for an app with an id, and groups a window on its taskbar button by
+// it. It has to be the id the shortcut carries (package.json › build › appId), or the window groups on
+// its own and Windows draws the framework's icon instead of the toucan.
+if (process.platform === 'win32') app.setAppUserModelId(APP_ID)
 
 // Until the core says which language the person picked, the Mac's.
 const systemLocale = ((): string | undefined => {
