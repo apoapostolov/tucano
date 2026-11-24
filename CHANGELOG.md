@@ -4,6 +4,17 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+> **Em português:**
+> - **Novo:** as imagens que uma resposta produziu aparecem como **um álbum**: uma grande à esquerda e as outras ao lado, com o restante contado na última célula. Clicar abre a janela como antes.
+> - **Novo:** o **botão direito numa imagem** abre um menu: **Salvar como…**, **Salvar em {pasta}** (um clique, na última pasta), **Copiar para a área de transferência** e, numa resposta, **Enviar para o campo de mensagem**.
+> - **Novo:** **Copiar** num anexo leva a imagem, o texto ou o arquivo para a área de transferência, com um aviso de onde colar.
+
+### Added
+
+- **A reply's pictures show as one album.** When a reply produces several images, they no longer stack as full-width pictures. The first sits large on the left and the rest fill a column beside it in a golden-section layout, capped at a fixed height. Past four, the last cell shows how many remain; a click still opens the lightbox on that image. A single image and any non-image artifacts keep their current shape. Thanks to Apostol Apostolov. (#302, #303)
+- **Right-click an image to save it, copy it, or send it back to the prompt.** The context menu offers **Save as…**, **Save to {Folder}** for a one-click save into the last folder, **Copy to clipboard**, and **Send to prompt** on reply images. The remembered folder is a personal setting; when it is missing, Tucano falls back to the dialog and explains why. Gallery cells and the lightbox image get the same menu. Thanks to Apostol Apostolov. (#335, #336)
+- **Copy any attachment to the clipboard.** A **Copy** button on an attachment card copies an image as an image, text as text, or another file as a file for the file manager, with a path fallback when a file copy is not possible. The toast says what was copied and where it can be pasted. Thanks to Apostol Apostolov.
+
 ## [0.2.47] - 2026-11-24
 
 > **Em português:**
