@@ -12,7 +12,6 @@ export function AgentModelsPanel(): ReactNode {
   const [archived, setArchived] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [model, setModel] = useState('')
-  const [fallback, setFallback] = useState('')
   const [effort, setEffort] = useState<Effort | null>(null)
   const [busy, setBusy] = useState(false)
   const saving = useRef(false)
@@ -22,28 +21,26 @@ export function AgentModelsPanel(): ReactNode {
   const visible = scope.filter((a) => `${a.name} ${a.handle}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
   const targets = scope.filter((a) => selected.includes(a.id))
   const allVisible = visible.length > 0 && visible.every((a) => selected.includes(a.id))
-  // Each field left empty is left alone: a level alone moves only levels, and a fallback alone moves
-  // only reserves. A row's Save sends just its own choices.
-  const save = async (ids: string[], value: string, level?: Effort | null, reserveModel?: string): Promise<boolean> => {
-    const main = value.trim()
-    const reserve = reserveModel?.trim() ?? ''
-    if (saving.current || !admin || !ids.length || (!main && !reserve && !level) || (main && !modelInfo(main)?.id) || (reserve && !modelInfo(reserve)?.id)) return false
+  // The model and, when one is picked, the thinking level that goes with it. A bulk change can carry
+  // only the level: with no model picked the agents keep their own and only their level moves, which
+  // is what a level picked on its own means.
+  const save = async (ids: string[], value: string, level?: Effort | null): Promise<boolean> => {
+    const only = !value.trim()
+    if (saving.current || !admin || !ids.length || (only && !level) || (!only && !modelInfo(value)?.id)) return false
     saving.current = true
     setBusy(true)
     setError('')
     setResult('')
     try {
-      const count = await setAgentModels(ids, main, level ?? undefined, reserve || undefined)
+      const count = await setAgentModels(ids, value, level ?? undefined)
       setResult(
         count
-          ? !main && reserve
-            ? L(`Modelo reserva atualizado em ${count} ${count === 1 ? 'agente' : 'agentes'}.`, `Fallback model updated for ${count} ${count === 1 ? 'agent' : 'agents'}.`)
-            : !main
-              ? L(`Esforço atualizado em ${count} ${count === 1 ? 'agente' : 'agentes'}.`, `Thinking level updated for ${count} ${count === 1 ? 'agent' : 'agents'}.`)
-              : level
+          ? only
+            ? L(`Esforço atualizado em ${count} ${count === 1 ? 'agente' : 'agentes'}.`, `Thinking level updated for ${count} ${count === 1 ? 'agent' : 'agents'}.`)
+            : level
               ? L(`Modelo e esforço atualizados em ${count} ${count === 1 ? 'agente' : 'agentes'}.`, `Model and thinking level updated for ${count} ${count === 1 ? 'agent' : 'agents'}.`)
               : L(`Modelo atualizado em ${count} ${count === 1 ? 'agente' : 'agentes'}.`, `Model updated for ${count} ${count === 1 ? 'agent' : 'agents'}.`)
-          : level || reserve
+          : level
             ? L('Os agentes já estavam assim.', 'The agents were already like this.')
             : L('Os agentes já estavam usando esse modelo.', 'The agents were already using this model.')
       )
@@ -66,14 +63,11 @@ export function AgentModelsPanel(): ReactNode {
       <fieldset disabled={busy} className="agent-models__controls">
         <div className="agent-models__bulk">
           <strong>{L('Alterar em lote', 'Bulk change')}</strong>
-          <strong className="agent-models__subhead">{L('Modelo principal', 'Main model')}</strong>
           {/* Keep stays a pick of its own here: a level alone moves levels, not models. */}
           <ModelPicker value={model} onChange={setModel} effort={effort} keepEffort onEffort={(e) => setEffort(e)} />
-          <strong className="agent-models__subhead">{L('Modelo reserva', 'Fallback model')}</strong>
-          <ModelPicker value={fallback} onChange={setFallback} />
-          <p className="hint">{L('Ao trocar de harness, o agente passa a usar o login padrão dele. Mais esforço pensa mais e gasta mais do plano. Sem modelo principal escolhido, só o esforço e a reserva escolhidos mudam; o resto fica como está.', 'When switching harnesses, the agent uses its default login. More effort thinks longer and uses more of your plan. With no main model picked, only the level and fallback picked here change; the rest stays as it is.')}</p>
+          <p className="hint">{L('Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual. Mais esforço pensa mais e gasta mais do plano. Sem modelo escolhido, só o esforço muda e cada agente fica com o modelo dele.', 'When switching harnesses, the agent uses its default login. The reserve model stays the same. More effort thinks longer and uses more of your plan. With no model picked, only the level changes and each agent keeps its own model.')}</p>
           <div className="row">
-            <button type="button" className="btn btn--primary btn--sm" disabled={!targets.length || (!modelInfo(model)?.id && !modelInfo(fallback)?.id && !effort)} onClick={() => void save(targets.map((a) => a.id), model, effort, fallback)}>
+            <button type="button" className="btn btn--primary btn--sm" disabled={!targets.length || (!modelInfo(model)?.id && !effort)} onClick={() => void save(targets.map((a) => a.id), model, effort)}>
               {L(`Aplicar aos selecionados (${targets.length})`, `Apply to selected (${targets.length})`)}
             </button>
             <span className="muted small">{L(`${scope.length} ${scope.length === 1 ? 'agente disponível' : 'agentes disponíveis'}`, `${scope.length} ${scope.length === 1 ? 'agent' : 'agents'} available`)}</span>

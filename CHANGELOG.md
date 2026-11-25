@@ -5,7 +5,6 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 > **Em português:**
-> - **Adicionado:** a alteração em lote agora tem uma linha **Modelo principal** e outra **Modelo reserva**, e aplica a reserva aos agentes selecionados sem mexer no modelo principal.
 > - **Ajuste:** em Modelos dos agentes e na Memória, o esforço de raciocínio fica na mesma linha do harness e do modelo, com a largura do nome mais longo; o modelo mostra `…` no campo e abre a lista mais larga, sem sair da tela; o que a memória aprende sobre você vai para a linha seguinte.
 > - **Adicionado:** uma resposta pronta que oferece uma só ação ganha um botão **Proceed**; um clique executa só aquela ação, sem criar outra mensagem sua.
 > - **Adicionado:** um ajuste liga o botão **Proceed**. Desligado por padrão, ele fica no fim de Configurações › Você › Conversas; ligado, uma resposta que oferece uma só ação ganha um botão de aprovação.
@@ -13,7 +12,6 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Added
 
-- **Bulk fallback model.** The bulk change now labels the main model row and adds a fallback model row that assigns the reserve to selected agents without changing their main model.
 - **Thinking levels sit on the model row.** In Agent models and Memory, the level shares the harness and model row, sized to its longest name; the model trigger truncates with an ellipsis while its menu opens wider without leaving the screen; what Memory learns about you moves to the next row.
 - **One approval button for a reply that offers one action.** A finished agent reply that proposes a single next step in words shows one **Proceed** button; a click runs just that action and writes no prompt from you.
 - **A setting turns the Proceed button on.** Off by default, it sits at the bottom of Settings › You › Conversations; with it on, a reply offering one action gets a single approval button.
