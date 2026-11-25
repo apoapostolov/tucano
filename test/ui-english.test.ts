@@ -214,7 +214,9 @@ const RAW_ALLOWED: Record<string, string[]> = {
   'src/renderer/src/components/Panel.tsx': ['Leu a página'],
   // a sign-in wall's own words, matched against the page and never shown
   'src/shared/wall.ts': ['inicia sessão para continuar', 'faça login para continuar'],
-  'src/renderer/src/components/Servers.tsx': ['Conectado: os agentes de lá podem usar este computador quando trabalham pra você.']
+  'src/renderer/src/components/Servers.tsx': ['Conectado: os agentes de lá podem usar este computador quando trabalham pra você.'],
+  // one-action proposal phrases the detector matches in a reply, never shown on screen
+  'src/shared/proceed.ts': ['se você quiser', 'quando você quiser', 'quando você mandar', 'só me avisar', 'só me dizer', 'só dizer', 'só pedir', 'é só dizer', 'você decide']
 }
 
 // The strings an L() call's first argument holds, wherever it is: the Portuguese side, fine as it is.
