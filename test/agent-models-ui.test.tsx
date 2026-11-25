@@ -8,10 +8,11 @@ Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, N
 Object.assign(document, { oninput: null })
 let fake: Pick<State, 'agents'>
 let admin = true
-const save = vi.fn(async (_ids: string[], _model: string, _effort?: string) => 1)
-vi.mock('../src/renderer/src/store', () => ({ useStore: (select: (s: unknown) => unknown) => select(fake), amAdmin: () => admin, setAgentModels: (ids: string[], model: string, effort?: string) => save(ids, model, effort) }))
+const save = vi.fn(async (_ids: string[], _model: string, _effort?: string, _fallback?: string) => 1)
+vi.mock('../src/renderer/src/store', () => ({ useStore: (select: (s: unknown) => unknown) => select(fake), amAdmin: () => admin, setAgentModels: (ids: string[], model: string, effort?: string, fallback?: string) => save(ids, model, effort, fallback) }))
 vi.mock('../src/renderer/src/components/Harness', () => ({
-  ModelPicker: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => <select aria-label="Modelo" value={value} onChange={(e) => onChange(e.target.value)}><option value="">Escolha</option><option value="sonnet">Sonnet</option><option value="opus">Opus</option></select>,
+  // The level rides in the picker when onEffort is passed, as in the real ModelPicker.
+  ModelPicker: ({ value, onChange, effort, keepEffort, onEffort }: { value: string; onChange: (v: string) => void; effort?: string | null; keepEffort?: boolean; onEffort?: (e: string | null) => void }) => <div className="model-picker"><select aria-label="Modelo" value={value} onChange={(e) => onChange(e.target.value)}><option value="">Escolha</option><option value="sonnet">Sonnet</option><option value="opus">Opus</option></select>{onEffort && <select aria-label="Esforço" value={effort ?? ''} onChange={(e) => onEffort(e.target.value === '' ? null : e.target.value)}>{keepEffort && <option value="">Manter</option>}<option value="low">Baixo</option><option value="medium">Médio</option><option value="high">Alto</option><option value="xhigh">Máximo</option></select>}</div>,
   // No level picked yet: the trigger says Keep, and with `keep` the list carries it as a pick of its own
   // that reports null (the real one has it as the placeholder and as an option).
   EffortSelect: ({ value, onChange, keep }: { value?: string | null; onChange: (e: string | null) => void; keep?: boolean }) => <select aria-label="Esforço" value={value ?? ''} onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}>{keep && <option value="">Manter</option>}<option value="low">Baixo</option><option value="medium">Médio</option><option value="high">Alto</option><option value="xhigh">Máximo</option></select>
@@ -40,7 +41,7 @@ it('selects all displayed active agents and applies only after the button is pre
   await click(all)
   await click(button('Aplicar aos selecionados'))
   // The thinking level is only sent when one is picked: an untouched control keeps each agent's own.
-  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', undefined)
+  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', undefined, undefined)
   expect(document.body.textContent).toContain('Modelo atualizado')
 })
 it('sends the thinking level picked in the bulk row along with the model', async () => {
@@ -49,19 +50,22 @@ it('sends the thinking level picked in the bulk row along with the model', async
   const all = [...document.querySelectorAll('label')].find((l) => l.textContent?.includes('Selecionar todos'))!.querySelector('input')!
   await click(all)
   await click(button('Aplicar aos selecionados'))
-  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', 'xhigh')
+  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', 'xhigh', undefined)
 })
 it('offers Keep in the bulk level list, and a level picked can go back to it', async () => {
-  const bulk = field(document.querySelector('.agent-models__bulk')!, 'Esforço')
-  expect([...bulk.querySelectorAll('option')].map((o) => o.textContent)).toContain('Manter')
+  const bulk = document.querySelector('.agent-models__bulk')!
+  expect(bulk.querySelector('.model-picker [aria-label="Esforço"]')).not.toBeNull()
+  expect(bulk.querySelector('.effort-select--inline')).toBeNull()
+  const level = field(bulk, 'Esforço')
+  expect([...level.querySelectorAll('option')].map((o) => o.textContent)).toContain('Manter')
   await pick(document.querySelector('select')!, 'opus')
-  await pick(bulk, 'xhigh')
-  await pick(bulk, '')
+  await pick(level, 'xhigh')
+  await pick(level, '')
   const all = [...document.querySelectorAll('label')].find((l) => l.textContent?.includes('Selecionar todos'))!.querySelector('input')!
   await click(all)
   await click(button('Aplicar aos selecionados'))
   // Back on Keep, only the model is left to apply: the agents keep their own levels.
-  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', undefined)
+  expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', undefined, undefined)
 })
 it('applies a level alone to the selected agents when no model is picked', async () => {
   const apply = button('Aplicar aos selecionados')
@@ -71,23 +75,38 @@ it('applies a level alone to the selected agents when no model is picked', async
   await pick(field(document.querySelector('.agent-models__bulk')!, 'Esforço'), 'high')
   expect(apply.disabled).toBe(false)
   await click(apply)
-  expect(save).toHaveBeenCalledWith(['lia', 'theo'], '', 'high')
+  expect(save).toHaveBeenCalledWith(['lia', 'theo'], '', 'high', undefined)
   expect(document.body.textContent).toContain('Esforço atualizado')
+})
+it('applies a fallback model alone to the selected agents', async () => {
+  const bulk = document.querySelector('.agent-models__bulk')!
+  expect(bulk.textContent).toContain('Modelo principal')
+  expect(bulk.textContent).toContain('Modelo reserva')
+  const pickers = [...bulk.querySelectorAll('.model-picker')]
+  expect(pickers).toHaveLength(2)
+  await pick(pickers[1]!.querySelector('select')!, 'opus')
+  const all = [...document.querySelectorAll('label')].find((l) => l.textContent?.includes('Selecionar todos'))!.querySelector('input')!
+  await click(all)
+  await click(button('Aplicar aos selecionados'))
+  expect(save).toHaveBeenCalledWith(['lia', 'theo'], '', undefined, 'opus')
+  expect(document.body.textContent).toContain('Modelo reserva atualizado')
 })
 it('saves an individual agent without changing the others', async () => {
   const row = document.querySelector('[role="group"][aria-label="lia"]')!
   await pick(field(row, 'Modelo'), 'opus')
   await click(row.querySelector('button')!)
-  expect(save).toHaveBeenCalledWith(['lia'], 'opus', undefined)
+  expect(save).toHaveBeenCalledWith(['lia'], 'opus', undefined, undefined)
 })
-it('shows each agent its own level and saves a changed one on its own', async () => {
+it('shows each agent its own level on the model row and saves a changed one on its own', async () => {
   const row = document.querySelector('[role="group"][aria-label="theo"]')!
+  expect(row.querySelector('.model-picker [aria-label="Esforço"]')).not.toBeNull()
+  expect(row.querySelector('.effort-select--inline')).toBeNull()
   expect(field(row, 'Esforço').value).toBe('high')
   expect(row.querySelector('button')?.disabled).toBe(true)
   await pick(field(row, 'Esforço'), 'low')
   expect(row.querySelector('button')?.disabled).toBe(false)
   await click(row.querySelector('button')!)
-  expect(save).toHaveBeenCalledWith(['theo'], 'sonnet', 'low')
+  expect(save).toHaveBeenCalledWith(['theo'], 'sonnet', 'low', undefined)
 })
 it('shows failures and keeps the choice available to retry', async () => {
   save.mockRejectedValueOnce(new Error('Falha ao salvar'))

@@ -2203,33 +2203,39 @@ const api: Handlers = {
     if (job) bg(runner.continueJob(job, ctx.person), 'continueJob')
   },
 
-  setAgentModels: ({ agentIds, modelId, effort }, ctx) => {
+  setAgentModels: ({ agentIds, modelId, effort, fallbackModelId }, ctx) => {
     const value = modelId.trim()
+    // An omitted fallback leaves each agent's reserve alone; an empty one takes it away.
+    const fallback = fallbackModelId === undefined ? undefined : fallbackModelId.trim()
     // The thinking level travels with the model when one is sent ("high", or null for the default).
     const level = effort === undefined || effort === null || effort === 'default' ? undefined : effort
-    // No model with a level is a bulk change of the level alone: every agent keeps its own model and
-    // only its level moves, which is what picking a level and no model means.
-    const only = value === ''
-    if (only && level === undefined) throw new Error(L('Escolha um modelo ou um esforço.', 'Choose a model or a thinking level.'))
+    // No model, reserve or level is nothing to apply. One of them alone moves only that field.
+    if (!value && fallback === undefined && level === undefined) throw new Error(L('Escolha um modelo, um modelo reserva ou um esforço.', 'Choose a model, a fallback model or a thinking level.'))
     if (level !== undefined && !isEffort(level)) throw new Error(L('Escolha um esforço válido.', 'Choose a valid effort.'))
     const model = value ? modelInfo(value) : undefined
-    if (!only && !model?.id) throw new Error(L('Escolha um modelo válido.', 'Choose a valid model.'))
+    const reserve = fallback ? modelInfo(fallback) : undefined
+    if (value && !model?.id) throw new Error(L('Escolha um modelo válido.', 'Choose a valid model.'))
+    if (fallback && !reserve?.id) throw new Error(L('Escolha um modelo reserva válido.', 'Choose a valid fallback model.'))
     const agents = [...new Set(agentIds)].map((id) => {
       const agent = db.agent(id)
       if (!agent) throw new Error(L('Um dos agentes não existe mais. Atualize a lista.', 'An agent no longer exists. Refresh the list.'))
       return agent
     })
-    const changes = (a: Agent): boolean => (!only && a.modelId !== value) || (level !== undefined && a.effort !== level)
+    const changes = (a: Agent): boolean => (!!value && a.modelId !== value) || (fallback !== undefined && (a.fallbackModelId ?? '') !== fallback) || (level !== undefined && a.effort !== level)
     const changed = agents.filter(changes).map((a): Agent => ({
       ...a,
-      ...(only ? {} : { modelId: value }),
+      ...(value ? { modelId: value } : {}),
+      ...(fallback !== undefined ? {
+        fallbackModelId: fallback || undefined,
+        ...(!fallback || (reserve && modelInfo(a.fallbackModelId ?? '')?.engine !== reserve.engine) ? { fallbackAccountId: undefined } : {})
+      } : {}),
       ...(level !== undefined ? { effort: level } : {}),
       ...(model && modelInfo(a.modelId)?.engine !== model.engine ? { accountId: undefined } : {})
     }))
     db.tx(() => {
       for (const agent of changed) {
         db.saveAgent(agent)
-        record(ctx, 'agent.updated', agent.id, { name: agent.name, ...(only ? {} : { modelId: value }), ...(level !== undefined ? { effort: level } : {}) })
+        record(ctx, 'agent.updated', agent.id, { name: agent.name, ...(value ? { modelId: value } : {}), ...(fallback !== undefined ? { fallbackModelId: fallback || null } : {}), ...(level !== undefined ? { effort: level } : {}) })
       }
     })
     for (const agent of changed) emit({ type: 'agent', agent: db.agent(agent.id)! })

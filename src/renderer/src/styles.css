@@ -6522,7 +6522,8 @@ table.csv th {
   flex-basis: 100%;
 }
 /* The thinking level on the model's own row: the harness keeps only its name's width (Claude, Codex,
-   OpenCode, Pi), the model takes what's left, and the level closes the row. */
+   OpenCode, Pi), the model takes what's left, and the level closes the row. The level is only as wide
+   as its longest name, plus the select's own padding and caret. */
 .model-picker .select.model-picker__engine,
 .lrow--wide .model-picker .select.model-picker__engine {
   flex: 0 0 auto;
@@ -6532,7 +6533,7 @@ table.csv th {
 .model-picker .select.model-picker__effort,
 .lrow--wide .model-picker .select.model-picker__effort {
   flex: 0 0 auto;
-  width: 128px;
+  width: 12ch;
 }
 /* Under a model select, where the picks are one below the other (Settings → Models). */
 .select.effort-select--inline {
@@ -13279,6 +13280,7 @@ button.agent-card__now:hover {
 /* Every agent's model in Settings › Models, with individual model edits and a shared batch picker. */
 .agent-models__controls { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 16px; }
 .agent-models__bulk { display: grid; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.agent-models__subhead { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
 .agent-models__filters { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .agent-models__filters > input { flex: 1; min-width: 180px; }
 .agent-models input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; }
