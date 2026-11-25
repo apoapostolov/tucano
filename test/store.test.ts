@@ -93,6 +93,19 @@ describe("the window's messages", () => {
     expect(asked.filter((a) => a.method === 'olderMessages')).toHaveLength(1)
   })
 
+  it('clears content and history while keeping the conversation open', () => {
+    store.navigate({ kind: 'conversation', id: 'c1' })
+    store.openThread('root')
+    emit({ type: 'conversation_cleared', id: 'c1' })
+    const state = store.getState()
+    expect(store.messagesIn(state, 'c1')).toEqual([])
+    expect(state.history.c1).toBeUndefined()
+    expect(state.conversations.some((c) => c.id === 'c1')).toBe(true)
+    expect(state.view).toEqual({ kind: 'conversation', id: 'c1' })
+    expect(state.panel).toBeNull()
+    expect(store.messagesIn(state, 'c2').map((m) => m.id)).toEqual(['x1'])
+  })
+
   it('drop a conversation whole when it goes', () => {
     emit({ type: 'conversation_removed', id: 'c1' })
     expect(store.messagesIn(store.getState(), 'c1')).toEqual([])

@@ -672,6 +672,19 @@ function apply(e: CoreEvent): void {
       }
       case 'routine':
         return { ...s, routines: upsert(s.routines, e.routine) }
+      case 'conversation_cleared': {
+        thoughts.clear(messagesIn(s, e.id).map((message) => message.id))
+        const { [e.id]: _gone, ...messages } = s.messages
+        const { [e.id]: _from, ...history } = s.history
+        const here = s.view?.kind === 'conversation' && s.view.id === e.id
+        return {
+          ...s, messages, history,
+          artifacts: s.artifacts.filter((a) => a.conversationId !== e.id),
+          approvals: s.approvals.filter((a) => a.conversationId !== e.id),
+          panel: here ? null : s.panel,
+          panelWide: here ? false : s.panelWide
+        }
+      }
       case 'conversation_removed': {
         thoughts.clear(messagesIn(s, e.id).map((message) => message.id))
         const left = s.conversations.filter((c) => c.id !== e.id)
@@ -1072,6 +1085,7 @@ export const setTopic = (id: string, topic: string): Promise<void> => call('setT
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
 export const setChannelMembers = (id: string, agentIds: string[]): Promise<void> => call('setChannelMembers', { id, agentIds })
+export const cleanConversation = (id: string): Promise<void> => call('cleanConversation', { id })
 export const deleteConversation = (id: string): Promise<void> => call('deleteConversation', { id })
 export const markRead = (id: string): void => { void call('markRead', { conversationId: id }) }
 
