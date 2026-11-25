@@ -4,6 +4,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Quadro's columns use the same scrollbar as the sidebar.** They now show the app's dim, thin scrollbar with a transparent track instead of the browser's bright overlay bar.
+
 ### Removed
 
 - **The Router section is gone from Settings.** With a classifier picking who replies in a channel, the card had no choice to offer. Routing keeps working the same way.
