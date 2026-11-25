@@ -29,6 +29,7 @@ type Section = {
 export function settingsStructure({ admin, owner, team, servers }: SettingsAccess) {
   return [
     { id: 'workspace-context', page: 'geral', label: L('Geral', 'General'), icon: 'gear', color: 'var(--c-graphite)', keys: ['workspaceLabel', 'workspaceName', 'context', 'onboarding'], scope: 'workspace', visible: admin },
+    { id: 'app-sidebar', page: 'geral', label: L('Barra lateral', 'Sidebar'), icon: 'layers', color: 'var(--c-teal)', keys: ['hideEmptyAsks', 'hideEmptyApprovals'], scope: 'personal', visible: true },
     { id: 'app-appearance', page: 'geral', label: L('Aparência', 'Appearance'), icon: 'sun', color: 'var(--c-amber)', keys: ['theme', 'language', 'clock'], scope: 'mixed', visible: true },
     { id: 'app-notifications', page: 'geral', label: L('Notificações', 'Notifications'), icon: 'bell', color: 'var(--c-rose)', keys: ['sounds'], scope: 'personal', visible: true },
     { id: 'app-dictation', page: 'geral', label: L('Ditado', 'Dictation'), icon: 'mic', color: 'var(--c-sky)', keys: ['voice'], scope: 'mixed', visible: admin },
@@ -65,7 +66,7 @@ export type SettingsPageId = SettingsSection['page']
 // The groups in the order they sit at the top of the page, with their subjects in reading order:
 // what most people change first, what can't be undone last.
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
-  geral: ['workspace-context', 'app-appearance', 'app-notifications', 'app-dictation', 'app-conversation'],
+  geral: ['workspace-context', 'app-sidebar', 'app-appearance', 'app-notifications', 'app-dictation', 'app-conversation'],
   agentes: ['agents-permissions', 'agents-replies', 'agents-limits', 'agents-routines', 'agents-tuca', 'agents-browser'],
   modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'models-router', 'knowledge-memory'],
   conexoes: ['connections-phone', 'connections-servers', 'connections-traces', 'harnesses-keys'],
@@ -102,6 +103,7 @@ export const settingsTabAliases: Readonly<Record<string, SettingsSectionId>> = {
 function settingsTerms(): Readonly<Record<SettingsSectionId, readonly string[]>> {
   return {
     'workspace-context': [L('Nome do workspace', 'Workspace name'), L('Como os agentes te chamam', 'What the agents call you'), L('Idioma', 'Language'), L('Contexto', 'Context'), L('Rever a introdução', 'See the introduction again'), L('Mostrar as missões', 'Show the missions'), L('Mostrar a barra lateral inteira', 'Show the whole sidebar')],
+    'app-sidebar': [L('Esconder Perguntas quando não há nenhuma', 'Hide empty Asks'), L('Esconder Aprovações quando não há nenhuma', 'Hide empty Approvals')],
     'app-appearance': [L('Tema claro ou escuro', 'Light or dark theme'), L('Idioma', 'Language'), L('Relógio', 'Time format'), L('24 horas', '24-hour'), L('12 horas', '12-hour')],
     'app-notifications': [L('Sons', 'Sounds'), L('Testar uma notificação', 'Test a notification')],
     'app-dictation': [L('Modelo do ditado', 'Dictation model'), L('Microfone', 'Microphone'), L('Detectar o idioma', 'Detect the language'), 'whisper'],

@@ -238,7 +238,7 @@ function Tucked({ items }: { items: TopItem[] }): ReactNode {
   const [open, setOpen] = useState(false)
   const team = useStore(teamMode)
   const glyph = (i: TopItem): ReactNode =>
-    i === 'tuca' ? <TucaMark size={18} /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
+    i === 'tuca' ? <TucaMark size={18} /> : i === 'asks' ? <Icon name="ask" /> : i === 'approvals' ? <Icon name="shield" /> : i === 'board' ? <Icon name="board" /> : <Glyph name={i} />
   return (
     <div className={`tucked ${open ? 'is-open' : ''}`}>
       <button type="button" className="tucked__toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -300,6 +300,7 @@ export function Sidebar(): ReactNode {
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
   const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const asks = useStore((s) => s.inbox.questions.length)
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
   const channels = conversations.filter((c) => c.kind === 'channel')
   const dms = conversations.filter((c) => c.kind === 'dm' && agentOf(c.name)?.kind !== 'tuca')
@@ -325,8 +326,15 @@ export function Sidebar(): ReactNode {
   const back = (i: TopItem): boolean => available.includes(i) && hidden.includes(i) && (waitingIn[i] ?? 0) > 0
   const tucked = available.filter((i) => hidden.includes(i) && !back(i))
   // Below the Tuca, which stays first, the items in the person's order (navOrder). Only those that
-  // show are drawn; one taken out keeps its place for when it comes back.
-  const navItems = ordered(available.filter((i) => i !== 'tuca').map((id) => ({ id })), settings.navOrder)
+  // show are drawn; one taken out keeps its place for when it comes back. Asks sits above Approvals
+  // for an order saved before it existed, and can still be moved from there.
+  const navOrder = settings.navOrder?.length && !settings.navOrder.includes('asks')
+    ? (() => {
+        const at = settings.navOrder!.indexOf('approvals')
+        return at < 0 ? ['asks', ...settings.navOrder!] : [...settings.navOrder!.slice(0, at), 'asks', ...settings.navOrder!.slice(at)]
+      })()
+    : settings.navOrder
+  const navItems = ordered(available.filter((i) => i !== 'tuca').map((id) => ({ id })), navOrder)
   const navShown = navItems.map((i) => i.id).filter((i) => shows(i) || back(i))
   const open = (e: React.MouseEvent, items: MenuItem[]): void => {
     e.preventDefault()
@@ -358,8 +366,8 @@ export function Sidebar(): ReactNode {
   const channelSort = useHoldReorder({ group: 'channels', onDrop: dropChannel, onNudge: (id, by) => saveLayout(nudgeChannel(channels, layout, id, by)) })
   const navSort = useHoldReorder({
     group: 'nav',
-    onDrop: (id, before) => updateSettings({ navOrder: moveBefore(navItems, settings.navOrder, id, before === 'end:nav' ? undefined : before) }),
-    onNudge: (id, by) => updateSettings({ navOrder: nudge(navItems, settings.navOrder, id, by, (i) => (navShown as string[]).includes(i)) })
+    onDrop: (id, before) => updateSettings({ navOrder: moveBefore(navItems, navOrder, id, before === 'end:nav' ? undefined : before) }),
+    onNudge: (id, by) => updateSettings({ navOrder: nudge(navItems, navOrder, id, by, (i) => (navShown as string[]).includes(i)) })
   })
   // The agents keep one order, as the list shows them, and a drop or a step stays in the row's sector.
   const agentList = groups ? groups.flatMap((g) => g.agents).filter((a, i, all) => all.findIndex((b) => b.id === a.id) === i) : teamShown
@@ -533,7 +541,9 @@ export function Sidebar(): ReactNode {
         )}
         {navShown.map((item) => (
           <TopRow key={item} item={item} back={back(item)} onMenu={menuAt} sort={navSort}>
-            {item === 'approvals' ? (
+            {item === 'asks' ? (
+              <NavItem view={{ kind: 'asks' }} icon="ask" label={topLabel('asks', team)} badge={asks} />
+            ) : item === 'approvals' ? (
               <NavItem view={{ kind: 'approvals' }} icon="shield" label={topLabel('approvals', team)} badge={pending} />
             ) : item === 'board' ? (
               <NavItem view={{ kind: 'board' }} icon="board" label={topLabel('board', team)} fresh={fresh('board')} />

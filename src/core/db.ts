@@ -865,7 +865,7 @@ export class Db {
   // comes archived (with no agents it would apply to everyone), a routine needs its agent and place.
   private keepOnly(parts: WorkspaceParts): void {
     if (WORKSPACE_PARTS.every((p) => parts[p])) return
-    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'folded', 'navOrder', 'agentOrder', 'sectorOrder'] : [])])
+    const kept = new Set(['seenVersion', 'theme', 'onboarding', ...(parts.general ? GENERAL_SETTINGS : []), ...(parts.context ? ['context'] : []), ...(parts.channels ? ['channelLayout', 'folded', 'hideEmptyAsks', 'hideEmptyApprovals', 'navOrder', 'agentOrder', 'sectorOrder'] : [])])
     for (const { key } of this.db.prepare('SELECT key FROM settings').all() as { key: string }[]) if (!kept.has(key)) this.db.prepare('DELETE FROM settings WHERE key = ?').run(key)
     if (!parts.general) this.db.prepare('DELETE FROM secrets WHERE key = ? OR key LIKE ?').run(JEV_KEY, CLASSIFIER_KEYS)
     if (!parts.connectors) {
@@ -2639,6 +2639,13 @@ export class Db {
   // Answered since `since`, newest first.
   answeredQuestions(since: number): Question[] {
     return (this.db.prepare("SELECT * FROM questions WHERE state = 'answered' AND answered_at >= ? ORDER BY answered_at DESC").all(since) as Row[]).map((r) => this.toQuestion(r))
+  }
+
+  // Answered and closed questions, newest first: the Asks page's History, which is what the open
+  // list drops off. A closed one has no `answered_at` (nobody answered it), so it sorts by when it
+  // was asked.
+  pastQuestions(limit = 50): Question[] {
+    return (this.db.prepare("SELECT * FROM questions WHERE state != 'open' ORDER BY COALESCE(answered_at, created_at) DESC LIMIT ?").all(limit) as Row[]).map((r) => this.toQuestion(r))
   }
 
   openQuestions(): Question[] {
