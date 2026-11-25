@@ -3487,13 +3487,23 @@ h3 {
   gap: 8px;
   margin-top: 10px;
 }
+.ask__foot:has(.ask__recommend--inline) {
+  justify-content: flex-start;
+}
 .ask__recommend--inline {
   display: inline-flex;
   align-items: center;
+  flex: none;
+  margin-top: 0;
   gap: 4px;
   font-size: 12px;
   color: var(--text-2);
   cursor: pointer;
+  white-space: nowrap;
+}
+.ask__recommend--inline input {
+  flex: none;
+  margin: 0;
 }
 .ask__hint {
   margin-right: auto;
