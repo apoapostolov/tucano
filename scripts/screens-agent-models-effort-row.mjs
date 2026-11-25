@@ -116,6 +116,12 @@ export default async function story(context) {
       }
       const menu = await readMenu(win, selectors.model, t, `model-menu-${surface.id}-${size.width}`)
       const text = await readText(win, surface.effort)
+      const bulk = surface.id === 'bulk'
+        ? {
+            subheads: await win.locator('.agent-models__bulk .agent-models__subhead').allInnerTexts(),
+            pickerBoxes: (await measure(win, '.agent-models__bulk .model-picker', [])).map((p) => p.box)
+          }
+        : null
       const sameRow = boxes.harness.box.y === boxes.effort.box.y && boxes.model.box.y === boxes.effort.box.y
       const row = {
         selector: surface.effort,
@@ -136,6 +142,7 @@ export default async function story(context) {
           labels: text.labels,
           font: text.font,
           menu,
+          bulk,
           boxes
         }
       }
