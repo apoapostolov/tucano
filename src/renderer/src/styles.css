@@ -10368,10 +10368,21 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   height: 100%;
   object-fit: contain;
 }
-/* The picture and the two buttons that change it, under the connector's state and address. */
+/* The picture and the buttons that change it, under the connector's state and address. The row
+   wraps on a narrow screen so the controls and the note stay in the modal instead of clipping. */
 .connector-modal__icon {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  align-items: center;
   margin-bottom: 10px;
+}
+.connector-modal__icon .btn {
+  flex: none;
+}
+.connector-modal__icon .grow {
+  flex: 1 1 140px;
+  min-width: 0;
 }
 /* The same tile in the steps that pick a connector: it brings its own surface, so the circle goes. */
 .onb-power-row__icon--tile {
