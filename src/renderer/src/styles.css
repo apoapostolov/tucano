@@ -7075,6 +7075,10 @@ table.csv th {
 .settings-group__box > * + * {
   border-top: 1px solid var(--border);
 }
+/* A missing-key line reads with the notice above it, so the two sublines share one block. */
+.settings-group__box > .hint--joined {
+  border-top: 0;
+}
 .settings-group__box > .key-row {
   border-bottom: 0;
 }
