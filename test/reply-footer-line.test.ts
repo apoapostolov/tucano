@@ -27,6 +27,8 @@ const ROW = `
       <span class="thread-link__when"><span class="thread-link__ago">2m</span><span class="thread-link__see">View thread</span></span>
       ${CHEVRON}
     </button>
+    <button class="retry">Continue</button>
+    <button class="retry">Follow</button>
     <div class="receipt"><button class="receipt__line">Sonnet · 12.4k tokens · 7s</button></div>
     <div class="msg__actions">
       <button class="msg__replyto" title="Reply to message" aria-label="Reply to message">${REPLY_GLYPH}</button>
@@ -84,11 +86,26 @@ for (const c of cases) {
         const css = getComputedStyle(el)
         return { columnGap: css.columnGap, rowGap: css.rowGap }
       })
-      expect(style).toEqual({ columnGap: '14px', rowGap: '6px' })
-      expect(await row.locator('.msg__meta > .thread-link + .receipt').count()).toBe(1)
+      expect(style).toEqual({ columnGap: '10px', rowGap: '6px' })
+      expect(await row.locator('.msg__meta > .thread-link + .retry + .retry + .receipt').count()).toBe(1)
+      const firstAction = await box(row.locator('.retry').nth(0))
+      const secondAction = await box(row.locator('.retry').nth(1))
+      for (const [previous, next] of [[pill, firstAction], [firstAction, secondAction]] as const) {
+        if (next.top >= previous.bottom) {
+          expect(Math.abs(next.left - meta.left)).toBeLessThanOrEqual(0.5)
+          // The thread pill can be taller than an action sharing its line.
+          const lineBottom = Math.max(...[pill, firstAction, secondAction]
+            .filter((item) => item.top < next.top && item.bottom > previous.top)
+            .map((item) => item.bottom))
+          expect(Math.abs(next.top - lineBottom - 6)).toBeLessThanOrEqual(0.5)
+        } else {
+          expect(Math.abs(next.left - previous.right - 10)).toBeLessThanOrEqual(0.5)
+        }
+      }
+      if (c.width === 420) expect(receipt.top).toBeGreaterThanOrEqual(pill.bottom)
       expect(Math.abs(pill.left - meta.left)).toBeLessThanOrEqual(0.5)
       expect(receipt.left >= pill.right || receipt.top >= pill.bottom).toBe(true)
-      if (receipt.top >= pill.bottom) {
+      if (receipt.top >= secondAction.bottom) {
         expect(Math.abs(receipt.left - meta.left)).toBeLessThanOrEqual(0.5)
       }
       expect(Math.abs(glyph.right - meta.right)).toBeLessThanOrEqual(0.5)
