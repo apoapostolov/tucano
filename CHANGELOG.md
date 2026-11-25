@@ -17,6 +17,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+- **A routine's times read as different hours on a 12-hour clock.** A block at 09:00 showed "09:00 AM" and one at 21:00 showed "09:00 PM", with the same digits, so the two runs looked alike. The hour in a block's label now follows the clock setting: 9:00 AM and 9:00 PM in English, 09:00 and 21:00 on a 24-hour clock. The block stays at its own hour either way.
 - **The Quadro's columns use the same scrollbar as the sidebar.** They now show the app's dim, thin scrollbar with a transparent track instead of the browser's bright overlay bar.
 
 ### Removed
