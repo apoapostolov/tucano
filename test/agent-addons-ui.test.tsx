@@ -78,6 +78,13 @@ describe('the extensions an agent’s browser can carry', () => {
     expect(document.body.textContent).not.toContain('Downloading')
   })
 
+  it('draws a real glyph for Defuddle Clip', async () => {
+    await render()
+    const svg = rowOf('Defuddle Clip').querySelector('svg.icon')
+    expect(svg).not.toBeNull()
+    expect(svg?.querySelector('path')?.getAttribute('d')).toMatch(/[0-9]/)
+  })
+
   it('turns one on without touching the others, and sends the whole set', async () => {
     settings = { ...base, browserAddOns: { ads: true } }
     await render()
