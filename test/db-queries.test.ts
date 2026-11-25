@@ -72,6 +72,40 @@ describe('reading just what is asked', () => {
   })
 })
 
+describe('cleanConversation', () => {
+  it('removes conversation content, stops active writers first, and preserves configuration', () => {
+    const db = seeded()
+    const raw = (db as unknown as { db: DatabaseSync }).db
+    db.setSummary('c1', 'Old text', 2)
+    db.saveMessage(msg('reply', 'c1', 3, { threadId: 'm1', run: run('waiting_input') }))
+    db.createApproval(approval('pending', 'pending'))
+    db.saveArtifact({ id: 'f', agentId: 'a1', conversationId: 'c1', messageId: 'm1', kind: 'file', name: 'f', title: 'f', source: 'kept-on-disk', size: 1, createdAt: 1 })
+    raw.exec("INSERT INTO receipts (message_id, agent_id, engine, model, input_tokens, cache_read_tokens, output_tokens, ms, at) VALUES ('m1', 'a1', 'fake', 'fake', 1, 0, 1, 1, 1)")
+    db.saveQuestion({ id: 'q', conversationId: 'c1', agentId: 'a1', text: '?', askedTo: db.ownerId(), requestedBy: db.ownerId(), state: 'open', deadlineAt: 100, createdAt: 1 })
+    db.saveDelegation({ id: 'd', from: 'a1', to: 'a3', conversationId: 'c1', rootId: 'm1', originConversationId: 'c1', originMessageId: 'm1', requestedBy: db.ownerId(), text: 'work', state: 'open', createdAt: 1 })
+    raw.exec("INSERT INTO routines (id, name, agent_id, conversation_id, prompt, days, time, enabled, created_at) VALUES ('routine', 'daily', 'a1', 'c1', 'work', '[]', '09:00', 1, 1)")
+    const before = db.conversation('c1')!
+    const stopped: string[] = []
+    db.cleanConversation('c1', (id) => {
+      expect(db.message(id)).toBeDefined()
+      expect(raw.isTransaction).toBe(true)
+      stopped.push(id)
+    })
+    expect(stopped.sort()).toEqual(['m1', 'reply'])
+    expect(db.conversation('c1')).toMatchObject({ name: before.name, members: before.members, unread: 0 })
+    expect(db.conversation('c1')).toMatchObject({ summary: undefined, summaryUntil: undefined, summaryAt: undefined })
+    expect(db.message('m1')).toBeUndefined()
+    expect(db.message('reply')).toBeUndefined()
+    expect(db.message('m3')).toBeDefined()
+    expect(db.routines().some((r) => r.id === 'routine')).toBe(true)
+    for (const table of ['receipts', 'artifacts', 'approvals', 'questions', 'delegations'])
+      expect(raw.prepare('SELECT COUNT(*) AS n FROM ' + table).get()).toMatchObject({ n: 0 })
+    expect(raw.prepare("SELECT COUNT(*) AS n FROM unread WHERE message_id IN ('m1', 'm2', 'reply')").get()).toMatchObject({ n: 0 })
+    expect(raw.prepare("SELECT COUNT(*) AS n FROM message_notifications WHERE message_id IN ('m1', 'm2', 'reply')").get()).toMatchObject({ n: 0 })
+    db.close()
+  })
+})
+
 describe('indexes for what runs often', () => {
   const plan = (raw: DatabaseSync, sql: string): string => (raw.prepare(`EXPLAIN QUERY PLAN ${sql}`).all() as { detail: string }[]).map((r) => r.detail).join(' | ')
 

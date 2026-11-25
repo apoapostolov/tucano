@@ -1307,6 +1307,7 @@ export class Runner {
   }
 
   private update(m: Message, patch: Partial<Message>, attemptStart = false): void {
+    if (this.controllers.get(m.id)?.reason === 'stopped' && !this.deps.db.message(m.id)) return // Cancellation may settle after a conversation was cleaned.
     Object.assign(m, patch)
     // A card settled while the reply was working stays settled (keepDecided).
     if (m.run?.agentDraft || m.run?.proposals?.length) m.run = keepDecided(m.run, this.deps.db.message(m.id)?.run)

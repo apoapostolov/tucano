@@ -1202,6 +1202,23 @@ export class Db {
     })
   }
 
+  // Stop live writers inside this transaction before removing their persisted messages.
+  cleanConversation(id: string, stop: (messageId: string) => void = () => {}): void {
+    this.tx(() => {
+      for (const m of this.messagesWithRun(['working', 'waiting_input', 'waiting_approval']))
+        if (m.conversationId === id) stop(m.id)
+      this.db.prepare("UPDATE approvals SET state = 'expired', reason = 'The conversation was cleaned.', decided_at = ? WHERE conversation_id = ? AND state = 'pending'").run(Date.now(), id)
+      this.db.prepare('DELETE FROM receipts WHERE message_id IN (SELECT id FROM messages WHERE conversation_id = ?)').run(id)
+      this.db.prepare('DELETE FROM artifacts WHERE conversation_id = ?').run(id)
+      this.db.prepare('DELETE FROM approvals WHERE conversation_id = ?').run(id)
+      this.db.prepare('DELETE FROM questions WHERE conversation_id = ?').run(id)
+      this.db.prepare('DELETE FROM read_state WHERE conversation_id = ?').run(id)
+      this.db.prepare('DELETE FROM delegations WHERE conversation_id = ? OR origin_conversation_id = ?').run(id, id)
+      this.db.prepare('DELETE FROM messages WHERE conversation_id = ?').run(id)
+      this.db.prepare('UPDATE conversations SET summary = NULL, summary_until = NULL, summary_at = NULL WHERE id = ?').run(id)
+    })
+  }
+
   // Its messages and members go with it (foreign keys).
   deleteConversation(id: string): void {
     this.db.prepare('DELETE FROM conversations WHERE id = ?').run(id)

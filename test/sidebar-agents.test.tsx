@@ -47,6 +47,20 @@ afterEach(async () => {
 })
 
 describe("an agent's row in the sidebar", () => {
+  it.each(['channel', 'dm'] as const)('places clean immediately above delete in the %s menu', async (kind) => {
+    await render({ agents: [agent({})], conversations: [dm({}), { id: 'c1', kind: 'channel', name: 'geral', members: ['a1'] }] })
+    const target = document.querySelector(kind === 'channel' ? '.channel-row' : '.agent-row')!
+    await act(async () => {
+      const event = new window.Event('contextmenu', { bubbles: true, cancelable: true })
+      Object.assign(event, { clientX: 20, clientY: 20 })
+      target.dispatchEvent(event)
+    })
+    const labels = [...document.querySelectorAll('.menu__item')].map((el) => el.textContent)
+    const at = labels.findIndex((text) => text?.includes('Limpar conversa'))
+    expect(at).toBeGreaterThanOrEqual(0)
+    expect(labels[at + 1]).toContain(kind === 'channel' ? 'Excluir canal' : 'Apagar a conversa')
+  })
+
   it('is one list: no "Mensagens diretas", one row per agent whether or not it has a DM', async () => {
     await render({ agents: [agent({}), agent({ id: 'a2', name: 'Theo', handle: 'theo' })], conversations: [dm({}), { id: 'c1', kind: 'channel', name: 'geral', members: ['a1'] }] })
     expect(document.body.textContent).not.toContain('ensagens diretas')

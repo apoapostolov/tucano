@@ -11,6 +11,7 @@ import {
   makeWithTuca,
   openTuca,
   isTeam,
+  cleanConversation,
   deleteConversation,
   markRead,
   navigate,
@@ -414,8 +415,20 @@ export function Sidebar(): ReactNode {
     { label: L('Novo grupo com este canal', 'New group with this channel'), icon: 'plus', onClick: () => newGroup(c.id) },
     ...(admin ? channelDelete(c) : [])
   ]
+  const cleanItem = (id: string, name: string, channel: boolean): MenuItem => ({
+    label: L('Limpar conversa…', 'Clean Conversation…'),
+    icon: 'eraser',
+    danger: true,
+    onClick: () => void confirmDialog({
+      title: channel ? L(`Limpar #${name}?`, `Clean #${name}?`) : L(`Limpar a conversa com ${name}?`, `Clean the conversation with ${name}?`),
+      body: L('Todas as mensagens e threads serão removidas. O canal ou a conversa, seus membros, configurações e rotinas ficam. Não dá pra desfazer.', 'Every message and thread will be removed. The channel or conversation, its members, settings and routines stay. This cannot be undone.'),
+      confirm: channel ? L(`Limpar #${name}`, `Clean #${name}`) : L(`Limpar conversa com ${name}`, `Clean conversation with ${name}`),
+      danger: true
+    }).then((ok) => { if (ok) void cleanConversation(id) })
+  })
   const channelDelete = (c: (typeof channels)[number]): MenuItem[] => [
     'separator',
+    cleanItem(c.id, c.name, true),
     {
       label: L('Excluir canal…', 'Delete channel…'),
       icon: 'trash',
@@ -445,6 +458,7 @@ export function Sidebar(): ReactNode {
     { label: L('Configurações da conversa…', 'Conversation settings…'), icon: 'gear', onClick: () => openDialog({ kind: 'settings', id: dm.id }) },
     wikiItem(dm.id, dm.wikiCapture !== false),
     'separator',
+    cleanItem(dm.id, agentName, false),
     {
       label: L('Apagar a conversa…', 'Delete the conversation…'),
       icon: 'trash',

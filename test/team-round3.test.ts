@@ -152,6 +152,7 @@ describe('G. every event reaches only who may see what it is about', () => {
       artifact: { event: { type: 'artifact', artifact: { id: 'f1', conversationId: 'dm-ana', messageId: 'm-dm', agentId: 'a1', name: 'segredo.txt', mime: 'text/plain', size: 1, at: 1 } as unknown as Artifact }, is: 'hidden' },
       routine: { event: { type: 'routine', routine }, is: 'hidden' },
       routine_removed: { event: { type: 'routine_removed', id: 'r1', for: ana.id }, is: 'hidden' },
+      conversation_cleared: { event: { type: 'conversation_cleared', id: 'dm-ana', for: ana.id }, is: 'hidden' },
       conversation_removed: { event: { type: 'conversation_removed', id: 'dm-ana', for: ana.id }, is: 'hidden' },
       skill: { event: { type: 'skill', skill: { id: 's1', name: 'x' } as unknown as Skill }, is: 'shown' },
       skill_removed: { event: { type: 'skill_removed', id: 's1' }, is: 'shown' },

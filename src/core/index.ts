@@ -582,7 +582,7 @@ function emit(event: CoreEvent): void {
   // A new unread one: the sidebar's count goes up (each person's own).
   const conversation = more ? db.conversation(event.message.conversationId) : undefined
   if (conversation) hub.emit({ type: 'conversation', conversation })
-  if (['message', 'conversation', 'conversation_removed', 'approval', 'settings'].includes(event.type)) workspaceSummary()
+  if (['message', 'conversation', 'conversation_cleared', 'conversation_removed', 'approval', 'settings'].includes(event.type)) workspaceSummary()
 }
 
 // The phone gets each new approval and question as it happens (spec §19).
@@ -2282,6 +2282,18 @@ const api: Handlers = {
     const reach = localReach(messageId)
     const found = reach && resolveLocal(path, reach)
     if (found) toMain({ type: 'open_local', path: found.path, how: how === 'open' && (found.kind === 'folder' || found.kind === 'pdf') ? 'open' : 'reveal' })
+  },
+
+  cleanConversation: ({ id }, ctx) => {
+    const c = db.conversation(id)
+    if (!c) return
+    reach(ctx, id)
+    if (c.kind === 'channel') must(ctx.person, { kind: 'admin' })
+    db.cleanConversation(id, (messageId) => runner.stop(messageId))
+    runner.forgetSessions({ conversationId: id })
+    record(ctx, 'conversation.cleaned', id)
+    emit({ type: 'conversation_cleared', id, ...(c.kind === 'dm' ? { for: dmOwner(c, db.ownerId()) } : {}) })
+    emitConversations([id])
   },
 
   deleteConversation: ({ id }, ctx) => {
