@@ -126,8 +126,11 @@ describe('the steer pill', () => {
     expect(field()!.parentElement!.className).toBe('retry-note')
     expect(stopped).toHaveLength(0) // steering did not stop the reply
     expect(document.querySelector('.steps__list')).not.toBeNull() // and did not toggle the steps
+    // Once the reply has ended the chain carries no pill: on this head the pill is drawn in the reply's
+    // footer, where it reads Follow (follow-pill.test.tsx: what it does there, and what it sends).
     await draw(reply('done'))
-    expect(pill()).toBeNull()
+    expect(document.querySelector('.steps .steps__steer-pill')).toBeNull()
+    expect(pill()!.textContent?.trim()).toMatch(/^(Seguir|Follow)$/)
   })
 
   it('is the same row and the same field a reply that stopped opens its ways back in', async () => {
