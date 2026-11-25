@@ -15,7 +15,7 @@ import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
 import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
-import { MAX_IMAGES_PER_MESSAGE, saidAt } from '../../../shared/types'
+import { MAX_IMAGES_PER_MESSAGE, saidAt, type RunRound } from '../../../shared/types'
 import { CUT, canContinue } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
@@ -614,8 +614,45 @@ export function ThreadHead({ message, replyKey, divider, quote }: { message: Mes
   )
 }
 
+// The words of one reply or one of its Follow rounds, drawn the same way in both places.
+function SaidText({ message, text, components }: { message: Message; text: string; components: ComponentProps<typeof MessageMarkdown>['components'] }): ReactNode {
+  return (
+    <div className="md msg__text">
+      {message.author.kind === 'agent' && message.run?.status !== 'working' ? (
+        <MessageMarkdown urlTransform={safeUrl} remarkPlugins={AGENT_PLUGINS} components={components}>{wikiLinks(text)}</MessageMarkdown>
+      ) : (
+        <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(text)}</MessageMarkdown>
+      )}
+    </div>
+  )
+}
+
+// A reply that followed up draws each turn under the one before it: its instruction row and
+// toolchain, the reasoning kept with that round, then what it said. The live words belong only
+// to the newest round; the earlier rounds read from what the run has kept.
+export function Rounds({ message, said, components }: { message: Message; said: string; components: ComponentProps<typeof MessageMarkdown>['components'] }): ReactNode {
+  const rounds = message.run!.rounds!
+  const working = message.run!.status === 'working'
+  const before = rounds.slice(0, -1).map((r) => r.text).filter(Boolean).join('\n\n')
+  const live = said.startsWith(before) ? said.slice(before.length).replace(/^\n\n/, '') : said
+  return (
+    <>
+      {rounds.map((round, i) => {
+        const newest = i === rounds.length - 1
+        const text = newest && working ? live || round.text : round.text
+        return (
+          <div className="msg__round" key={round.id}>
+            <RunSteps message={message} round={round} working={working && newest} />
+            {text && <SaidText message={message} text={text} components={components} />}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 // `replyKey`: the composer it answers in (the thread it is in, or the conversation).
-const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, askReplies, quote, replyKey = message.conversationId }: { message: Message; grouped: boolean; replies?: Message[]; ask?: Message; askReplies?: Message[]; quote?: string; replyKey?: string }): ReactNode {
+export const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, askReplies, quote, replyKey = message.conversationId }: { message: Message; grouped: boolean; replies?: Message[]; ask?: Message; askReplies?: Message[]; quote?: string; replyKey?: string }): ReactNode {
   const [menu, setMenu] = useState<MenuState>(null)
   const closeMenu = useCallback(() => setMenu(null), [])
   const me = useStore((s) => s.me)
@@ -735,25 +772,21 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
               <div className="msg__anchor-pin">
                 <ThreadButton message={message} />
               </div>
-              <RunBlock message={message} />
+              {message.run.rounds?.length ? <Rounds message={message} said={said} components={agentMarkdown} /> : <RunBlock message={message} />}
             </div>
+          ) : message.run.rounds?.length ? (
+            <Rounds message={message} said={said} components={agentMarkdown} />
           ) : (
             <RunBlock message={message} />
           )
         ) : null}
-        {text && quiet && !showSaid ? (
+        {!message.run?.rounds?.length && (text && quiet && !showSaid ? (
           <button className="link small msg__said" onClick={() => setShowSaid(true)}>
             {L('Ver o que escreveu', 'See what it wrote')}
           </button>
         ) : text ? (
-          <div className="md msg__text">
-            {agent && message.run?.status !== 'working' ? (
-              <MessageMarkdown urlTransform={safeUrl} remarkPlugins={AGENT_PLUGINS} components={agentMarkdown}>{wikiLinks(text)}</MessageMarkdown>
-            ) : (
-              <MessageMarkdown urlTransform={safeUrl} remarkPlugins={PLAIN_PLUGINS} components={plainMarkdown}>{wikiLinks(text)}</MessageMarkdown>
-            )}
-          </div>
-        ) : null}
+          <SaidText message={message} text={text} components={agentMarkdown} />
+        ) : null)}
         {attached.length > 0 && (
           <div className="artifacts artifacts--mine">
             {attached.map((a) => (
@@ -2032,8 +2065,12 @@ function useNow(on: boolean): number {
 
 // One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click.
-export function RunSteps({ message }: { message: Message }): ReactNode {
+export function RunSteps({ message, round, working: roundWorking }: { message: Message; round?: RunRound; working?: boolean }): ReactNode {
   const run = message.run!
+  // A reply that followed up keeps one toolchain per round; a reply that didn't has one round's
+  // worth of steps in the flat chain, drawn as it always was.
+  const steps = round?.steps ?? run.steps
+  const working = roundWorking ?? run.status === 'working'
   // Open while the agent works, so its steps read as they go, unless the person closes it or turned
   // that off in Settings (several agents at once would fill the screen); closed after.
   const stepsOpen = useStore((s) => s.settings.stepsOpen) !== false
@@ -2041,18 +2078,17 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
   // for that in Settings › Conversations: the count still names every step the reply took.
   const mode = useStore((s) => stepsModeFor(s.settings))
   const keep = useStore((s) => s.settings.stepsLatest)
-  const shown = stepsWindow(run.steps, mode, keep)
+  const shown = stepsWindow(steps, mode, keep)
   const [toggled, setOpen] = useState<boolean | null>(null)
-  const working = run.status === 'working'
   const open = toggled ?? (working && stepsOpen)
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
 
-  if (run.steps.length === 0 && !working) return null
-  const total = run.steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
-  const failed = run.steps.filter((st) => st.status === 'error').length
-  const current = [...run.steps].reverse().find((st) => st.status === 'running')
+  if (steps.length === 0 && !working) return null
+  const total = steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
+  const failed = steps.filter((st) => st.status === 'error').length
+  const current = [...steps].reverse().find((st) => st.status === 'running')
 
   return (
     <>
@@ -2075,14 +2111,14 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
                 ? `${current.label}…`
                 : now - message.at > 60_000
                   ? L('Ainda trabalhando: tarefas longas demoram mesmo', 'Still working: long tasks do take a while')
-                  : run.steps.length === 0
+                  : steps.length === 0
                     ? L('Lendo o pedido…', 'Reading the request…')
                     : L('Pensando…', 'Thinking…')}
             </span>
           ) : (
             <span className="steps__summary">
               {run.status === 'done' && failed === 0 && `${L('Pronto', 'Done')} · `}
-              {run.steps.length} {L(`passo${run.steps.length === 1 ? '' : 's'}`, `step${run.steps.length === 1 ? '' : 's'}`)}
+              {steps.length} {L(`passo${steps.length === 1 ? '' : 's'}`, `step${steps.length === 1 ? '' : 's'}`)}
               {total > 0 && ` · ${duration(total)}`}
             </span>
           )}
@@ -2111,7 +2147,7 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
             ))}
           </ol>
         )}
-        <Thought message={message} working={working} />
+        <Thought message={message} working={working} thought={round?.thought} />
       </div>
     </>
   )
@@ -2133,13 +2169,15 @@ export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; cl
 // line it thought — the whole of it one click away. The window keeps it in memory so it can be read
 // back. Off unless the person turned it on in Settings: a reply's reasoning is its own, and most
 // people want the answer.
-export function Thought({ message, working }: { message: Message; working: boolean }): ReactNode {
+export function Thought({ message, working, thought: kept }: { message: Message; working: boolean; thought?: string }): ReactNode {
   const on = useStore((s) => s.settings.showThinking === true)
   // How much of it shows before it scrolls (Settings › Conversations): a hint's worth, or most of
   // the window when the reasoning is the thing being read. Unset: the height the block always had.
   const size = useStore((s) => s.settings.thinkingSize ?? 'sm')
   const retained = useLiveThoughtState(message.id, STREAM_MS)
-  const thought = retained?.text
+  // A finished round's reasoning lives on the run: the live cache holds only the newest turn and
+  // is cleared when the next one starts. Old replies have no kept text and still read from it.
+  const thought = kept || retained?.text
   // null: follow the reply — open while it thinks, folded once it's done. A click says otherwise.
   const [asked, setAsked] = useState<boolean | null>(null)
   const open = asked ?? working

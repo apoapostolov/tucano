@@ -11,7 +11,7 @@ import { nodeOf } from '../shared/node-link'
 import type { CoreEvent } from '../shared/rpc'
 import { ErrorCode, McpError, type CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import type { GrantLevel, LeaveAsk, TucaLeave } from '../shared/types'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type ReplyTarget, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
+import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, MAX_FOLLOW_ROUNDS, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type ReplyTarget, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunRound, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { WIKI_TOOL_NAMES, WIKI_TOOLS, wikiCall, type Wiki } from './wiki'
@@ -1766,11 +1766,28 @@ export class Runner {
     const andThink = (steps: Step[]): Step[] => (steps.some((s) => s.status === 'running') ? steps : [...steps, thinking()])
     const followUp = opts.followUp?.trim() || undefined
     // A reply that goes on keeps what it already said and did: the new turn starts under it, never
-    // instead of it. `past` is what it had said; this turn streams into `msg.text` from empty and the
-    // two are joined again on the way out (`kept`).
-    const past = followUp ? msg.text : ''
-    const pastSteps = followUp ? (opts.existing?.run?.steps ?? []).map((s): Step => (s.status === 'running' ? { ...s, status: 'done' } : s)) : []
-    const kept = (text: string): string => (past && text.trim() ? `${past}\n\n${text}` : past || text)
+    // instead of it. Each turn is a round with its own instruction row, toolchain, reasoning and
+    // words. A reply saved before rounds existed has none: its whole chain and text are the first
+    // round, so old replies need no migration.
+    const rounds: RunRound[] | undefined = followUp
+      ? opts.existing?.run?.rounds?.length
+        ? opts.existing.run.rounds.map((r) => ({ ...r, steps: [...r.steps] }))
+        : opts.existing?.run
+          ? [{ id: opts.existing.run.steps[0]?.id ?? opts.existing.id, steps: [...opts.existing.run.steps], text: opts.existing.text }]
+          : []
+      : undefined
+    // Only the newest rounds stay. A fourth pushes out the oldest one with its Follow row,
+    // toolchain, reasoning and output, so the flat steps and text follow what was kept.
+    const dropped = rounds && rounds.length >= MAX_FOLLOW_ROUNDS ? rounds.splice(0, rounds.length - MAX_FOLLOW_ROUNDS + 1) : []
+    const droppedText = dropped.map((r) => r.text).filter(Boolean).join('\n\n')
+    const past = followUp ? (droppedText && msg.text.startsWith(droppedText) ? msg.text.slice(droppedText.length).replace(/^\n\n/, '') : msg.text) : ''
+    const pastSteps = followUp ? rounds!.flatMap((r) => r.steps).map((s): Step => (s.status === 'running' ? { ...s, status: 'done' } : s)) : []
+    let roundText = ''
+    let roundThought = ''
+    const kept = (text: string): string => {
+      roundText = text.trim()
+      return past && text.trim() ? `${past}\n\n${text}` : past || text
+    }
     // A retry starts clean; a follow-up keeps what it said until the next save.
     if (!followUp) msg.text = ''
     // "Try again" passes no task: it repeats the one of the reply it's redoing. A follow-up adds the
@@ -1797,10 +1814,25 @@ export class Runner {
     const replyTrace = (traced.reply = traceReply({ agent: { id: agent.id, name: agent.name }, engine: engineId, model: modelName, effort: agent.effort, conversationId: conv.id, jobId, ...(linkedTo ? { linkedTo } : {}) }))
     const spanOn = replyTrace ? { trace: { ...replyTrace.ref, ...(linkedTo ? { linkedTo } : {}) } } : {} // where a reply this one asks for links back to
     // A follow-up keeps what the reply already did, and shows the person's instruction as a row of its own.
-    msg.run = { status: 'working', depth: opts.depth, steps: [...pastSteps, ...(followUp ? [followUpStep(followUp)] : []), thinking()], ...again, ...(replyTo ? { replyTo } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId, ...spanOn, ...decidedCards(opts.existing?.run) }
+    const instruction = followUp ? followUpStep(followUp) : undefined
+    const opening = thinking()
+    const openingSteps = [...(instruction ? [instruction] : []), opening]
+    if (rounds) rounds.push({ id: instruction?.id ?? opening.id, steps: [...openingSteps], text: '' })
+    msg.run = { status: 'working', depth: opts.depth, steps: [...pastSteps, ...openingSteps], ...again, ...(rounds ? { rounds } : {}), ...(replyTo ? { replyTo } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId, ...spanOn, ...decidedCards(opts.existing?.run) }
     // Only a new execution replaces this reply's reasoning; tool/steering updates do not.
     let attemptStart = true
     const save = (patch: Partial<Message> = {}): void => {
+      if (rounds && patch.run) {
+        // The flat chain is authoritative while the reply runs; the last round is whatever it
+        // holds after the earlier rounds' steps. Store its words and reasoning with it.
+        const before = rounds.slice(0, -1).reduce((n, r) => n + r.steps.length, 0)
+        const current = rounds[rounds.length - 1]!
+        current.steps = (patch.run.steps ?? msg.run!.steps).slice(before)
+        current.text = roundText
+        if (roundThought) current.thought = roundThought
+        const keptRounds = rounds.map((r) => ({ ...r, steps: [...r.steps] }))
+        patch = { ...patch, run: { ...patch.run, rounds: keptRounds, steps: keptRounds.flatMap((r) => r.steps) } }
+      }
       this.update(msg, patch, attemptStart)
       attemptStart = false
     }
@@ -2075,6 +2107,7 @@ export class Runner {
       if (timer) clearTimeout(timer)
       timer = null
       if (thought) {
+        roundThought += thought // reasoning outlives the live renderer cache when this round ends
         emit({ type: 'thinking', id: msg.id, text: thought })
         thought = ''
       }

@@ -14,6 +14,11 @@ import { fakeEngine } from '../src/core/engines/fake'
 import type { Engine, Turn } from '../src/core/engines/types'
 import { Gateway } from '../src/core/gateway'
 import { Runner } from '../src/core/runs'
+import { memorySystem } from '../src/core/memory'
+import { titleSystem } from '../src/core/titles'
+import { curatorSystem } from '../src/core/wiki-curator'
+import { answerSystem, catalogSystem } from '../src/core/docs-brain'
+import { chimeSystem, handoffSystem, routerSystem } from '../src/core/router'
 import { plainCipher, Secrets } from '../src/core/secrets'
 
 vi.setConfig({ testTimeout: 30_000 })
@@ -48,7 +53,10 @@ const agentMessages = (): Message[] => db.messages().filter((m) => m.author.kind
 const mine = (): Message[] => db.messages().filter((m) => m.author.kind === 'person')
 
 // Every turn the engine ran, in order: its prompt and the session it was given.
-const recorder = (opts: { sessions?: boolean } = {}): { engine: Engine; turns: Turn[] } => {
+// Helper jobs (title, router, memory) use their own prompts. A supplied reply is only for the
+// agent's own turn, so a test can name each round's words without the fake's canned Follow answer.
+const helperSystems = [titleSystem(), routerSystem(), chimeSystem(), handoffSystem(), memorySystem(), curatorSystem(), answerSystem(), catalogSystem()]
+const recorder = (opts: { sessions?: boolean; reply?: (turn: Turn) => string } = {}): { engine: Engine; turns: Turn[] } => {
   const turns: Turn[] = []
   const base = fakeEngine('claude', { delayMs: 1, ...(opts.sessions ? { sessions: true } : {}) })
   return {
@@ -57,6 +65,13 @@ const recorder = (opts: { sessions?: boolean } = {}): { engine: Engine; turns: T
       ...base,
       async *run(turn: Turn) {
         turns.push(turn)
+        if (opts.reply && !helperSystems.includes(turn.system)) {
+          const reply = opts.reply(turn)
+          yield { type: 'thinking', delta: `Thinking about ${reply}.` }
+          yield { type: 'text', delta: reply }
+          yield { type: 'done', text: reply, usage: { inputTokens: 120, cacheReadTokens: 0, outputTokens: 30 } }
+          return
+        }
         yield* base.run(turn)
       }
     }
@@ -162,6 +177,63 @@ describe('a reply that has ended', () => {
     const chain = agentMessages()[0]!.run!.steps
     expect(chain.some((s) => s.kind === 'steer' && s.input === 'change of plan')).toBe(true)
     await r.idle()
+  })
+
+  it('keeps every round in order and resumes the session without restarting it', async () => {
+    let n = 0
+    const { engine, turns } = recorder({ sessions: true, reply: () => `Round ${++n} answer` })
+    const r = runnerWith(engine)
+    await r.send('d1', 'first request')
+    await r.idle()
+
+    await follow(r, agentMessages()[0]!.id, 'go on to the second part')
+    await r.idle()
+    await follow(r, agentMessages()[0]!.id, 'and now the third part')
+    await r.idle()
+
+    const msg = agentMessages()[0]!
+    const rounds = msg.run!.rounds!
+    expect(agentMessages()).toHaveLength(1)
+    expect(rounds.map((x) => x.text)).toEqual(['Round 1 answer', 'Round 2 answer', 'Round 3 answer'])
+    expect(msg.text).toBe(rounds.map((x) => x.text).join('\n\n'))
+    // Each round has its own instruction row, toolchain and thinking row, in the same order as the flat chain.
+    expect(rounds.map((x) => x.steps.filter((s) => s.kind === 'steer').length)).toEqual([0, 1, 1])
+    for (const [i, round] of rounds.entries()) {
+      expect(round.steps.length).toBeGreaterThanOrEqual(i === 0 ? 1 : 2) // its own toolchain, not only the instruction row
+      // The first round was saved before rounds existed, so only later turns have durable reasoning.
+      if (i > 0) expect(round.thought).toContain(`Thinking about Round ${i + 1} answer.`)
+    }
+    expect(msg.run!.steps).toEqual(rounds.flatMap((x) => x.steps))
+    expect(rounds[1]!.text).not.toBe(rounds[0]!.text)
+
+    // A resumed turn with the same session id is the visible result of `sessions.begin` being
+    // called with `restart: false` (src/core/runs.ts): the reply goes on, it doesn't start over.
+    expect(turns).toHaveLength(3)
+    expect(turns.slice(1).every((turn) => turn.session?.resume === true && turn.session?.id === turns[0]!.session?.id)).toBe(true)
+  })
+
+  it('keeps only the newest three rounds after four follows', async () => {
+    let n = 0
+    const { engine } = recorder({ reply: () => `Round ${++n} answer` })
+    const r = runnerWith(engine)
+    await r.send('d1', 'first request')
+    await r.idle()
+    const id = agentMessages()[0]!.id
+    for (let i = 0; i < 4; i++) {
+      await follow(r, id, `go on ${i + 2}`)
+      await r.idle()
+    }
+
+    const msg = agentMessages()[0]!
+    const rounds = msg.run!.rounds!
+    expect(rounds).toHaveLength(3)
+    expect(rounds.map((x) => x.text)).toEqual(['Round 3 answer', 'Round 4 answer', 'Round 5 answer'])
+    expect(msg.text).not.toContain('Round 1 answer')
+    expect(msg.text).not.toContain('Round 2 answer')
+    expect(msg.run!.steps).toEqual(rounds.flatMap((x) => x.steps))
+    expect(rounds.every((x) => x.steps.filter((s) => s.kind === 'steer').length === 1)).toBe(true)
+    expect(rounds.flatMap((x) => x.steps).some((s) => s.input === 'go on 2')).toBe(false)
+    expect(rounds.flatMap((x) => x.steps).some((s) => s.input === 'go on 3')).toBe(true)
   })
 
   it('nothing follows a reply that is not there, is not an agent’s, or never ended that way', async () => {
