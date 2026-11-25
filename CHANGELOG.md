@@ -4,12 +4,28 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+
+## [0.2.48] - 2026-11-25
+
 > **Em português:**
-> - **Novo:** as imagens que uma resposta produziu aparecem como **um álbum**: uma grande à esquerda e as outras ao lado, com o restante contado na última célula. Clicar abre a janela como antes.
-> - **Novo:** o **botão direito numa imagem** abre um menu: **Salvar como…**, **Salvar em {pasta}** (um clique, na última pasta), **Copiar para a área de transferência** e, numa resposta, **Enviar para o campo de mensagem**.
-> - **Novo:** **Copiar** num anexo leva a imagem, o texto ou o arquivo para a área de transferência, com um aviso de onde colar.
-> - **Novo:** em **Configurações › Conversas** você escolhe como uma resposta se lê. O raciocínio da resposta vem em três alturas, então um pensamento longo não empurra mais a resposta pra fora da tela. Numa execução que demora, os passos aparecem todos ou só os mais novos, numa janela que os mantém no lugar enquanto o resto continua abaixo. Com um trecho selecionado, **⌘L** no Mac ou **Ctrl+L** nos outros sistemas responde àquele trecho, e o atalho pode ser desligado. O formato do relógio fica em **Configurações › Aparência** e mostra 3:05 PM ou 15:05, e essa escolha vale nas respostas, no horário de uma rotina e no que o agente recebe.
-> - **Corrigido:** o ícone de responder a uma mensagem fica na mesma linha do botão que abre a thread, na linha em que a resposta já termina, e não mais um em cima do outro.
+> - **Segurança: cinco correções** ([GHSA-gprv-8xfq-w6xf](https://github.com/eduwxyz/tucano/security/advisories/GHSA-gprv-8xfq-w6xf)). Um arquivo que um agente citou não pode mais ser trocado por um atalho pra outro arquivo depois de conferido. No nível **Normal**, um comando que apaga, publica, faz merge, envia ou paga **pede a sua aprovação**, como o nível promete. Num servidor, o acesso às páginas que os agentes servem passa a ser de cada pessoa, vale 12 horas e acaba quando ela perde o acesso. Um arquivo que o agente mostra sai com os valores do Cofre mascarados. E o limite de notificações por telefone conta o telefone, não o texto do identificador. Atualize.
+> - **Mudou:** no nível Normal, `rm -rf` numa pasta que não se refaz, `git reset --hard`, `git branch -D`, `git merge`, `npm publish` e parecidos agora pedem aprovação antes de rodar. **Aprovar e sempre permitir** no card libera aquele tipo de ação de vez.
+> - **Mudou:** num servidor, uma página de agente que já estava aberta no navegador pede, uma vez, pra ser aberta de novo pelo Tucano.
+
+### Original Changes
+
+#### Security
+
+- **A file an agent cited can't be swapped for a link to another file after it was checked.** The address the app signs for a cited file now names the file itself, not only its path, and the file is read from the one descriptor that was checked. Before, an agent with a computer could put a link in the file's place, and a person on a server who opened the address again got whatever the link led to, the server's key and database included ([GHSA-gprv-8xfq-w6xf](https://github.com/eduwxyz/tucano/security/advisories/GHSA-gprv-8xfq-w6xf)). Thanks to @leoreinaux.
+- **At the Normal level, a command that deletes, publishes, merges, sends or pays asks for your approval,** as the level says it does. `rm -rf src`, `npm publish`, `gh repo delete` or `terraform destroy` ran right away before, even after the agent had read something from outside. Committing, pushing and opening a pull request still run on their own; a rule set to "does it alone" and the No guardrails level are unchanged. On a lent computer, a terminal allowed for good no longer covers these commands.
+- **On a server, the sign-in to the pages agents serve is each person's own.** It was the same value for everyone, never expired on the server and wasn't checked again, so it outlived the 12 hours and the person's removal. It now names the person, expires on the server, and each request asks again whether that person may see that page.
+- **A file an agent shows carries none of the Cofre's values.** A text file comes out with `[cofre:NAME]` in their place, as a command's output already did; a binary file that holds one is refused, naming the key.
+- **The push relay's limit per phone counts the phone.** A handle written another way (spaces, `+` and `/`) used to get a count of its own.
+- **Hardening.** The desktop window gives a permission only to the app's own page, in its main frame; before, every request that wasn't for the camera or the microphone was granted, whoever in the window asked. Folders lent to an agent's computer are checked again each time it turns on. A page an agent serves can't send Tucano's own cookies, or one for a wider address.
+
+#### Changed
+
+- **Folders lent through a link are kept as where they lead.** Once, on the first start with this version: a folder lent as `~/work/app`, where `~/work` leads to another disk, is kept as that place, so the new check doesn't ask for it to be lent again.
 
 ### Added
 
@@ -19,13 +35,18 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 - **Right-click an image to save it, copy it, or send it back to the prompt.** The context menu offers **Save as…**, **Save to {Folder}** for a one-click save into the last folder, **Copy to clipboard**, and **Send to prompt** on reply images. The remembered folder is a personal setting; when it is missing, Tucano falls back to the dialog and explains why. Gallery cells and the lightbox image get the same menu. Thanks to Apostol Apostolov. (#335, #336)
 - **Copy any attachment to the clipboard.** A **Copy** button on an attachment card copies an image as an image, text as text, or another file as a file for the file manager, with a path fallback when a file copy is not possible. The toast says what was copied and where it can be pasted. Thanks to Apostol Apostolov.
 - **Settings › Conversations now sets how a reply reads.** A reply's reasoning comes in three heights, so a long train of thought no longer pushes the answer off the screen. A run that goes on for a while shows every step or only the newest few, in a window that holds them in place while the rest go on below. With text selected, **⌘L** on a Mac or **Ctrl+L** elsewhere replies to that excerpt, and the shortcut can be turned off. The clock format sits in Settings › Appearance and reads 3:05 PM or 15:05, a choice that follows into replies, a routine's schedule and what an agent is told. Thanks to Apostol Apostolov. (#633)
+- **Clean Conversation clears a channel or an agent DM without losing its setup.** The menu offers **Clean Conversation…** with a confirmation. It removes every message and thread, expires pending approvals and stops replies still at work. The conversation, its members, settings and routines stay.
+- **Copy a finished reply as Markdown from its footer.** A copy button appears on an agent answer that ended with text. It puts the reply as it was written on the clipboard, for a note, a document or another window.
 
 ### Fixed
 
 - **The reply-to icon sits on the line of the pill that opens the thread.** A message with a thread showed them one above the other: the pill that says how many replies it has, and under it the icon that replies to the message. They now ride the one row the reply already ends with, the pill a row's gap before the icon, in a channel and in a thread, at any width. Everything else in that row stays where it was, and the reply is a line shorter for it.
+- **The reply footer spaces its controls by 10 px.** The thread pill and the actions beside it now keep the same gap at every width.
 - **Every session in a channel keeps its own action buttons.** A channel holds the sessions of whoever answered in it, one under the other, and a session that ended has to say how it goes on. Since 0.2.45 those ways on sat on every one of them. They stayed out of sight until the pointer reached that row, so the only control in sight was the steer of the reply at work, and an older session that had stopped or run out of budget read as a dead end. **Continue**, **Try again** and **Try with instructions** are now in sight under every reply that ended, in the footer the newest one already uses. Each acts on the reply it sits under. The numbers stay quiet until the pointer arrives. Thanks to Apostol Apostolov.
 - **The steer sits in the reply's footer, under everything the reply drew.** While a reply worked, its pill stood between the steps and what the agent was thinking, where the ways on from a finished reply never are. It now ends the reply in the same row, the same pill, and with the same note field **Continue** and **Try with instructions** use, under the steps and the thinking block.
 - **The sidebar moves rows by hand again with a mouse, and its Move up and Move down commands show their arrows again.** Since 0.2.45 a press that started moving cancelled the hold, so dragging a row did nothing and the sidebar only sorted if the row was first held perfectly still for a third of a second. A mouse press now keeps its hold while it drags; a row still lifts only after that hold, so a quick flick moves nothing and a plain click still opens. The channel menu's two reorder commands also lost their glyphs in that release, which left two bare labels in a menu where every other command carries an icon. Alt+Up/Down and the saved orders are unchanged.
+
+
 
 ## [0.2.47] - 2026-11-24
 
