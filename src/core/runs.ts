@@ -3524,6 +3524,8 @@ ${note}`,
       this.steerLeftovers(control, msg)
     }
 
+    // Cleaning removes the reply while its aborted engine is still unwinding.
+    if (control.reason === 'stopped' && !db.message(msg.id)) return msg
     const endedAt = Date.now()
     const ms = endedAt - started
     const receipt: Receipt | undefined = result
