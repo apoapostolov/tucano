@@ -53,7 +53,6 @@ import {
   type TelegramInfo,
   type Settings,
   useStore,
-  EFFORTS,
   ENGINES,
   MAX_AGENT_ROUTINES,
   RUN_BUDGET_PCT,
@@ -102,7 +101,7 @@ import { voiceRefusal } from '../../../shared/voice'
 import { ACTION_KINDS, actionHint, actionMode, AUTONOMY_LEVELS, autonomyHint, autonomyLabel, COMPUTADOR, kindLabel, modeLabel, shellActions, type ActionKind, type ActionMode, type ActionRules, type Autonomy, type Policy } from '../../../shared/actions'
 import { useVoice, VOICE_CHOICES, VOICE_WHERE, VoiceSetup } from './VoiceSetup'
 import { HermesImport } from './HermesImport'
-import { AccountPicker, AccountsCard, HarnessList, HarnessMcps, ModelPicker, onGateway, OutsideGateway, usableEngines } from './Harness'
+import { AccountPicker, AccountsCard, EffortSelect, HarnessList, HarnessMcps, ModelPicker, onGateway, OutsideGateway, usableEngines } from './Harness'
 import { AppsCard } from './Apps'
 import { AgentModelsPanel } from './AgentModelsPanel'
 import { ConnectorGrid, ConnectorIconPicker, ConnectorTile, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
@@ -804,10 +803,11 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
           {pane('perfil') && (
             <Section
               title={L('Onde roda e modelo', 'Where it runs and model')}
-              help={L('O agente roda no Claude Code, no Codex ou em outro que você já usa, do jeito que você configurou: no seu plano, no gateway da empresa ou no seu provedor.', 'The agent runs in Claude Code, Codex or another configured runtime, using your plan, company gateway or provider.')}
+              help={L('O agente roda no Claude Code, no Codex ou em outro que você já usa, do jeito que você configurou: no seu plano, no gateway da empresa ou no seu provedor. O esforço diz quanto ele pensa: mais esforço pensa mais e gasta mais do plano.', 'The agent runs in Claude Code, Codex or another one you already use, the way you set it up: on your plan, your company’s gateway or your provider. The effort says how hard it thinks: more effort thinks longer and uses more of your plan.')}
             >
+              {/* The harness, the model and how hard it thinks on one row: the harness gives up the width its short name doesn't need. */}
               <Row label={L('Modelo', 'Model')} className="lrow--wide">
-                <ModelPicker value={draft.modelId} onChange={(modelId) => patch({ modelId })} />
+                <ModelPicker value={draft.modelId} onChange={(modelId) => patch({ modelId })} effort={draft.effort} onEffort={(effort) => patch({ effort }, true)} />
               </Row>
               <div className="lrow lrow--picker">
                 <AccountPicker draft={draft} patch={patch} />
@@ -827,20 +827,6 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                     </button>
                   )}
                 </p>
-              )}
-              {/* Cursor's models carry the effort in the name (…-high, …-xhigh): no separate pick. */}
-              {engine !== 'cursor' && (
-                <Row label={L('Esforço de raciocínio', 'Reasoning effort')} sub={L('Mais esforço pensa mais e gasta mais do plano.', 'More effort means longer reasoning and uses more of your plan.')}>
-                  <Select
-                    aria-label={L('Esforço de raciocínio', 'Reasoning effort')}
-                    value={draft.effort ?? null}
-                    onChange={(v) => {
-                      if (v) patch({ effort: v as Agent['effort'] }, true)
-                    }}
-                    options={EFFORTS.map((ef) => ({ value: ef.id, label: ef.label }))}
-                    placeholder={L('Escolha o esforço', 'Pick an effort')}
-                  />
-                </Row>
               )}
               <Row label={L('Limite mensal', 'Monthly limit')} sub={L(`Em milhões de tokens, conferido antes de cada turno. No limite, ${name} para e avisa. Zero é sem limite.`, `In millions of tokens, checked before every turn. At the limit, ${name} stops and tells you. Zero means no limit.`)}>
                 <NumberInput aria-label={L('Limite mensal (milhões de tokens)', 'Monthly limit (millions of tokens)')} min={0} step={0.5} value={draft.limit / 1_000_000} onChange={(n) => patch({ limit: safeLimit(n * 1_000_000) })} onBlur={() => timer.current && void flush()} className="input--short" />
@@ -4588,6 +4574,13 @@ export function SettingsPage(): ReactNode {
                     placeholder={L('Escolha', 'Pick')}
                   />
                 </Field>
+                {/* It also names each request: the same level serves both small calls. */}
+                <EffortSelect
+                  className="effort-select--inline"
+                  label={L('Esforço de raciocínio', 'Reasoning effort')}
+                  value={settings.memoryEffort ?? 'low'}
+                  onChange={(memoryEffort) => { if (memoryEffort) updateSettings({ memoryEffort }) }}
+                />
               </div>
             </Card>
           </SectionAnchor>

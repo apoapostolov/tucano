@@ -15,6 +15,8 @@ Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, N
 Object.assign(window, { tucano: {} })
 // The conversation under "Ajustar com o Tuca" watches its size.
 Object.assign(globalThis, { ResizeObserver: class { observe(): void {} unobserve(): void {} disconnect(): void {} } })
+// Select's menu measures on the next frame; linkedom has no animation frames.
+Object.assign(globalThis, { requestAnimationFrame: (cb: () => void) => setTimeout(cb, 0) as unknown as number, cancelAnimationFrame: (id: number) => clearTimeout(id) })
 // React reads typing from the input event only where the document says it has one (linkedom doesn't).
 Object.assign(document, { oninput: null })
 
@@ -238,6 +240,22 @@ describe('the first run', () => {
     await click(/^Continuar$/)
     await click(/Prefiro configurar do zero/)
     expect(text()).toContain('Quem vai trabalhar com você?')
+  })
+
+  it('offers the four thinking levels under the new agent’s model', async () => {
+    setLang('pt')
+    fake = state({ settings: { engines: engines({ claude: { installed: true, loggedIn: true, route: 'plan' } }) } })
+    await render(<Intro />)
+    await click(/^Começar$/)
+    await click(/^Continuar$/)
+    await click(/Prefiro configurar do zero/)
+    const trigger = document.querySelector<HTMLElement>('[aria-label="Esforço de raciocínio"]')!
+    expect(trigger).toBeTruthy()
+    await act(async () => trigger.click())
+    expect([...document.querySelectorAll('[role="option"]')].map((o) => o.textContent?.trim())).toEqual(['Baixo', 'Médio', 'Alto', 'Máximo'])
+    const max = [...document.querySelectorAll('[role="option"]')].find((o) => o.textContent?.trim() === 'Máximo')!
+    await click(max)
+    expect(trigger.textContent).toContain('Máximo')
   })
 })
 

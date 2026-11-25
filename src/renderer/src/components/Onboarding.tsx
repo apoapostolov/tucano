@@ -37,7 +37,7 @@ import {
   type State,
   type View
 } from '../store'
-import { ModelPicker, usableEngines } from './Harness'
+import { EffortSelect, ModelPicker, usableEngines } from './Harness'
 import { ColorPicker, LookPicker, Toggle } from './Pages'
 import { Composer, MessageList } from './Conversation'
 import { draftAgent, EFFORT, UseDraft } from './Tuca'
@@ -841,6 +841,10 @@ function MakeAgent(p: {
         <div className="onb__field">
           <span>{L('Modelo', 'Model')}</span>
           <ModelPicker value={agent.modelId} onChange={(modelId) => patch({ modelId })} />
+        </div>
+        <div className="onb__field">
+          <span>{L('Esforço de raciocínio', 'Reasoning effort')}</span>
+          <EffortSelect className="effort-select--inline" value={agent.effort} onChange={(effort) => { if (effort) patch({ effort }) }} />
         </div>
         <label className="onb__field">
           <span>{L(`O que ${agent.name.trim() || 'o agente'} faz`, `What ${agent.name.trim() || 'the agent'} does`)}</span>

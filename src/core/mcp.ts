@@ -13,7 +13,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { L } from '../shared/lang'
 import { levelAllows, type HarnessKey, type HarnessLevel } from '../shared/harness-keys'
 import type { Method, Params, Result, Snapshot } from '../shared/rpc'
-import { channelName, MAX_AGENT_ROUTINES, type Agent, type AgentColor, type Conversation, type Effort, type Message, type Routine, type RoutineInput, type Schedule } from '../shared/types'
+import { channelName, EFFORT_IDS, MAX_AGENT_ROUTINES, type Agent, type AgentColor, type Conversation, type Effort, type Message, type Routine, type RoutineInput, type Schedule } from '../shared/types'
 
 export interface McpCaller {
   person: { id: string; name: string; role: string }
@@ -142,7 +142,6 @@ const s = (description: string, extra: Json = {}): Json => ({ type: 'string', de
 const schema = (properties: Json, required: string[] = []): Json => ({ type: 'object', properties, required, additionalProperties: false })
 const IDEM = { idempotency_key: s('Optional. The same key again (from this harness, within 7 days) returns what the first call created instead of creating again.') }
 const COLORS: AgentColor[] = ['sky', 'indigo', 'violet', 'rose', 'amber', 'green', 'teal', 'graphite']
-const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh']
 const SCHEDULE: Json = {
   type: 'object',
   description: 'When it runs, in the Tucano machine\'s local time. Weekly: days + time (or times). One day only: date + time. Monthly: month_day + time.',
@@ -575,7 +574,7 @@ export class McpDoor {
             role: s('What it does, in a line: "Revisa contratos".'),
             instructions: s('How it works: its system prompt, in Markdown.'),
             model: s('A model id from get_state\'s "models" (default: default_model).'),
-            effort: s('low, medium, high or xhigh (default medium).', { enum: EFFORTS }),
+            effort: s('low, medium, high or xhigh (default medium).', { enum: EFFORT_IDS }),
             color: s('Its color.', { enum: COLORS }),
             channels: { type: 'array', items: { type: 'string' }, description: 'Channels it joins ("#name" or id).' },
             reports_to: s('The agent it answers to (name or id), if any.'),
@@ -602,7 +601,7 @@ export class McpDoor {
                 color: color && COLORS.includes(color) ? color : COLORS[snap.agents.length % COLORS.length]!,
                 instructions: need(a, 'instructions', 50_000),
                 modelId: str(a, 'model', 100) || defaults.modelId,
-                effort: effort && EFFORTS.includes(effort) ? effort : 'medium',
+                effort: effort && EFFORT_IDS.includes(effort) ? effort : 'medium',
                 limit: defaults.limit,
                 maxRoutines: MAX_AGENT_ROUTINES,
                 used: 0,
@@ -631,7 +630,7 @@ export class McpDoor {
             role: s('New role line.'),
             instructions: s('New instructions (the whole text: it replaces the old).'),
             model: s('A model id from get_state\'s "models".'),
-            effort: s('low, medium, high or xhigh.', { enum: EFFORTS }),
+            effort: s('low, medium, high or xhigh.', { enum: EFFORT_IDS }),
             color: s('Its color.', { enum: COLORS }),
             channels: { type: 'array', items: { type: 'string' }, description: 'All the channels it should be in ("#name" or id).' },
             reports_to: s('The agent it answers to (name or id); "" for no one.')
@@ -650,7 +649,7 @@ export class McpDoor {
             ...(str(a, 'role', 300) !== undefined ? { role: str(a, 'role', 300)! } : {}),
             ...(str(a, 'instructions', 50_000) ? { instructions: str(a, 'instructions', 50_000)! } : {}),
             ...(str(a, 'model', 100) ? { modelId: str(a, 'model', 100)! } : {}),
-            ...(effort && EFFORTS.includes(effort) ? { effort } : {}),
+            ...(effort && EFFORT_IDS.includes(effort) ? { effort } : {}),
             ...(color && COLORS.includes(color) ? { color } : {})
           }
           if (boss !== undefined) {
