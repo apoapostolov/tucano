@@ -1,6 +1,6 @@
 import { captureThoughtLine, restoreThoughtLine, type ThoughtLine } from '../thought-reading'
 import { stepsModeFor, stepsWindow } from '../../../shared/steps'
-import { L, lang, locale } from '../../../shared/lang'
+import { L, locale } from '../../../shared/lang'
 import { isReplyShortcut } from '../../../shared/reply-shortcut'
 import { overMonthlyLimit } from '../../../shared/limits'
 import { sectorName } from '../../../shared/org'
@@ -69,7 +69,6 @@ import { canEditChannel,
   ACCESS_REQUEST,
   countedTokens,
   sendMessage,
-  updateSettings,
   typing,
   toast,
   setTab,
@@ -651,7 +650,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
   const name = agent ? agent.name : ghost ? L('Agente', 'Agent') : (other ?? me.name)
   // A reply answers what an agent or a person said, once it stopped working (my own too: a note under it).
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
-  const hasFooter = !!(message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation))
   const openMenu = (e: React.MouseEvent<HTMLElement>): void => {
     if (!canReply || (e.target as HTMLElement).closest('a, button, input, textarea, select, [role="menu"]')) return
     const selected = selectedQuote(e.currentTarget)
@@ -1380,7 +1378,6 @@ function ThreadLink({ message, replies, noReply }: { message: Message; replies: 
 // field that answers there.
 function ThreadPanel({ rootId, conv, title, members, focusId, focusKey, onJump }: { rootId: string; conv: Conversation; title: string; members: Agent[]; focusId?: string; focusKey?: number; onJump?: (messageId: string, threadId?: string) => void }): ReactNode {
   const root = useStore((s) => messageById(s, rootId, conv.id))
-  const focus = useStore((s) => s.panel?.kind === 'thread' && s.panel.id === rootId ? s.panel.message : undefined)
   const replies = useStore((s) => repliesOf(s, conv.id, rootId))
   // A thread from before what's here comes from the core; only then is it gone if it isn't there.
   const [looked, setLooked] = useState<string | null>(null)
@@ -1941,7 +1938,7 @@ function TeamAsk({ id, agentName, askedTo, decisions, answers, answeredInText, c
 
 // What remarkMentions marked: an agent's @handle becomes its chip, which opens its profile. A handle
 // no agent has stays as it was written, in bold, as any @ always was.
-function MentionSpan({ node: _, ...props }: ComponentProps<'span'> & ExtraProps): ReactNode {
+function MentionSpan({ node: _node, ...props }: ComponentProps<'span'> & ExtraProps): ReactNode {
   const handle = (props as Record<string, unknown>)['data-mention']
   if (typeof handle !== 'string') return <span {...props} />
   return <Mention handle={handle} />
@@ -2618,7 +2615,9 @@ try {
   const kept = JSON.parse(sessionStorage.getItem(RELOAD_KEY) ?? '{}') as Record<string, string>
   for (const [k, text] of Object.entries(kept)) if (typeof text === 'string' && text.trim()) drafts.set(k, { text, images: [] })
   sessionStorage.removeItem(RELOAD_KEY)
-} catch {}
+} catch {
+  // A payload that won't parse is a draft nobody can read: it is dropped, and there is nothing to say.
+}
 // What a conversation's field starts with next time it opens (the introduction leaves the first message there, unsent).
 export const setComposerDraft = (key: string, text: string): void => void drafts.set(key, { text, images: [] })
 export const composerDraft = (key: string): string => drafts.get(key)?.text ?? ''
@@ -2628,7 +2627,9 @@ const keepForReload = (current?: { key: string; text: string }): void => {
   if (current?.text.trim()) texts[current.key] = current.text
   try {
     sessionStorage.setItem(RELOAD_KEY, JSON.stringify(texts))
-  } catch {}
+  } catch {
+    // Storage that refuses the write (full, or blocked) costs the drafts this reload: not worth a toast.
+  }
 }
 
 type DictationState = 'idle' | 'starting' | 'recording' | 'transcribing'
@@ -3024,7 +3025,9 @@ export function Composer({ conversationId, threadId, members, placeholder, tools
       if (files(e)) e.preventDefault()
     }
     const leave = (e: DragEvent): void => {
-      if (files(e) && --depth <= 0) (depth = 0), setDragging(false)
+      if (!files(e) || --depth > 0) return
+      depth = 0
+      setDragging(false)
     }
     const drop = (e: DragEvent): void => {
       if (!files(e)) return
