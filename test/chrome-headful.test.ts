@@ -6,11 +6,10 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ChromeBrowsers, hasChrome } from '../src/core/chrome'
 
-// A page that says where its window is, and whether it still has the profile's cookie: a headless
-// Chrome (--headless=new) reports a screenX on the screen (0, or a few pixels in when another Chrome
-// is open on the same machine: 10 on Windows and 22 on macOS, seen in CI on 2026-11-24), and a real
-// window reports a position outside the screen for a lane that opened one to get past a wall
-// (chrome.ts). The cookie is what shows the window is the same browser, not a new one.
+// A page that says which lane it is in and whether it still has the profile's cookie: a headless
+// Chrome (--headless=new) reports screenX 0, and one that went back to headless reports it again. Where
+// a real window actually is comes from the browser's own bounds (windowAt below), never from here. The
+// cookie is what shows the window is the same browser, not a new one.
 const PAGE = `<!doctype html><title>page</title>
 <p>the site</p>
 <script>document.title = 'x:' + screenX + '|c:' + document.cookie.includes('seen')</script>`
@@ -43,7 +42,7 @@ describe.skipIf(!hasChrome() || !screen())('a real window, for a site that only 
     url = base
     // The same server under another name: a site, for the once-per-site rule, is the host.
     other = base.replace('127.0.0.1', 'localhost') + 'other/'
-    chrome = new ChromeBrowsers(mkdtempSync(join(tmpdir(), 'tucano-chrome-')), (id, s) => shown.push(`${id}:${s}`), undefined, undefined, false, undefined, undefined, true)
+    chrome = new ChromeBrowsers(mkdtempSync(join(tmpdir(), 'tucano-chrome-')), (id, s) => shown.push(`${id}:${s}`), undefined, undefined, false, undefined, undefined, undefined, undefined, true)
   })
 
   afterAll(async () => {
@@ -60,6 +59,22 @@ describe.skipIf(!hasChrome() || !screen())('a real window, for a site that only 
   const outside = (title: string): boolean => where(title) < 0
   const offScreen = process.platform === 'win32'
 
+  // Left of the window, read from the browser itself: the one answer that is true on every system.
+  // The page's screenX is not it — a window created off the screen still says x:0 on Windows — so a
+  // test that asked the page would call an off-screen window "in front of me" and let a regression
+  // through. Silence here is the tab not being there, which the count of frames above already covers.
+  const windowAt = async (id: string): Promise<number | undefined> => {
+    const tab = (chrome as unknown as {
+      tabs: Map<string, { target: string; send: (method: string, params: unknown) => Promise<unknown> }>
+    }).tabs.get(id)
+    if (!tab) return undefined
+    const { windowId } = (await tab.send('Browser.getWindowForTarget', { targetId: tab.target })) as { windowId?: number }
+    if (typeof windowId !== 'number') return undefined
+    const { bounds } = (await tab.send('Browser.getWindowBounds', { windowId })) as { bounds?: { left: number } }
+    return bounds?.left
+  }
+
+
   it('opens the page it is on in a window, keeps the profile, and says so', async () => {
     const headless = await chrome.run('a', 'open', { url })
     expect(headless.title).toContain('c:true')
@@ -69,9 +84,9 @@ describe.skipIf(!hasChrome() || !screen())('a real window, for a site that only 
     const w = await chrome.run('a', 'headful')
     expect(w.headful).toBe(true)
     // The same address and the same cookie, now in a real window — off the screen on Windows, so it
-    // never takes the focus from what I'm doing.
+    // never takes the focus from what I'm doing: the window's own bounds, not the page's screenX.
     const inWindow = await chrome.run('a', 'frame')
-    if (offScreen) expect(outside(inWindow.title)).toBe(true)
+    if (offScreen) expect((await windowAt('a')) ?? 0).toBeLessThan(0)
     expect(inWindow.title).toContain('c:true')
     // Every answer from that lane says it is in a window, not only the one that opened it.
     const driving = await chrome.run('a', 'snapshot')
@@ -84,6 +99,7 @@ describe.skipIf(!hasChrome() || !screen())('a real window, for a site that only 
     // own window bounds, which the run of 2026-11-22 read back as 60,60 after the same call.)
     expect((await chrome.run('a', 'show')).shown).toBe(true)
     expect(shown).toContain('a:true')
+    expect(await windowAt('a')).toBeGreaterThanOrEqual(0) // back where a person can see it
     const took = await chrome.run('a', 'snapshot')
     expect(took.shown).toBe(true)
     expect(took.url).toBe(url)

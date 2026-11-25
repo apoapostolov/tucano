@@ -39,6 +39,7 @@ declare global {
       artifact?: {
         copy: (url: string, kind?: string) => Promise<{ ok: true; kind: 'image' | 'text' | 'file' | 'path' } | { ok: false }>
       }
+      pickLoginsCsv?: () => Promise<{ name: string; text: string } | null> // desktop only: a browser's exported passwords, read here
       pathOf?: (file: File) => string // a dropped or picked file's path on this computer (desktop only)
       upload?: (file: File, purpose?: 'message') => Promise<string> // a file sent to the server, and where it landed there (server only)
       onNavigate: (cb: (conversationId: string, threadId?: string) => void) => void
