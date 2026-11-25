@@ -695,6 +695,8 @@ export interface Settings {
   // The model's reasoning, dim and small under the steps, as it arrives. Unset: off, so nobody
   // meets a reply's guts unless they went looking for them (it is the agent's, not the answer's).
   showThinking?: boolean
+  // The one-click approval button under a reply offering a single action. Unset: off.
+  proceedButton?: boolean
   // How much of that reasoning shows before it scrolls (Conversation.tsx, `Thought`). Unset: the
   // height the block always had.
   thinkingSize?: 'sm' | 'md' | 'lg'

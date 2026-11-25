@@ -58,6 +58,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   steps: { kind: ['all', 'latest'], max: 20, nullable: true },
   stepsLatest: { kind: 'number', max: 10, nullable: true },
   showThinking: { kind: 'boolean', max: 10, nullable: true },
+  proceedButton: { kind: 'boolean', max: 10, nullable: true },
   thinkingSize: { kind: ['sm', 'md', 'lg'], max: 10, nullable: true },
   replyShortcut: { kind: 'boolean', max: 10, nullable: true },
   clock: { kind: ['24', '12'], max: 4, nullable: true },

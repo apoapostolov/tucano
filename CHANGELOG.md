@@ -5,10 +5,12 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 > **Em português:**
+> - **Adicionado:** um ajuste liga o botão **Proceed**. Desligado por padrão, ele fica no fim de Configurações › Você › Conversas; ligado, uma resposta que oferece uma só ação ganha um botão de aprovação.
 > - **Adicionado:** o **esforço de raciocínio** aparece onde o modelo é escolhido: na página do agente, em Modelos dos agentes (cada agente e a alteração em lote) e no modelo da memória, que também nomeia cada pedido. Onde o harness e o modelo dividem a linha, o nível vem depois deles; onde as escolhas ficam uma embaixo da outra, o nível vai embaixo do modelo. Na alteração em lote, **Manter** volta a ser uma opção e escolher só um nível muda só o nível, deixando cada agente com o modelo dele. Os modelos do Cursor já trazem o nível no nome, então ali ele não aparece.
 
 ### Added
 
+- **A setting turns the Proceed button on.** Off by default, it sits at the bottom of Settings › You › Conversations; with it on, a reply offering one action gets a single approval button.
 - **A thinking level wherever a model is picked.** The level sits after the harness and model on an agent's page, under the model in Agent models (per agent and in bulk) and under the memory model, which also names each request. In bulk, **Keep** is an option again, and a level chosen alone changes only the level while each agent keeps its model. Cursor's models carry the level in their name, so it stays hidden there.
 
 ### Fixed
