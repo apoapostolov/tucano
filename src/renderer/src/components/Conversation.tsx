@@ -651,7 +651,6 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
   const name = agent ? agent.name : ghost ? L('Agente', 'Agent') : (other ?? me.name)
   // A reply answers what an agent or a person said, once it stopped working (my own too: a note under it).
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
-  const hasFooter = !!(message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation))
   const openMenu = (e: React.MouseEvent<HTMLElement>): void => {
     if (!canReply || (e.target as HTMLElement).closest('a, button, input, textarea, select, [role="menu"]')) return
     const selected = selectedQuote(e.currentTarget)
@@ -801,9 +800,11 @@ const MessageRow = memo(function MessageRow({ message, grouped, replies, ask, as
             {L(`Aumentar o limite de ${agent.name}`, `Raise ${agent.name}’s limit`)}
           </button>
         )}
-        <ReplyFooter message={message} quote={quote} replyKey={replyKey} />
+        {/* The pill that opens this message's thread is the reply row's own: it rides that row beside the
+            reply-to glyph, so the footer is one line and not two. */}
+        <ReplyFooter message={message} quote={quote} replyKey={replyKey} {...(replies ? { threadPill: <ThreadPill message={message} replies={replies} /> } : {})} />
         {message.author.kind === 'person' && !message.threadId && <AskedFromHere message={message} />}
-        {replies && <ThreadLink message={message} replies={replies} noReply={!!message.run} />}
+        {replies && <ThreadAside message={message} replies={replies} noReply={!!message.run} />}
         {/* The routine's message had a thread of its own: still there, under the reply that carries it. */}
         {ask && !!askReplies?.length && <ThreadLink message={ask} replies={askReplies} noReply />}
       </div>
@@ -829,8 +830,10 @@ function AskedFromHere({ message }: { message: Message }): ReactNode {
 // One footer for a reply, whatever it is doing, in one place: under everything the reply drew — its
 // steps, what it thought, its words — and not between them. A reply at work carries the steer, one
 // that stopped carries the two ways back, one that finished carries its receipt. The controls stay
-// the same pill in the same row, and the field each one opens is the same field under it.
-export function ReplyFooter({ message, quote, replyKey = message.conversationId }: { message: Message; quote?: string; replyKey?: string }): ReactNode {
+// the same pill in the same row, and the field each one opens is the same field under it. The pill
+// that opens the message's thread (`threadPill`) is one of those controls: it rides this row, on the
+// same line as the reply-to glyph, so the footer is a line and not two.
+export function ReplyFooter({ message, quote, replyKey = message.conversationId, threadPill }: { message: Message; quote?: string; replyKey?: string; threadPill?: ReactNode }): ReactNode {
   const agent = useStore((s) => (message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
   const working = message.run?.status === 'working'
   const hasFooter = !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
@@ -853,6 +856,7 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId 
           {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
         </>
       )}
+      {threadPill}
       {canReply && (
         <div className="msg__actions">
           <button
@@ -1306,11 +1310,42 @@ function ThreadButton({ message }: { message: Message }): ReactNode {
   )
 }
 
-// The reply button on a short message, and, under a message with replies, a small pill: who took part,
-// how many replies and when the last came (or who's replying, or what waits on me). It opens the thread
-// on the side. With no reply yet, the system's note says what happened. `noReply` when the button is
-// already riding the run above (MessageRow).
+// The way into a message's thread, in the pieces that go where its own row does not. The pill that
+// opens it (ThreadPill) belongs to the reply's footer, beside the reply-to glyph: one row under the
+// message. What stays here under the message is the button at its corner, and the system's note when
+// the thread has no reply yet. `noReply` when the button is already riding the run above (MessageRow).
+function ThreadAside({ message, replies, noReply }: { message: Message; replies: Message[]; noReply?: boolean }): ReactNode {
+  const said = replies.some((m) => m.author.kind !== 'system')
+  const note = said ? undefined : replies.findLast((m) => m.author.kind === 'system')
+  return (
+    <>
+      {!noReply && <ThreadButton message={message} />}
+      {note && (
+        <button className={`thread-note ${note.run?.status === 'working' ? 'is-pending' : ''}`} onClick={() => openThread(message.id)} title={note.text.replace(/\*\*/g, '')}>
+          <Icon name="spark" size={12} />
+          <span>{note.text.replace(/\*\*/g, '').split(' · ')[0]}</span>
+        </button>
+      )}
+    </>
+  )
+}
+
+// A message's thread, on a surface with no reply footer of its own (a routine's message, and the ask a
+// routine's reply carries): the aside under it, then the pill on a line of its own.
 function ThreadLink({ message, replies, noReply }: { message: Message; replies: Message[]; noReply?: boolean }): ReactNode {
+  return (
+    <>
+      <ThreadAside message={message} replies={replies} {...(noReply ? { noReply } : {})} />
+      <ThreadPill message={message} replies={replies} />
+    </>
+  )
+}
+
+// Under a message with replies, a small pill: who took part, how many replies and when the last came
+// (or who's replying, or what waits on me). It opens the thread on the side, and it is a control of
+// the reply's footer, so it rides the footer's line beside the reply-to glyph instead of a line of its
+// own (ReplyFooter's `threadPill`).
+function ThreadPill({ message, replies }: { message: Message; replies: Message[] }): ReactNode {
   const agents = useStore((s) => s.agents)
   const you = useStore((s) => s.you)
   const people = useStore((s) => s.people)
@@ -1332,47 +1367,36 @@ function ThreadLink({ message, replies, noReply }: { message: Message; replies: 
   const busy = [...new Set(working.map(nameOf))]
   // What's waiting on me in there, now that answers live in threads: a question or an approval.
   const asks = said.findLast((m) => m.run?.status === 'waiting_input' || m.run?.status === 'waiting_approval')
-  const note = said.length === 0 ? replies.findLast((m) => m.author.kind === 'system') : undefined
   const last = done.at(-1)
   // New: what others said after I last had the thread open (while it's open, nothing is).
   const seen = useStore((s) => s.threadSeen[message.id] ?? 0)
   const fresh = open ? 0 : done.filter((m) => !mine(m.author) && saidAt(m) > seen).length
   const go = (): void => openThread(message.id)
+  if (said.length === 0) return null
   return (
-    <>
-      {!noReply && <ThreadButton message={message} />}
-      {note && (
-        <button className={`thread-note ${note.run?.status === 'working' ? 'is-pending' : ''}`} onClick={go} title={note.text.replace(/\*\*/g, '')}>
-          <Icon name="spark" size={12} />
-          <span>{note.text.replace(/\*\*/g, '').split(' · ')[0]}</span>
-        </button>
+    <button className={`thread-link ${open ? 'is-open' : ''} ${asks ? 'is-asking' : ''}`} onClick={go} aria-label={L(`Abrir a thread: ${repliesLabel(done.length)}`, `Open the thread: ${repliesLabel(done.length)}`)}>
+      {fresh > 0 && <span className="thread-link__dot" aria-label={L(`${fresh} nova${fresh === 1 ? '' : 's'}`, `${fresh} new`)} />}
+      <Faces authors={authors} busy={new Set(working.flatMap((m) => (m.author.kind === 'agent' ? [m.author.id] : [])))} />
+      {asks ? (
+        <span className="thread-link__asks">
+          {asks.run!.status === 'waiting_input' ? (asks.run!.askedTo && asks.run!.askedTo !== you ? L(`${nameOf(asks)} perguntou algo a ${someone(asks.run!.askedTo)}`, `${nameOf(asks)} asked ${someone(asks.run!.askedTo)} something`) : L(`${nameOf(asks)} te perguntou algo`, `${nameOf(asks)} asked you something`)) : L(`${nameOf(asks)} pede aprovação`, `${nameOf(asks)} asks for approval`)}
+        </span>
+      ) : busy.length > 0 ? (
+        <span className="shimmer">{L(`${busy.join(' e ')} ${busy.length === 1 ? 'está' : 'estão'} respondendo…`, `${busy.join(' and ')} ${busy.length === 1 ? 'is' : 'are'} replying…`)}</span>
+      ) : (
+        <strong key={done.length} className="thread-link__count">
+          {repliesLabel(done.length)}
+          {fresh > 0 && <span className="thread-link__fresh">{L(` · ${fresh} nova${fresh === 1 ? '' : 's'}`, ` · ${fresh} new`)}</span>}
+        </strong>
       )}
-      {said.length > 0 && (
-        <button className={`thread-link ${open ? 'is-open' : ''} ${asks ? 'is-asking' : ''}`} onClick={go} aria-label={L(`Abrir a thread: ${repliesLabel(done.length)}`, `Open the thread: ${repliesLabel(done.length)}`)}>
-          {fresh > 0 && <span className="thread-link__dot" aria-label={L(`${fresh} nova${fresh === 1 ? '' : 's'}`, `${fresh} new`)} />}
-          <Faces authors={authors} busy={new Set(working.flatMap((m) => (m.author.kind === 'agent' ? [m.author.id] : [])))} />
-          {asks ? (
-            <span className="thread-link__asks">
-              {asks.run!.status === 'waiting_input' ? (asks.run!.askedTo && asks.run!.askedTo !== you ? L(`${nameOf(asks)} perguntou algo a ${someone(asks.run!.askedTo)}`, `${nameOf(asks)} asked ${someone(asks.run!.askedTo)} something`) : L(`${nameOf(asks)} te perguntou algo`, `${nameOf(asks)} asked you something`)) : L(`${nameOf(asks)} pede aprovação`, `${nameOf(asks)} asks for approval`)}
-            </span>
-          ) : busy.length > 0 ? (
-            <span className="shimmer">{L(`${busy.join(' e ')} ${busy.length === 1 ? 'está' : 'estão'} respondendo…`, `${busy.join(' and ')} ${busy.length === 1 ? 'is' : 'are'} replying…`)}</span>
-          ) : (
-            <strong key={done.length} className="thread-link__count">
-              {repliesLabel(done.length)}
-              {fresh > 0 && <span className="thread-link__fresh">{L(` · ${fresh} nova${fresh === 1 ? '' : 's'}`, ` · ${fresh} new`)}</span>}
-            </strong>
-          )}
-          {!busy.length && !asks && last && (
-            <span className="thread-link__when">
-              <span className="thread-link__ago">{ago(saidAt(last))}</span>
-              <span className="thread-link__see">{L('Ver thread', 'View thread')}</span>
-            </span>
-          )}
-          <Icon name="chevron" size={12} />
-        </button>
+      {!busy.length && !asks && last && (
+        <span className="thread-link__when">
+          <span className="thread-link__ago">{ago(saidAt(last))}</span>
+          <span className="thread-link__see">{L('Ver thread', 'View thread')}</span>
+        </span>
       )}
-    </>
+      <Icon name="chevron" size={12} />
+    </button>
   )
 }
 

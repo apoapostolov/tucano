@@ -4155,10 +4155,26 @@ body.is-resizing webview {
 /* The reply-to icon is the right end of the footer line, not a row under it. */
 .msg__meta .msg__actions {
   margin: 0 0 0 auto;
+  /* And it is on the line the thread's pill sits on: its box takes the row's height, so the two
+     share the line's top and bottom instead of floating in the middle of it. */
+  align-self: stretch;
 }
 .msg__meta .msg__replyto {
   min-width: 0;
   min-height: 0;
+}
+/* The pill that opens the message's thread is a control of that same line: it rides the footer row
+   beside the reply-to glyph, on the row's own gap, not on a line of its own under the footer. It takes
+   the row's free space, so the two end the line together: the glyph keeps the right end it had, and
+   the pill sits one gap before it. The margin is the row's, so the pill takes none of its own. */
+.msg__meta .thread-link {
+  margin-top: 0;
+  margin-left: auto;
+}
+/* With a pill in the row the free space is already taken; the glyph keeps its place without asking for
+   it again (two auto margins would split the space between them). */
+.msg__meta:has(> .thread-link) .msg__actions {
+  margin-left: 0;
 }
 
 /* The message whose thread is open on the side, lit, so the two sides read as one. */
