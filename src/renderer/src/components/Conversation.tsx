@@ -845,6 +845,7 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
   if (!steerable && !hasFooter && !resumable && !retryable && !canReply) return null
   return (
     <div className="msg__meta">
+      {threadPill}
       {steerable && <Steer message={message} />}
       {resumable && (
         <button className="steps__ask-pill retry" aria-label={L('Continuar', 'Continue')} onClick={() => continueRun(message.id)}>
@@ -858,7 +859,6 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
           {message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && (!message.run.delegation || message.run.receipt) && <KeepInWiki messageId={message.id} />}
         </>
       )}
-      {threadPill}
       {canReply && (
         <div className="msg__actions">
           <button

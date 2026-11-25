@@ -1,30 +1,15 @@
-// One line under a message, not two: the glyph that replies to the message and the pill that opens its
-// thread are controls of the same reply row (`.msg__meta`), so they start on the same pixel row and
-// never touch. Laid out as Conversation.tsx draws them, in a channel's reply row and in a thread's, at
-// 1440 px and at 420 px.
-//
-// The DOM, verbatim from MessageRow → ReplyFooter (the `{threadPill}` line sits before `.msg__actions`,
-// whose `margin-left: auto` keeps the glyph at the row's right end):
-//
-//   <article class="msg msg--agent">
-//     <div class="msg__gutter">…</div>
-//     <div class="msg__body">
-//       <div class="md msg__text"><p>…</p></div>
-//       <div class="msg__meta">
-//         <div class="receipt"><button class="receipt__line">Sonnet · 12.4k tokens · 7s</button></div>
-//         <button class="thread-link">…</button>            ← ThreadPill, ReplyFooter's `threadPill`
-//         <div class="msg__actions"><button class="msg__replyto">…</button></div>
-//       </div>
-//     </div>
-//   </article>
-//
-// The pill's own line under the footer is what the change removes: before it, `.thread-link` was a
-// sibling of `.msg__meta`, so the row and the pill stacked.
 import { existsSync, readFileSync } from 'node:fs'
 import { chromium, type Locator } from 'playwright'
 import { expect, it } from 'vitest'
 
 const css = readFileSync(new URL('../src/renderer/src/styles.css', import.meta.url), 'utf8')
+
+it('draws the thread pill before the provider receipt in ReplyFooter', () => {
+  const source = readFileSync(new URL('../src/renderer/src/components/Conversation.tsx', import.meta.url), 'utf8')
+  const footer = source.slice(source.indexOf('export function ReplyFooter('), source.indexOf('function Steer('))
+  expect(footer.indexOf('{threadPill}')).toBeGreaterThan(0)
+  expect(footer.indexOf('{threadPill}')).toBeLessThan(footer.indexOf('<ReceiptLine'))
+})
 
 const DOT = '<span class="thread-link__dot" aria-label="2 new"></span>'
 const FACES = (n: number): string =>
@@ -34,16 +19,15 @@ const CHEVRON =
 const REPLY_GLYPH =
   '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 17H7a4 4 0 0 1 0-8h10M13 7l-4 5 4 5"></path></svg>'
 
-// The footer row: a receipt's numbers on the left, then the thread's pill, then the reply-to glyph at
-// the right end — the children ReplyFooter draws, in the order it draws them.
+// ReplyFooter draws the thread pill before the provider receipt and reply glyph.
 const ROW = `
   <div class="msg__meta">
-    <div class="receipt"><button class="receipt__line">Sonnet · 12.4k tokens · 7s</button></div>
     <button class="thread-link" aria-label="Open the thread: 12 replies">
       ${DOT}${FACES(2)}<strong class="thread-link__count">12 replies<span class="thread-link__fresh"> · 2 new</span></strong>
       <span class="thread-link__when"><span class="thread-link__ago">2m</span><span class="thread-link__see">View thread</span></span>
       ${CHEVRON}
     </button>
+    <div class="receipt"><button class="receipt__line">Sonnet · 12.4k tokens · 7s</button></div>
     <div class="msg__actions">
       <button class="msg__replyto" title="Reply to message" aria-label="Reply to message">${REPLY_GLYPH}</button>
     </div>
@@ -80,7 +64,7 @@ const cases: { name: string; html: () => string; width: number; row: number }[] 
 ]
 
 for (const c of cases) {
-  it.skipIf(!existsSync(chromium.executablePath()))(`puts the reply-to glyph on the thread pill's line: ${c.name}`, async () => {
+  it.skipIf(!existsSync(chromium.executablePath()))(`keeps the thread pill first and left-aligned: ${c.name}`, async () => {
     const browser = await chromium.launch({ headless: true })
     try {
       const page = await browser.newPage({ viewport: { width: c.width, height: 900 } })
@@ -96,21 +80,21 @@ for (const c of cases) {
       const pill = await box(row.locator('.thread-link'))
       const glyph = await box(row.locator('.msg__replyto'))
       const receipt = await box(row.locator('.receipt'))
-      // Same line: the two boxes start on the same pixel row (a pixel or two of rounding allowed).
-      expect(Math.abs(glyph.offsetTop - pill.offsetTop)).toBeLessThanOrEqual(2)
-      // The order the design intends: the pill first, the glyph at the row's right end, apart by the
-      // row's own gap (14 px), never overlapping.
+      const style = await row.locator('.msg__meta').evaluate((el) => {
+        const css = getComputedStyle(el)
+        return { columnGap: css.columnGap, rowGap: css.rowGap }
+      })
+      expect(style).toEqual({ columnGap: '14px', rowGap: '6px' })
+      expect(await row.locator('.msg__meta > .thread-link + .receipt').count()).toBe(1)
+      expect(Math.abs(pill.left - meta.left)).toBeLessThanOrEqual(0.5)
+      expect(receipt.left >= pill.right || receipt.top >= pill.bottom).toBe(true)
+      if (receipt.top >= pill.bottom) {
+        expect(Math.abs(receipt.left - meta.left)).toBeLessThanOrEqual(0.5)
+      }
+      expect(Math.abs(glyph.right - meta.right)).toBeLessThanOrEqual(0.5)
       expect(glyph.left).toBeGreaterThanOrEqual(pill.right)
-      expect(glyph.left - pill.right).toBeGreaterThanOrEqual(12)
-      expect(glyph.left - pill.right).toBeLessThanOrEqual(16)
-      // Both inside the row: nothing wrapped onto a line of its own, nothing spilled out of it.
       expect(pill.top).toBeGreaterThanOrEqual(meta.top - 0.5)
-      expect(pill.bottom).toBeLessThanOrEqual(meta.bottom + 0.5)
       expect(glyph.bottom).toBeLessThanOrEqual(meta.bottom + 0.5)
-      // And the row's other control did not move to make room: the receipt's numbers still start the
-      // row, and the pill sits beside them or on the line below them, never over them.
-      expect(Math.round(receipt.left - meta.left)).toBe(0)
-      expect(pill.left >= receipt.right || pill.top >= receipt.bottom - 0.5).toBe(true)
     } finally {
       await browser.close()
     }
