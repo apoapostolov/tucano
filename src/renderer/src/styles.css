@@ -4093,7 +4093,7 @@ body.is-resizing webview {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 14px;
+  column-gap: 10px;
   margin-top: 4px;
 }
 .msg__meta .receipt,
