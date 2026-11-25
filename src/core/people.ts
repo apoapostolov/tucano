@@ -6,7 +6,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { L } from '../shared/lang'
 import { MENTION } from '../shared/mention-text'
 import type { CoreEvent, Snapshot, Wire } from '../shared/rpc'
-import { CODE_SPANS, scopePerson, type Agent, type Approval, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf } from '../shared/types'
+import { CODE_SPANS, delegating, scopePerson, type Agent, type Approval, type Artifact, type BrowserView, type ComputerInfo, type Connector, type Conversation, type Delegation, type Inbox, type InboxProposal, type Memory, type Message, type Person, type PersonAccess, type Question, type Role, type Routine, type RoutineInput, type Settings, proposalsOf, type AskEntry } from '../shared/types'
 import type { Db } from './db'
 import { can, isAdmin, isPersonalSetting, must } from './policy-people'
 import { maskSecrets } from './step-text'
@@ -579,6 +579,34 @@ export class People {
 
   harnessNoticeSeen(person: Pick<Person, 'id'>, now = Date.now()): void {
     this.db.setMeta(`harnessSeen:${person.id}`, String(now))
+  }
+
+  // The Asks page's history: answered and closed questions, newest first, from the conversations
+  // this person can see. A question from a DM that isn't theirs comes without where it was asked.
+  history(person: Person, limit = 50): AskEntry[] {
+    const shown = (q: Question): AskEntry => {
+      // A finished ask keeps the widgets it was asked with, not just the numbered text: the same
+      // decisions, partial answers and recommendation the open card carries.
+      const run = this.db.message(q.id)?.run
+      const saved = (run as { recommended?: (number | null)[] } | undefined)?.recommended
+      // The driver marks the recommendation on the option itself; older records carry it as a
+      // per-decision index. Both end up as the index list the finished card draws.
+      const recommended = saved ?? run?.questions?.map((d) => {
+        const i = (d.options ?? []).findIndex((o) => o.recommended)
+        return i < 0 ? null : i
+      })
+      const ask = run?.questions?.length
+        ? {
+            decisions: run.questions,
+            ...(run.answers ? { answers: run.answers } : {}),
+            ...(recommended?.some((p) => p !== null) ? { recommended } : {})
+          }
+        : {}
+      if (this.canSeeConversation(person, this.conversationOf(q.conversationId))) return { ...q, ...ask }
+      const { conversationId: _c, threadId: _t, ...only } = q
+      return { ...only, ...ask }
+    }
+    return this.db.pastQuestions(limit).filter((q) => this.canSeeConversation(person, this.conversationOf(q.conversationId))).map(shown)
   }
 
   // The cards members sent to the admins that no one has applied or dismissed yet (a reply's cards

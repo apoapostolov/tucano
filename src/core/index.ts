@@ -3421,10 +3421,12 @@ const api: Handlers = {
     }
   },
   answerQuestion: ({ id, text }, ctx) => runner.answer(id, text, ctx.person),
+  questionsHistory: ({ limit }, ctx) => people.history(ctx.person, limit), // answered and closed, newest first: the Asks page's History
   removeTucaLeave: ({ id }, ctx) => {
     if (db.removeTucaLeave(id, ctx.person.id)) emit({ type: 'leaves' })
   },
   confirmQuestion: ({ id, ok }, ctx) => runner.confirm(id, ok, ctx.person),
+  dismissQuestion: ({ id }, ctx) => runner.dismiss(id, ctx.person), // leave an ask unanswered: it closes and the reply goes on
   // A question's decisions, answered on the card one at a time and then sent: by whoever may answer it (Runner.decidable).
   answerDecision: ({ messageId, index, answer }, ctx) => runner.answerDecision(messageId, index, answer, ctx.person),
   submitDecisions: ({ messageId }, ctx) => runner.submitDecisions(messageId, ctx.person),

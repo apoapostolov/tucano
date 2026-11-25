@@ -10,12 +10,13 @@ import { getState, inboxCount, isTeam, pendingApprovals, teamMode, toast, update
 import { useHubTabs } from './Hubs'
 import { useSidebarParts } from './Missions'
 
-export type TopItem = 'tuca' | 'approvals' | 'board' | 'knowledge' | 'operations'
-export const TOP_ITEMS: readonly TopItem[] = ['tuca', 'approvals', 'board', 'knowledge', 'operations']
+export type TopItem = 'tuca' | 'asks' | 'approvals' | 'board' | 'knowledge' | 'operations'
+export const TOP_ITEMS: readonly TopItem[] = ['tuca', 'asks', 'approvals', 'board', 'knowledge', 'operations']
 
 export const topLabel = (item: TopItem, team: boolean): string =>
   ({
     tuca: 'Tuca',
+    asks: L('Perguntas', 'Asks'),
     approvals: team ? L('Pra você', 'For you') : L('Aprovações', 'Approvals'),
     board: L('Quadro', 'Board'),
     knowledge: L('Conhecimento', 'Knowledge'),
@@ -37,7 +38,13 @@ export function useAvailable(): TopItem[] {
   const agents = useStore((s) => s.agents.filter(isTeam).length)
   const knowledge = useHubTabs('knowledge').length
   const operations = useHubTabs('operations').length
-  return TOP_ITEMS.filter((i) => (i === 'board' ? agents > 0 && parts.shows('board') : i === 'knowledge' ? knowledge > 0 : i === 'operations' ? operations > 0 : true))
+  // A setting hides an empty Asks or Approvals entry. The page being open is never empty: it keeps
+  // its own way back, and something that starts waiting brings the entry back on its own.
+  const emptyAsks = useStore((s) => s.settings.hideEmptyAsks === true && s.inbox.questions.length === 0 && s.view?.kind !== 'asks')
+  const emptyApprovals = useStore((s) => s.settings.hideEmptyApprovals === true && s.view?.kind !== 'approvals' && (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length) === 0)
+  return TOP_ITEMS.filter((i) =>
+    i === 'asks' ? !emptyAsks : i === 'approvals' ? !emptyApprovals : i === 'board' ? agents > 0 && parts.shows('board') : i === 'knowledge' ? knowledge > 0 : i === 'operations' ? operations > 0 : true
+  )
 }
 
 // Takes an item out of the sidebar, or brings it back. Taking it out from the item says where it comes
@@ -54,6 +61,7 @@ export function setHidden(item: TopItem, hide: boolean, quiet = false): void {
 // whole inbox, with people), Conhecimento's suggested memories and proposed skills.
 export function useWaitingIn(): Partial<Record<TopItem, number>> {
   const approvals = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const asks = useStore((s) => s.inbox.questions.length)
   const knowledge = useHubTabs('knowledge').reduce((n, t) => n + t.badge, 0)
-  return { approvals, knowledge }
+  return { asks, approvals, knowledge }
 }
