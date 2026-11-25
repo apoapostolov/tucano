@@ -39,7 +39,7 @@ npm test
 
 Both must pass, and GitHub runs them (plus the build) on macOS, Linux and Windows for every pull request. Tests cover the core: the CLI stream parsers (with recorded outputs), context building, runs, limits, governance, routines, memory, the migration from the old name. A change in the core comes with a test.
 
-For UI changes, attach a screenshot to the pull request. `node scripts/screens.mjs <folder>` opens the built app with Playwright on a temporary database and saves screenshots of the main screens.
+For UI changes, attach a screenshot to the pull request. `node scripts/screens.mjs tour` opens the built app and saves the main screens. For area stories, run `node scripts/screens.mjs <area>`; see [docs/screens-harness.md](docs/screens-harness.md).
 
 ## How the code is laid out
 

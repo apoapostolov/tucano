@@ -47,7 +47,7 @@ npm run dev
 - **Electron's binary.** Electron 44 downloads its binary the first time it runs, not at `npm install`. If `npm run dev` stops on that (offline, proxy), run `node node_modules/electron/install.js` once.
 - **Data folder.** `npm run dev` keeps its data in `%APPDATA%\Tucano Dev`; the installed app uses `%APPDATA%\Tucano`. `TUCANO_DATA`, `TUCANO_FAKE_ENGINES=1` and `TUCANO_SEED` work as on the Mac (in PowerShell: `$env:TUCANO_FAKE_ENGINES = '1'; npm run dev`).
 - **Checks:** `npm run typecheck` and `npm test`. The Docker tests run when Docker Desktop is running and `node:22-bookworm` is pulled; otherwise they are skipped.
-- **Screenshots:** `node scripts/screens.mjs <folder>` works as on the Mac.
+- **Screenshots:** `node scripts/screens.mjs tour` captures the main screens; use `node scripts/screens.mjs <area>` for an area story. See [screens-harness.md](screens-harness.md).
 
 ### Packaging
 

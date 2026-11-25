@@ -252,7 +252,8 @@ You need Node 24+ and one harness signed in. `npm run dev` keeps its own data in
 | `npm run build` | Builds into `out/` |
 | `npm run install-app` | Builds `Tucano.app` and installs it in `/Applications` |
 | `npm run release` | Builds the `.dmg` and `.zip` and publishes `package.json`'s version as a GitHub release (`-- --no-publish` only builds) |
-| `node scripts/screens.mjs <folder>` | Opens the build with Playwright on a temporary database and saves screenshots |
+| `node scripts/screens.mjs tour` | Opens the built app with Playwright on a temporary database and saves screenshots |
+| `node scripts/screens.mjs <area>` | Runs an area story; see [docs/screens-harness.md](docs/screens-harness.md) |
 | `npm run dist:win` | On Windows: builds the installer, `dist/tucano-win-x64.exe` (not code-signed) |
 
 **On Windows?** Development works there too, with Git for Windows. See [docs/windows.md](docs/windows.md) for what you need, how it differs from the Mac, and every change made for it.

@@ -1,223 +1,160 @@
-// Opens the built app with Playwright and saves screenshots of the main flows.
-// Uses a fresh data directory and the fake engines, so nothing touches your
-// real database or spends your subscription. Pass --real to use the real CLIs.
-import { _electron as electron } from 'playwright'
-import { execFileSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+#!/usr/bin/env node
+// Runs one screenshot story and reports what it wrote.
+//
+//   node scripts/screens.mjs <area> [--out <dir>] [--size WxH] [--tag before|after] [--app <dir|exe>]
+//   node scripts/screens.mjs <area> -- <extra args for a legacy script>
+//
+// `<area>` is the name a story file already has: `session-buttons` runs
+// `scripts/screens-session-buttons.mjs`. A story that imports `scripts/screens/lib.mjs` runs through
+// the harness; one that still opens Electron itself is run as it always was, with its own out dir as
+// the first argument, and the runner says which of the two it did.
+//
+// The exit code is non-zero when a story throws (a failed assertion) or when its windows logged a page
+// error or a console error. A story that only prints a warning and carries on is not proof, so the
+// harness has no way to report one.
+import { spawnSync } from 'node:child_process'
+import { readFileSync, readdirSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { cleanup, closeAll, runErrors, runInfo, runOutput, setRun } from './screens/lib.mjs'
 
-const out = process.argv.find((a, i) => i >= 2 && !a.startsWith('--')) ?? 'screens'
-const real = process.argv.includes('--real')
-mkdirSync(out, { recursive: true })
+const SCRIPTS = dirname(fileURLToPath(import.meta.url))
+const ROOT = resolve(SCRIPTS, '..')
 
-const data = mkdtempSync(join(tmpdir(), 'tucano-'))
-for (const dir of [tmpdir(), '/tmp']) rmSync(join(dir, 'tucano-demo-tasks.json'), { force: true }) // the demo connector starts from its sample list
-const app = await electron.launch({
-  args: ['.'],
-  env: { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', ...(real ? {} : { TUCANO_FAKE_ENGINES: '1' }) }
+// Something the person typed wrong: the message is the whole answer, so no stack is printed.
+class UsageError extends Error {}
+
+const usage = () => {
+  const areas = readdirSync(SCRIPTS)
+    .filter((name) => name.startsWith('screens-') && name.endsWith('.mjs'))
+    .map((name) => name.replace(/^screens-/, '').replace(/\.mjs$/, ''))
+    .sort()
+  return `usage: node scripts/screens.mjs <area> [--out <dir>] [--size WxH] [--tag before|after] [--app <dir|exe>]
+
+areas: ${areas.join(', ')}
+`
+}
+
+const FLAGS = { '--out': 'out', '--size': 'size', '--tag': 'tag', '--app': 'app' }
+
+function parseArgs(argv) {
+  const args = { area: null, out: null, size: null, tag: null, app: null, passthrough: [], help: false }
+  // `--out=x` and `--out x` are the same flag, so one spelling is read here and the other never is.
+  const separator = argv.indexOf('--')
+  const ownArgs = separator < 0 ? argv : argv.slice(0, separator)
+  args.passthrough = separator < 0 ? [] : argv.slice(separator + 1)
+  const tokens = ownArgs.flatMap((arg) => {
+    const at = arg.startsWith('--') ? arg.indexOf('=') : -1
+    return at > 0 ? [arg.slice(0, at), arg.slice(at + 1)] : [arg]
+  })
+  const positional = []
+  for (let i = 0; i < tokens.length; i += 1) {
+    const arg = tokens[i]
+    if (arg === '-h' || arg === '--help') args.help = true
+    // The two ways a person already asks for a before run, kept working.
+    else if (arg === '--before') args.tag = 'before'
+    else if (arg === '--after') args.tag = 'after'
+    else if (FLAGS[arg]) {
+      const value = tokens[++i]
+      if (!value || value.startsWith('--')) throw new UsageError(`${arg} requires a value`)
+      args[FLAGS[arg]] = value
+    }
+    else if (arg.startsWith('-')) throw new UsageError(`unknown flag ${arg}`)
+    else positional.push(arg)
+  }
+  args.area = positional[0] ?? null
+  args.passthrough.push(...positional.slice(1))
+  return args
+}
+
+const say = (...lines) => console.log(lines.join('\n'))
+
+function fail(message) {
+  console.error(`screens: ${message}`)
+  process.exitCode = 1
+}
+
+// A story from before the harness: it launches Electron itself and takes its out dir as argv[2].
+function runLegacy({ story, out, tag, passthrough, source }) {
+  const extra = []
+  if (tag === 'before' && source.includes("'--before'")) extra.push('--before')
+  const argv = [story, out, ...extra, ...passthrough]
+  say(`mode: legacy (${argv.slice(1).join(' ')})`)
+  const child = spawnSync(process.execPath, argv, { cwd: ROOT, stdio: 'inherit' })
+  if (child.error) return fail(`${story} did not start: ${child.error.message}`)
+  return child.status ?? 1
+}
+
+async function runLibrary({ area, story, out, size, tag, app, passthrough }) {
+  say(`mode: library ${story.slice(ROOT.length + 1).split('\\').join('/')}`)
+  setRun({ area, script: story, out, size, tag, app, mode: 'library' })
+  const module = await import(pathToFileURL(story).href)
+  const steps = module.default
+  if (typeof steps !== 'function') throw new Error(`${story} exports no default async function: a story is a function`)
+  // A story may pin its own viewport; a `--size` on the command line wins over the file.
+  const run = runInfo()
+  if (!size && module.size) setRun({ size: module.size })
+  await steps({ area, out: run.out, size: run.size ?? module.size ?? null, tag, args: passthrough ?? [] })
+  return 0
+}
+
+function readStory(file) {
+  try {
+    return readFileSync(file, 'utf8')
+  } catch {
+    throw new UsageError(`no story at ${file}\n\n${usage()}`)
+  }
+}
+
+// What every run ends with: the frames, the frames.json files, and any error nobody allowed.
+async function report(story) {
+  const { frames, framesJson } = runOutput()
+  const module = await import(pathToFileURL(story).href)
+  const allow = (module.allowErrors ?? []).map((pattern) => new RegExp(pattern))
+  const unexpected = runErrors().filter((error) => !allow.some((pattern) => pattern.test(error)))
+  if (frames.length) say(`frames (${frames.length}):`, ...frames.map((frame) => `  ${frame}`))
+  else say('frames: none written')
+  if (framesJson.length) say('frames.json:', ...framesJson.map((file) => `  ${file}`))
+  if (unexpected.length) {
+    console.error(`screens: ${unexpected.length} page error(s)`)
+    for (const error of unexpected.slice(0, 20)) console.error(`  ${error}`)
+    process.exitCode = 1
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  if (args.help || !args.area) {
+    say(usage())
+    if (!args.area && !args.help) process.exitCode = 1
+    return
+  }
+  if (args.tag && !['before', 'after'].includes(args.tag)) throw new UsageError(`--tag takes before or after; got ${args.tag}`)
+  const file = args.area.endsWith('.mjs') ? args.area : join(SCRIPTS, `screens-${args.area}.mjs`)
+  const story = resolve(ROOT, file)
+  const source = readStory(story)
+  const tag = args.tag ?? 'after'
+  const area = args.area.replace(/^screens-/, '').replace(/\.mjs$/, '')
+  const out = resolve(ROOT, args.out ?? join('frames', area, tag))
+  setRun({ area, script: story, out, size: args.size, tag, app: args.app, mode: 'library' })
+  if (!/from\s+['"]\.\/screens\/lib\.mjs['"]/.test(source)) {
+    process.exitCode = runLegacy({ story, out, tag, passthrough: args.passthrough, source })
+    return
+  }
+  try {
+    await runLibrary({ area, story, out, size: args.size, tag, app: args.app, passthrough: args.passthrough })
+  } finally {
+    try {
+      await closeAll()
+      await report(story)
+    } finally {
+      cleanup()
+    }
+  }
+}
+
+main().catch((error) => {
+  console.error(`screens: ${error instanceof UsageError ? error.message : (error?.stack ?? error)}`)
+  cleanup()
+  process.exitCode = 1
 })
-const win = await app.firstWindow()
-await win.setViewportSize({ width: 1280, height: 820 })
-await win.waitForSelector('.sidebar')
-const errors = []
-win.on('pageerror', (e) => errors.push(String(e)))
-win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-
-const shot = async (name) => win.screenshot({ path: `${out}/${name}.png` })
-const busy = '.msg .shimmer, .msg .typing, .system-line.is-pending'
-// Waits until nothing is routing or answering, including replies that start later (handoffs).
-async function settle() {
-  const deadline = Date.now() + (real ? 180_000 : 15_000)
-  let quiet = 0
-  while (Date.now() < deadline && quiet < (real ? 6 : 3)) {
-    await win.waitForTimeout(500)
-    quiet = (await win.locator(busy).count()) === 0 ? quiet + 1 : 0
-  }
-}
-async function send(text) {
-  await win.fill('.composer textarea', text)
-  await win.keyboard.press('Enter')
-  await win.waitForTimeout(400)
-}
-
-await shot('01-inicio')
-
-// No mention, two agents: the router picks.
-await send('O build do checkout quebrou depois do último merge. Alguém consegue olhar o que pode ser?')
-await win.waitForSelector('.system-line')
-await shot('02-router-escolhendo')
-await settle()
-await shot('03-router-escolheu')
-
-// The agent asks a question with ask_user; the next message answers it.
-await send('@lia antes de sugerir qualquer coisa, use a ferramenta de pergunta pra me perguntar qual é o meu prazo.')
-await settle()
-await shot('04-pergunta')
-await send('Até sexta.') // the message box still answers, as before
-await settle()
-await shot('05-respondeu-pergunta')
-
-// Several decisions: a card under the reply, one at a time, then a review before sending.
-await send('@lia me ajuda a decidir')
-await settle()
-await win.waitForSelector('.ask--answer')
-await shot('05a-decisoes')
-await win.locator('.ask-option').first().click()
-await win.fill('.ask__text', 'Até sexta.')
-await win.keyboard.press('Enter')
-await shot('05b-decisoes-revisao')
-await win.locator('.ask .btn--primary').click()
-await settle()
-
-// Handoff: Lia mentions Theo, who answers next.
-await send('@lia peça pro Theo calcular a mediana de 3, 9 e 4, mencionando ele com arroba. Você não calcula.')
-await settle()
-await shot('06-handoff')
-
-await win.click('text=Uso e limites')
-await shot('07-uso')
-
-// ---------- M3: connector, grant, tools, approval ----------
-
-await win.click('.nav-item:has-text("Conectores")')
-await win.click('button:has-text("Adicionar personalizado")')
-await win.click('button[role=radio]:has-text("Local")')
-await win.click('text=Preencher com o servidor de demonstração')
-await shot('08-novo-conector')
-await win.click('.connector__actions button.btn--primary')
-await win.waitForSelector('.connector-modal .tag:text-is("conectado")', { timeout: 20_000 }) // the new connector opens in a window
-await shot('09-conector-ferramentas')
-
-// Give Lia read and write on it.
-await win.click('.section:has-text("Agentes") .nav-item:has-text("Lia")')
-await win.click('.tabs [role=tab]:has-text("Ferramentas")')
-await win.click('.grant:has-text("Tarefas") button:has-text("Ler e escrever")')
-await win.click('button:has-text("Salvar")')
-await win.waitForSelector('.saved')
-await shot('10-grant')
-
-await win.click('text=Abrir DM')
-await send('Liste as minhas tarefas.')
-await settle()
-await shot('11-consultou')
-
-await send('Apague a tarefa 2, por favor.')
-await settle()
-await win.waitForSelector('.approval', { timeout: real ? 60_000 : 5000 })
-await shot('12-pedido-de-aprovacao')
-
-await win.click('.approval button:has-text("Aprovar")')
-await settle()
-await shot('13-aprovado')
-
-await win.click('.nav-item:has-text("Aprovações")')
-await shot('14-aprovacoes')
-
-await win.click('.nav-item:has-text("Conectores")')
-await win.click('.catalog__card.is-mine')
-await shot('15-ferramenta-nova')
-
-// Theo (Codex) reads the same connector.
-await win.click('.section:has-text("Agentes") .nav-item:has-text("Theo")')
-await win.click('.tabs [role=tab]:has-text("Ferramentas")')
-await win.click('.grant:has-text("Tarefas") button:has-text("Ler"):not(:has-text("escrever"))')
-await win.click('button:has-text("Salvar")')
-await win.waitForSelector('.saved')
-await win.click('text=Abrir DM')
-await send('Quais tarefas ainda estão abertas?')
-await settle()
-await shot('16-codex-consultou')
-
-// ---------- M4: memory ----------
-
-await win.click('.section:has-text("Mensagens diretas") .nav-item:has-text("Lia")')
-await send('lembra que eu prefiro PR pequeno, com descrição em bullets')
-await settle()
-await win.waitForSelector('.memory-chip', { timeout: real ? 60_000 : 5000 })
-await shot('17-guardou-memoria')
-
-// Fill the DM past the window, with a preference only I state, then summarize.
-if (!real) {
-  await send('eu prefiro café sem açúcar nas reuniões')
-  await settle()
-  for (let i = 1; i <= 14; i++) {
-    await send(`mensagem de enchimento ${i}`)
-    await settle()
-  }
-  await win.click('.topbar button:has-text("Resumo")')
-  await win.click('.summary button:has-text("Resumir agora")')
-  await win.waitForSelector('.summary textarea', { timeout: 10_000 })
-  await shot('18-resumo')
-}
-
-await win.click('.nav-item:has-text("Memória")')
-await shot('19-memoria')
-
-// ---------- M5: the agent's computer ----------
-
-await win.click('.section:has-text("Agentes") .nav-item:has-text("Lia")')
-await win.click('.tabs [role=tab]:has-text("Ferramentas")')
-await win.click('[aria-label="Computador"] button:text-is("Linux isolado")')
-await win.waitForSelector('.computer .tag:text-is("ligado")', { timeout: 300_000 })
-await shot('20-computador')
-await win.click('text=Abrir DM')
-if (real) {
-  await send('Cria um dashboard simples de vendas por mês (dados inventados, 6 meses) numa página HTML com gráfico, sobe ele num serviço e me mostra um print.')
-  await settle()
-} else {
-  await send("rode `mkdir -p site && printf '<meta charset=utf-8><h1 style=\"font:48px sans-serif;color:#2f6bf2\">Vendas por mês</h1><p>Jan 10 · Fev 14 · Mar 9</p>' > site/index.html && ls site`")
-  await settle()
-  await send('suba `cd site && python3 -m http.server 8000 --bind 0.0.0.0` na porta 8000')
-  await settle()
-  await send('print de http://localhost:8000')
-  await settle()
-  await send('mostre `site/index.html`')
-  await settle()
-}
-await shot('21-computador-chat')
-await win.click('.artifact-image')
-await win.waitForTimeout(500)
-await shot('22-painel-print')
-await win.keyboard.press('Escape') // close the screenshot lightbox
-const open = win.locator('.artifact-card--service button:has-text("Abrir")')
-if (await open.count()) {
-  await open.first().click()
-  await win.waitForTimeout(1500)
-  await shot('23-painel-servico')
-}
-
-// ---------- M6: routines ----------
-
-await win.click('.nav-item:has-text("Rotinas")')
-await shot('24-rotinas-vazio')
-await win.click('.cal__empty button:has-text("Fechamento da semana")')
-await win.locator('.routine-form select').nth(1).selectOption({ label: '#engenharia' })
-await shot('25-rotina-nova')
-await win.click('button:has-text("Criar rotina")')
-await win.locator('.routine-form').waitFor({ state: 'detached' })
-// The routine is a block on the calendar. The calendar shows only what's still to come, so past
-// Friday 17:00 this week's block is gone: find it next week, and come back to this one for the run.
-const routine = win.locator('.cal__ev:has-text("Fechamento da semana")')
-const later = (await routine.count()) === 0
-if (later) await win.keyboard.press('ArrowRight')
-await routine.first().click()
-await win.click('.cal-pop button:has-text("Rodar agora")')
-if (later) await win.keyboard.press('t')
-const ran = win.locator('.cal__ev:has-text("Fechamento da semana"):has(.cal__ev-ok)')
-await ran.waitFor({ timeout: 120_000 })
-await win.keyboard.press('Escape') // the popover can cover the run's block
-await ran.first().click()
-await shot('26-rotinas')
-await win.click('.cal-pop button:has-text("Ver a")')
-await settle()
-await shot('27-rotina-na-conversa')
-
-console.log(errors.length ? `ERRORS:\n${errors.join('\n')}` : 'no console errors')
-console.log(`data: ${data}`)
-await app.close()
-// Computers made by this run go with it.
-const prefix = `tucano-${createHash('sha1').update(data).digest('hex').slice(0, 6)}-`
-const ids = execFileSync('docker', ['ps', '-aq', '--filter', `name=${prefix}`], { encoding: 'utf8' }).trim().split('\n').filter(Boolean)
-if (ids.length) execFileSync('docker', ['rm', '-f', ...ids], { stdio: 'ignore' })
