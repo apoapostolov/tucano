@@ -44,6 +44,18 @@ afterEach(async () => {
 })
 
 describe("an agent's page saves by itself", () => {
+  it('gives its own settings a scoped danger zone for deleting old messages', async () => {
+    await show(<AgentPage id="a1" />, [{ ...lia, retentionDays: 7 }], 'perfil')
+    const card = [...document.querySelectorAll('.card--danger')].find((el) => el.textContent?.includes('Histórico deste bot'))!
+    expect(card.textContent).toContain('Apagar o histórico dele mais antigo que X dias')
+    expect(card.textContent).toContain('Só pra este bot')
+    expect(card.textContent).toContain('Apagar o histórico deste bot')
+    const days = card.querySelector('input[type="number"][aria-label="Dias"]') as HTMLInputElement | null
+    expect(days).toBeTruthy()
+    expect(days!.getAttribute('value')).toBe('7')
+    expect(card.textContent).toContain('nada disso')
+  })
+
   it('has no Save button', async () => {
     await show(<AgentPage id="a1" />)
     expect([...document.querySelectorAll('button')].some((b) => /^Salvar$/.test(b.textContent ?? ''))).toBe(false)
