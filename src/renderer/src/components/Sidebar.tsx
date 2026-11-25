@@ -13,6 +13,8 @@ import {
   isTeam,
   cleanConversation,
   deleteConversation,
+  goBack,
+  goForward,
   markRead,
   navigate,
   openDialog,
@@ -26,6 +28,7 @@ import {
   amOwner,
   canEditChannel,
   inboxCount,
+  docsWaitingCount,
   initials,
   personById,
   roleLabel,
@@ -289,6 +292,8 @@ export function Sidebar(): ReactNode {
   const agents = useStore((s) => s.agents)
   const settings = useStore((s) => s.settings)
   const platform = useStore((s) => s.platform)
+  const canBack = useStore((s) => s.navBack.length > 0)
+  const canForward = useStore((s) => s.navForward.length > 0)
   const people = useStore((s) => s.people)
   const you = useStore((s) => s.you)
   // With a team: who I am, what waits on me, and only what my role may change.
@@ -299,7 +304,7 @@ export function Sidebar(): ReactNode {
   // A new install's sidebar starts short and grows with the missions (Missions.tsx).
   const parts = useSidebarParts()
   const fresh = (p: SidebarPart): (() => void) | undefined => (parts.fresh(p) ? () => parts.seen(p) : undefined)
-  const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length))
+  const pending = useStore((s) => (teamMode(s) ? inboxCount(s) : pendingApprovals(s).length + docsWaitingCount(s)))
   const asks = useStore((s) => s.inbox.questions.length)
   const agentOf = (id: string): Agent | undefined => agents.find((a) => a.id === id)
   const channels = conversations.filter((c) => c.kind === 'channel')
@@ -516,6 +521,22 @@ export function Sidebar(): ReactNode {
     <aside className="sidebar">
       <div className="sidebar__drag" />
       <div className="workspace">
+        <button
+          className="icon-btn"
+          disabled={!canBack}
+          title={L(`Voltar (${shortcut(platform, '[')})`, `Back (${shortcut(platform, '[')})`)}
+          onClick={goBack}
+        >
+          <Icon name="back" />
+        </button>
+        <button
+          className="icon-btn"
+          disabled={!canForward}
+          title={L(`Avançar (${shortcut(platform, ']')})`, `Forward (${shortcut(platform, ']')})`)}
+          onClick={goForward}
+        >
+          <Icon name="forward" />
+        </button>
         <WorkspaceMenu />
       </div>
 
