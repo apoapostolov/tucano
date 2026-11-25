@@ -243,6 +243,6 @@ describe('the sidebar in the order the person left it', () => {
   it('draws the top items in their order, and one taken out stays out', async () => {
     await render({ agents: [agent({})], conversations: [], settings: { navOrder: ['operations', 'board', 'approvals'], sidebarHidden: ['approvals'] } as State['settings'] })
     const top = [...document.querySelectorAll('.top-row')].map((r) => r.getAttribute('data-order-id'))
-    expect(top).toEqual([null, 'operations', 'board', 'knowledge']) // the Tuca stays first, unsortable; Aprovações stays out
+    expect(top).toEqual([null, 'operations', 'board', 'asks', 'knowledge']) // the Tuca stays first; Asks sits before the hidden Aprovações for an older order
   })
 })
