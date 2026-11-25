@@ -10381,7 +10381,7 @@ button.wk-pill.is-on { box-shadow: 0 0 0 1.5px var(--k); background: color-mix(i
   flex: none;
 }
 .connector-modal__icon .grow {
-  flex: 1 1 140px;
+  flex: 1 1 100%;
   min-width: 0;
 }
 /* The same tile in the steps that pick a connector: it brings its own surface, so the circle goes. */
