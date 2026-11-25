@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('tucano', {
         { result: 'saved'; path: string; folder: string } | { result: 'missing_folder'; folder: string } | { result: 'cancelled' | 'failed' }
       >,
     copy: (url: string): Promise<boolean> => ipcRenderer.invoke('image:clipboard', { url }) as Promise<boolean>,
+    // The picture sitting on the clipboard, so a connector can wear it without a file dialog.
+    paste: (): Promise<{ mime: string; data: string } | null> => ipcRenderer.invoke('image:fromClipboard') as Promise<{ mime: string; data: string } | null>,
     read: (url: string): Promise<{ mime: string; data: string } | null> => ipcRenderer.invoke('image:read', { url }) as Promise<{ mime: string; data: string } | null>,
     // Where a picture goes in one click before the person has saved one themselves.
     folder: (): Promise<{ folder: string } | null> => ipcRenderer.invoke('image:folder') as Promise<{ folder: string } | null>

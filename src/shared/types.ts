@@ -971,6 +971,9 @@ export interface Connector {
   args?: string[]
   envKeys?: string[] // names only; values are secrets
   auth: ConnectorAuth
+  // The picture this connector wears: a small image kept with it, or an https image address.
+  // Empty: the store's mark, or the icon of its kind.
+  icon?: string
   status: ConnectorStatus
   error?: string
   errorDetail?: string // the raw error and its causes (a certificate's code, the DNS's), under "Ver detalhes"

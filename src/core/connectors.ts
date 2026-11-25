@@ -32,6 +32,37 @@ const RECONNECT_DELAYS_MS = [2_000, 5_000, 15_000, 60_000, 300_000]
 // How long a renewal's answer is kept for another request that renews with the same refresh token.
 const RENEWAL_KEEP_MS = 60_000
 
+// A connector's picture: a small inline image, or an https image address. It rides in every connector
+// list, so the renderer shrinks bitmaps to 96 px and these caps guard icons sent straight to the core.
+const ICON_DATA_URL = /^data:image\/(?:png|jpeg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/
+const ICON_HTTPS = /^https:\/\/\S+$/i
+const ICON_MAX_CHARS = 32_000
+const ICON_URL_MAX_CHARS = 2_048
+const SVG_UNSAFE = /<script|javascript:|<foreignObject|on\w+\s*=/i
+
+function iconValue(value: string): string {
+  const icon = value.trim()
+  if (!icon) return ''
+  if (icon.length > (icon.startsWith('data:') ? ICON_MAX_CHARS : ICON_URL_MAX_CHARS))
+    throw new Error(L('A imagem é grande demais para um ícone. Escolha uma menor.', 'That image is too big for an icon. Pick a smaller one.'))
+  if (ICON_DATA_URL.test(icon)) {
+    if (icon.startsWith('data:image/svg+xml;base64,')) {
+      const svg = Buffer.from(icon.slice('data:image/svg+xml;base64,'.length), 'base64').toString('utf8')
+      if (SVG_UNSAFE.test(svg))
+        throw new Error(L('Esse SVG tem script ou HTML dentro, e um ícone não pode ter.', 'That SVG carries a script or HTML inside, and an icon cannot.'))
+    }
+    return icon
+  }
+  if (ICON_HTTPS.test(icon)) {
+    try {
+      if (new URL(icon).protocol === 'https:') return icon
+    } catch {
+      // not an address: the message below says what is allowed
+    }
+  }
+  throw new Error(L('Isso não é uma imagem (PNG, JPEG, WebP, GIF ou SVG) nem um endereço https.', 'That is not an image (PNG, JPEG, WebP, GIF or SVG) or an https address.'))
+}
+
 // The authorization page sent the browser back without a code: why, and what to do.
 export function notAuthorized(url: URL): string {
   const error = url.searchParams.get('error')
@@ -430,6 +461,14 @@ export class ConnectorManager {
 
   private redirectFor(provider: AppProvider): string {
     return provider === 'slack' && this.deps.fixedCallbackUrl ? this.deps.fixedCallbackUrl() : this.deps.oauthCallbackUrl()
+  }
+
+  // The picture a connector wears instead of the store's mark (or its kind's glyph). Empty goes back.
+  // Nothing about the connection changes, so no reconnect follows.
+  async setIcon(id: string, icon: string): Promise<void> {
+    if (!this.deps.db.connector(id)) throw new Error(L('Esse conector não existe mais.', 'That connector no longer exists.'))
+    this.deps.db.setConnectorIcon(id, iconValue(icon) || null)
+    this.emitConnector(id)
   }
 
   // Sets or replaces the token of a connector that signs in with one, and connects with it.

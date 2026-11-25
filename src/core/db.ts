@@ -723,6 +723,9 @@ const COLUMNS: [string, string, string][] = [
   ['conversations', 'title', 'TEXT'],
   // What became of an approved call: 'done', 'error' or 'not_run' (src/shared/types.ts).
   ['approvals', 'result', 'TEXT'],
+  // The picture a connector wears: a small image as a data URL, or an https image address.
+  // Empty: the store's mark, or the icon of its kind.
+  ['connectors', 'icon', 'TEXT'],
   // The message a reply answers, with the quote it showed (src/shared/types.ts: Message.reply).
   ['messages', 'reply', 'TEXT'],
   // How long an agent's history is kept (src/shared/retention.ts), in days: its replies and its own DMs.
@@ -1835,8 +1838,14 @@ export class Db {
       args: JSON.parse(str(r['args']) || '[]') as string[],
       envKeys: JSON.parse(str(r['env_keys']) || '[]') as string[],
       auth: str(r['auth']) as ConnectorAuth,
+      icon: r['icon'] ? str(r['icon']) : undefined,
       tools: this.tools(id).map(({ inputSchema: _, ...t }) => t)
     }
+  }
+
+  // The picture a connector wears; null goes back to the store's mark (or the icon of its kind).
+  setConnectorIcon(id: string, icon: string | null): void {
+    this.db.prepare('UPDATE connectors SET icon = ? WHERE id = ?').run(icon, id)
   }
 
   saveConnector(c: { id: string; name: string; kind: Connector['kind']; url?: string; command?: string; args?: string[]; envKeys?: string[]; auth: ConnectorAuth }): void {

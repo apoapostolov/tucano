@@ -32,6 +32,7 @@ declare global {
           opts?: { dir?: string; dialog?: boolean }
         ) => Promise<{ result: 'saved'; path: string; folder: string } | { result: 'missing_folder'; folder: string } | { result: 'cancelled' | 'failed' }>
         copy: (url: string) => Promise<boolean>
+        paste: () => Promise<{ mime: string; data: string } | null>
         read: (url: string) => Promise<{ mime: string; data: string } | null>
         // The folder a one-click save lands in before anything has been saved: the system's own.
         folder?: () => Promise<{ folder: string } | null>
