@@ -1,4 +1,4 @@
-import { CLASSIFIER_JOBS, classifierFor, classifierJobsOf, classifierLabel, classifierList, JEV_CLASSIFIER, jobAbout, jobLabel, jobNotice, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
+import { CLASSIFIER_JOBS, classifierJobsOf, classifierLabel, classifierList, JEV_CLASSIFIER, jobAbout, jobLabel, jobNotice, PROVIDERS, providerSpec, type ClassifierConfig, type ClassifierJob, type ClassifierProvider } from '../../../shared/classifiers'
 import { L, lang, locale, type Lang } from '../../../shared/lang'
 import { timeOpts } from '../../../shared/clock'
 import { nodeOf } from '../../../shared/node-link'
@@ -4060,7 +4060,6 @@ export function SettingsPage(): ReactNode {
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   // At work, Jev and Telegram stay: the person decides, told what leaves the gateway.
   const work = onGateway(settings)
-  const routingClassifier = classifierFor(settings, 'routing')
   const team = useStore(teamMode)
   const admin = useStore(amAdmin)
   const owner = useStore(amOwner)
@@ -4566,28 +4565,6 @@ export function SettingsPage(): ReactNode {
               lead={L('Que trabalho cada classificador faz. Um trabalho sem classificador fica desligado, e o do roteador volta pro modelo pequeno.', 'Which job each classifier does. A job with no classifier stays off, and the router’s one falls back to the small model.')}
             >
               <ClassifierUsesCard />
-            </Card>
-          </SectionAnchor>
-        )}
-
-        {on('modelos') && admin && (
-          <SectionAnchor id="models-router" sections={structure}>
-            <Card title={L('Roteador', 'Router')} section="models-router" lead={L('O que lê a conversa e decide quem responde nos canais: um modelo pequeno, ou um classificador. Não concede permissão nenhuma.', 'What reads the conversation and decides who replies in channels: a small model, or a classifier. It grants no permissions at all.')}>
-              {routingClassifier ? (
-                <div className="key-row">
-                  <Icon name="spark" />
-                  <div className="grow">
-                    <strong>{classifierLabel(routingClassifier)}</strong>
-                    <p className="muted small">
-                      {L('Um classificador escolhe quem responde neste workspace. Troque ou desligue em Classificadores.', 'A classifier picks who replies in this workspace. Change or turn it off in Classifiers.')}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <Field label={L('Modelo do roteador', 'Router model')} hint={L('Prefira um modelo rápido: ele roda antes de cada resposta num canal.', 'Choose a fast model: it runs before every channel reply.')}>
-                  <ModelSelect value={settings.routerModel} onChange={(routerModel) => updateSettings({ routerModel })} />
-                </Field>
-              )}
             </Card>
           </SectionAnchor>
         )}

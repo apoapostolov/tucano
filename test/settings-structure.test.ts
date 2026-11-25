@@ -51,6 +51,15 @@ describe('settings ownership and visibility', () => {
     }
   })
 
+  it('leaves no Router section in the Models group or its search', () => {
+    const sections = settingsStructure(all)
+    expect(sections.map(section => section.id)).not.toContain('models-router')
+    expect(settingsTabStructure('modelos', sections).map(section => section.id)).not.toContain('models-router')
+    for (const term of ['Router', 'Router model', 'Who replies in channels']) {
+      expect(searchSettings(sections, term).map(hit => hit.section.id), term).not.toContain('models-router')
+    }
+  })
+
   it('shows Connections › Traces to an admin only', () => {
     const shown = (admin: boolean): boolean => settingsStructure({ admin, owner: false, team: true, servers: false }).some((s) => s.id === 'connections-traces' && s.visible)
     expect(shown(true)).toBe(true)
