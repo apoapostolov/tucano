@@ -1085,7 +1085,7 @@ export const setTopic = (id: string, topic: string): Promise<void> => call('setT
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
 export const setChannelMembers = (id: string, agentIds: string[]): Promise<void> => call('setChannelMembers', { id, agentIds })
-export const cleanConversation = (id: string): Promise<void> => call('cleanConversation', { id })
+export const cleanConversation = (id: string): Promise<void> => fire(L('Não consegui limpar a conversa.', "I couldn't clean the conversation."), 'cleanConversation', { id })
 export const deleteConversation = (id: string): Promise<void> => call('deleteConversation', { id })
 export const markRead = (id: string): void => { void call('markRead', { conversationId: id }) }
 
