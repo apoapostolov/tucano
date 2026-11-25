@@ -15,6 +15,7 @@ import { answerDecision, continueRun, isTeam, loadTasks, navigate, openThread, p
 import { ApprovalCard, QuestionCard, ReplyText } from './Conversation'
 import { ArtifactCard } from './Panel'
 import { ago, AgentAvatar, tokens as tokenWords } from './ui'
+import { DocBoardLine } from './docs/DocBoardLine'
 
 type Col = 'todo' | 'doing' | 'you' | 'done'
 type Group = 'none' | 'agent' | 'sector'
@@ -193,7 +194,11 @@ export function BoardPage(): ReactNode {
       const id = el.dataset.card!
       if (el.classList.contains('ghost')) continue
       const r = el.getBoundingClientRect()
-      const p = { x: r.left - box.left, y: r.top - box.top }
+      // Where the card rests, not where a slide still running (or a hover lift) shows it: measured
+      // mid-slide, the next render would take that for a move and slide it back from the other side.
+      const t = getComputedStyle(el).transform
+      const m = t && t !== 'none' ? new DOMMatrix(t) : undefined
+      const p = { x: r.left - box.left - (m ? m.m41 + ((1 - m.m11) * el.offsetWidth) / 2 : 0), y: r.top - box.top - (m ? m.m42 + ((1 - m.m22) * el.offsetHeight) / 2 : 0) }
       next.set(id, p)
       const was = rects.current.get(id)
       if (!was) {
@@ -798,11 +803,13 @@ function CardView({ c, ctx, focus, fresh, fam, onOpen, onDecide }: { c: BoardTas
   const ready = c.family.slice(1).filter((k) => k.column === 'done').length
   let body: ReactNode
   if (c.column === 'done') {
-    const result = c.state === 'stopped' ? L('Parado antes de terminar', 'Stopped before finishing') : firstLine(c.last?.text ?? '') || (c.parts.length ? L('O time entregou', 'The team delivered') : L('Pronto', 'Done'))
+    const cancelled = !!c.last?.run?.cancelled // the person dismissed its question: not a result, so grey like a stop
+    const result = cancelled ? L('Pergunta cancelada', 'Question cancelled') : c.state === 'stopped' ? L('Parado antes de terminar', 'Stopped before finishing') : firstLine(c.last?.text ?? '') || (c.parts.length ? L('O time entregou', 'The team delivered') : L('Pronto', 'Done'))
     body = (
       <>
         <div className="bd-done-row"><Face agent={a} /><div className="bd-c-title">{c.title}</div><span className="time">{c.endedAt ? new Date(c.endedAt).toLocaleTimeString(locale(), timeOpts({ hour: '2-digit', minute: '2-digit' })) : ''}</span></div>
-        <div className={`bd-res ${c.state === 'stopped' ? 'stopped' : ''}`}><Check /><span>{result}</span></div>
+        <div className={`bd-res ${c.state === 'stopped' || cancelled ? 'stopped' : ''}`}><Check /><span>{result}</span></div>
+        <DocBoardLine artifactIds={c.replies.flatMap((r) => r.run?.artifactIds ?? [])} />
       </>
     )
   } else if (c.column === 'you') {
