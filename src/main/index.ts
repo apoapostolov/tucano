@@ -759,6 +759,21 @@ ipcMain.handle('pick-folder', async (event, o?: { start?: string; hidden?: boole
   return r.canceled ? null : (r.filePaths[0] ?? null)
 })
 
+// A connector's icon from the system clipboard: the first image on it, handed to the page to shrink.
+// A clipboard with text only, or nothing, comes back as null so the picker can say so.
+ipcMain.handle('image:fromClipboard', async (event) => {
+  if (!fromApp(event)) return null
+  const items = await clipboard.read().catch(() => [])
+  for (const item of items) {
+    const mime = item.types.find((t) => t.startsWith('image/'))
+    if (!mime) continue
+    const blob = await item.getType(mime)
+    if (!(blob instanceof Blob) || !blob.size) continue
+    return { mime, data: Buffer.from(await blob.arrayBuffer()).toString('base64') }
+  }
+  return null
+})
+
 // A picture right-clicked in a conversation: saved where the person says, or taken to the clipboard.
 // The page names it by the URL it was shown from; the bytes are read here (src/main/image-bytes.ts),
 // so a page never gets to ask for a file of its choosing.

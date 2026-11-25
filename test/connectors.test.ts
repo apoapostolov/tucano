@@ -325,3 +325,49 @@ describe('a secret kept in 1Password', () => {
     await mine.closeAll()
   })
 })
+
+// A server added by hand wore a terminal or a globe: the mark came from the store's entry, and it has
+// none. Now it can wear a picture kept in the database, so a backup carries it.
+describe('the picture a connector wears', () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+  const svg = (body: string): string => `data:image/svg+xml;base64,${Buffer.from(body).toString('base64')}`
+  const add = async (): Promise<string> => {
+    const id = await connectors.add({ name: 'Google Services', kind: 'remote', url: `${base}/mcp`, auth: 'none' })
+    await connectors.connect(id) // the add already started one; this waits for it before the database closes
+    return id
+  }
+
+  it('keeps a picked image on the connector and takes it away again', async () => {
+    const id = await add()
+    await connectors.setIcon(id, png)
+    expect(connectors.get(id)!.icon).toBe(png)
+    await connectors.setIcon(id, '') // back to the store's mark, or the icon of its kind
+    expect(connectors.get(id)!.icon).toBeUndefined()
+  })
+
+  it('keeps an https image address as the address, not as a data URL', async () => {
+    const id = await add()
+    await connectors.setIcon(id, 'https://example.com/logo.png')
+    expect(connectors.get(id)!.icon).toBe('https://example.com/logo.png')
+    await expect(connectors.setIcon(id, 'http://example.com/logo.png')).rejects.toThrow(/https|imagem|image/)
+    expect(connectors.get(id)!.icon).toBe('https://example.com/logo.png')
+  })
+
+  it('refuses what is not an image, a script SVG, and a picture too big to be a tile', async () => {
+    const id = await add()
+    await expect(connectors.setIcon(id, 'data:text/html;base64,PHNjcmlwdD4=')).rejects.toThrow(/imagem|image/)
+    await expect(connectors.setIcon(id, svg('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script></svg>'))).rejects.toThrow(/SVG|script/)
+    await expect(connectors.setIcon(id, `data:image/png;base64,${'A'.repeat(32_001)}`)).rejects.toThrow(/grande|big/)
+    expect(connectors.get(id)!.icon).toBeUndefined()
+  })
+
+  it('carries the picture through a backup-shaped copy of the database', async () => {
+    const id = await add()
+    await connectors.setIcon(id, png)
+    const backup = join(mkdtempSync(join(tmpdir(), 'tucano-icon-backup-')), 'backup.db')
+    db.backupTo(backup)
+    const copy = new Db(backup)
+    expect(copy.connector(id)?.icon).toBe(png)
+    copy.close()
+  })
+})
