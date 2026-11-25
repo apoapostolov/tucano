@@ -398,6 +398,8 @@ export class People {
         return event.for === person.id ? event : undefined
       case 'settings':
         return { type: 'settings', settings: this.settingsFor(person, event.settings) }
+      case 'message_removed':
+        return conversation(event.conversationId) ? event : undefined
       // Gone from a DM (or someone's own memory): only its person hears of it (its id is no one else's to know).
       case 'conversation_cleared':
       case 'conversation_removed':

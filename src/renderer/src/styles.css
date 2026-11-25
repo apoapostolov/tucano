@@ -2374,6 +2374,121 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* A queued prompt's row: one line, with the grip to drag it, the clock and the words, then the thread,
+   Start and two-press Drop at the row's end. The grip and the drop line are from the 0.2.44 work drawer,
+   reconciled with this driver's row (its dot, glyphs and armed state are already styled above). */
+.work-row__grip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 3px 1px;
+  border-radius: 6px;
+  color: var(--text-3);
+  cursor: grab;
+}
+.work-row:hover .work-row__grip,
+.work-row__grip:hover {
+  color: var(--text-2);
+  background: var(--hover);
+}
+.work-row__grip:active {
+  cursor: grabbing;
+}
+.work-row__grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* The row a dragged prompt would land on: an inset line where it will go, not a filled row. */
+.work-row--queued.is-over {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+.work-row--queued .work-row__text {
+  color: var(--text-2);
+}
+/* Start adds work rather than ending it, so it takes the accent on hover, unlike the x glyphs. */
+.work-row__start:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Steer on a working row, Follow on a finished one: the same pill, in the same place between the row's
+   words and its glyphs. A pill keeps its own width so a long prompt shortens instead of wrapping it. */
+.work-row .steps__ask {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+.work-row__follow {
+  flex: none;
+}
+.work-row__steer .steps__ask-pill,
+.work-row__follow .steps__ask-pill {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+/* The field is the row's own second line, one line tall, from where its words start to the row's right
+   edge. The row is a grid only while that field is open; shut, it stays the flex line it always was, so
+   nothing about a working row moves until a person steers it or follows one. */
+.work-row:has(.steps__ask-note--row) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+/* The wrapper and its inner grid dissolve, so the pill keeps the row it was on and the field becomes
+   the row's own second line. */
+.work-row:has(.steps__ask-note--row) > .work-row__steer,
+.work-row:has(.steps__ask-note--row) > .work-row__steer > .steps__ask,
+.work-row:has(.steps__ask-note--row) > .work-row__follow,
+.work-row:has(.steps__ask-note--row) > .work-row__follow > .steps__ask {
+  display: contents;
+}
+/* A working row's words start 19px in (the go button's 6px padding, the 6px dot and its 7px gap); a
+   finished row's start past the state glyph, 24px in. The field starts there and takes the row's
+   remaining width, so 100% plus a margin would hang it past the row's end. */
+.work-row:has(.steps__ask-note--row) .steps__ask-note--row {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-left: 19px;
+}
+.work-row--done:has(.steps__ask-note--row) .steps__ask-note--row {
+  margin-left: 24px;
+}
+.steps__ask-note.steps__ask-note--row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: none;
+}
+.steps__ask-note--row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}
+.steps__ask-send {
+  flex: none;
+  color: var(--text-3);
+}
+.work-row .steps__ask-send:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.work-row .steps__ask-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+  background: none;
+}
 .composer {
   border: 1px solid var(--border);
   border-radius: 20px;

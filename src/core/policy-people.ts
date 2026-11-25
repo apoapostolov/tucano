@@ -91,6 +91,9 @@ export const NEEDS: Record<Method, Need> = {
   olderMessages: 'anyone',
   threadMessages: 'anyone',
   stopRun: 'anyone',
+  startQueued: 'anyone', // whoever may write in the conversation may move its queue on
+  reorderQueued: 'anyone',
+  dropQueued: 'anyone', // one's own prompt, or anyone's to whoever runs the channel: the core checks which
   retryRun: 'anyone',
   continueRun: 'anyone',
   continueJob: 'anyone',

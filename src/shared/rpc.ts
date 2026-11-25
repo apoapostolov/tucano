@@ -49,6 +49,9 @@ export interface Api {
   sendMessage(p: { conversationId: string; text: string; images?: ImageUpload[]; files?: FileUpload[]; threadId?: string; mode?: 'steer'; steerTo?: string; reply?: ReplyTarget }): void // threadId: a reply in the thread that message started; mode 'steer': from a running reply's own pill, for that reply (steerTo), not a prompt; reply: to that message, or to the excerpt of it I selected
   typing(p: { conversationId: string; threadId?: string; opened?: boolean }): void // the person is writing there (or just opened it): what will answer gets ready
   stopRun(p: { messageId: string }): void
+  startQueued(p: { messageId: string }): void // a prompt waiting in the queue starts now, cap or no cap (the Start on its row in the work drawer)
+  reorderQueued(p: { conversationId: string; ids: string[] }): void // the order the queue runs in, as a person put it in the work drawer
+  dropQueued(p: { messageId: string }): void // a prompt waiting in the queue is taken back: its row leaves the drawer and its message leaves the conversation
   retryRun(p: { messageId: string; note?: string }): void // note: a direction for the new try
   continueRun(p: { messageId: string }): void // a reply paused at its budget goes on
   continueJob(p: { messageId: string }): void // the note where a job stopped on its brakes: its work goes on (src/core/jobs.ts)
@@ -318,6 +321,7 @@ export type CoreEvent =
   | { type: 'routine'; routine: Routine }
   | { type: 'routine_removed'; id: string; for?: string } // for: a DM's person, the only one who saw it
   | { type: 'conversation_cleared'; id: string; for?: string }
+  | { type: 'message_removed'; id: string; conversationId: string } // one message left its conversation for good (a queued prompt taken back): it goes from the list and from the drawer
   | { type: 'conversation_removed'; id: string; for?: string }
   | { type: 'skill'; skill: Skill }
   | { type: 'skill_removed'; id: string }
@@ -328,7 +332,7 @@ export type CoreEvent =
   | { type: 'leaves'; leaves?: TucaLeave[] } // what a person let the Tuca do himself changed (each gets their own)
 
 // Every kind of event, so a test can go through them all (people.ts's eventFor decides each one's audience).
-export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'thinking', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_cleared', 'conversation_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations', 'leaves'] as const satisfies readonly CoreEvent['type'][]
+export const CORE_EVENT_TYPES = ['voice', 'node', 'tasks', 'message', 'delta', 'thinking', 'agent', 'agent_removed', 'conversation', 'settings', 'connector', 'connector_removed', 'approval', 'memory', 'memory_removed', 'computer', 'browser', 'browser_frame', 'artifact', 'routine', 'routine_removed', 'conversation_cleared', 'conversation_removed', 'message_removed', 'skill', 'skill_removed', 'wiki', 'people', 'inbox', 'delegations', 'leaves'] as const satisfies readonly CoreEvent['type'][]
 // …and none left out: a new kind of event fails to compile here until it's listed.
 type _AllListed = Exclude<CoreEvent['type'], (typeof CORE_EVENT_TYPES)[number]> extends never ? true : never
 export const _allEventsListed: _AllListed = true

@@ -712,6 +712,9 @@ const COLUMNS: [string, string, string][] = [
   ['agents', 'deleted_at', 'INTEGER'],
   // A prompt of mine waiting its turn: 'queue' while it waits (src/core/runs.ts, resumeQueued).
   ['messages', 'send_mode', 'TEXT'],
+  // Where a queued prompt sits among the ones waiting in its conversation, when a person moved it in the
+  // work drawer (runs.ts, `reorderQueued`). Empty: the order it was written in.
+  ['messages', 'queue_pos', 'INTEGER'],
   // An agent whose replies go one at a time (Agent.oneAtATime): 1; unset, as many as the app runs.
   ['agents', 'one_at_a_time', 'INTEGER'],
   // What a conversation with the Tuca is about, in a few words: the person has several, one per request.
@@ -1375,6 +1378,7 @@ export class Db {
       threadId: r['thread_id'] ? str(r['thread_id']) : undefined,
       ...(r['thread_summary'] ? { threadSummary: JSON.parse(str(r['thread_summary'])) as ThreadSummary } : {}),
       ...(r['send_mode'] === 'queue' ? { sendMode: 'queue' as const } : {}),
+      ...(r['queue_pos'] === null || r['queue_pos'] === undefined ? {} : { queuePos: Number(r['queue_pos']) }),
       ...(r['title'] ? { title: str(r['title']) } : {}),
       ...(r['via'] ? { via: str(r['via']) } : {}),
       ...(r['stop_job'] ? { stop: { job: str(r['stop_job']) } } : {}),
@@ -1538,8 +1542,8 @@ export class Db {
   saveMessage(m: Message): void {
     this.db
       .prepare(
-        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, via, stop_job, send_mode, reply) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, stop_job = excluded.stop_job, send_mode = excluded.send_mode, reply = excluded.reply`
+        `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, via, stop_job, send_mode, queue_pos, reply) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, stop_job = excluded.stop_job, send_mode = excluded.send_mode, queue_pos = excluded.queue_pos, reply = excluded.reply`
       )
       .run(
         m.id,
@@ -1554,15 +1558,48 @@ export class Db {
         m.via ?? null,
         m.stop?.job ?? null,
         m.sendMode ?? null,
+        m.queuePos ?? null,
         m.reply ? JSON.stringify(m.reply) : null
       )
   }
 
-  // My prompts that were still waiting their turn when the app closed, oldest first (runs.ts, `resumeQueued`).
-  // Only 'queue': an older build marked a message handed into a running reply 'steer', and that reply
-  // answered it already.
+  // My prompts that were still waiting their turn when the app closed, in the order they run in (runs.ts,
+  // `resumeQueued`). Only 'queue': an older build marked a message handed into a running reply 'steer',
+  // and that reply answered it already. A prompt a person moved in the work drawer goes where they put
+  // it; the rest keep the order they were written in, after the moved ones (no position: last).
   queuedMessages(): Message[] {
-    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY at`).all() as Row[]).map((r) => this.toMessage(r))
+    return (this.db.prepare(`SELECT * FROM messages WHERE send_mode = 'queue' ORDER BY COALESCE(queue_pos, 9223372036854775807), at`).all() as Row[]).map((r) => this.toMessage(r))
+  }
+
+  // Where a queued prompt sits in its conversation's queue (runs.ts, `reorderQueued`). Written on its own
+  // column, like a session's name: the message may be waiting beside a row that is still moving, and a
+  // whole save from a stale copy would put the rest back.
+  setQueuePos(id: string, pos: number | null): void {
+    this.db.prepare('UPDATE messages SET queue_pos = ? WHERE id = ?').run(pos, id)
+  }
+
+  // The mark a queued prompt kept goes the moment its reply starts (runs.ts, `clearWaiting`), together
+  // with the place a person gave it: written on these two columns alone and never through a whole save,
+  // because a save is an upsert, and a prompt deleted while it waited would come back into the room by
+  // it. A row that is gone stays gone.
+  clearQueueMark(id: string): void {
+    this.db.prepare('UPDATE messages SET send_mode = NULL, queue_pos = NULL WHERE id = ?').run(id)
+  }
+
+  // A queued prompt taken back before it went (runs.ts, `dropQueued`): the message and what hangs on its
+  // key go. Nothing answered it yet, so the thread under it is empty; the approvals asked under any of
+  // those messages go by the same key, and its notifications go with it (foreign keys). Its receipts
+  // are separate rows and stay: nothing was spent on a prompt that never ran. Returns what went.
+  deleteMessage(id: string): string[] {
+    return this.tx(() => {
+      const inThread = (this.db.prepare('SELECT id FROM messages WHERE thread_id = ?').all(id) as { id: string }[]).map((r) => r.id)
+      const gone = [id, ...inThread]
+      for (const one of gone) {
+        this.db.prepare('DELETE FROM approvals WHERE message_id = ?').run(one)
+        this.db.prepare('DELETE FROM messages WHERE id = ?').run(one)
+      }
+      return gone
+    })
   }
 
   // Replies that failed on something that passes, whose time to try again has come (src/core/runs.ts).

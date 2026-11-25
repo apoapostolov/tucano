@@ -2107,6 +2107,24 @@ const api: Handlers = {
 
   stopRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.stop(messageId)),
 
+  // A prompt waiting in the queue (the work drawer): Start sends it now, cap or no cap; the order is
+  // the one a person made by dragging the rows. Anyone who may write in the conversation may do both.
+  startQueued: ({ messageId }, ctx) => (reachMessage(ctx, messageId), runner.startQueued(messageId)),
+  reorderQueued: ({ conversationId, ids }, ctx) => {
+    reach(ctx, conversationId)
+    runner.reorderQueued(conversationId, ids)
+  },
+  // Taking a prompt back: its own prompt for whoever wrote it, someone else's in a channel for whoever
+  // runs the channel. The message must still be there to know whose it was and where it went.
+  dropQueued: ({ messageId }, ctx) => {
+    const m = db.message(messageId)
+    if (!m) return
+    reachMessage(ctx, messageId)
+    const own = m.author.kind === 'person' && m.author.id === ctx.person.id
+    if (!own) manage(ctx, m.conversationId)
+    runner.dropQueued(messageId)
+  },
+
   retryRun: ({ messageId, note }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), runner.retry(messageId, note ?? undefined)),
 
   continueRun: ({ messageId }, ctx) => (reachMessage(ctx, messageId), assertReplyVisible(db, ctx.person, messageId), bg(runner.continue(messageId), 'continueRun')),
@@ -2289,6 +2307,7 @@ const api: Handlers = {
     if (!c) return
     reach(ctx, id)
     if (c.kind === 'channel') must(ctx.person, { kind: 'admin' })
+    runner.forgetConversation(id) // nothing waits in a conversation whose queue is about to be wiped
     db.cleanConversation(id, (messageId) => runner.stop(messageId))
     runner.forgetSessions({ conversationId: id })
     record(ctx, 'conversation.cleaned', id)
@@ -2301,6 +2320,7 @@ const api: Handlers = {
     if (!c) return
     reach(ctx, id)
     if (c.kind === 'channel') must(ctx.person, { kind: 'admin' })
+    runner.forgetConversation(id)
     dropConversation(ctx, c)
   },
 
