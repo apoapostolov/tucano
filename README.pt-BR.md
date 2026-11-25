@@ -252,7 +252,8 @@ Precisa do Node 24+ e de um harness logado. O `npm run dev` guarda os dados em `
 | `npm run build` | Gera o build em `out/` |
 | `npm run install-app` | Gera o `Tucano.app` e instala em `/Applications` |
 | `npm run release` | Gera o `.dmg` e o `.zip` e publica a versão do `package.json` como release no GitHub (`-- --no-publish` só gera) |
-| `node scripts/screens.mjs <pasta>` | Abre o build com Playwright num banco temporário e salva screenshots |
+| `node scripts/screens.mjs tour` | Abre o build com Playwright num banco temporário e salva screenshots |
+| `node scripts/screens.mjs <área>` | Roda uma história da área; veja [docs/screens-harness.md](docs/screens-harness.md) |
 | `npm run dist:win` | No Windows: gera o instalador, `dist/tucano-win-x64.exe` (sem assinatura de código) |
 
 **No Windows?** O desenvolvimento também funciona lá, com o Git for Windows. O [docs/windows.md](docs/windows.md) (em inglês) diz o que precisa, o que muda em relação ao Mac e todas as mudanças feitas pra isso.

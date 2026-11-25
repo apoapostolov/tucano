@@ -1,7 +1,8 @@
 // Frames and measurements for "every session in a channel keeps its own action buttons": a channel
 // with three sessions and what each row offers, read from the built app.
 //
-//   node scripts/screens-session-buttons.mjs <out dir> [app dir] [shape]
+//   node scripts/screens.mjs session-buttons
+//   node scripts/screens.mjs session-buttons -- finished | mixed | running
 //
 // `shape` is one of:
 //   finished  three sessions that ended: each one's ways on (Continue, Try again, Try with
@@ -13,145 +14,130 @@
 //
 // A reply that takes its time is stopped by hand ("finished" and "mixed"); "Try again" on an ended
 // row starts a fresh reply beside whatever runs, which is how three are put to work at once.
-import { _electron as electron } from 'playwright'
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { close, measure, openApp, settle, shot, until, writeFrames } from './screens/lib.mjs'
 
-const out = process.argv[2] ?? 'C:/tmp/frames/session-buttons'
-const appDir = process.argv[3] ?? 'C:/Users/theap/orca/workspaces/tucano/session-buttons'
-const shape = process.argv[4] ?? 'finished'
-mkdirSync(out, { recursive: true })
-const data = mkdtempSync(join(tmpdir(), 'tucano-'))
-const env = { ...process.env, TUCANO_DATA: data, TUCANO_SEED: '1', TUCANO_FAKE_ENGINES: '1', TUCANO_LOCALE: 'en-US' }
-const errors = []
-const app = await electron.launch({ args: ['.'], cwd: appDir, env })
-const win = await app.firstWindow()
-win.on('pageerror', (e) => errors.push(String(e)))
-win.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await win.setViewportSize({ width: 1280, height: 900 })
-await win.waitForSelector('.sidebar')
-await win.waitForTimeout(800)
+export const title = 'Every session in a channel keeps its ways on'
+// The size the frames in frames/ were taken at, kept so the old and the new pictures line up.
+export const size = '1280x900'
 
-const WAIT_IDLE = () => ![...document.querySelectorAll('.composer button')].some((b) => b.textContent?.trim() === 'Stop')
-const waitIdle = async () => {
-  await win.waitForFunction(WAIT_IDLE, null, { timeout: 90_000 }).catch(() => {})
-  await win.waitForTimeout(700)
-}
+export default async function story(context) {
+  const t = await openApp()
+  const { win } = t
+  const shape = context.args[0] ?? 'finished'
 
-await win.locator('.sidebar').getByText('engineering', { exact: false }).first().click()
-await win.waitForTimeout(500)
-
-// A reply that takes its time, stopped by hand: one that ended early is the one that needs its ways on.
-const started = async (ask) => {
-  await win.fill('.composer textarea', ask)
-  await win.keyboard.press('Enter')
-  await win.waitForSelector('.composer button:has-text("Stop")', { timeout: 30_000 })
-  await win.waitForTimeout(1800)
-}
-const stopOne = async (ask) => {
-  await started(ask)
-  await win.locator('.composer button:has-text("Stop")').click()
-  await waitIdle()
-}
-
-await stopOne('Summarise what the last release changed for the sidebar. Demore 8 s.')
-await stopOne('Which of those changes can break a saved layout? Demore 8 s.')
-if (shape === 'finished') {
-  await stopOne('Write the short note we send to the team about it. Demore 8 s.')
-} else {
-  // The third one left at work. In "running", the two ended rows are put back to work beside it.
-  await started('Write the short note we send to the team about it. Demore 14 s.')
-  if (shape === 'running') {
-    // By id, not by position: a reply that goes back to work moves to the end of the channel, so the
-    // rows a person sees shift the moment the first retry starts.
-    const ids = await win.evaluate(() => [...document.querySelectorAll('.msg--agent')].map((m) => m.getAttribute('data-id')))
-    for (const id of ids.slice(0, 2)) {
-      const row = win.locator(`.msg--agent[data-id="${id}"]`)
-      await row.scrollIntoViewIfNeeded()
-      await row.hover()
-      await win.waitForTimeout(250)
-      await row.locator('button:has-text("Try again")').first().click()
-      await win.waitForTimeout(1200)
-    }
-    await win.waitForFunction(
-      () => [...document.querySelectorAll('.msg--agent')].filter((m) => m.querySelector('.steps.is-working')).length >= 3,
-      null,
-      { timeout: 30_000 }
-    ).catch(() => {})
+  // Every agent row, by id: the row, its footer, each way on in that footer, and the steer a row at
+  // work carries. A class name is not evidence, so nothing here asks an element what it is: the
+  // computed style and the box say whether a control is in sight.
+  const first = async (selector, data, props) => {
+    const [row] = await measure(win, selector, props, { optional: true })
+    return row ? { ...row, data } : null
   }
-}
-
-// The pointer parked on the channel's title: no row is hovered, so what is measured is what the
-// channel shows on its own.
-await win.locator('.topbar__title').hover()
-await win.waitForTimeout(400)
-
-const measure = () =>
-  win.evaluate(() => {
-    const rows = [...document.querySelectorAll('.msg--agent')].map((m, i) => {
-      const foot = m.querySelector('.msg__meta')
-      const onScreen = (el) => {
-        const r = el.getBoundingClientRect()
-        const cs = getComputedStyle(el)
-        return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' && Number(cs.opacity) > 0
+  const rowsOfRows = async (part) => {
+    const ids = await win.locator('.msg--agent').evaluateAll((els) => els.map((el) => el.getAttribute('data-id')))
+    const found = []
+    for (const [index, id] of ids.entries()) {
+      const scope = `.msg--agent[data-id="${id}"]`
+      const where = { row: index + 1, id, part }
+      found.push(await first(scope, { ...where, piece: 'row' }))
+      found.push(await first(`${scope} .msg__meta`, { ...where, piece: 'footer' }))
+      for (const [at, way] of (await measure(win, `${scope} .msg__meta button`, ['pointer-events'])).entries()) {
+        found.push({ ...way, data: { ...where, piece: 'way', way: at + 1 } })
       }
-      const box = foot?.getBoundingClientRect()
-      return {
-        row: i + 1,
-        id: m.getAttribute('data-id'),
-        author: m.querySelector('.msg__author')?.textContent?.trim(),
-        // A row at work says so in its own chain, and is the one a steer can reach.
-        working: !!m.querySelector('.steps.is-working'),
-        steers: m.querySelectorAll('.step--steer').length,
-        footer: !!foot,
-        note: m.querySelector('.msg__body > .note')?.textContent?.trim().slice(0, 60) ?? null,
-        box: box ? { x: Math.round(box.x), y: Math.round(box.y), w: Math.round(box.width), h: Math.round(box.height) } : null,
-        controls: [...(foot?.querySelectorAll('button') ?? [])].map((b) => ({
-          label: b.getAttribute('aria-label') ?? b.textContent?.trim(),
-          // `msg__hire` was the class that kept a way on hidden until the pointer reached the row.
-          hoverOnly: b.classList.contains('msg__hire'),
-          opacity: getComputedStyle(b).opacity,
-          onScreen: onScreen(b)
-        }))
-      }
-    })
-    return { rows, agentRows: rows.length }
+      found.push(await first(`${scope} .steps__steer-pill`, { ...where, piece: 'steer' }))
+    }
+    return found.filter(Boolean)
+  }
+  const channel = async () => ({
+    ...(await measure(win, '.main'))[0],
+    data: { part: 'channel' }
   })
 
-const report = { shape, ...(await measure()) }
-report.pageErrors = errors.length
-report.errors = errors.slice(0, 4)
-// The frame is the content column, so the callout coordinates (viewport space) are shifted by this.
-const main = await win.locator('.main').boundingBox()
-report.main = main && { x: Math.round(main.x), y: Math.round(main.y) }
-writeFileSync(join(out, 'frames.json'), JSON.stringify(report, null, 2))
-await win.locator('.main').screenshot({ path: join(out, `channel-three-sessions-${shape}.png`) })
+  await until(win, '.sidebar')
+  await settle(win, 800)
 
-if (shape === 'running') {
-  // The note under the second row, typed and sent: it has to land in that row's own chain.
-  const target = report.rows[1].id
-  const second = win.locator(`.msg--agent[data-id="${target}"]`)
-  await second.scrollIntoViewIfNeeded()
-  await second.hover()
-  await second.locator('.steps__steer-pill').click()
-  await second.locator('.retry-note textarea').fill('Take the second layout and say why.')
-  await second.locator('.retry-note__row button').first().click()
-  await win.waitForTimeout(2500)
-  const after = await measure()
-  report.steered = {
-    target,
-    // The row that was steered is the only one that gained a steer in its chain.
-    steers: after.rows.map((r) => ({ id: r.id, steers: r.steers })),
-    idsBefore: report.rows.map((r) => r.id),
-    idsAfter: after.rows.map((r) => r.id),
-    postedAsMessage: after.agentRows > report.agentRows
+  const waitIdle = async () => {
+    await until(win, '.composer button:has-text("Stop")', { state: 'hidden', timeout: 90_000 }).catch(() => {})
+    await settle(win, 700)
   }
-  report.pageErrors = errors.length
-  writeFileSync(join(out, 'frames.json'), JSON.stringify(report, null, 2))
-  await win.locator('.main').screenshot({ path: join(out, `channel-three-sessions-${shape}-steered.png`) })
-}
+  const started = async (ask) => {
+    await win.fill('.composer textarea', ask)
+    await win.keyboard.press('Enter')
+    await until(win, '.composer button:has-text("Stop")', { timeout: 30_000 })
+    await settle(win, 1800)
+  }
+  const stopOne = async (ask) => {
+    await started(ask)
+    await win.locator('.composer button:has-text("Stop")').click()
+    await waitIdle()
+  }
 
-console.log(JSON.stringify(report, null, 1))
-await app.close()
-rmSync(data, { recursive: true, force: true })
+  await win.locator('.sidebar').getByText('engineering', { exact: false }).first().click()
+  await settle(win, 500)
+
+  await stopOne('Summarise what the last release changed for the sidebar. Demore 8 s.')
+  await stopOne('Which of those changes can break a saved layout? Demore 8 s.')
+  if (shape === 'finished') {
+    await stopOne('Write the short note we send to the team about it. Demore 8 s.')
+  } else {
+    // The third one left at work. In "running", the two ended rows are put back to work beside it.
+    await started('Write the short note we send to the team about it. Demore 14 s.')
+    if (shape === 'running') {
+      // By id, not by position: a reply that goes back to work moves to the end of the channel, so
+      // the rows a person sees shift the moment the first retry starts.
+      const ids = await win.locator('.msg--agent').evaluateAll((els) => els.map((el) => el.getAttribute('data-id')))
+      for (const id of ids.slice(0, 2)) {
+        const row = win.locator(`.msg--agent[data-id="${id}"]`)
+        await row.scrollIntoViewIfNeeded()
+        await row.hover()
+        await settle(win, 250)
+        await row.locator('button:has-text("Try again")').first().click()
+        await settle(win, 1200)
+      }
+      await win
+        .waitForFunction(
+          () => [...document.querySelectorAll('.msg--agent')].filter((m) => m.querySelector('.steps.is-working')).length >= 3,
+          null,
+          { timeout: 30_000 }
+        )
+        .catch(() => {})
+    }
+  }
+
+  // The pointer parked on the channel's title: no row is hovered, so what is measured is what the
+  // channel shows on its own.
+  await win.locator('.topbar__title').hover()
+  await settle(win, 400)
+
+  const rows = await rowsOfRows(shape)
+  const reported = await channel()
+  reported.frame = await shot(t, `channel-three-sessions-${shape}`, '.main')
+  const data = { shape, agentRows: rows.filter((row) => row.data.piece === 'row').length }
+  const all = [reported, ...rows]
+
+  if (shape === 'running') {
+    // The note under the second row, typed and sent: it has to land in that row's own chain.
+    const target = rows.find((row) => row.data.piece === 'row' && row.data.row === 2)?.data.id
+    const idsBefore = await win.locator('.msg--agent').evaluateAll((els) => els.map((el) => el.getAttribute('data-id')))
+    await win.locator(`.msg--agent[data-id="${target}"]`).scrollIntoViewIfNeeded()
+    await win.locator(`.msg--agent[data-id="${target}"]`).hover()
+    await until(win, '.steps__steer-pill')
+    await win.locator(`.msg--agent[data-id="${target}"] .steps__steer-pill`).click()
+    await win.locator(`.msg--agent[data-id="${target}"] .retry-note textarea`).fill('Take the second layout and say why.')
+    await win.locator(`.msg--agent[data-id="${target}"] .retry-note__row button`).first().click()
+    await settle(win, 2500)
+    const steered = await channel()
+    steered.frame = await shot(t, `channel-three-sessions-${shape}-steered`, '.main')
+    const after = await rowsOfRows(`${shape}-steered`)
+    const idsAfter = await win.locator('.msg--agent').evaluateAll((els) => els.map((el) => el.getAttribute('data-id')))
+    Object.assign(data, {
+      steered: target,
+      idsBefore,
+      idsAfter,
+      postedAsMessage: idsAfter.length > idsBefore.length
+    })
+    all.push(steered, ...after)
+  }
+
+  writeFrames(t.out, all, { data })
+  await close(t)
+}
