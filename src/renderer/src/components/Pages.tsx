@@ -101,7 +101,7 @@ import { voiceRefusal } from '../../../shared/voice'
 import { ACTION_KINDS, actionHint, actionMode, AUTONOMY_LEVELS, autonomyHint, autonomyLabel, COMPUTADOR, kindLabel, modeLabel, shellActions, type ActionKind, type ActionMode, type ActionRules, type Autonomy, type Policy } from '../../../shared/actions'
 import { useVoice, VOICE_CHOICES, VOICE_WHERE, VoiceSetup } from './VoiceSetup'
 import { HermesImport } from './HermesImport'
-import { AccountPicker, AccountsCard, EffortSelect, HarnessList, HarnessMcps, ModelPicker, onGateway, OutsideGateway, usableEngines } from './Harness'
+import { AccountPicker, AccountsCard, HarnessList, HarnessMcps, ModelPicker, onGateway, OutsideGateway, usableEngines } from './Harness'
 import { AppsCard } from './Apps'
 import { AgentModelsPanel } from './AgentModelsPanel'
 import { ConnectorGrid, ConnectorIconPicker, ConnectorTile, OwnAppSetup, ThirdPartyWarning } from './ConnectorStore'
@@ -131,7 +131,7 @@ import { STEPS_LATEST_MAX, STEPS_LATEST_MIN, stepsKeep, stepsModeFor, type Steps
 import { cleanRetentionDays, MAX_RETENTION_DAYS, retentionLabel } from '../../../shared/retention'
 import exportSkill from '../assets/tucano-export-skill.md?raw'
 import { dayLabel, daySummary, exceptionCount, groupHistory, type HistoryGroup, type HistoryStatus } from '../approval-history'
-import { ACCESS_REQUEST, type Approval } from '../../../shared/types'
+import { ACCESS_REQUEST, type Approval, type Effort } from '../../../shared/types'
 
 
 // Every page's head, the same on all of them: the title big, inside the content and at the same
@@ -807,7 +807,7 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
             >
               {/* The harness, the model and how hard it thinks on one row: the harness gives up the width its short name doesn't need. */}
               <Row label={L('Modelo', 'Model')} className="lrow--wide">
-                <ModelPicker value={draft.modelId} onChange={(modelId) => patch({ modelId })} effort={draft.effort} onEffort={(effort) => patch({ effort }, true)} />
+                <ModelPicker value={draft.modelId} onChange={(modelId) => patch({ modelId })} effort={draft.effort} onEffort={(effort) => { if (effort) patch({ effort }, true) }} />
               </Row>
               <div className="lrow lrow--picker">
                 <AccountPicker draft={draft} patch={patch} />
@@ -3113,7 +3113,7 @@ function ReserveModel({ draft, patch }: { draft: Agent; patch: (p: Partial<Agent
   )
 }
 
-export function ModelSelect(p: { value: string; onChange: (v: string) => void; jev?: boolean; engines?: EngineId[] }): ReactNode {
+export function ModelSelect(p: { value: string; onChange: (v: string) => void; jev?: boolean; engines?: EngineId[]; effort?: Effort | null; onEffort?: (e: Effort | null) => void }): ReactNode {
   return <ModelPicker {...p} />
 }
 
@@ -4566,30 +4566,27 @@ export function SettingsPage(): ReactNode {
         {on('modelos') && admin && (
           <SectionAnchor id="knowledge-memory" sections={structure}>
             <Card title={L('Memória', 'Memory')} section="knowledge-memory" lead={L('Um modelo pequeno resume o que sai da janela de cada conversa e, do mesmo trecho, tira o que vale lembrar sobre você.', 'A small model summarizes what leaves each conversation’s window and, from the same stretch, picks what’s worth remembering about you.')}>
-              <div className="grid2">
-                <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', 'Runs every ~20 messages in a long conversation.')}>
-                  <ModelSelect value={settings.memoryModel} onChange={(memoryModel) => updateSettings({ memoryModel })} />
-                </Field>
-                <Field label={L('O que ele aprende sobre você', 'What it learns about you')} hint={L('Só conta o que você disse, nunca o que um agente supôs.', 'Only what you said counts, never what an agent assumed.')}>
-                  <Select
-                    value={settings.memoryLearning ?? null}
-                    onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
-                    options={[
-                      { value: 'approve', label: L('Vira sugestão pra você aprovar', 'A suggestion for you to approve') },
-                      { value: 'auto', label: L('Grava sozinho', 'Saved on its own') },
-                      { value: 'off', label: L('Nada (só resume)', 'Nothing (just summarizes)') }
-                    ]}
-                    placeholder={L('Escolha', 'Pick')}
-                  />
-                </Field>
+              <Field label={L('Modelo da memória', 'Memory model')} hint={L('Roda a cada ~20 mensagens numa conversa longa.', 'Runs every ~20 messages in a long conversation.')}>
                 {/* It also names each request: the same level serves both small calls. */}
-                <EffortSelect
-                  className="effort-select--inline"
-                  label={L('Esforço de raciocínio', 'Reasoning effort')}
-                  value={settings.memoryEffort ?? 'low'}
-                  onChange={(memoryEffort) => { if (memoryEffort) updateSettings({ memoryEffort }) }}
+                <ModelSelect
+                  value={settings.memoryModel}
+                  onChange={(memoryModel) => updateSettings({ memoryModel })}
+                  effort={settings.memoryEffort ?? 'low'}
+                  onEffort={(memoryEffort) => { if (memoryEffort) updateSettings({ memoryEffort }) }}
                 />
-              </div>
+              </Field>
+              <Field label={L('O que ele aprende sobre você', 'What it learns about you')} hint={L('Só conta o que você disse, nunca o que um agente supôs.', 'Only what you said counts, never what an agent assumed.')}>
+                <Select
+                  value={settings.memoryLearning ?? null}
+                  onChange={(v) => { if (v) updateSettings({ memoryLearning: v as typeof settings.memoryLearning }) }}
+                  options={[
+                    { value: 'approve', label: L('Vira sugestão pra você aprovar', 'A suggestion for you to approve') },
+                    { value: 'auto', label: L('Grava sozinho', 'Saved on its own') },
+                    { value: 'off', label: L('Nada (só resume)', 'Nothing (just summarizes)') }
+                  ]}
+                  placeholder={L('Escolha', 'Pick')}
+                />
+              </Field>
             </Card>
           </SectionAnchor>
         )}

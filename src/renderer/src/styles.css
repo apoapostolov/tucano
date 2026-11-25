@@ -6522,7 +6522,8 @@ table.csv th {
   flex-basis: 100%;
 }
 /* The thinking level on the model's own row: the harness keeps only its name's width (Claude, Codex,
-   OpenCode, Pi), the model takes what's left, and the level closes the row. */
+   OpenCode, Pi), the model takes what's left, and the level closes the row. The level is only as wide
+   as its longest name, plus the select's own padding and caret. */
 .model-picker .select.model-picker__engine,
 .lrow--wide .model-picker .select.model-picker__engine {
   flex: 0 0 auto;
@@ -6532,7 +6533,7 @@ table.csv th {
 .model-picker .select.model-picker__effort,
 .lrow--wide .model-picker .select.model-picker__effort {
   flex: 0 0 auto;
-  width: 128px;
+  width: 12ch;
 }
 /* Under a model select, where the picks are one below the other (Settings → Models). */
 .select.effort-select--inline {

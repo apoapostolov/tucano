@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
 import { ENGINES, modelInfo, type Agent, type Effort } from '../../../shared/types'
 import { amAdmin, setAgentModels, useStore } from '../store'
-import { EffortSelect, ModelPicker } from './Harness'
+import { ModelPicker } from './Harness'
 import { AgentAvatar } from './ui'
 
 export function AgentModelsPanel(): ReactNode {
@@ -63,14 +63,8 @@ export function AgentModelsPanel(): ReactNode {
       <fieldset disabled={busy} className="agent-models__controls">
         <div className="agent-models__bulk">
           <strong>{L('Alterar em lote', 'Bulk change')}</strong>
-          <ModelPicker value={model} onChange={setModel} />
-          <EffortSelect
-            className="effort-select--inline"
-            label={L('Esforço de raciocínio', 'Reasoning effort')}
-            value={effort}
-            keep
-            onChange={(e) => setEffort(e)}
-          />
+          {/* Keep stays a pick of its own here: a level alone moves levels, not models. */}
+          <ModelPicker value={model} onChange={setModel} effort={effort} keepEffort onEffort={(e) => setEffort(e)} />
           <p className="hint">{L('Ao trocar de harness, o agente passa a usar o login padrão dele. O modelo reserva continua igual. Mais esforço pensa mais e gasta mais do plano. Sem modelo escolhido, só o esforço muda e cada agente fica com o modelo dele.', 'When switching harnesses, the agent uses its default login. The reserve model stays the same. More effort thinks longer and uses more of your plan. With no model picked, only the level changes and each agent keeps its own model.')}</p>
           <div className="row">
             <button type="button" className="btn btn--primary btn--sm" disabled={!targets.length || (!modelInfo(model)?.id && !effort)} onClick={() => void save(targets.map((a) => a.id), model, effort)}>
@@ -115,14 +109,7 @@ function AgentModelRow({ agent, selected, onSelect, onSave }: { agent: Agent; se
       </div>
       <div className="agent-models__choice">
         <span className="muted small">{L('Em uso:', 'Current:')} {current ? `${ENGINES[current.engine].label} · ${current.label}` : agent.modelId}</span>
-        <ModelPicker value={value} onChange={setDraft} />
-        {/* The thinking level, one pick under the model, as in Settings' other model cards. */}
-        <EffortSelect
-          className="effort-select--inline"
-          label={L('Esforço de raciocínio', 'Reasoning effort')}
-          value={effort}
-          onChange={(e) => setLevel(e)}
-        />
+        <ModelPicker value={value} onChange={setDraft} effort={effort} onEffort={(e) => setLevel(e)} />
       </div>
       <button type="button" className="btn btn--sm" disabled={(value === agent.modelId && effort === agent.effort) || !modelInfo(value)?.id} onClick={async () => { if (await onSave([agent.id], value, level)) { setDraft(null); setLevel(null) } }}>{L('Salvar', 'Save')}</button>
     </div>

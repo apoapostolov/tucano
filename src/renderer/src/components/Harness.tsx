@@ -140,8 +140,9 @@ export function EffortSelect({ value, onChange, className = '', label, placehold
 // A model to run with: the harness, then its model from the list, or another by name.
 // jev adds TypeSafe's Jev (the router). Engines limits the harnesses offered.
 // With `onEffort`, the thinking level rides along on the same row, after the model: the harness gives
-// up width for it (its names are short, and the level's are shorter still).
-export function ModelPicker({ value, onChange, engines, jev, effort, onEffort }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean; effort?: Effort | null; onEffort?: (e: Effort) => void }): ReactNode {
+// up width for it (its names are short, and the level's are shorter still). `keepEffort` adds Keep for
+// a picker that applies one level to agents which each have their own.
+export function ModelPicker({ value, onChange, engines, jev, effort, keepEffort, onEffort }: { value: string; onChange: (v: string) => void; engines?: EngineId[]; jev?: boolean; effort?: Effort | null; keepEffort?: boolean; onEffort?: (e: Effort | null) => void }): ReactNode {
   const usable = useStore((s) => usableEngines(s.settings))
   const statuses = useStore((s) => s.settings.engines)
   const choices = (engines ?? usable).filter((e) => usable.includes(e))
@@ -201,6 +202,7 @@ export function ModelPicker({ value, onChange, engines, jev, effort, onEffort }:
           <Select
             className="grow"
             value={other ? OTHER : inList ? value : null}
+            menuMinWidth={320}
             searchable
             {...modelChoices}
             placeholder={loading ? L('Buscando os modelos…', 'Fetching the models…') : options.length ? L('Escolha um modelo…', 'Pick a model…') : L('Sem lista: use Outro modelo', 'No list: use Other model')}
@@ -220,7 +222,7 @@ export function ModelPicker({ value, onChange, engines, jev, effort, onEffort }:
         </>
       )}
       {/* Cursor's models carry the effort in the name (…-high, …-xhigh): there it would be a second one. */}
-      {onEffort && engine && engine !== 'cursor' && <EffortSelect className="model-picker__effort" value={effort} onChange={(e) => { if (e) onEffort(e) }} />}
+      {onEffort && engine && engine !== 'cursor' && <EffortSelect className="model-picker__effort" value={effort} keep={keepEffort} onChange={(e) => onEffort(e)} />}
       {error && other && <span className="hint">{L('Não deu pra pegar a lista', 'Couldn’t get the list')}: {error}</span>}
     </div>
   )

@@ -11,7 +11,8 @@ let admin = true
 const save = vi.fn(async (_ids: string[], _model: string, _effort?: string) => 1)
 vi.mock('../src/renderer/src/store', () => ({ useStore: (select: (s: unknown) => unknown) => select(fake), amAdmin: () => admin, setAgentModels: (ids: string[], model: string, effort?: string) => save(ids, model, effort) }))
 vi.mock('../src/renderer/src/components/Harness', () => ({
-  ModelPicker: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => <select aria-label="Modelo" value={value} onChange={(e) => onChange(e.target.value)}><option value="">Escolha</option><option value="sonnet">Sonnet</option><option value="opus">Opus</option></select>,
+  // The level rides in the picker when onEffort is passed, as in the real ModelPicker.
+  ModelPicker: ({ value, onChange, effort, keepEffort, onEffort }: { value: string; onChange: (v: string) => void; effort?: string | null; keepEffort?: boolean; onEffort?: (e: string | null) => void }) => <div className="model-picker"><select aria-label="Modelo" value={value} onChange={(e) => onChange(e.target.value)}><option value="">Escolha</option><option value="sonnet">Sonnet</option><option value="opus">Opus</option></select>{onEffort && <select aria-label="Esforço" value={effort ?? ''} onChange={(e) => onEffort(e.target.value === '' ? null : e.target.value)}>{keepEffort && <option value="">Manter</option>}<option value="low">Baixo</option><option value="medium">Médio</option><option value="high">Alto</option><option value="xhigh">Máximo</option></select>}</div>,
   // No level picked yet: the trigger says Keep, and with `keep` the list carries it as a pick of its own
   // that reports null (the real one has it as the placeholder and as an option).
   EffortSelect: ({ value, onChange, keep }: { value?: string | null; onChange: (e: string | null) => void; keep?: boolean }) => <select aria-label="Esforço" value={value ?? ''} onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}>{keep && <option value="">Manter</option>}<option value="low">Baixo</option><option value="medium">Médio</option><option value="high">Alto</option><option value="xhigh">Máximo</option></select>
@@ -52,11 +53,14 @@ it('sends the thinking level picked in the bulk row along with the model', async
   expect(save).toHaveBeenCalledWith(['lia', 'theo'], 'opus', 'xhigh')
 })
 it('offers Keep in the bulk level list, and a level picked can go back to it', async () => {
-  const bulk = field(document.querySelector('.agent-models__bulk')!, 'Esforço')
-  expect([...bulk.querySelectorAll('option')].map((o) => o.textContent)).toContain('Manter')
+  const bulk = document.querySelector('.agent-models__bulk')!
+  expect(bulk.querySelector('.model-picker [aria-label="Esforço"]')).not.toBeNull()
+  expect(bulk.querySelector('.effort-select--inline')).toBeNull()
+  const level = field(bulk, 'Esforço')
+  expect([...level.querySelectorAll('option')].map((o) => o.textContent)).toContain('Manter')
   await pick(document.querySelector('select')!, 'opus')
-  await pick(bulk, 'xhigh')
-  await pick(bulk, '')
+  await pick(level, 'xhigh')
+  await pick(level, '')
   const all = [...document.querySelectorAll('label')].find((l) => l.textContent?.includes('Selecionar todos'))!.querySelector('input')!
   await click(all)
   await click(button('Aplicar aos selecionados'))
@@ -80,8 +84,10 @@ it('saves an individual agent without changing the others', async () => {
   await click(row.querySelector('button')!)
   expect(save).toHaveBeenCalledWith(['lia'], 'opus', undefined)
 })
-it('shows each agent its own level and saves a changed one on its own', async () => {
+it('shows each agent its own level on the model row and saves a changed one on its own', async () => {
   const row = document.querySelector('[role="group"][aria-label="theo"]')!
+  expect(row.querySelector('.model-picker [aria-label="Esforço"]')).not.toBeNull()
+  expect(row.querySelector('.effort-select--inline')).toBeNull()
   expect(field(row, 'Esforço').value).toBe('high')
   expect(row.querySelector('button')?.disabled).toBe(true)
   await pick(field(row, 'Esforço'), 'low')

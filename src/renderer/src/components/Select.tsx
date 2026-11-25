@@ -50,6 +50,8 @@ type SelectProps = {
   searchable?: boolean
   // Show a small secondary hint line under each option's label.
   showHint?: boolean
+  // Minimum menu width, for options longer than a narrow trigger. Still capped to the viewport.
+  menuMinWidth?: number
   disabled?: boolean
   required?: boolean
   // Accessible label override; defaults to `label`.
@@ -149,7 +151,7 @@ export function Select(props: SelectProps): ReactNode {
   const {
     id, name, label, hint, options, groups,
     placeholder = '', value, values, onChange, onValuesChange,
-    multiple = false, searchable = false, showHint = false, disabled = false, required = false,
+    multiple = false, searchable = false, showHint = false, menuMinWidth = 180, disabled = false, required = false,
     'aria-label': ariaLabelProp, open: openProp, onOpenChange,
     className = '', emptyText = L('Nenhuma correspondência', 'No matches')
   } = props
@@ -198,7 +200,7 @@ export function Select(props: SelectProps): ReactNode {
     const below = vh - r.bottom - GAP - MARGIN
     const above = r.top - GAP - MARGIN
     const wanted = Math.min(menuRef.current?.scrollHeight ?? PREFERRED_HEIGHT, PREFERRED_HEIGHT)
-    const width = Math.max(0, Math.min(Math.max(r.width, 180), vw - MARGIN * 2))
+    const width = Math.max(0, Math.min(Math.max(r.width, menuMinWidth), vw - MARGIN * 2))
     const left = Math.round(Math.min(Math.max(MARGIN, r.left), vw - width - MARGIN))
     let next: MenuPosition
     if (below >= wanted || (below >= above && below >= MIN_HEIGHT))
@@ -211,7 +213,7 @@ export function Select(props: SelectProps): ReactNode {
       next = { left, width, top: Math.round(Math.max(MARGIN, Math.min(r.top, vh - MARGIN - h))), maxHeight: Math.floor(h), placement: 'over' }
     }
     setPosition((prev) => (samePosition(prev, next) ? prev : next))
-  }, [close])
+  }, [close, menuMinWidth])
 
   useLayoutEffect(() => {
     if (!open) { setPosition(null); return }
