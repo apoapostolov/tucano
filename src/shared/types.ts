@@ -6,6 +6,7 @@ import type { ClassifierConfig, ClassifierJob } from './classifiers'
 import type { ChannelLayout } from './channel-layout'
 import type { Answer, Decision } from './questions'
 import type { PageSigns } from './wall'
+import type { NoticeSettings } from './notice'
 import { L, lang, locale, type Lang } from './lang'
 
 export type AgentColor = 'sky' | 'indigo' | 'violet' | 'rose' | 'amber' | 'green' | 'teal' | 'graphite'
@@ -669,6 +670,7 @@ export interface Settings {
   // height the block always had.
   thinkingSize?: 'sm' | 'md' | 'lg'
   replyShortcut?: boolean // ⌘L (Ctrl+L off a Mac) replies to the text I selected in a message; unset: on
+  notice?: NoticeSettings // native or enhanced (src/shared/notice.ts); unset: enhanced, so a notification already on keeps coming
   seenVersion?: string // the last version whose news I closed; an update past it shows what's new once
   accounts?: Account[] // more logins of Claude Code or Codex, beside the one each already has
   primaryAccounts?: Partial<Record<AccountEngine, string>> // the primary login of a harness with accounts (its id, or unset: the usual login); the reply goes there first
