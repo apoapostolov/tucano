@@ -62,6 +62,7 @@ import {
   RUN_STALL_MINUTES,
   archiveAgent,
   setTab,
+  wipeHistory,
   saveSkill,
   skillApplies,
   modelInfo,
@@ -127,6 +128,7 @@ import { SettingsGroups, SettingsJumps, SettingsResults, SettingsSubject, Settin
 import { searchSettings, settingsGroups, settingsGroupLabel, settingsStructure, settingsTabAliases, settingsTabStructure, type SettingsPageId, type SettingsSection, type SettingsSectionId } from '../settings-structure'
 import { workspaceLabel } from '../../../shared/workspaces'
 import { STEPS_LATEST_MAX, STEPS_LATEST_MIN, stepsKeep, stepsModeFor, type StepsMode } from '../../../shared/steps'
+import { cleanRetentionDays, MAX_RETENTION_DAYS, retentionLabel } from '../../../shared/retention'
 import exportSkill from '../assets/tucano-export-skill.md?raw'
 import { dayLabel, daySummary, exceptionCount, groupHistory, type HistoryGroup, type HistoryStatus } from '../approval-history'
 import { ACCESS_REQUEST, type Approval } from '../../../shared/types'
@@ -463,11 +465,15 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
   const globalRules = useStore((s) => s.settings.actionRules)
   const globalAutonomy = useStore((s) => s.settings.autonomy)
   const globalGuard = useStore((s) => s.settings.outsideGuard)
+  // The period it follows when its page doesn't say one (Settings › History).
+  const tucanoDays = useStore((s) => cleanRetentionDays(s.settings.retentionDays) ?? 0)
 
   const memberOf = (agentId: string): string[] => channels.filter((c) => c.members.includes(agentId)).map((c) => c.id)
   const [draft, setDraft] = useState<Agent>(() => existing ?? proposed ?? newAgentDraft())
   const [chosen, setChosen] = useState<string[]>(() => (id ? memberOf(id) : []))
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [historyBusy, setHistoryBusy] = useState(false)
+  const [historyNote, setHistoryNote] = useState('')
   const [saveError, setSaveError] = useState('') // why the core refused it (a person's name, a taken @)
   const [handleTyped, setHandleTyped] = useState(false)
   const [menu, setMenu] = useState<MenuState>(null)
@@ -1108,6 +1114,82 @@ export function AgentPage({ id, draft: proposed, fromMessage }: { id?: string; d
                 </button>
               </Row>
             </Section>
+          )}
+
+          {pane('perfil') && !isNew && (
+            <div className="card--danger">
+            <Card
+              title={L('Histórico deste bot', 'This bot’s history')}
+              lead={L(
+                'O que ele respondeu em qualquer conversa, e tudo o que foi dito nas DMs dele. O que você escreveu nos canais fica, e as memórias dele também: elas têm a aba Memória.',
+                'What it answered anywhere, and everything said in its DMs. What you wrote in channels stays, and so do its memories: they have their own Memory tab.'
+              )}
+            >
+              <div className="field">
+                <span className="field__label">{L('Apagar o histórico dele mais antigo que X dias', 'Delete its history older than X days')}</span>
+                <div className="segmented" role="radiogroup" aria-label={L('Apagar o histórico dele mais antigo que X dias', 'Delete its history older than X days')}>
+                  <button role="radio" aria-checked={draft.retentionDays === undefined} className={draft.retentionDays === undefined ? 'is-active' : ''} onClick={() => draft.retentionDays !== undefined && patch({ retentionDays: undefined })}>
+                    {L(`Como o Tucano (${retentionLabel(tucanoDays)})`, `Same as the Tucano (${retentionLabel(tucanoDays)})`)}
+                  </button>
+                  <button role="radio" aria-checked={draft.retentionDays !== undefined} className={draft.retentionDays !== undefined ? 'is-active' : ''} onClick={() => draft.retentionDays === undefined && patch({ retentionDays: tucanoDays || 30 })}>
+                    {L('Só pra este bot', 'Only this bot')}
+                  </button>
+                </div>
+                {draft.retentionDays !== undefined && (
+                  <div className="row">
+                    <NumberInput
+                      min={0}
+                      max={MAX_RETENTION_DAYS}
+                      step={1}
+                      value={draft.retentionDays}
+                      onChange={(n) => patch({ retentionDays: cleanRetentionDays(n) ?? 0 })}
+                      className="input--short"
+                      aria-label={L('Dias', 'Days')}
+                    />
+                    <span className="muted small">{L('dias; 0 guarda tudo, para sempre, mesmo que o Tucano guarde menos', 'days; 0 keeps everything, for good, even when the Tucano keeps less')}</span>
+                  </div>
+                )}
+                <span className="hint">
+                  {L(
+                    'Cada mensagem conta da própria data, na limpeza diária: com 30, o que passou de 30 dias sai do banco e o próximo turno já não lê nada disso.',
+                    'Each message counts from its own date, in the daily cleanup: with 30, anything past 30 days leaves the database and the next turn reads none of it.'
+                  )}
+                </span>
+              </div>
+              <div className="row">
+                <button
+                  className="btn btn--danger"
+                  disabled={historyBusy}
+                  onClick={() => {
+                    void confirmDialog({
+                      title: L(`Apagar o histórico de ${draft.name}?`, `Delete ${draft.name}’s history?`),
+                      body: L(
+                        `Saem as respostas dele em todos os canais e tudo o que foi dito nas DMs dele. ${draft.name} continua na equipe; as memórias e os recibos de uso ficam. Não dá pra desfazer.`,
+                        `Its replies in every channel go, and everything said in its DMs. ${draft.name} stays on the team; memories and usage receipts stay. This cannot be undone.`
+                      ),
+                      confirm: L('Apagar histórico', 'Delete history'),
+                      danger: true
+                    }).then((ok) => {
+                      if (!ok) return
+                      setHistoryBusy(true)
+                      setHistoryNote('')
+                      void wipeHistory(draft.id)
+                        .then((gone) => setHistoryNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`)))
+                        .catch((e: unknown) => setHistoryNote(e instanceof Error ? e.message : String(e)))
+                        .finally(() => setHistoryBusy(false))
+                    })
+                  }}
+                >
+                  {L('Apagar o histórico deste bot', 'Delete this bot’s history')}
+                </button>
+                {historyNote && (
+                  <span className="muted small" role="status">
+                    {historyNote}
+                  </span>
+                )}
+              </div>
+            </Card>
+            </div>
           )}
         </div>
       </fieldset>
@@ -3340,7 +3422,66 @@ export function BackupCard(): ReactNode {
   )
 }
 
-function WorkspaceDangerArea(): ReactNode {
+// The workspace's history, inside the danger area between Backups and Delete workspace: the period
+// checked once a day, and the button that takes every message at once, whatever the period says.
+function WorkspaceHistorySection(): ReactNode {
+  const kept = useStore((s) => cleanRetentionDays(s.settings.retentionDays) ?? 0)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+  const wipe = async (): Promise<void> => {
+    const ok = await confirmDialog({
+      title: L('Apagar todas as conversas?', 'Wipe all conversations?'),
+      body: L(
+        'Todas as mensagens de todas as conversas são apagadas. Agentes, canais, memórias e recibos de uso ficam. Não dá para desfazer.',
+        'Every message in every conversation is deleted. Agents, channels, memories and usage receipts stay. This cannot be undone.'
+      ),
+      confirm: L('Apagar todas as conversas', 'Wipe all conversations'),
+      danger: true
+    })
+    if (!ok) return
+    setBusy(true)
+    setNote('')
+    try {
+      const gone = await wipeHistory()
+      setNote(L(`${gone} mensagem(ns) apagadas.`, `${gone} message(s) deleted.`))
+    } catch (e) {
+      setNote(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="workspace-danger__section workspace-danger__history">
+      <h3>{L('Histórico', 'History')}</h3>
+      <p className="small muted">{L('O que fica guardado do que foi dito e respondido neste workspace. O prazo é conferido uma vez por dia; apagar na hora é o botão abaixo.', 'What is kept of what was said and answered in this workspace. The period is checked once a day; the button below deletes at once.')}</p>
+      <div className="row row--wrap workspace-danger__history-line">
+        <Field
+          label={L('Guardar sessões por', 'Keep sessions for')}
+          hint={L(
+            'Zero guarda tudo, para sempre. Com 30, o que foi dito ou respondido há mais de 30 dias sai do banco na limpeza diária. Um bot pode ter um prazo próprio, na página dele. As memórias, a wiki e os recibos de uso não entram nessa conta.',
+            'Zero keeps everything, for good. With 30, anything said or answered more than 30 days ago leaves the database in the daily cleanup. A bot can have its own period, on its page. Memories, the wiki and the usage receipts are not part of it.'
+          )}
+        >
+          <div className="row">
+            <NumberInput min={0} max={MAX_RETENTION_DAYS} step={1} value={kept} onChange={(n) => updateSettings({ retentionDays: cleanRetentionDays(n) ?? 0 })} className="input--short" aria-label="Days" />
+            <span className="muted small">{L('dias', 'days')}</span>
+          </div>
+        </Field>
+        <button className="btn btn--danger btn--sm workspace-danger__wipe" disabled={busy} onClick={() => void wipe()}>
+          {L('Apagar todas as conversas', 'Wipe all conversations')}
+        </button>
+      </div>
+      {note && (
+        <span className="muted small" role="status">
+          {note}
+        </span>
+      )}
+    </div>
+  )
+}
+
+export function WorkspaceDangerArea(): ReactNode {
+  const owner = useStore(amOwner)
   const name = useStore((s) => workspaceLabel(s.settings))
   const defaultWorkspace = useStore((s) => s.defaultWorkspace)
   const [note, setNote] = useState('')
@@ -3364,7 +3505,8 @@ function WorkspaceDangerArea(): ReactNode {
         </div>
         {note && <p className="small muted">{note}</p>}
       </div>
-      {window.tucano.workspaces && <div className="workspace-danger__section">
+      <WorkspaceHistorySection />
+      {owner && window.tucano.workspaces && <div className="workspace-danger__section">
         <h3>{L('Excluir workspace', 'Delete workspace')}</h3>
         <p className="small muted">{defaultWorkspace ? L('O workspace padrão não pode ser excluído. Você ainda pode fazer backup ou duplicá-lo.', 'The default workspace cannot be deleted. You can still back it up or duplicate it.') : L(`Excluir “${name}” apaga também seus backups locais, agentes, conversas, memórias, credenciais e rotinas. Copie o backup para fora deste workspace antes. Os outros workspaces e suas pastas de projetos ficam intactos.`, `Deleting “${name}” also deletes its local backups, agents, conversations, memories, credentials and routines. Copy your backup outside this workspace first. Other workspaces and project folders are kept.`)}</p>
         <button className="btn btn--danger btn--sm" disabled={busy || defaultWorkspace} onClick={() => void remove()}>{busy ? L('Aguarde…', 'Please wait…') : L('Excluir workspace e todos os dados', 'Delete workspace and all data')}</button>

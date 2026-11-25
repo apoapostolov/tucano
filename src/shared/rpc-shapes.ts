@@ -33,6 +33,7 @@ export const SHAPES: Record<Method, Record<string, string>> = {
   setChannelMembers: { id: 's', agentIds: 'S' },
   cleanConversation: { id: 's' },
   deleteConversation: { id: 's' },
+  wipeHistory: { agentId: 's?' },
   openDm: { agentId: 's' },
   tasks: {},
   saveTask: { task: 'o' },
