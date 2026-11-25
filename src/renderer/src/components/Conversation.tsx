@@ -835,14 +835,17 @@ function AskedFromHere({ message }: { message: Message }): ReactNode {
 export function ReplyFooter({ message, quote, replyKey = message.conversationId, threadPill }: { message: Message; quote?: string; replyKey?: string; threadPill?: ReactNode }): ReactNode {
   const agent = useStore((s) => (message.author.kind === 'agent' ? agentById(s, message.author.id) : undefined))
   const working = message.run?.status === 'working'
+  // A reply that ended carries the same pill under another name: there is nothing left to steer, so the
+  // instruction it takes makes that reply go on from where it stopped (runs.ts, `followIn`).
+  const steerable = working || message.run?.status === 'done'
   const hasFooter = !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
   const resumable = !!message.run && (message.run.status === 'paused' || (CUT.includes(message.run.status) && canContinue(message.run)))
   const retryable = !!message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit))))
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
-  if (!working && !hasFooter && !resumable && !retryable && !canReply) return null
+  if (!steerable && !hasFooter && !resumable && !retryable && !canReply) return null
   return (
     <div className="msg__meta">
-      {working && <Steer message={message} />}
+      {steerable && <Steer message={message} />}
       {resumable && (
         <button className="steps__ask-pill retry" aria-label={L('Continuar', 'Continue')} onClick={() => continueRun(message.id)}>
           <Icon name="play" size={11} /><span className="steps__ask-pill__word">{L('Continuar', 'Continue')}</span>
@@ -878,7 +881,13 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
 // "Try with instructions" opens, and what the person writes goes to this reply (send mode `steer`)
 // instead of becoming a message of its own. It stays in sight while the reply works: unlike the ways
 // back from a reply that stopped, it is the live control, not a repair.
+//
+// A reply that has ended carries the same pill under another name: Follow. Nothing is left to steer
+// there, so the core takes the instruction as that reply going on from where it stopped (runs.ts,
+// `followIn`), through this same call: one pill, one field, one way in.
 function Steer({ message }: { message: Message }): ReactNode {
+  const following = message.run?.status === 'done'
+  const word = following ? L('Seguir', 'Follow') : L('Orientar', 'Steer')
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const typed = note.trim()
@@ -892,18 +901,18 @@ function Steer({ message }: { message: Message }): ReactNode {
       <button
         type="button"
         className="steps__ask-pill steps__steer-pill"
-        aria-label={L('Orientar', 'Steer')}
+        aria-label={word}
         aria-expanded={open}
-        title={L('Dizer como seguir, sem parar a resposta', 'Say how to go on without stopping the reply')}
+        title={following ? L('Pedir a esta resposta para seguir daqui', 'Ask this reply to go on from here') : L('Dizer como seguir, sem parar a resposta', 'Say how to go on without stopping the reply')}
         onClick={() => setOpen((v) => !v)}
       >
-        <Icon name="pointer" size={11} /><span className="steps__ask-pill__word">{L('Orientar', 'Steer')}</span>
+        <Icon name={following ? 'down' : 'pointer'} size={11} /><span className="steps__ask-pill__word">{word}</span>
       </button>
       {open && (
         <div className="retry-note">
           <textarea
-            aria-label={L('Orientação para a resposta em curso', 'Instructions for the current reply')}
-            placeholder={L('Como ele deve seguir?', 'How should it go on?')}
+            aria-label={following ? L('O que mais esta resposta deve fazer', 'What more this reply should do') : L('Orientação para a resposta em curso', 'Instructions for the current reply')}
+            placeholder={following ? L('O que mais?', 'What next?') : L('Como ele deve seguir?', 'How should it go on?')}
             rows={2}
             value={note}
             autoFocus
@@ -918,7 +927,7 @@ function Steer({ message }: { message: Message }): ReactNode {
           />
           <div className="retry-note__row">
             <button className="btn btn--primary btn--xs" disabled={!typed} onClick={() => steer(typed)}>
-              {L('Orientar', 'Steer')}
+              {word}
             </button>
             <button
               className="link"
@@ -2165,9 +2174,9 @@ export function Thought({ message, working }: { message: Message; working: boole
   )
 }
 
-// One reply's run as the conversation draws it: its steps, the steer sub-button beside Stop in
-// the steps row, and the steer's field under the box. Anything the run says about itself — its steps
-// and the thinking under them — still sits above the field.
+// One reply's run as the conversation draws it: its steps, the pill in the steps row (Steer while it
+// works, Follow once it has ended) and the field that pill opens under the box. Anything the run says
+// about itself — its steps and the thinking under them — still sits above the field.
 export function RunBlock({ message }: { message: Message }): ReactNode {
   return <RunSteps message={message} />
 }
