@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
 import type { Message } from '../../../shared/types'
-import { allWorkingIds, messagesIn, stopRun, useStore } from '../store'
-import { Icon, duration } from './ui'
+import { allWorkingIds, dropQueued, messagesIn, reorderQueued, sendMessage, startQueued, stopRun, useStore } from '../store'
+import { Icon, type IconName, duration } from './ui'
 
 // What the drawer keeps about one conversation while the app is open: whether it is open, and the
 // replies that ended here. Those stay as rows, marked with how they ended, until someone takes them
@@ -21,8 +21,9 @@ const drawerFor = (conversationId: string): DrawerMemory => {
   drawerMemory.set(conversationId, made)
   return made
 }
-// A reply that ended, as the drawer shows it: how it ended, in a glyph, a word and a tone.
-const endedAs = (status: string): { icon: 'check' | 'x' | 'pause'; tone: 'ok' | 'bad' | 'off'; said: string } =>
+// A reply that ended, as the drawer shows it: how it ended, in a glyph and a tone. The words stay in
+// the glyph's title, so the row has the room the Follow pill needs (the ended label was taking it).
+const endedAs = (status: string): { icon: IconName; tone: 'ok' | 'bad' | 'off'; said: string } =>
   status === 'done'
     ? { icon: 'check', tone: 'ok', said: L('Concluída', 'Done') }
     : status === 'failed' || status === 'limit_reached'
@@ -43,13 +44,77 @@ function useTick(on: boolean): number {
   return now
 }
 
+// The one-line field a drawer row opens for Steer (a reply at work) and Follow (one that ended).
+// The pill keeps the row it is on; the field is that row's second line, one line tall, from where the
+// row's words start to its right edge. Enter sends, Escape closes without sending, and the glyph stays
+// asleep until there is something to send. The same call carries both: a steer reaches the reply at
+// its next tool call, and for a done reply the core's `followIn` resumes it in place (runs.ts).
+function RowPrompt({ icon, label, title, aria, placeholder, onSend }: {
+  icon: IconName
+  label: string
+  title: string
+  aria: string
+  placeholder: string
+  onSend: (text: string) => void
+}): ReactNode {
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const typed = note.trim()
+  const close = (): void => {
+    setOpen(false)
+    setNote('')
+  }
+  const go = (): void => {
+    if (!typed) return
+    onSend(typed)
+    close()
+  }
+  return (
+    <div className={`steps__ask steps__ask--${icon}`}>
+      <button
+        type="button"
+        className="steps__ask-pill steps__steer-pill"
+        aria-label={label}
+        aria-expanded={open}
+        title={title}
+        onClick={() => (open ? close() : setOpen(true))}
+      >
+        <Icon name={icon} size={11} />
+        <span className="steps__ask-pill__word">{label}</span>
+      </button>
+      {open && (
+        <div className="steps__ask-note steps__ask-note--row">
+          <input
+            type="text"
+            aria-label={aria}
+            placeholder={placeholder}
+            value={note}
+            autoFocus
+            onChange={(e) => setNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && typed) {
+                e.preventDefault()
+                go()
+              }
+              if (e.key === 'Escape') close()
+            }}
+          />
+          <button type="button" className="icon-btn icon-btn--sm steps__ask-send" title={L('Enviar', 'Send')} aria-label={L('Enviar', 'Send')} disabled={!typed} onClick={go}>
+            <Icon name="send" size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // The work this conversation is carrying, attached above the field: the replies running right now,
-// each with the prompt that started it, the thread it answers in and a way to stop it, and the replies
-// that already ended here — kept, marked with how they ended, so they can still be jumped to until
-// their row is taken off. A reply inside one of this conversation's threads counts as work here too:
-// its thread button opens that thread on it, and a reply that starts one opens its own. It opens by
-// itself when it gains something to show — a second reply running at once — and can be closed; with
-// nothing in it, it isn't there at all. Each conversation has its own.
+// each with a Steer, the prompts waiting their turn with their order and controls, and the replies
+// that already ended here — kept, marked with how they ended, with a Follow on the ones the core can
+// resume. A reply inside one of this conversation's threads counts as work here too: its row opens
+// that thread on it. It opens by itself when it gains something to show — a queued prompt, or a
+// second reply running at once — and can be closed; with nothing in it, it isn't there at all. Each
+// conversation has its own.
 export function WorkDrawer({
   conversationId,
   onJump,
@@ -64,11 +129,20 @@ export function WorkDrawer({
   const messages = useStore((s) => messagesIn(s, conversationId))
   const remember = drawerFor(conversationId)
   const running = messages.filter((m) => ids.includes(m.id))
-  const busy = running.length > 1
+  // In the order it will run in: the place a person dragged the rows into (runs.ts, `reorderQueued`),
+  // and after those the order they were written in.
+  const queued = messages
+    .filter((m) => m.sendMode === 'queue')
+    .sort((a, b) => (a.queuePos ?? Number.MAX_SAFE_INTEGER) - (b.queuePos ?? Number.MAX_SAFE_INTEGER) || a.at - b.at)
+  const busy = queued.length > 0 || running.length > 1
   const [open, setOpen] = useState<boolean>(remember.open ?? busy)
+  // The queued row being dragged, and the one it would land on: the grip is the handle, and the row it
+  // is dropped on takes its place in the queue the core runs (runs.ts, `reorderQueued`).
+  const [dragged, setDragged] = useState<string | null>(null)
+  const [over, setOver] = useState<string | null>(null)
   const [ended, setEnded] = useState<string[]>(remember.done)
   const now = useTick(running.length > 0)
-  // Two clicks for a destructive X: the first arms it and turns the glyph red, the second does it.
+  // Two clicks for a destructive glyph: the first arms it and turns it red, the second does it.
   // Only one button is armed at a time; leaving it or clicking elsewhere disarms it.
   const [armed, setArmed] = useState<string | null>(null)
   const arm = (key: string, run: () => void): void => {
@@ -126,10 +200,22 @@ export function WorkDrawer({
     if (over.length) keep([...remember.done, ...over])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [working])
+  // A queued prompt put before or after another: the whole queue goes in its new order, so the row it
+  // was dropped on keeps its place and everything else keeps its own.
+  const moveQueued = (from: string, to: string): void => {
+    const order = queued.map((m) => m.id)
+    const at = order.indexOf(from)
+    const into = order.indexOf(to)
+    if (at < 0 || into < 0 || at === into) return
+    const next = [...order]
+    next.splice(into, 0, ...next.splice(at, 1))
+    reorderQueued(conversationId, next)
+  }
   const finished = ended.map((id) => messages.find((m) => m.id === id)).filter((m): m is Message => !!m?.run && ENDED.includes(m.run.status))
-  if (!running.length && !finished.length) return null
+  if (!running.length && !queued.length && !finished.length) return null
   const counts = [
     running.length > 0 ? L(`${running.length} respondendo`, `${running.length} replying`) : '',
+    queued.length > 0 ? L(`${queued.length} na fila`, `${queued.length} queued`) : '',
     finished.length > 0 ? L(`${finished.length} terminada${finished.length === 1 ? '' : 's'}`, `${finished.length} finished`) : ''
   ]
     .filter((part) => part !== '')
@@ -153,6 +239,19 @@ export function WorkDrawer({
                 <span className="work-row__text">{asked(m)}</span>
               </button>
               <span className="work-row__meta">{duration(Math.max(0, now - m.at))}</span>
+              {/* Steering first, stopping after it: what a person does to a running reply is say how
+                  to go on far more often than kill it, and the x at the row's end is the last thing
+                  under the pointer rather than the first. */}
+              <div className="work-row__steer">
+                <RowPrompt
+                  icon="pointer"
+                  label={L('Orientar', 'Steer')}
+                  title={L('Dizer como seguir, sem parar esta resposta', 'Say how to go on without stopping this reply')}
+                  aria={L('Orientação para esta resposta', 'A steer for this reply')}
+                  placeholder={L('Como ele deve seguir?', 'How should it go on?')}
+                  onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], 'steer', m.id)}
+                />
+              </div>
               <button type="button"
                 className="icon-btn icon-btn--sm work-row__thread-btn"
                 title={into(m)}
@@ -173,11 +272,104 @@ export function WorkDrawer({
               </button>
             </div>
           ))}
+          {queued.length > 0 && (
+            <>
+              <div className="work-drawer__group">{L('Na fila', 'Queued')}</div>
+              {queued.map((m) => (
+                <div
+                  className={`work-row work-row--queued ${over === m.id && dragged !== m.id ? 'is-over' : ''}`}
+                  key={m.id}
+                  onDragOver={(e: DragEvent<HTMLDivElement>) => {
+                    if (!dragged || dragged === m.id) return
+                    e.preventDefault() // a row is a place to drop one: the browser drops nothing it wasn't told about
+                    if (over !== m.id) setOver(m.id)
+                  }}
+                  onDragLeave={() => setOver((was) => (was === m.id ? null : was))}
+                  onDrop={(e: DragEvent<HTMLDivElement>) => {
+                    e.preventDefault()
+                    const from = e.dataTransfer?.getData('text/plain') || dragged
+                    setOver(null)
+                    setDragged(null)
+                    if (from) moveQueued(from, m.id)
+                  }}
+                >
+                  {/* The handle: dragged, it moves this prompt up or down the queue; the arrows do the
+                      same from the keyboard. Off the jump button, so a drag never opens the message. */}
+                  <span
+                    className="work-row__grip"
+                    role="button"
+                    tabIndex={0}
+                    draggable
+                    title={L('Arraste para mudar a ordem da fila', 'Drag to change the order of the queue')}
+                    aria-label={L('Mudar a ordem deste pedido na fila', 'Move this prompt in the queue')}
+                    onDragStart={(e: DragEvent<HTMLSpanElement>) => {
+                      setDragged(m.id)
+                      e.dataTransfer.effectAllowed = 'move'
+                      e.dataTransfer.setData('text/plain', m.id)
+                    }}
+                    onDragEnd={() => {
+                      setDragged(null)
+                      setOver(null)
+                    }}
+                    onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
+                      const at = queued.findIndex((q) => q.id === m.id)
+                      const to = e.key === 'ArrowUp' ? at - 1 : e.key === 'ArrowDown' ? at + 1 : -1
+                      if (to < 0 || to >= queued.length) return
+                      e.preventDefault()
+                      moveQueued(m.id, queued[to]!.id)
+                    }}
+                  >
+                    <Icon name="grip" size={11} />
+                  </span>
+                  <button type="button" className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para este pedido', 'Go to this prompt')}>
+                    <Icon name="clock" size={11} />
+                    {/* The heading above already says it is waiting: the row is the prompt alone. */}
+                    <span className="work-row__text">{oneLine(m.text, 90) || L('sem texto', 'no text')}</span>
+                  </button>
+                  <button type="button"
+                    className="icon-btn icon-btn--sm work-row__thread-btn"
+                    title={into(m)}
+                    aria-label={L('Abrir a thread deste pedido', 'Open this prompt’s thread')}
+                    onClick={() => onThread?.(threadOf(m))}
+                  >
+                    <Icon name="thread" size={12} />
+                  </button>
+                  {/* Past the cap it would wait for a slot: pressing this sends it now, which is what
+                      asking for it means (runs.ts, `startQueued`). */}
+                  <button type="button"
+                    className="icon-btn icon-btn--sm work-row__start"
+                    title={L('Começar este pedido agora', 'Start this prompt now')}
+                    aria-label={L('Começar este pedido agora', 'Start this prompt now')}
+                    onClick={() => startQueued(m.id)}
+                  >
+                    <Icon name="play" size={11} />
+                  </button>
+                  {/* Taking the prompt back before it went: it never runs, and the message goes with
+                      its row, so the bubble it put in the conversation goes too (runs.ts, `dropQueued`).
+                      The x sits at the row's end, where a running session carries its stop. */}
+                  <button type="button"
+                    className={`icon-btn icon-btn--sm work-row__drop ${armed === `drop:${m.id}` ? 'is-armed' : ''}`}
+                    title={armed === `drop:${m.id}` ? L('Clique de novo para tirar da fila', 'Click again to take it out') : L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
+                    aria-label={L('Tirar este pedido da fila', 'Take this prompt out of the queue')}
+                    onClick={() => arm(`drop:${m.id}`, () => dropQueued(m.id))}
+                    onBlur={disarm}
+                    onMouseLeave={disarm}
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
           {finished.length > 0 && (
             <>
               <div className="work-drawer__group">{L('Terminadas', 'Finished')}</div>
               {finished.map((m) => {
                 const how = endedAs(m.run?.status ?? 'done')
+                // The core resumes only a reply that ended as done. A stopped, cut or failed one keeps
+                // its own way back (Continue / Try again) on the message itself, so it gets no Follow
+                // here that the core would refuse.
+                const followable = m.run?.status === 'done'
                 return (
                   <div className="work-row work-row--done" key={m.id}>
                     <button type="button" className="work-row__go" onClick={() => onJump?.(m.id, m.threadId)} title={L('Ir para esta resposta', 'Go to this reply')}>
@@ -186,7 +378,21 @@ export function WorkDrawer({
                       </span>
                       <span className="work-row__text">{asked(m)}</span>
                     </button>
-                    <span className="work-row__meta">{how.said}</span>
+                    {/* How it ended is the glyph in the row's own lead, with its words in the title: a
+                        written label here costs the line its room. Follow is the same field as Steer,
+                        sent through the same call; for a done reply the core's `followIn` takes it. */}
+                    {followable && (
+                      <div className="work-row__follow">
+                        <RowPrompt
+                          icon="down"
+                          label={L('Seguir', 'Follow')}
+                          title={L('Dizer como esta resposta segue agora', 'Say how this reply goes on now')}
+                          aria={L('O que mais esta resposta deve fazer', 'What more this reply should do')}
+                          placeholder={L('O que mais?', 'What next?')}
+                          onSend={(text) => void sendMessage(m.conversationId, text, [], m.threadId, [], 'steer', m.id)}
+                        />
+                      </div>
+                    )}
                     <button type="button"
                       className="icon-btn icon-btn--sm work-row__thread-btn"
                       title={into(m)}

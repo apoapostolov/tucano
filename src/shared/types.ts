@@ -538,6 +538,10 @@ export interface Message {
   // goes one at a time): 'queue' while it waits, unset once its reply goes. Kept in the database, so it
   // outlives a restart (runs.ts, resumeQueued).
   sendMode?: 'queue'
+  // Where a queued prompt sits among the ones waiting in its conversation, as a person put it in the
+  // work drawer (runs.ts, `reorderQueued`). Unset: the order it was written in, which is what a queue
+  // starts as. Kept in the database like `sendMode`, so a restart reads the same order.
+  queuePos?: number
   // The message this one answers, kept with the quote it showed: the agent still reads it when the
   // original has left the history it sees.
   reply?: { messageId: string; author: string; agentId?: string; text: string; at: number; excerpt?: boolean }

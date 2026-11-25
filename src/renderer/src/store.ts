@@ -685,6 +685,16 @@ function apply(e: CoreEvent): void {
           panelWide: here ? false : s.panelWide
         }
       }
+      case 'message_removed': {
+        // A queued prompt taken back: the bubble leaves the conversation and the drawer in one event,
+        // and no reply can start on it afterwards (runs.ts, `dropQueued`).
+        thoughts.clear([e.id])
+        return {
+          ...s,
+          messages: { ...s.messages, [e.conversationId]: messagesIn(s, e.conversationId).filter((m) => m.id !== e.id) },
+          panel: s.panel?.kind === 'thread' && s.panel.id === e.id ? null : s.panel
+        }
+      }
       case 'conversation_removed': {
         thoughts.clear(messagesIn(s, e.id).map((message) => message.id))
         const left = s.conversations.filter((c) => c.id !== e.id)
@@ -1129,6 +1139,11 @@ export const typing = (conversationId: string, threadId?: string, opened = false
 }
 
 export const stopRun = (messageId: string): void => void fire(L('Não consegui parar a resposta.', "I couldn't stop the reply."), 'stopRun', { messageId })
+// A prompt in the queue goes now, cap or no cap (Start on its row in the work drawer); the order a
+// person drags the rows into is what the queue runs in; and taking one back removes its message.
+export const startQueued = (messageId: string): void => void fire(L('Não consegui começar este pedido agora.', "I couldn't start that prompt now."), 'startQueued', { messageId })
+export const reorderQueued = (conversationId: string, ids: string[]): void => void fire(L('Não consegui guardar a ordem da fila.', "I couldn't keep the queue's order."), 'reorderQueued', { conversationId, ids })
+export const dropQueued = (messageId: string): void => void fire(L('Não consegui tirar este pedido da fila.', "I couldn't take that prompt out of the queue."), 'dropQueued', { messageId })
 export const retryRun = (messageId: string, note?: string): void =>
   void fire(L('Não consegui tentar de novo.', "I couldn't try again."), 'retryRun', { messageId, ...(note ? { note } : {}) })
 export const continueRun = (messageId: string): void => void fire(L('Não consegui continuar a resposta.', "I couldn't continue the reply."), 'continueRun', { messageId })

@@ -83,6 +83,7 @@ export const MAX_CONCURRENT_URGENT = 6
 const MAX_TURN_IMAGES = 6 // attached images a reply sees as images; older ones only by name
 const mimeOf = (name: string): string => ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp' })[name.split('.').pop()!.toLowerCase()] ?? 'image/jpeg'
 const MAX_MENTIONS = 3
+const MAX_QUEUE_ORDER = 500 // rows a person may put in an order at once (the work drawer's queue)
 // A request whose thread has nothing after it at all: the one asked never got going. It's knocked on
 // once, and if that comes to nothing either it ends as failed, so whoever asked always hears (delegations).
 const FIRST_NUDGE_MS = 4 * 60_000
@@ -884,19 +885,27 @@ export class Runner {
 
 
   // A prompt that was waiting its turn when the app closed: its message is here, its reply never started
-  // (db.ts, queuedMessages). Each one goes in the order I wrote them, after whatever runs there now.
+  // (db.ts, queuedMessages). Each one goes in the order it runs in (the place a person gave it in the
+  // work drawer, then the order it was written in), after whatever runs there now.
   async resumeQueued(): Promise<void> {
     const { db } = this.deps
     if (this.paused) return // they keep their mark, and go at the next start
     const cap = await this.repliesAtOnce()
-    for (const m of db.queuedMessages()) {
-      const conv = db.conversation(m.conversationId)
-      const members = conv ? this.members(conv) : []
-      if (!conv || !members.length || m.author.kind !== 'person') continue
-      const named = mentioned(m.text, members).slice(0, MAX_MENTIONS)
-      if (!named.length && conv.kind !== 'dm' && members.length > 1) this.runIn(conv.id, () => this.routeAndRun(conv, members, m.threadId, m.id, true), m, cap)
-      else for (const agent of named.length ? named : members) this.runIn(conv.id, () => this.startReply(agent, conv, { depth: 1, threadId: m.threadId, replyTo: m.id }, { urgent: true, parallel: true }), m, cap)
-    }
+    for (const m of db.queuedMessages()) this.queuedStart(m, cap)
+  }
+
+  // The job a queued prompt sets off: whoever it names, or the router in a channel of several. With a
+  // cap it goes behind what is already running there (a restart, `resumeQueued`); `immediate` starts it
+  // now (the Start on its row), past the cap, the same way Start on an in-memory entry calls `startIn`.
+  private queuedStart(m: Message, cap: number, immediate = false): void {
+    const { db } = this.deps
+    const conv = db.conversation(m.conversationId)
+    const members = conv ? this.members(conv) : []
+    if (!conv || !members.length || m.author.kind !== 'person') return
+    const named = mentioned(m.text, members).slice(0, MAX_MENTIONS)
+    const start = (job: () => Promise<unknown>): void => immediate ? this.startIn(conv.id, job, m) : this.runIn(conv.id, job, m, cap)
+    if (!named.length && conv.kind !== 'dm' && members.length > 1) start(() => this.routeAndRun(conv, members, m.threadId, m.id, true))
+    else for (const agent of named.length ? named : members) start(() => this.startReply(agent, conv, { depth: 1, threadId: m.threadId, replyTo: m.id }, { urgent: true, parallel: true }))
   }
 
   // How many replies may run at once in one conversation (Settings › Agents › Replies): 1 is one at a
@@ -947,11 +956,15 @@ export class Runner {
     return true
   }
 
-  // A slot freed there: the prompts queued behind it go, as many as fit, in the order they came.
+  // A slot freed there: the prompts queued behind it go, as many as fit, in the order of the line (the
+  // order they came, or the one a person gave them in the drawer: `reorderQueued`).
   private nextIn(conversationId: string): void {
     const waiting = this.convWaiting.get(conversationId)
     while (waiting?.length && this.inUse(conversationId) < waiting[0]!.cap) {
       const next = waiting.shift()!
+      // Deleted through any path while it waited (a retention sweep, a thread gone): its message is
+      // gone, so nothing may answer it even though nothing called `dropQueued`.
+      if (!this.deps.db.message(next.prompt.id)) continue
       this.startIn(conversationId, next.job, next.prompt)
     }
     if (!waiting?.length) this.convWaiting.delete(conversationId)
@@ -963,6 +976,88 @@ export class Runner {
     if (left > 0) this.convRuns.set(conversationId, left)
     else this.convRuns.delete(conversationId)
     this.nextIn(conversationId)
+  }
+
+  // The person presses Start on a queued prompt (its row in the work drawer): it goes now, beside
+  // whatever runs there, even with the conversation's cap used up, which is what pressing it asks for.
+  // The rest of the line keeps its order and its turn. Nothing starts twice: the entry leaves the line
+  // first, so no freed slot can start it again, and its mark goes in the same step (`startIn`), so a
+  // restart doesn't either. A prompt that isn't in the line (its reply is already on its way, or it
+  // waits on its agent rather than the conversation) is left alone.
+  startQueued(messageId: string): void {
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const at = waiting.findIndex((w) => w.prompt.id === messageId)
+      if (at < 0) continue
+      const [entry] = waiting.splice(at, 1)
+      if (!waiting.length) this.convWaiting.delete(conversationId)
+      this.startIn(conversationId, entry!.job, entry!.prompt)
+      return
+    }
+    // Marked in the database but not waiting here (a restart before `resumeQueued`, or another
+    // process): start it as the prompt it is, now, as the row asked.
+    const m = this.deps.db.message(messageId)
+    if (m?.sendMode === 'queue') this.queuedStart(m, 0, true)
+  }
+
+  // The order a person gave the queue in the work drawer: the whole line of that conversation, the
+  // prompts named first in the order given and the rest after them as they were. The place is kept on
+  // each message (db.ts, `setQueuePos`), so a restart reads the same order, the jobs waiting here take
+  // it now, and each message is told again with its place so the drawer draws the new order. Only
+  // queued prompts of that conversation may be named, each once.
+  reorderQueued(conversationId: string, ids: string[]): void {
+    const { db } = this.deps
+    if (ids.length > MAX_QUEUE_ORDER) throw new Error(L('Ordem grande demais.', 'Too many rows in that order.'))
+    const queued = db.queuedMessages().filter((m) => m.conversationId === conversationId)
+    const known = new Set(queued.map((m) => m.id))
+    if (new Set(ids).size !== ids.length) throw new Error(L('Um pedido aparece duas vezes nessa ordem.', 'A prompt appears twice in that order.'))
+    for (const id of ids) if (!known.has(id)) throw new Error(L('Só os pedidos na fila desta conversa podem ser ordenados.', 'Only prompts queued in this conversation can be ordered.'))
+    const place = new Map(ids.map((id, i) => [id, i]))
+    const order = [...queued].sort((a, b) => (place.get(a.id) ?? Number.POSITIVE_INFINITY) - (place.get(b.id) ?? Number.POSITIVE_INFINITY))
+    order.forEach((m, at) => {
+      if (m.queuePos === at) return
+      db.setQueuePos(m.id, at)
+      this.deps.emit({ type: 'message', message: { ...m, queuePos: at } })
+    })
+    const waiting = this.convWaiting.get(conversationId)
+    if (!waiting?.length) return
+    const rankOf = new Map(order.map((m, i) => [m.id, i]))
+    waiting.sort((a, b) => (rankOf.get(a.prompt.id) ?? 0) - (rankOf.get(b.prompt.id) ?? 0))
+  }
+
+  // A queued prompt taken back before it went (the x on its row in the work drawer): the line it was
+  // waiting in goes first, so nothing starts it afterwards, and then the message itself. The row in the
+  // drawer and the bubble it put in the conversation are one message, so both leave in the same step,
+  // and everyone looking learns of it at once (`message_removed`). A prompt that already started keeps
+  // no queue mark, and is left alone here.
+  dropQueued(messageId: string): void {
+    const { db } = this.deps
+    const m = db.message(messageId)
+    if (!m || m.sendMode !== 'queue') return
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const left = waiting.filter((w) => w.prompt.id !== messageId)
+      if (left.length === waiting.length) continue
+      if (left.length) this.convWaiting.set(conversationId, left)
+      else this.convWaiting.delete(conversationId)
+    }
+    db.deleteMessage(messageId)
+    this.deps.emit({ type: 'message_removed', id: messageId, conversationId: m.conversationId })
+  }
+
+  // Nothing waits in that conversation any more (it is being cleaned or deleted under its queue): what
+  // waited there for a slot would otherwise start into it once one frees, and answer a prompt that is gone.
+  forgetConversation(conversationId: string): void {
+    this.convWaiting.delete(conversationId)
+  }
+
+  // A message gone for good through some other path (retention, a deleted conversation's thread): its
+  // waiting entry goes with it, so a slot freeing later cannot answer a prompt that no longer exists.
+  forget(messageId: string): void {
+    for (const [conversationId, waiting] of [...this.convWaiting]) {
+      const left = waiting.filter((w) => w.prompt.id !== messageId)
+      if (left.length === waiting.length) continue
+      if (left.length) this.convWaiting.set(conversationId, left)
+      else this.convWaiting.delete(conversationId)
+    }
   }
 
   // A steer goes to the reply running in that conversation, which reads it at its next tool call.
@@ -1395,10 +1490,17 @@ export class Runner {
     this.update(m, { sendMode: 'queue' })
   }
 
+  // The mark a queued prompt kept goes the moment its reply starts, with the place a person gave it
+  // (db.ts, `clearQueueMark`), so the app never starts it twice and its row leaves the drawer. Written on
+  // the two columns alone, never as a whole message: a save is an upsert, and a prompt deleted while it
+  // waited (its row's x, its conversation cleaned) would come back into the room by it. A row that is
+  // gone stays gone, and nothing is told of it.
   private clearWaiting(messageId: string | undefined): void {
-    const m = messageId ? this.deps.db.message(messageId) : undefined
-    if (m?.sendMode !== 'queue') return
-    this.update(m, { sendMode: undefined })
+    if (!messageId) return
+    const m = this.deps.db.message(messageId)
+    if (m?.sendMode !== 'queue' && m?.queuePos === undefined) return
+    this.deps.db.clearQueueMark(messageId)
+    if (m) this.update(m, { sendMode: undefined, queuePos: undefined })
   }
 
   // Each reply answers the message that was routed (`trigger`), not whatever came in while it
