@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('tucano', {
   },
   connect: (): void => ipcRenderer.send('core:connect'),
   pickFolder: (o?: { start?: string; hidden?: boolean }): Promise<string | null> => ipcRenderer.invoke('pick-folder', o) as Promise<string | null>,
-  // A picture right-clicked in a conversation: saved where the person says, or into the clipboard.
+// A picture right-clicked in a conversation: saved where the person says, or into the clipboard.
   image: {
     save: (
       url: string,
@@ -44,6 +44,9 @@ contextBridge.exposeInMainWorld('tucano', {
     copy: (url: string, kind?: string): Promise<{ ok: true; kind: 'image' | 'text' | 'file' | 'path' } | { ok: false }> =>
       ipcRenderer.invoke('artifact:copy', { url, kind }) as Promise<{ ok: true; kind: 'image' | 'text' | 'file' | 'path' } | { ok: false }>
   },
+  // The Cofre's import: the file is chosen and read here, so the page only gets the text of a file the
+  // person picked.
+  pickLoginsCsv: (): Promise<{ name: string; text: string } | null> => ipcRenderer.invoke('pick-logins-csv') as Promise<{ name: string; text: string } | null>,
   // A picked file's path, so the core reads a big .zip in parts instead of through the page.
   pathOf: (file: File): string => webUtils.getPathForFile(file),
   // A click on a notification opens its conversation, and the thread it's about.
