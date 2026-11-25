@@ -1365,7 +1365,35 @@ h3 {
 }
 .msg__actions {
   display: flex;
+  gap: 10px;
   margin-top: 4px;
+}
+/* The reply's own Markdown on the clipboard, left of the reply glyph: a dim glyph with no frame of
+   its own, and the check it turns into for a moment after the press. */
+.msg__copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: var(--radius);
+  color: var(--text-3);
+  cursor: pointer;
+}
+.msg__copy:hover,
+.msg__copy:focus-visible,
+.msg__copy.is-copied {
+  background: var(--bubble);
+  color: var(--text);
+}
+@media (pointer: coarse) {
+  .msg__copy {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 /* The reply button under a message (and "Reply to selection" once text in it is selected). */
 .msg__replyto {
@@ -4160,6 +4188,11 @@ body.is-resizing webview {
   align-self: stretch;
 }
 .msg__meta .msg__replyto {
+  min-width: 0;
+  min-height: 0;
+}
+/* Both glyphs belong to the footer line's own height, not to buttons standing 32 px tall inside it. */
+.msg__meta .msg__copy {
   min-width: 0;
   min-height: 0;
 }

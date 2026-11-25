@@ -18,6 +18,8 @@ const CHEVRON =
   '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>'
 const REPLY_GLYPH =
   '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 17H7a4 4 0 0 1 0-8h10M13 7l-4 5 4 5"></path></svg>'
+const COPY_GLYPH =
+  '<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="14" height="14" rx="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>'
 
 // ReplyFooter draws the thread pill before the provider receipt and reply glyph.
 const ROW = `
@@ -31,6 +33,7 @@ const ROW = `
     <button class="retry">Follow</button>
     <div class="receipt"><button class="receipt__line">Sonnet · 12.4k tokens · 7s</button></div>
     <div class="msg__actions">
+      <button class="msg__copy" title="Copy as Markdown" aria-label="Copy as Markdown">${COPY_GLYPH}</button>
       <button class="msg__replyto" title="Reply to message" aria-label="Reply to message">${REPLY_GLYPH}</button>
     </div>
   </div>`
@@ -81,6 +84,7 @@ for (const c of cases) {
       const meta = await box(row.locator('.msg__meta'))
       const pill = await box(row.locator('.thread-link'))
       const glyph = await box(row.locator('.msg__replyto'))
+      const copy = await box(row.locator('.msg__copy'))
       const receipt = await box(row.locator('.receipt'))
       const style = await row.locator('.msg__meta').evaluate((el) => {
         const css = getComputedStyle(el)
@@ -112,6 +116,14 @@ for (const c of cases) {
       expect(glyph.left).toBeGreaterThanOrEqual(pill.right)
       expect(pill.top).toBeGreaterThanOrEqual(meta.top - 0.5)
       expect(glyph.bottom).toBeLessThanOrEqual(meta.bottom + 0.5)
+      // Copy as Markdown rides the same right-hand group, immediately left of the reply glyph.
+      expect(await row.locator('.msg__actions > .msg__copy + .msg__replyto').count()).toBe(1)
+      expect(copy.right).toBeLessThanOrEqual(glyph.left)
+      expect(Math.abs(glyph.left - copy.right - 10)).toBeLessThanOrEqual(0.5)
+      expect(copy.top).toBeLessThan(glyph.bottom)
+      expect(glyph.top).toBeLessThan(copy.bottom)
+      expect(copy.top).toBeGreaterThanOrEqual(meta.top - 0.5)
+      expect(copy.bottom).toBeLessThanOrEqual(meta.bottom + 0.5)
     } finally {
       await browser.close()
     }

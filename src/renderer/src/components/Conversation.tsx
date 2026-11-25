@@ -581,6 +581,31 @@ const MessageMarkdown = memo(Markdown)
 const STREAM_MS = 140 // a streaming reply's Markdown, about 7 times a second
 const NO_ATTACHED: Artifact[] = []
 
+// The reply as it was written, not as the screen drew it: its own Markdown, on the clipboard, for a
+// note, a doc or another window. It sits in the footer's action group, just left of the reply glyph,
+// and only on an agent's answer that finished with words in it.
+export function CopyMarkdown({ text }: { text: string }): ReactNode {
+  const [copied, setCopied] = useState(false)
+  const timer = useRef<number | undefined>(undefined)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  const copy = (): void => {
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true)
+        if (timer.current) window.clearTimeout(timer.current)
+        timer.current = window.setTimeout(() => setCopied(false), 1600)
+      })
+      .catch(() => toast(L('Não deu pra copiar a resposta.', 'Could not copy the reply.')))
+  }
+  const label = L('Copiar como Markdown', 'Copy as Markdown')
+  return (
+    <button type="button" className={`msg__copy${copied ? ' is-copied' : ''}`} title={label} aria-label={label} onPointerDown={(e) => e.preventDefault()} onClick={copy}>
+      <Icon name={copied ? 'check' : 'copy'} size={16} />
+    </button>
+  )
+}
+
 // `replies`: in a timeline with threads, the replies to this message (none yet: empty).
 // `ask`: on a routine's run, the message the routine posted: a chip by the name that opens it (`askReplies`: its thread).
 // Memoized because each word an agent streams redraws the list: only the row that changed should pay for it.
@@ -861,6 +886,7 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
       )}
       {canReply && (
         <div className="msg__actions">
+          {message.author.kind === 'agent' && message.run?.status === 'done' && !!message.text.trim() && <CopyMarkdown text={message.text} />}
           <button
             className={`msg__replyto ${quote ? 'msg__replyto--excerpt' : ''}`}
             title={quote ? L('Responder ao trecho', 'Reply to selection') : L('Responder mensagem', 'Reply to message')}
