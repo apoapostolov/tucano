@@ -7,6 +7,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > **Em português:**
 > - **Adicionado:** a alteração em lote agora tem uma linha **Modelo principal** e outra **Modelo reserva**, e aplica a reserva aos agentes selecionados sem mexer no modelo principal.
 > - **Ajuste:** em Modelos dos agentes e na Memória, o esforço de raciocínio fica na mesma linha do harness e do modelo, com a largura do nome mais longo; o modelo mostra `…` no campo e abre a lista mais larga, sem sair da tela; o que a memória aprende sobre você vai para a linha seguinte.
+> - **Ajuste:** em Configurações › Workspace › Dados e exclusão, os botões de backup e de exclusão ficam à direita do texto, na mesma borda do cartão. Em uma janela estreita, eles passam para a linha de baixo sem apertar as palavras.
 > - **Adicionado:** uma resposta pronta que oferece uma só ação ganha um botão **Proceed**; um clique executa só aquela ação, sem criar outra mensagem sua.
 > - **Adicionado:** um ajuste liga o botão **Proceed**. Desligado por padrão, ele fica no fim de Configurações › Você › Conversas; ligado, uma resposta que oferece uma só ação ganha um botão de aprovação.
 > - **Adicionado:** o **esforço de raciocínio** aparece onde o modelo é escolhido: na página do agente, em Modelos dos agentes (cada agente e a alteração em lote) e no modelo da memória, que também nomeia cada pedido. Em todos eles, o nível vem depois do harness e do modelo. Na alteração em lote, **Manter** volta a ser uma opção e escolher só um nível muda só o nível, deixando cada agente com o modelo dele. Os modelos do Cursor já trazem o nível no nome, então ali ele não aparece.
@@ -23,6 +24,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **A routine's times read as different hours on a 12-hour clock.** A block at 09:00 showed "09:00 AM" and one at 21:00 showed "09:00 PM", with the same digits, so the two runs looked alike. The hour in a block's label now follows the clock setting: 9:00 AM and 9:00 PM in English, 09:00 and 21:00 on a 24-hour clock. The block stays at its own hour either way.
 - **The Quadro's columns use the same scrollbar as the sidebar.** They now show the app's dim, thin scrollbar with a transparent track instead of the browser's bright overlay bar.
+- **The Danger zone buttons sit to the right of their text.** In Settings › Workspace › Data and deletion, the backup buttons and the delete button share the card's right edge. In a narrow window they move under the text instead of squeezing it.
 
 ### Removed
 
