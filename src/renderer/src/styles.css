@@ -515,10 +515,9 @@ h3 {
 .modal__card.workspace-manager { width: min(600px, calc(100vw - 32px)); }
 .workspace-manager__body { min-height: 0; overflow-y: auto; padding-bottom: 12px; }
 .workspace-manager__list { min-height: 0; max-height: 50vh; overflow-y: auto; }
-.workspace-manager__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.workspace-manager__row { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px 0; }
 .workspace-manager__row + .workspace-manager__row { border-top: 1px solid var(--border); }
-.workspace-manager__identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.workspace-manager__identity .workspace-manager__name { flex: 1 1 auto; }
+.workspace-manager__identity { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 0 1 auto; }
 .workspace-picture__thumb { flex: none; display: grid; place-items: center; width: 40px; height: 40px; cursor: pointer; }
 .workspace-picture__face { position: relative; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--panel); color: var(--text-3); overflow: hidden; }
 .workspace-picture__face img { display: block; width: 100%; height: 100%; padding: 2px; border-radius: 9px; object-fit: contain; }
@@ -535,8 +534,7 @@ h3 {
 .workspace-picture__url input { flex: 1 1 220px; min-width: 0; }
 @media (max-width: 560px) {
   .workspace-manager__row { flex-wrap: wrap; }
-  .workspace-manager__identity { flex: 1 1 180px; }
-  .workspace-manager__row > .row { flex: 1 1 100%; justify-content: flex-end; }
+  .workspace-manager__row > .row { margin-left: auto; }
   .modal__card.workspace-picture { width: calc(100vw - 24px); }
 }
 .workspace-manager__name { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: left; }
@@ -548,7 +546,7 @@ h3 {
 .workspace-manager__carry input { margin-top: 3px; }
 .workspace-manager__carry span { display: flex; flex-direction: column; gap: 2px; }
 .workspace-manager__carry small { font-size: 12px; line-height: 1.4; }
-.workspace-manager__row > .row { flex-shrink: 0; }
+.workspace-manager__row > .row { flex-shrink: 0; margin-left: auto; }
 .workspace-manager__switch[aria-pressed='true'] { background: var(--ok-soft); color: var(--ok); }
 .workspace-manager__pause[aria-pressed='true'] { background: var(--warn-soft); color: var(--warn); }
 .workspace-manager__row .workspace-manager__delete { color: var(--danger); }

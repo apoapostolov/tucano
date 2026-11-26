@@ -105,12 +105,15 @@ export default async function story(t) {
     assert.equal(thumbs.length, baseline.rows.length)
     assert.ok(thumbs.every((x) => x.box.w >= 32 && x.box.h >= 32), `thumbnail hit target under 32 px at ${width}`)
     const face = await measure(app, '.workspace-picture__face')
-    const nameGap = baseline.names[0].x - (thumbs[0].box.x + thumbs[0].box.w)
-    assert.ok(nameGap >= 8 && nameGap <= 16, `name not directly beside the thumbnail at ${width}: ${nameGap}px`)
+    const thumbnailLeft = thumbs[0].box.x
+    const thumbnailRight = thumbnailLeft + thumbs[0].box.w
+    const nameLeft = baseline.names[0].x
+    const gap = nameLeft - thumbnailRight
+    assert.equal(gap, 12, `name not 12px beside the thumbnail at ${width}: ${gap}px`)
     assert.ok(face.every((f) => inside(f.box, baseline.card)), `thumbnail cut by the card at ${width}`)
     rows[rows.length - 1].data.thumbnail = thumbs[0].box
     rows[rows.length - 1].data.face = face[0].box
-    rows[rows.length - 1].data.nameGap = nameGap
+    Object.assign(rows[rows.length - 1].data, { thumbnailLeft, thumbnailRight, nameLeft, gap })
     await app.win.locator(THUMB).first().hover()
     await settle(app, 200)
     const hover = await measure(app, GLYPH, ['opacity'])
