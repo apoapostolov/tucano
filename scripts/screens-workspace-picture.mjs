@@ -1,6 +1,7 @@
 // Proof story for the picture in Manage workspaces: the row thumbnail, its hover/focus edit glyph,
-// and the picture window's empty and set states at 1440 and 420. Same story runs before and after;
-// `--tag before` reads the baseline rows, `--tag after` also drives the new controls.
+// the focus ring inside the thumbnail face, and the picture window's empty and set states at 1440
+// and 420. `--tag before` reads the baseline rows; `--tag after` drives the new controls and writes
+// manager, hover, focus, empty and set frames.
 //   npm run build
 //   node scripts/screens.mjs workspace-picture --tag before --out C:/tmp/frames/workspace-picture/driver/before
 //   node scripts/screens.mjs workspace-picture --tag after  --out C:/tmp/frames/workspace-picture/driver/after
@@ -15,6 +16,7 @@ const ROW = '.workspace-manager__row'
 const CONTROLS = '.workspace-manager__row .icon-btn'
 const THUMB = '.workspace-picture__thumb'
 const GLYPH = '.workspace-picture__edit'
+const RING = '.workspace-picture__ring'
 
 const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
 const inside = (inner, outer, slack = 1) => inner.x >= outer.x - slack && inner.x + inner.w <= outer.x + outer.w + slack && inner.y >= outer.y - slack && inner.y + inner.h <= outer.y + outer.h + slack
@@ -118,7 +120,9 @@ export default async function story(t) {
     await settle(app, 200)
     const hover = await measure(app, GLYPH, ['opacity'])
     assert.ok(Number(hover[0].props.opacity) > 0.9, `edit glyph stayed hidden on hover at ${width}`)
-    rows[rows.length - 1].data.hoverGlyphOpacity = hover[0].props.opacity
+    const geometry = { thumbnailLeft, thumbnailRight, nameLeft, gap, thumbnail: thumbs[0].box, face: face[0].box, hoverGlyphOpacity: hover[0].props.opacity }
+    const hoverFrame = await shot(app, `after-${width}-hover`, MANAGER)
+    rows.push({ selector: MANAGER, frame: hoverFrame, props: { viewportWidth: String(width) }, box: baseline.card, data: { shot: 'hover', ...baseline, ...geometry } })
     // Leave the pointer, then reach the thumbnail again by keyboard for focus-visible.
     await app.win.mouse.move(0, 0)
     await app.win.locator(THUMB).first().focus()
@@ -126,7 +130,17 @@ export default async function story(t) {
     await app.win.keyboard.press('Tab')
     await settle(app, 200)
     const focus = await measure(app, GLYPH, ['opacity'])
-    rows[rows.length - 1].data.focusGlyphOpacity = focus[0].props.opacity
+    assert.ok(Number(focus[0].props.opacity) > 0.9, `edit glyph stayed hidden on keyboard focus at ${width}`)
+    const ring = await measure(app, RING, ['opacity'])
+    assert.equal(ring.length, thumbs.length)
+    assert.ok(Number(ring[0].props.opacity) > 0.9, `focus ring stayed hidden at ${width}`)
+    const focusRingLeft = ring[0].box.x
+    const focusRingRight = focusRingLeft + ring[0].box.w
+    const faceRight = face[0].box.x + face[0].box.w
+    const focusRingClipped = focusRingLeft < face[0].box.x || focusRingRight > faceRight || focusRingLeft < thumbnailLeft || focusRingRight > thumbnailRight
+    assert.equal(focusRingClipped, false, `focus ring clipped at ${width}`)
+    const focusFrame = await shot(app, `after-${width}-focus`, MANAGER)
+    rows.push({ selector: MANAGER, frame: focusFrame, props: { viewportWidth: String(width) }, box: baseline.card, data: { shot: 'focus', ...baseline, ...geometry, focusGlyphOpacity: focus[0].props.opacity, focusRingLeft, focusRingRight, focusRingClipped } })
     await app.win.locator(THUMB).first().click()
     await until(app.win, PICTURE)
     await settle(app, 250)

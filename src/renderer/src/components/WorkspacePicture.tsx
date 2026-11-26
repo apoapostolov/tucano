@@ -17,6 +17,7 @@ export function WorkspacePictureButton({ workspace, onOpen, disabled = false }: 
     <button type="button" className="workspace-picture__thumb" title={title} aria-label={title} disabled={disabled} onClick={onOpen}>
       <span className="workspace-picture__face">
         {workspace.picture ? <img src={workspace.picture} alt="" /> : <Icon name="layers" size={20} />}
+        <span className="workspace-picture__ring" aria-hidden />
         <span className="workspace-picture__edit" aria-hidden><Icon name="edit" size={12} /></span>
       </span>
     </button>

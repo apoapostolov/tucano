@@ -76,6 +76,7 @@ it('gives every row a thumbnail with its own picture or the neutral placeholder 
   expect(thumbs[1]!.querySelector('[data-icon="layers"]')).not.toBeNull()
   for (const t of thumbs) {
     expect(t.querySelector('.workspace-picture__face')).not.toBeNull()
+    expect(t.querySelector('.workspace-picture__ring')).not.toBeNull()
     expect(t.querySelector('.workspace-picture__edit')).not.toBeNull()
     expect(t.getAttribute('aria-label')).toMatch(/imagem|picture/i)
   }
@@ -84,6 +85,8 @@ it('gives every row a thumbnail with its own picture or the neutral placeholder 
   expect(css).toContain('.workspace-picture__thumb:hover .workspace-picture__edit, .workspace-picture__thumb:focus-visible .workspace-picture__edit { opacity: 1; }')
   expect(css).toMatch(/\.workspace-picture__thumb\s*\{[^}]*width: 40px; height: 40px;/)
   expect(css).toContain('.workspace-picture__face img { display: block; width: 100%; height: 100%; padding: 2px; border-radius: 9px; object-fit: contain; }')
+  expect(css).toContain('.workspace-picture__thumb:focus-visible { outline: none; box-shadow: none; }')
+  expect(css).toContain('.workspace-picture__ring { position: absolute; inset: 2px; border: 2px solid var(--accent); border-radius: 8px; opacity: 0; pointer-events: none; }')
 })
 
 it('opens the picture window from a row and shows the dotted empty placeholder', async () => {
