@@ -9,11 +9,11 @@ import { expect, it } from 'vitest'
 // exist", so the file never once ran in CI — it only ever went red for a reason that had nothing to
 // do with the reasoning it checks. It runs on a machine that has the browser, as it does locally.
 it.skipIf(!existsSync(chromium.executablePath()))('preserves a retained passage across prefix eviction without changing folding or following', async () => {
-  const server = await createServer({ configFile: false, server: { host: '127.0.0.1', port: 0, hmr: false }, appType: 'custom', oxc: { jsx: { runtime: 'automatic' } }, optimizeDeps: { include: ['react', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-dom', 'react-markdown', 'remark-gfm', 'open-bot-avatar', 'open-bot-avatar/dom', 'qrcode-generator'] }, resolve: { dedupe: ['react', 'react-dom'] } })
+  const server = await createServer({ configFile: false, root: 'test/fixtures', server: { host: '127.0.0.1', port: 0, hmr: false }, appType: 'custom', oxc: { jsx: { runtime: 'automatic' } }, optimizeDeps: { include: ['react', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime', 'react-dom', 'react-markdown', 'remark-gfm', 'open-bot-avatar', 'open-bot-avatar/dom', 'qrcode-generator'] }, resolve: { dedupe: ['react', 'react-dom'] } })
   server.middlewares.use((req, res, next) => {
     if (req.url !== '/') return next()
     res.setHeader('Content-Type', 'text/html')
-    res.end('<html><body><div id="root"></div><script type="module" src="/test/fixtures/thought-boundary.tsx"></script></body></html>')
+    res.end('<html><body><div id="root"></div><script type="module" src="/thought-boundary.tsx"></script></body></html>')
   })
   await server.listen()
   const address = server.httpServer!.address() as { port: number }
