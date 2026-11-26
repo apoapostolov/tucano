@@ -52,6 +52,9 @@ export function WorkspacePicture({ workspace, value, onClose }: { workspace: Wor
     if (!from) return toast(L('Não há imagem na área de transferência.', 'There is no image on the clipboard.'))
     void save(iconFromFile(from))
   }
+  // The address check throws before it returns a value, so it goes through a promise to reach save's
+  // catch and show the same toast a rejected file shows.
+  const fromAddress = (): void => { void save(Promise.resolve().then(() => iconFromAddress(address))) }
 
   return (
     <div
@@ -90,8 +93,8 @@ export function WorkspacePicture({ workspace, value, onClose }: { workspace: Wor
           <label className="field">
             <span className="field__label">{L('Endereço da imagem', 'Image address')}</span>
             <div className="row workspace-picture__url">
-              <input type="url" value={address} placeholder="https://" aria-label={L('Endereço da imagem', 'Image address')} onChange={(event) => setAddress(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !busy && address.trim()) { event.preventDefault(); void save(iconFromAddress(address)) } }} />
-              <button type="button" className="btn btn--ghost btn--sm" disabled={busy || !address.trim()} onClick={() => void save(iconFromAddress(address))}>{L('Adicionar', 'Add')}</button>
+              <input type="url" value={address} placeholder="https://" aria-label={L('Endereço da imagem', 'Image address')} onChange={(event) => setAddress(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !busy && address.trim()) { event.preventDefault(); fromAddress() } }} />
+              <button type="button" className="btn btn--ghost btn--sm" disabled={busy || !address.trim()} onClick={fromAddress}>{L('Adicionar', 'Add')}</button>
             </div>
           </label>
           <p className="small muted">{L('PNG, JPEG, WebP, GIF ou SVG, escolhidos ou colados. Um endereço precisa começar em https://.', 'PNG, JPEG, WebP, GIF or SVG, picked or pasted. An address must start with https://.')}</p>

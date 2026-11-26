@@ -129,6 +129,29 @@ it('picks a file through the OS picker and toasts a refused address without savi
   expect(setPicture).toHaveBeenCalledTimes(1)
 })
 
+it('toasts an address the validator refuses on the spot, without saving it', async () => {
+  await click(thumb(1))
+  const modal = windowOf()
+  vi.mocked(iconFromAddress).mockImplementationOnce(() => { throw new Error('The image address must start with https://.') })
+  await type(modal.querySelector('input[type="url"]')!, 'http://example.com/logo.png')
+  await click(button(modal, 'Add'))
+  expect(toast).toHaveBeenCalledWith(expect.stringMatching(/https/))
+  expect(setPicture).not.toHaveBeenCalled()
+})
+
+it('saves a bitmap that needed a smaller ceiling without toasting a success', async () => {
+  await click(thumb(1))
+  const modal = windowOf()
+  const resized = `data:image/png;base64,${'A'.repeat(31_900)}`
+  vi.mocked(iconFromFile).mockResolvedValueOnce(resized)
+  const file = modal.querySelector('input[type="file"]') as unknown as HTMLInputElement
+  Object.defineProperty(file, 'files', { configurable: true, value: [new File(['noise'], 'noise.png', { type: 'image/png' })] })
+  await change(file)
+  expect(setPicture).toHaveBeenCalledWith('b', resized)
+  expect(setPicture.mock.calls[0]?.[1].length).toBeLessThanOrEqual(32_000)
+  expect(toast).not.toHaveBeenCalled()
+})
+
 it('uses the clipboard button and clears a picture back to the placeholder', async () => {
   await click(thumb(0))
   const modal = windowOf()

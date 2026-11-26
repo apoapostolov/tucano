@@ -5,6 +5,8 @@ import { L } from '../../shared/lang'
 
 // A tile is 36 px and a screen can be twice that; this is a mark, never a photograph.
 export const ICON_PX = 96
+// A noisy bitmap can fill 32 000 characters even at 96 px. Try the smaller marks before refusing it.
+const SMALLER_PX = [80, 64, 48, 32, 16]
 const MAX_FILE_BYTES = 4 * 1024 * 1024
 // Keep in step with ICON_MAX_CHARS in src/core/connectors.ts, which refuses anything longer.
 const MAX_DATA_CHARS = 32_000
@@ -73,7 +75,8 @@ async function svgIcon(file: File): Promise<string> {
   return `data:image/svg+xml;base64,${utf8Base64(text)}`
 }
 
-// A bitmap drawn on a transparent canvas, so a mark with soft edges keeps them.
+// A bitmap drawn on a transparent canvas, so a mark with soft edges keeps them. The first pass keeps
+// the 96 px mark; a data URL that will not fit is drawn again at smaller ceilings until one does.
 async function shrunkIcon(file: File): Promise<string> {
   let bitmap: ImageBitmap
   try {
@@ -81,7 +84,20 @@ async function shrunkIcon(file: File): Promise<string> {
   } catch {
     throw new Error(L('Não consegui ler essa imagem. Tente um PNG ou um JPEG.', "I couldn't read that image. Try a PNG or a JPEG."))
   }
-  const scale = Math.min(1, ICON_PX / Math.max(bitmap.width, bitmap.height))
+  try {
+    let smallest = ''
+    for (const ceiling of [ICON_PX, ...SMALLER_PX]) {
+      smallest = drawBitmap(bitmap, ceiling)
+      if (smallest.length <= MAX_DATA_CHARS) return smallest
+    }
+    return smallest // the final guard in iconFromFile rejects it
+  } finally {
+    bitmap.close()
+  }
+}
+
+function drawBitmap(bitmap: ImageBitmap, ceiling: number): string {
+  const scale = Math.min(1, ceiling / Math.max(bitmap.width, bitmap.height))
   const width = Math.max(1, Math.round(bitmap.width * scale))
   const height = Math.max(1, Math.round(bitmap.height * scale))
   const canvas = document.createElement('canvas')
@@ -90,7 +106,6 @@ async function shrunkIcon(file: File): Promise<string> {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error(L('Não consegui preparar a imagem.', "I couldn't prepare the image."))
   ctx.drawImage(bitmap, 0, 0, width, height)
-  bitmap.close()
   return canvas.toDataURL('image/png')
 }
 
