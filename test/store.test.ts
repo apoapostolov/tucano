@@ -111,6 +111,21 @@ describe("the window's messages", () => {
     expect(store.messagesIn(store.getState(), 'c1')).toEqual([])
     expect(store.messagesIn(store.getState(), 'c2').map((m) => m.id)).toEqual(['x1'])
   })
+
+  it('draws a prompt right above the reply it started, in the timeline and in a thread', () => {
+    emit({ type: 'message', message: msg('fila', 'c2', 1, { sendMode: 'queue' }) })
+    emit({ type: 'message', message: msg('meio', 'c2', 10) })
+    emit({ type: 'message', message: msg('resposta', 'c2', 11, { author: { kind: 'agent', id: 'a1' }, run: { status: 'done', steps: [], replyTo: 'fila', endedAt: 30 } }) })
+    expect(store.timelineOf(store.getState(), 'c2').map((m) => m.id)).toEqual(['x1', 'meio', 'fila', 'resposta'])
+    expect(store.messageById(store.getState(), 'fila')).toMatchObject({ at: 1, sendMode: 'queue' }) // the row moved, the stored prompt did not change
+
+    emit({ type: 'message', message: msg('raiz', 'c2', 12) })
+    emit({ type: 'message', message: msg('pergunta', 'c2', 13, { threadId: 'raiz' }) })
+    emit({ type: 'message', message: msg('outra', 'c2', 14, { threadId: 'raiz' }) })
+    emit({ type: 'message', message: msg('resposta-fio', 'c2', 15, { threadId: 'raiz', author: { kind: 'agent', id: 'a1' }, run: { status: 'done', steps: [], replyTo: 'pergunta', endedAt: 40 } }) })
+    expect(store.repliesOf(store.getState(), 'c2', 'raiz').map((m) => m.id)).toEqual(['outra', 'pergunta', 'resposta-fio'])
+    expect(store.timelineOf(store.getState(), 'c2').map((m) => m.id)).toEqual(['x1', 'meio', 'raiz', 'fila', 'resposta'])
+  })
 })
 
 describe('the navigation history', () => {

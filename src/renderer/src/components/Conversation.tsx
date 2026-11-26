@@ -643,8 +643,8 @@ export function Rounds({ message, said, components }: { message: Message; said: 
         const newest = i === rounds.length - 1
         const text = newest && working ? live || round.text : round.text
         return (
-          <div className="msg__round" key={round.id}>
-            <RunSteps message={message} round={round} working={working && newest} />
+          <div className="msg__round" key={round.id} data-follow-round={i}>
+            <RunSteps message={message} round={round} working={working && newest} ownsStream={newest} />
             {text && <SaidText message={message} text={text} components={components} />}
           </div>
         )
@@ -2067,7 +2067,7 @@ function useNow(on: boolean): number {
 
 // One quiet line: what the agent is doing now (and for how long), or how many
 // steps it took. The steps themselves open on a click.
-export function RunSteps({ message, round, working: roundWorking }: { message: Message; round?: RunRound; working?: boolean }): ReactNode {
+export function RunSteps({ message, round, working: roundWorking, ownsStream = true }: { message: Message; round?: RunRound; working?: boolean; ownsStream?: boolean }): ReactNode {
   const run = message.run!
   // A reply that followed up keeps one toolchain per round; a reply that didn't has one round's
   // worth of steps in the flat chain, drawn as it always was.
@@ -2167,7 +2167,7 @@ export function RunSteps({ message, round, working: roundWorking }: { message: M
             </ol>
           )}
         </div>
-        <Thought message={message} working={working} thought={round?.thought} />
+        <Thought message={message} working={working} thought={round?.thought} ownsStream={ownsStream} />
       </div>
     </>
   )
@@ -2189,15 +2189,16 @@ export function followsTheEnd(box: { scrollHeight: number; scrollTop: number; cl
 // line it thought — the whole of it one click away. The window keeps it in memory so it can be read
 // back. Off unless the person turned it on in Settings: a reply's reasoning is its own, and most
 // people want the answer.
-export function Thought({ message, working, thought: kept }: { message: Message; working: boolean; thought?: string }): ReactNode {
+export function Thought({ message, working, thought: kept, ownsStream = true }: { message: Message; working: boolean; thought?: string; ownsStream?: boolean }): ReactNode {
   const on = useStore((s) => s.settings.showThinking === true)
   // How much of it shows before it scrolls (Settings › Conversations): a hint's worth, or most of
   // the window when the reasoning is the thing being read. Unset: the height the block always had.
   const size = useStore((s) => s.settings.thinkingSize ?? 'sm')
   const retained = useLiveThoughtState(message.id, STREAM_MS)
-  // A finished round's reasoning lives on the run: the live cache holds only the newest turn and
-  // is cleared when the next one starts. Old replies have no kept text and still read from it.
-  const thought = kept || retained?.text
+  // Each round keeps its own reasoning on the run. Only the round that owns the stream can read
+  // the live cache: an older round never shows what the newest one is thinking now.
+  const live = ownsStream ? retained : undefined
+  const thought = kept || live?.text
   // null: follow the reply — open while it thinks, folded once it's done. A click says otherwise.
   const [asked, setAsked] = useState<boolean | null>(null)
   const open = asked ?? working
@@ -2216,16 +2217,16 @@ export function Thought({ message, working, thought: kept }: { message: Message;
   }, [open])
   useLayoutEffect(() => {
     const el = box.current
-    if (!el || !retained || !open || !on) {
+    if (!el || !live || !open || !on) {
       line.current = null
       written.current = null
       follow.current = true
       return
     }
     if (working && follow.current) el.scrollTop = el.scrollHeight
-    else if (line.current) restoreThoughtLine(el, line.current, retained.start)
+    else if (line.current) restoreThoughtLine(el, line.current, live.start)
     written.current = el.scrollTop
-  }, [retained, open, working, on])
+  }, [live, open, working, on])
   if (!on || !thought) return null
   // Folded, it carries the line it is on now: what it is thinking, cut to the width of the block.
   const last = thought.trimEnd().split(/\r?\n/).filter((l) => l.trim() !== '').pop() ?? ''
@@ -2247,7 +2248,7 @@ export function Thought({ message, working, thought: kept }: { message: Message;
           const el = e.currentTarget
           if (written.current !== null && Math.abs(el.scrollTop - written.current) < 0.5) return
           follow.current = followsTheEnd(el)
-          line.current = !follow.current && retained ? captureThoughtLine(el, retained.start) : null
+          line.current = !follow.current && live ? captureThoughtLine(el, live.start) : null
           written.current = el.scrollTop
         }}>
           {thought}

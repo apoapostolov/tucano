@@ -12,7 +12,7 @@ import type { CoreEvent, Method, Params } from '../../shared/rpc'
 import type { AppProvider } from '../../shared/connector-catalog'
 import {
   artifactUrl,
-  asSaid,
+  asShown,
   type TucaLeave,
   type Account,
   type AskEntry,
@@ -343,7 +343,8 @@ function indexOf(list: Message[]): ConversationIndex {
   if (had) return had
   const ix: ConversationIndex = { byId: new Map(), timeline: [], replies: new Map(), working: [], waiting: [], browser: new Map(), receipts: [], agentDone: false }
   // In the order things were said (a reply when it ended), whoever is still working at the end.
-  for (const m of asSaid(list)) {
+  // The prompt that started a reply travels with it when a Follow moves it down the conversation.
+  for (const m of asShown(list)) {
     ix.byId.set(m.id, m)
     if (!m.threadId) ix.timeline.push(m)
     else {

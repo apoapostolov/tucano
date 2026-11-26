@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { asSaid, saidAt, type Agent, type EngineId, type Message, type RunStatus, type Settings } from '../src/shared/types'
+import { asSaid, asShown, saidAt, type Agent, type EngineId, type Message, type RunStatus, type Settings } from '../src/shared/types'
 import { Db } from '../src/core/db'
 import { fakeEngine } from '../src/core/engines/fake'
 import type { Engine, EngineEvent, Turn } from '../src/core/engines/types'
@@ -40,6 +40,79 @@ describe('asSaid', () => {
     const list = [said('lenta', 1, 'done', 9), said('m', 2)]
     asSaid(list)
     expect(list.map((m) => m.id)).toEqual(['lenta', 'm'])
+  })
+})
+
+describe('the prompt a session answers', () => {
+  const said = (id: string, at: number, status?: RunStatus, endedAt?: number): Message => ({
+    id,
+    conversationId: 'c',
+    author: status ? { kind: 'agent', id: 'a' } : { kind: 'person', id: 'owner' },
+    text: id,
+    at,
+    ...(status ? { run: { status, steps: [], ...(endedAt ? { endedAt } : {}) } } : {})
+  })
+  const asked = (id: string, at: number, extra: Partial<Message> = {}): Message => ({ ...said(id, at), ...extra })
+  const answered = (id: string, at: number, promptId: string, endedAt: number, extra: Partial<Message> = {}): Message => {
+    const reply = said(id, at, 'done', endedAt)
+    return { ...reply, ...extra, run: { ...reply.run!, replyTo: promptId } }
+  }
+  const ids = (messages: Message[]): string[] => asShown(messages).map((m) => m.id)
+
+  it('takes the originating prompt down with a reply that a Follow moved later', () => {
+    const prompt = asked('pedido', 1)
+    const firstEnd = answered('sessão', 2, 'pedido', 4)
+    const afterFirstEnd = [asked('depois-1', 5), asked('depois-2', 6)]
+    expect(ids([prompt, firstEnd, ...afterFirstEnd])).toEqual(['pedido', 'sessão', 'depois-1', 'depois-2'])
+
+    const followed = { ...firstEnd, run: { ...firstEnd.run!, endedAt: 9 } }
+    expect(saidAt(followed)).toBe(9)
+    expect(ids([prompt, followed, ...afterFirstEnd])).toEqual(['depois-1', 'depois-2', 'pedido', 'sessão'])
+    expect(asShown([prompt, followed, ...afterFirstEnd]).slice(-2).map((m) => m.id)).toEqual(['pedido', 'sessão'])
+  })
+
+  it('pulls a queued prompt written long before its answer straight above it', () => {
+    const list = [asked('na-fila', 1, { sendMode: 'queue' }), asked('meio', 20), answered('resposta', 30, 'na-fila', 40)]
+    expect(ids(list)).toEqual(['meio', 'na-fila', 'resposta'])
+    expect(list.map((m) => m.id)).toEqual(['na-fila', 'meio', 'resposta']) // only the shown order changed
+  })
+
+  it('pairs inside a thread without touching the channel around it', () => {
+    const list = [
+      asked('raiz', 1),
+      asked('no-fio', 2, { threadId: 'raiz' }),
+      asked('outro-no-fio', 3, { threadId: 'raiz' }),
+      answered('resposta-no-fio', 4, 'no-fio', 20, { threadId: 'raiz' }),
+      asked('canal', 5)
+    ]
+    const shown = asShown(list)
+    expect(shown.map((m) => m.id)).toEqual(['raiz', 'outro-no-fio', 'canal', 'no-fio', 'resposta-no-fio'])
+    expect(shown.filter((m) => m.threadId === 'raiz').map((m) => m.id)).toEqual(['outro-no-fio', 'no-fio', 'resposta-no-fio'])
+  })
+
+  it('never pulls a prompt from another thread, conversation, or one that is not loaded', () => {
+    expect(ids([asked('de-outro-fio', 1, { threadId: 'a' }), answered('resposta', 2, 'de-outro-fio', 9, { threadId: 'b' })])).toEqual(['de-outro-fio', 'resposta'])
+    expect(ids([asked('de-outra-conversa', 1, { conversationId: 'outra' }), answered('resposta', 2, 'de-outra-conversa', 9)])).toEqual(['de-outra-conversa', 'resposta'])
+    expect(ids([answered('resposta', 2, 'ausente', 9)])).toEqual(['resposta'])
+  })
+
+  it('keeps unrelated rows in place and moves each prompt only once', () => {
+    const list = [
+      asked('p1', 1),
+      answered('r1', 2, 'p1', 30),
+      asked('p2', 3),
+      answered('r2', 4, 'p2', 20),
+      asked('solto', 5),
+      answered('sem-prompt', 22, 'ausente', 23)
+    ]
+    const shown = asShown(list)
+    expect(shown.map((m) => m.id)).toEqual(['solto', 'p2', 'r2', 'sem-prompt', 'p1', 'r1'])
+    expect(shown.map((m) => m.id).filter((id) => id === 'p1' || id === 'p2')).toEqual(['p2', 'p1'])
+    expect(list.map((m) => m.id)).toEqual(['p1', 'r1', 'p2', 'r2', 'solto', 'sem-prompt'])
+
+    // A reply still working stays at the end, with its prompt right above it.
+    const working = { ...answered('trabalhando', 6, 'solto', 0), run: { status: 'working' as const, steps: [], replyTo: 'solto' } }
+    expect(asShown([...list, working]).map((m) => m.id)).toEqual(['p2', 'r2', 'sem-prompt', 'p1', 'r1', 'solto', 'trabalhando'])
   })
 })
 
@@ -98,7 +171,8 @@ describe('replies that overlap', () => {
 
     expect(of('lia').at).toBeLessThan(of('theo').at) // she started first…
     expect(of('lia').run!.endedAt!).toBeGreaterThan(of('theo').run!.endedAt!) // …and ended last
-    expect(asSaid(db.messages()).map(whose)).toEqual(['me', 'me', 'theo', 'lia'])
+    expect(asSaid(db.messages()).map(whose)).toEqual(['me', 'me', 'theo', 'lia']) // the order the curator reads
+    expect(asShown(db.messages()).map(whose)).toEqual(['me', 'theo', 'me', 'lia']) // each prompt sits with its own reply in the window
     expect(saidAt(of('lia'))).toBe(of('lia').run!.endedAt)
   })
 

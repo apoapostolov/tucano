@@ -580,10 +580,51 @@ export interface Message {
 // started, since that's what decides what it had read: agents read each other in that order.
 export const saidAt = (m: Message): number => m.run?.endedAt ?? m.at
 
-// A conversation as people read it: in the order things were said, and whoever is still working at the end.
+// A reply's prompt is drawn directly above it, even when a Follow moved the reply to its later end
+// or the prompt waited in the queue long before its answer. Only rows in the list given here move,
+// only inside their own conversation and thread, and no prompt is used twice. Stored times stay put.
+function pairPrompts(sorted: Message[]): Message[] {
+  const byId = new Map<string, Message>()
+  for (const m of sorted) if (!byId.has(m.id)) byId.set(m.id, m)
+  const pair = new Map<Message, Message>() // reply → the prompt it answers
+  const claimed = new Set<Message>()
+  for (const reply of sorted) {
+    const id = reply.run?.replyTo
+    if (!id) continue
+    const prompt = byId.get(id)
+    if (!prompt || prompt === reply || claimed.has(prompt)) continue
+    if (prompt.conversationId !== reply.conversationId || prompt.threadId !== reply.threadId) continue
+    pair.set(reply, prompt)
+    claimed.add(prompt)
+  }
+  if (!pair.size) return sorted
+
+  const shown: Message[] = []
+  const emitted = new Set<Message>()
+  const put = (m: Message, chain: Set<Message>): void => {
+    if (emitted.has(m)) return
+    emitted.add(m)
+    const prompt = pair.get(m)
+    if (prompt && !emitted.has(prompt) && !chain.has(prompt)) put(prompt, new Set([...chain, m]))
+    shown.push(m)
+  }
+  for (const m of sorted) if (!claimed.has(m)) put(m, new Set())
+  for (const m of sorted) if (!emitted.has(m)) put(m, new Set()) // a prompt that answers a prompt keeps its own prompt
+  return shown
+}
+
+// A conversation in the order things were said: replies when they ended, whoever is working at the
+// end. This is also the order the curator reads, so display-only pairing stays out of it.
 export function asSaid(messages: Message[]): Message[] {
   const working = (m: Message): boolean => m.run?.status === 'working'
   return [...messages.filter((m) => !working(m)).sort((a, b) => saidAt(a) - saidAt(b)), ...messages.filter(working).sort((a, b) => a.at - b.at)]
+}
+
+// The order people see: a reply's originating prompt sits right above it, even when a Follow moved
+// the reply to its later end or the prompt waited in the queue long before its answer. The window
+// calls this; the curator keeps reading asSaid, so its mark and what an agent reads do not move.
+export function asShown(messages: Message[]): Message[] {
+  return pairPrompts(asSaid(messages))
 }
 
 // A thread's own summary, kept on its first message. `until`: the `at` of the last message it covers.

@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CoreEvent } from '../src/shared/rpc'
-import type { Agent, EngineId, GrantLevel, Message, Settings } from '../src/shared/types'
+import { asShown, saidAt, type Agent, type EngineId, type GrantLevel, type Message, type Settings } from '../src/shared/types'
 import { ConnectorManager } from '../src/core/connectors'
 import { Db } from '../src/core/db'
 import { fakeEngine } from '../src/core/engines/fake'
@@ -144,6 +144,33 @@ describe('a reply that has ended', () => {
     expect(turns[1]!.session?.resume).toBe(true)
     expect(turns[1]!.session?.id).toBe(turns[0]!.session?.id)
     expect(turns[1]!.prompt).toContain('also do the second part')
+  })
+
+  it('keeps the originating prompt beside the followed reply in the shown order, not in the saved one', async () => {
+    const { engine, turns } = recorder({ sessions: true })
+    const r = runnerWith(engine)
+    await r.send('d1', 'first request')
+    await r.idle()
+    const prompt = mine()[0]!
+    const reply = agentMessages()[0]!
+    expect(reply.run?.replyTo).toBe(prompt.id)
+    const stored = db.messages().map((m) => m.id)
+    const shown = (): string[] => asShown(db.messages()).filter((m) => m.id === prompt.id || m.id === reply.id).map((m) => m.id)
+    expect(shown()).toEqual([prompt.id, reply.id])
+
+    await follow(r, reply.id, 'also do the second part')
+    await r.idle()
+
+    const followed = agentMessages()[0]!
+    expect(agentMessages()).toHaveLength(1) // the Follow adds a round, not a new reply
+    expect(mine()).toHaveLength(1) // nor a new prompt of the person's
+    expect(db.messages().map((m) => m.id)).toEqual(stored) // the saved order never moved
+    expect(followed.run!.endedAt!).toBeGreaterThanOrEqual(reply.run!.endedAt!)
+    expect(saidAt(followed)).toBe(followed.run!.endedAt)
+    expect(shown()).toEqual([prompt.id, followed.id])
+    expect(turns).toHaveLength(2)
+    expect(turns[1]!.session?.id).toBe(turns[0]!.session?.id) // the same session reads on from where it stopped
+    expect(turns[1]!.blocks?.some((b) => b.includes('also do the second part'))).toBe(true)
   })
 
   it("handed its own answer when the engine has no session to resume", async () => {

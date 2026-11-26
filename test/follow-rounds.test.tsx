@@ -118,6 +118,45 @@ describe('Follow rounds in the conversation', () => {
     expect(thoughts()).toEqual(['First round: read the file.', 'Second round: check the test.', 'Third round: write the result.'])
   })
 
+  it('gives each round its own Thought after its steps, and lets only the newest read the live stream', async () => {
+    const first = { ...rounds[0]!, thought: 'Round one reasoning: read the file.' }
+    const second = { ...rounds[1]!, thought: undefined }
+    live = 'Round two reasoning: check the test.'
+    fake.settings.stepsOpen = true
+    await draw(message('working', { rounds: [first, second] }))
+
+    const blocks = [...document.querySelectorAll('.msg__round')]
+    expect(blocks.map((b) => b.getAttribute('data-follow-round'))).toEqual(['0', '1'])
+    const thoughtText = (b: Element): string[] => [...b.querySelectorAll('.thought__last, .thought__text')].map((el) => el.textContent ?? '')
+    expect(thoughtText(blocks[0]!)).toEqual(['Round one reasoning: read the file.'])
+    expect(thoughtText(blocks[1]!)).toEqual(['Round two reasoning: check the test.'])
+    expect(thoughtText(blocks[0]!).join(' ')).not.toContain('Round two reasoning')
+    const order = (block: Element): string[] =>
+      [...block.querySelectorAll('.steps__body, .steps__list, .thought')].map((el) => el.getAttribute('class')?.split(' ')[0] ?? '')
+    for (const block of blocks) {
+      const drawn = order(block)
+      expect(drawn).toContain('thought')
+      expect(drawn.indexOf('thought')).toBeGreaterThan(drawn.indexOf('steps__body'))
+      // The working round's list is open, the old one's folded.
+      if (drawn.includes('steps__list')) expect(drawn.indexOf('thought')).toBeGreaterThan(drawn.indexOf('steps__list'))
+    }
+    expect(order(blocks[1]!)).toContain('steps__list')
+
+    // Once it ends, that reasoning is stored on its own round; the older round keeps its own.
+    live = undefined
+    await draw(message('done', { rounds: [first, { ...second, thought: 'Round two reasoning: check the test.' }] }))
+    const done = [...document.querySelectorAll('.msg__round')]
+    expect(thoughtText(done[0]!)).toEqual(['Round one reasoning: read the file.'])
+    expect(thoughtText(done[1]!)).toEqual(['Round two reasoning: check the test.'])
+  })
+
+  it('hides every round’s thought container when thinking is off', async () => {
+    fake.settings.showThinking = false
+    live = 'Reasoning nobody asked to see.'
+    await draw(message('working', { rounds: [rounds[0]!, rounds[1]!] }))
+    expect(document.querySelectorAll('.thought')).toHaveLength(0)
+  })
+
   it('does not make or remove a round when a Proceed or steps card is drawn', async () => {
     const m = message('done', { questions: [{ question: 'Go ahead', kind: 'text', proceed: true }], proceedOpen: true })
     await act(async () => void root.render(<MessageRow message={m} grouped={false} />))
