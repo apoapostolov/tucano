@@ -1747,12 +1747,54 @@ h3 {
 .steps__stop {
   margin-left: 2px;
 }
+/* The line beside the steps is a handle in both states: an 18 px button over the 2 px line,
+   centred on it and stopping before the step icons. It keeps the way back when the toggle at the
+   top has scrolled away. Only the line changes colour; the rail itself never gets a background. */
+.steps__body {
+  position: relative;
+}
+.steps__body.is-folded {
+  height: 18px;
+  margin: 4px 0 6px 3px;
+  border-left: 2px solid var(--border);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+.steps__rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -5px;
+  width: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  /* Above the list: `rise` animates a transform, which would otherwise sit over the handle. */
+  z-index: 1;
+}
+.steps__body.is-folded .steps__rail {
+  left: -6px;
+}
+.steps__rail:hover,
+.steps__rail:focus-visible,
+.steps__rail:active {
+  background: transparent;
+  outline: none;
+}
+.steps__rail:hover + .steps__list,
+.steps__rail:focus-visible + .steps__list,
+.steps__body.is-folded:has(.steps__rail:hover),
+.steps__body.is-folded:has(.steps__rail:focus-visible) {
+  border-left-color: var(--accent);
+}
 .steps__list {
   list-style: none;
   margin: 4px 0 6px 3px;
   padding: 2px 0 2px 14px;
   border-left: 2px solid var(--border);
   animation: rise var(--dur-base) var(--ease-out) both;
+  transition: border-color var(--dur-base) var(--ease-out);
 }
 /* The line that says how many steps the window left out: where the list starts, not a step of its
    own — no dot on the rail, dim, and it never carries a row's hover. */

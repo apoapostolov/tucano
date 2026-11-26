@@ -2084,6 +2084,13 @@ export function RunSteps({ message, round, working: roundWorking }: { message: M
   const now = useNow(working)
   // Just finished: the pulse turns into a green check for a moment, then the chevron is back.
   const justDone = useJustEnded(working, 1600) && run.status === 'done'
+  // The line beside the steps stays a handle in both states: in a long run the toggle at the top is
+  // scrolled away, so a click on the line folds or reopens from where the person is reading.
+  const box = useRef<HTMLDivElement>(null)
+  const toggleSteps = (next: boolean): void => {
+    setOpen(next)
+    requestAnimationFrame(() => box.current?.scrollIntoView({ block: 'nearest' }))
+  }
 
   if (steps.length === 0 && !working) return null
   const total = steps.reduce((acc, st) => acc + (st.ms ?? 0), 0)
@@ -2092,8 +2099,8 @@ export function RunSteps({ message, round, working: roundWorking }: { message: M
 
   return (
     <>
-      <div className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''}`}>
-        <button className="steps__toggle" onClick={() => setOpen(!open)}>
+      <div ref={box} className={`steps ${open ? 'is-open' : ''} ${working ? 'is-working' : ''}`}>
+        <button className="steps__toggle" onClick={() => toggleSteps(!open)}>
           {working ? (
             <span className="steps__pulse" />
           ) : justDone ? (
@@ -2137,16 +2144,25 @@ export function RunSteps({ message, round, working: roundWorking }: { message: M
             </span>
           )}
         </button>
-        {open && (
-          <ol className="steps__list">
-            {shown.hidden > 0 && (
-              <li className="steps__more">{L(`${shown.hidden} passo${shown.hidden === 1 ? '' : 's'} mais antigo${shown.hidden === 1 ? '' : 's'} fora da lista`, `${shown.hidden} older step${shown.hidden === 1 ? '' : 's'} out of the list`)}</li>
-            )}
-            {shown.shown.map((st) => (
-              <StepRow key={st.id} step={st} />
-            ))}
-          </ol>
-        )}
+        <div className={`steps__body ${open ? '' : 'is-folded'}`}>
+          <button
+            type="button"
+            className="steps__rail"
+            aria-label={open ? L('Clique para recolher as etapas', 'Click to fold the steps') : L('Clique para desdobrar as etapas', 'Click to unfold the steps')}
+            title={open ? L('Clique para recolher as etapas', 'Click to fold the steps') : L('Clique para desdobrar as etapas', 'Click to unfold the steps')}
+            onClick={() => toggleSteps(!open)}
+          />
+          {open && (
+            <ol className="steps__list">
+              {shown.hidden > 0 && (
+                <li className="steps__more">{L(`${shown.hidden} passo${shown.hidden === 1 ? '' : 's'} mais antigo${shown.hidden === 1 ? '' : 's'} fora da lista`, `${shown.hidden} older step${shown.hidden === 1 ? '' : 's'} out of the list`)}</li>
+              )}
+              {shown.shown.map((st) => (
+                <StepRow key={st.id} step={st} />
+              ))}
+            </ol>
+          )}
+        </div>
         <Thought message={message} working={working} thought={round?.thought} />
       </div>
     </>
