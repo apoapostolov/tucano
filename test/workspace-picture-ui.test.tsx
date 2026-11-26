@@ -13,9 +13,11 @@ Object.assign(globalThis, { window, document, HTMLElement: window.HTMLElement, N
 const png = 'data:image/png;base64,AAAA'
 let list: WorkspaceList
 const updateSettings = vi.fn()
+const toast = vi.fn()
 vi.mock('../src/renderer/src/store', () => ({
   useStore: (select: (s: unknown) => unknown) => select({ settings: { onboarding: { done: true, workspaceManagerSeen: true } } }),
-  updateSettings
+  updateSettings,
+  toast
 }))
 vi.mock('../src/renderer/src/components/Workspaces', () => ({ useWorkspaceList: () => ({ list, error: '' }) }))
 vi.mock('../src/renderer/src/components/Modal', () => ({
@@ -56,6 +58,7 @@ beforeEach(async () => {
   setLang('en')
   list = { selected: 'a', workspaces: [work('a', 'Alpha', png), work('b', 'Beta')] }
   setPicture.mockClear()
+  toast.mockClear()
   vi.mocked(iconFromFile).mockClear()
   vi.mocked(iconFromAddress).mockClear()
   vi.mocked(imageFromClipboard).mockClear()
@@ -72,6 +75,7 @@ it('gives every row a thumbnail with its own picture or the neutral placeholder 
   expect(thumbs[1]!.querySelector('img')).toBeNull()
   expect(thumbs[1]!.querySelector('[data-icon="layers"]')).not.toBeNull()
   for (const t of thumbs) {
+    expect(t.querySelector('.workspace-picture__face')).not.toBeNull()
     expect(t.querySelector('.workspace-picture__edit')).not.toBeNull()
     expect(t.getAttribute('aria-label')).toMatch(/imagem|picture/i)
   }
@@ -79,6 +83,7 @@ it('gives every row a thumbnail with its own picture or the neutral placeholder 
   const css = readFileSync('src/renderer/src/styles.css', 'utf8')
   expect(css).toContain('.workspace-picture__thumb:hover .workspace-picture__edit, .workspace-picture__thumb:focus-visible .workspace-picture__edit { opacity: 1; }')
   expect(css).toMatch(/\.workspace-picture__thumb\s*\{[^}]*width: 40px; height: 40px;/)
+  expect(css).toContain('.workspace-picture__face img { display: block; width: 100%; height: 100%; padding: 2px; border-radius: 9px; object-fit: contain; }')
 })
 
 it('opens the picture window from a row and shows the dotted empty placeholder', async () => {
@@ -106,7 +111,7 @@ it('takes a pasted image and a pasted address through the connector picture path
   expect(setPicture).toHaveBeenLastCalledWith('b', 'data:image/png;base64,https://example.com/logo.png')
 })
 
-it('picks a file through the OS picker and shows a refused address without saving it', async () => {
+it('picks a file through the OS picker and toasts a refused address without saving it', async () => {
   await click(thumb(1))
   const modal = windowOf()
   const file = modal.querySelector('input[type="file"]') as unknown as HTMLInputElement
@@ -117,7 +122,7 @@ it('picks a file through the OS picker and shows a refused address without savin
   vi.mocked(iconFromAddress).mockRejectedValueOnce(new Error('The image address must start with https://.'))
   await type(modal.querySelector('input[type="url"]')!, 'http://example.com/logo.png')
   await click(button(modal, 'Add'))
-  expect(modal.querySelector('[role="alert"]')?.textContent).toMatch(/https/)
+  expect(toast).toHaveBeenCalledWith(expect.stringMatching(/https/))
   expect(setPicture).toHaveBeenCalledTimes(1)
 })
 

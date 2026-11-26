@@ -4,6 +4,7 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { L } from '../../../shared/lang'
 import type { WorkspaceSummary } from '../../../shared/workspaces'
+import { toast } from '../store'
 import { iconFromFile, iconFromAddress, imageFromClipboard } from '../connector-icon'
 import { Modal } from './Modal'
 import { Icon } from './ui'
@@ -14,8 +15,10 @@ export function WorkspacePictureButton({ workspace, onOpen, disabled = false }: 
   const title = L(`Alterar a imagem de ${workspace.name}`, `Change ${workspace.name}'s picture`)
   return (
     <button type="button" className="workspace-picture__thumb" title={title} aria-label={title} disabled={disabled} onClick={onOpen}>
-      {workspace.picture ? <img src={workspace.picture} alt="" /> : <Icon name="layers" size={20} />}
-      <span className="workspace-picture__edit" aria-hidden><Icon name="edit" size={12} /></span>
+      <span className="workspace-picture__face">
+        {workspace.picture ? <img src={workspace.picture} alt="" /> : <Icon name="layers" size={20} />}
+        <span className="workspace-picture__edit" aria-hidden><Icon name="edit" size={12} /></span>
+      </span>
     </button>
   )
 }
@@ -24,21 +27,19 @@ export function WorkspacePicture({ workspace, value, onClose }: { workspace: Wor
   const [picture, setPicture] = useState(value)
   const [address, setAddress] = useState('')
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
   const file = useRef<HTMLInputElement>(null)
   const api = window.tucano.workspaces
 
   const save = async (next: Promise<string> | string): Promise<void> => {
-    if (!api?.setPicture) return setError(L('Este app não pode mudar a imagem do workspace.', 'This app cannot change a workspace picture.'))
+    if (!api?.setPicture) return toast(L('Este app não pode mudar a imagem do workspace.', 'This app cannot change a workspace picture.'))
     setBusy(true)
-    setError('')
     try {
       const chosen = await next
       await api.setPicture(workspace.id, chosen)
       setPicture(chosen)
       setAddress('')
     } catch (e) {
-      setError(e instanceof Error && e.message ? e.message : L('Não consegui usar essa imagem.', "I couldn't use that image."))
+      toast(e instanceof Error && e.message ? e.message : L('Não consegui usar essa imagem.', "I couldn't use that image."))
     } finally {
       setBusy(false)
     }
@@ -47,7 +48,7 @@ export function WorkspacePicture({ workspace, value, onClose }: { workspace: Wor
     if (picked) void save(iconFromFile(picked))
   }
   const paste = (from: File | null): void => {
-    if (!from) return setError(L('Não há imagem na área de transferência.', 'There is no image on the clipboard.'))
+    if (!from) return toast(L('Não há imagem na área de transferência.', 'There is no image on the clipboard.'))
     void save(iconFromFile(from))
   }
 
@@ -93,7 +94,6 @@ export function WorkspacePicture({ workspace, value, onClose }: { workspace: Wor
             </div>
           </label>
           <p className="small muted">{L('PNG, JPEG, WebP, GIF ou SVG, escolhidos ou colados. Um endereço precisa começar em https://.', 'PNG, JPEG, WebP, GIF or SVG, picked or pasted. An address must start with https://.')}</p>
-          {error && <p className="field__error" role="alert">{error}</p>}
         </div>
         <footer className="modal__foot">
           <button type="button" className="btn btn--ghost btn--sm" disabled={busy} onClick={onClose}>{L('Fechar', 'Close')}</button>

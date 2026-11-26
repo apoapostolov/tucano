@@ -25,12 +25,16 @@ async function readRows(t, width) {
   const [card] = await measure(t, MANAGER)
   const rows = await measure(t, ROW)
   const buttons = await measure(t, CONTROLS)
+  const identity = await measure(t, '.workspace-manager__identity')
+  const names = await measure(t, '.workspace-manager__name')
   assert.ok(rows.length >= 1, `no workspace rows at ${width}`)
   assert.ok(buttons.length >= 4, `expected four row controls at ${width}, saw ${buttons.length}`)
   return {
     width,
     card: card.box,
     rows: rows.map((r) => r.box),
+    identity: identity.map((i) => i.box),
+    names: names.map((n) => n.box),
     controls: buttons.map((b) => b.box),
     controlsInsideCard: buttons.every((b) => inside(b.box, card.box)),
     controlsOverlapWords: rows.some((row) => buttons.some((b) => overlaps(b.box, row.box) && b.box.x < row.box.x + 100))
@@ -100,7 +104,13 @@ export default async function story(t) {
     const thumbs = await measure(app, THUMB, ['opacity'])
     assert.equal(thumbs.length, baseline.rows.length)
     assert.ok(thumbs.every((x) => x.box.w >= 32 && x.box.h >= 32), `thumbnail hit target under 32 px at ${width}`)
+    const face = await measure(app, '.workspace-picture__face')
+    const nameGap = baseline.names[0].x - (thumbs[0].box.x + thumbs[0].box.w)
+    assert.ok(nameGap >= 8 && nameGap <= 16, `name not directly beside the thumbnail at ${width}: ${nameGap}px`)
+    assert.ok(face.every((f) => inside(f.box, baseline.card)), `thumbnail cut by the card at ${width}`)
     rows[rows.length - 1].data.thumbnail = thumbs[0].box
+    rows[rows.length - 1].data.face = face[0].box
+    rows[rows.length - 1].data.nameGap = nameGap
     await app.win.locator(THUMB).first().hover()
     await settle(app, 200)
     const hover = await measure(app, GLYPH, ['opacity'])
