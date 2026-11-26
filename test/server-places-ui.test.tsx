@@ -103,6 +103,16 @@ describe("a server's page in the desktop app", () => {
     expect(desk.own).not.toHaveBeenCalled()
   })
 
+  it('keeps a server-page place initial', async () => {
+    Object.assign(window, { __TUCANO_WEB__: true, tucano: { places: desk } })
+    await act(async () => root.render(<WorkspaceMenu />))
+    await settle()
+    await click(document.querySelector('.workspace-picker__button')!)
+    const tile = document.querySelector('.workspace-picker__menu .menu__item .ws-menu__logo:not(.is-server)')!
+    expect(tile.querySelector('img')).toBeNull()
+    expect(tile.textContent).toBe('E')
+  })
+
   it('keeps the initial in the header even when the selected workspace has a picture', async () => {
     const list = { selected: 'w1', workspaces: [{ id: 'w1', name: 'Eduardo', picture: 'data:image/png;base64,AAAA', isDefault: true, paused: false, unread: 0, approvals: 0, status: 'ready' as const }] }
     Object.assign(window, { __TUCANO_WEB__: true, tucano: { places: desk, workspaces: { list: async () => list, subscribe: () => () => {} } } })
@@ -129,6 +139,13 @@ describe("the desktop app's own menu", () => {
     await act(async () => root.render(<WorkspaceMenu />))
     await settle()
   }
+  const row = (id: string, name: string, picture = ''): Record<string, unknown> => ({ id, name, picture, isDefault: id === 'w1', paused: false, unread: 0, approvals: 0, status: 'ready' })
+  const mountList = async (list: unknown): Promise<void> => {
+    Object.assign(window, { tucano: { workspaces: { list: async () => list, subscribe: () => () => {} } } })
+    await act(async () => root.render(<WorkspaceMenu />))
+    await settle()
+  }
+  const tileOf = (name: string): Element => [...document.querySelectorAll('.workspace-picker__menu [role="menuitemradio"]')].find((b) => b.textContent?.includes(name))!.querySelector('.ws-menu__logo')!
 
   it('names its workspaces "on this computer" once there are servers', async () => {
     const list = { selected: 'w1', workspaces: [{ id: 'w1', name: 'Eduardo', isDefault: true, paused: false, unread: 0, approvals: 0, status: 'ready' }] }
@@ -158,6 +175,41 @@ describe("the desktop app's own menu", () => {
     const logo = document.querySelector('.workspace__logo')!
     expect(logo.querySelector('img')).toBeNull()
     expect(logo.textContent).toBe('K')
+  })
+
+  it('draws every local workspace picture inside its own dropdown tile', async () => {
+    const first = 'data:image/png;base64,AAAA'
+    const second = 'data:image/png;base64,BBBB'
+    await mountList({ selected: 'w1', workspaces: [row('w1', 'Alpha', first), row('w2', 'Beta', second)] })
+    await click(document.querySelector('.workspace-picker__button')!)
+    const checked = document.querySelector('.workspace-picker__menu [role="menuitemradio"][aria-checked="true"] .ws-menu__logo')!
+    expect(checked.querySelector('img')?.getAttribute('src')).toBe(first)
+    expect(checked.textContent).toBe('')
+    expect(tileOf('Beta').querySelector('img')?.getAttribute('src')).toBe(second)
+    const css = readFileSync('src/renderer/src/styles.css', 'utf8')
+    expect(css).toContain('.ws-menu__logo img { display: block; width: 100%; height: 100%; border-radius: inherit; object-fit: contain; }')
+  })
+
+  it('keeps a local row without a picture as its initial after the dropdown opens', async () => {
+    await mountList({ selected: 'w1', workspaces: [row('w1', 'Alpha')] })
+    await click(document.querySelector('.workspace-picker__button')!)
+    expect(tileOf('Alpha').querySelector('img')).toBeNull()
+    expect(tileOf('Alpha').textContent).toBe('A')
+  })
+
+  it('returns a row to its initial when an https image fails, then tries again after the picture changes', async () => {
+    const bad = 'https://example.com/broken.png'
+    const good = 'data:image/png;base64,AAAA'
+    await mountList({ selected: 'w1', workspaces: [row('w1', 'Alpha', bad)] })
+    await click(document.querySelector('.workspace-picker__button')!)
+    const img = tileOf('Alpha').querySelector('img')!
+    expect(img.getAttribute('src')).toBe(bad)
+    await act(async () => { img.dispatchEvent(new window.Event('error')) })
+    expect(tileOf('Alpha').querySelector('img')).toBeNull()
+    expect(tileOf('Alpha').textContent).toBe('A')
+    await mountList({ selected: 'w1', workspaces: [row('w1', 'Alpha', good)] })
+    expect(tileOf('Alpha').querySelector('img')?.getAttribute('src')).toBe(good)
+    expect(tileOf('Alpha').textContent).toBe('')
   })
 })
 
