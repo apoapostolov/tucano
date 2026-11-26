@@ -2091,7 +2091,9 @@ export function RunSteps({ message, round, working: roundWorking }: { message: M
   const box = useRef<HTMLDivElement>(null)
   const toggleSteps = (next: boolean): void => {
     setOpen(next)
-    requestAnimationFrame(() => box.current?.scrollIntoView({ block: 'nearest' }))
+    requestAnimationFrame(() => {
+      if (typeof box.current?.scrollIntoView === 'function') box.current.scrollIntoView({ block: 'nearest' })
+    })
   }
 
   if (steps.length === 0 && !working) return null

@@ -162,6 +162,22 @@ describe('the rail beside a run’s steps', () => {
     expect(scrolled.at(-1)).toEqual({ className: expect.stringContaining('steps'), options: { block: 'nearest' } })
   })
 
+  it('still toggles when the DOM shim has no scrollIntoView', async () => {
+    const proto = window.HTMLElement.prototype as unknown as { scrollIntoView?: (options?: unknown) => void }
+    const original = proto.scrollIntoView
+    delete proto.scrollIntoView
+    try {
+      await mount(reply())
+      await openWithToggle()
+      await settled()
+      expect(el('.steps__list')).not.toBeNull()
+      await mouse(rails()[0]!)
+      expect(el('.steps__list')).toBeNull()
+    } finally {
+      proto.scrollIntoView = original
+    }
+  })
+
   it('gives each Follow round its own rail and its own fold', async () => {
     const m = reply()
     await act(async () => void root.render(
