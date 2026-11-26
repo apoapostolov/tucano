@@ -177,6 +177,23 @@ describe("the desktop app's own menu", () => {
     expect(logo.textContent).toBe('K')
   })
 
+  it('returns the header to the initial when its picture fails, then tries again after the picture changes', async () => {
+    const bad = 'https://example.com/broken.png'
+    const good = 'data:image/png;base64,AAAA'
+    await mount(bad)
+    const img = document.querySelector('.workspace__logo img')!
+    expect(img.getAttribute('src')).toBe(bad)
+    expect(document.querySelector('.workspace__logo')!.getAttribute('aria-hidden')).toBeNull()
+    await act(async () => { img.dispatchEvent(new window.Event('error')) })
+    const failed = document.querySelector('.workspace__logo')!
+    expect(failed.querySelector('img')).toBeNull()
+    expect(failed.textContent).toBe('K')
+    await mount(good)
+    const retried = document.querySelector('.workspace__logo')!
+    expect(retried.querySelector('img')?.getAttribute('src')).toBe(good)
+    expect(retried.textContent).toBe('')
+  })
+
   it('draws every local workspace picture inside its own dropdown tile', async () => {
     const first = 'data:image/png;base64,AAAA'
     const second = 'data:image/png;base64,BBBB'
