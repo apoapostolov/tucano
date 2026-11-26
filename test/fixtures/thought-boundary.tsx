@@ -15,7 +15,7 @@ core.onmessage = (m: MessageEvent<{ id: number; method: string }>) => {
   queueMicrotask(() => core.postMessage({ id: req.id, result }))
 }
 const event = (e: Record<string, unknown>): void => core.postMessage({ event: e })
-window.tucano = {
+;(window as any).tucano = {
   onNavigate: () => {},
   viewing: () => {},
   connect: () => window.postMessage('core:port', '*', [channel.port2])
