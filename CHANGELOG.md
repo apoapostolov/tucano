@@ -40,6 +40,29 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 - **The Router section is gone from Settings.** With a classifier picking who replies in a channel, the card had no choice to offer. Routing keeps working the same way.
 
+## [0.2.50] - 2026-11-25
+
+> **Em português:**
+> - **Novo:** **Outlook, OneDrive e Teams** na loja de conectores, numa categoria **Microsoft**: **Outlook.com** pra uma conta pessoal (e-mail, agenda, OneDrive, To Do e contatos) e **Microsoft 365** pra uma do trabalho ou escola (o mesmo, mais Teams e SharePoint). Já vem dentro do Tucano, sem instalar nada. Na primeira vez, o agente te passa um link e um código pra entrar na conta.
+> - **Corrigido:** uma **pergunta deixada numa thread** agora aparece também no canal, na faixa em cima do campo de mensagem, com "numa thread" (ou quantas há em outras threads). **Responder** abre a thread certa e leva até a pergunta. Antes, do canal, ela era só uma marca no link da thread, lá em cima, atrás de prints e logs.
+> - **Corrigido:** um **vídeo ou arquivo aberto de dentro de uma thread** fecha de volta pra thread, em vez de fechar o painel lateral inteiro.
+> - **Corrigido:** em **Uso**, um limite que zera daqui a uma semana ou mais mostra a data ("zera 30/11, 21:00"), não só o dia da semana. O limite de IA do mês dizia "zera seg, 21:00" numa segunda e parecia zerar naquela noite.
+> - **Mais seguro:** o computador novo de um agente não deixa um programa ganhar privilégios, limita quantos processos podem rodar e perde permissões de rede e de sistema que ele não usa. O `apt` e as pastas emprestadas continuam funcionando.
+
+### Added
+
+- **Outlook, OneDrive and Teams in the connector store**, under a new **Microsoft** category: **Outlook.com** for a personal account (email, calendar, OneDrive, Excel, To Do and contacts) and **Microsoft 365** for a work or school one (the same, plus Teams chats and channels, SharePoint and meeting times). Microsoft's own MCP servers take only apps registered ahead of time, so both use Softeria's open-source server ([ms-365-mcp-server](https://github.com/softeria/ms-365-mcp-server)), which now comes inside Tucano at a fixed version and runs on Tucano's own runtime: nothing to install, no Node.js. It talks to Microsoft Graph directly from this computer. The first time, the agent hands you a Microsoft link and a code; an agent allowed only to read can do that sign-in too. The sign-in is kept encrypted in the connector's own folder, with the key in Tucano's vault rather than beside it; each connector has its own, so a personal and a work account never mix, and removing the connector removes it. Of the server's 200-odd tools, about a million characters of schemas, the connector brings a short list (43 for a personal account, 53 for work): sending email goes through a draft, and sending it asks for approval; reading Teams channel messages is left out, since it needs a permission only a tenant admin grants. A company that allows only approved apps needs an admin to approve Softeria's once. A new **microsoft** page in the guide says all this.
+
+### Fixed
+
+- **A question left in a thread shows from the channel too.** The strip above the message field only showed a question asked where you were typing, so from a channel a question an agent asked inside one of its threads was only a mark on that thread's link, pages up behind the work. Now the channel's strip shows the oldest such question with "in a thread" (or how many more wait in other threads), and **Answer** opens that thread at the question. It steps aside while that thread is open beside the channel, which shows its own. What you type in the channel still goes to the channel. Thanks to Leo Miranda for the report.
+- **A file opened from a thread closes back to the thread.** A video, file, service or browser opened from a thread took the thread's place on the side, and its close button closed the whole panel. It now says "Back to the thread" and goes back there.
+- **Usage gives the date of a reset a week or more away.** The reset line named only the weekday, which fits Claude's and Codex's windows of up to a week but not a monthly limit: on a Monday, a limit renewing the Monday after read "resets Mon, 21:00" and passed for that same night. It now names the weekday within the six days ahead and the date beyond that.
+
+### Security
+
+- **An agent's new computer is harder to break out of.** Every computer made from now on runs with `no-new-privileges`, a limit of 2048 processes against fork bombs, and without the `NET_RAW`, `MKNOD` and `AUDIT_WRITE` capabilities. Root inside keeps what `apt` needs and what handing a lent folder's files back needs (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETUID`, `SETGID`). Computers made before keep running as they were until they are made again. Thanks to Raphaell Dyego.
+
 ## [0.2.49] - 2026-11-25
 
 > **Em português:**
