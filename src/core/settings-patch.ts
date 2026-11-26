@@ -2,12 +2,14 @@
 // Anything else is refused at once: what's saved goes in every snapshot, to everyone.
 import { L } from '../shared/lang'
 import { EFFORT_IDS, type Settings } from '../shared/types'
+import { workspacePictureError } from '../shared/workspaces'
 
 type Kind = 'string' | 'boolean' | 'number' | 'object' | 'array' | readonly string[]
 // key → its kind, the most it takes (characters of its JSON), and whether null clears it.
 const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?: boolean }>> = {
   workspaceName: { kind: 'string', max: 500 },
   workspaceLabel: { kind: 'string', max: 500, nullable: true },
+  workspacePicture: { kind: 'string', max: 32_000 },
   context: { kind: 'string', max: 100_000 },
   routerModel: { kind: 'string', max: 200 },
   routerEffort: { kind: EFFORT_IDS, max: 10, nullable: true },
@@ -88,6 +90,10 @@ export function settingsPatchError(patch: Record<string, unknown>): string | und
     if (!rule) return L('Essa configuração não existe.', "That setting doesn't exist.")
     if (v === undefined || (v === null && rule.nullable)) continue
     if (!fits(rule.kind, v)) return L(`Valor inválido pra ${key}.`, `Invalid value for ${key}.`)
+    if (key === 'workspacePicture' && typeof v === 'string') {
+      const bad = workspacePictureError(v)
+      if (bad) return bad
+    }
     if (JSON.stringify(v).length > rule.max) return L(`Valor grande demais pra ${key}.`, `Value too big for ${key}.`)
   }
   return undefined

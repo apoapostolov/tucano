@@ -25,7 +25,7 @@ import { Updates } from './updates'
 import { Workspaces } from './workspaces'
 import { backgroundOptions } from './background-qa'
 import { homePhone } from './home-phone'
-import { suggestWorkspaceCopyName, workspaceParts, type Workspace, type WorkspaceList, type WorkspaceSummary } from '../shared/workspaces'
+import { suggestWorkspaceCopyName, workspaceParts, workspacePictureError, type Workspace, type WorkspaceList, type WorkspaceSummary } from '../shared/workspaces'
 import { autostartEntry, autostartFile, electronPasswordStore, onPath } from '../core/platform'
 import { proxyFromPac } from '../core/network'
 import { Notices } from './notice'
@@ -85,7 +85,7 @@ let registry: Workspaces
 // `wikiFolder`: the wiki's folder, as that core says (an Obsidian vault, say): the one folder outside the app's own it may open.
 type Runtime = { child: UtilityProcess; browsers: Browsers; ready: Promise<void>; summary: WorkspaceSummary; busy: boolean; wikiFolder: string }
 const cores = new Map<string, Runtime>()
-const workspaceList = (): WorkspaceList => ({ selected: registry.selected().id, workspaces: registry.list().map((w) => cores.get(w.id)?.summary ?? { id: w.id, name: w.name, isDefault: w.isDefault, paused: false, unread: 0, approvals: 0, status: 'starting' }) })
+const workspaceList = (): WorkspaceList => ({ selected: registry.selected().id, workspaces: registry.list().map((w) => cores.get(w.id)?.summary ?? { id: w.id, name: w.name, picture: '', isDefault: w.isDefault, paused: false, unread: 0, approvals: 0, status: 'starting' }) })
 const publishWorkspaces = (): void => { mainWindow?.webContents.send('workspaces', workspaceList()); tellPlaces() }
 // A server's page in this window lists this computer's workspaces and the servers in its own menu
 // (src/preload/server.ts): told when their names or which is on screen change, it asks again.
@@ -136,7 +136,7 @@ function startCore(workspace: Workspace): Runtime {
       if (workspace.isDefault) lendTo()
     } else if (msg.type === 'workspace-summary') {
       registry.rename(workspace.id, msg.name)
-      runtime.summary = { ...runtime.summary, name: msg.name || runtime.summary.name, paused: msg.paused, unread: msg.unread, approvals: msg.approvals }
+      runtime.summary = { ...runtime.summary, name: msg.name || runtime.summary.name, picture: msg.picture, paused: msg.paused, unread: msg.unread, approvals: msg.approvals }
       publishWorkspaces()
     } else handleCore(child, msg, workspace, runtime)
   })
@@ -188,7 +188,8 @@ type CoreRequest =
   | { type: 'theme'; theme: Settings['theme']; initial?: boolean }
   | { type: 'ready' }
   | { type: 'notice-pref'; on: boolean; area?: NoticeArea }
-  | { type: 'workspace-summary'; name: string; paused: boolean; unread: number; approvals: number }
+  | { type: 'workspace-summary'; name: string; picture: string; paused: boolean; unread: number; approvals: number }
+  | { type: 'workspace-picture'; error?: string }
   | { type: 'workspace-cleaned'; agentIds?: string[]; error?: string }
   | { type: 'workspace-duplicated'; error?: string }
   | { type: 'workspace-paused'; error?: string }
@@ -546,7 +547,7 @@ async function switchWorkspace(id: string): Promise<void> {
 function trustedWorkspaceRequest(event: Electron.IpcMainInvokeEvent): void {
   if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) throw new Error('Not the app window')
 }
-function requestWorkspace(runtime: Runtime, request: object, response: 'workspace-cleaned' | 'workspace-duplicated' | 'workspace-paused' | 'wiki-relocated'): Promise<string[]> {
+function requestWorkspace(runtime: Runtime, request: object, response: 'workspace-cleaned' | 'workspace-duplicated' | 'workspace-paused' | 'workspace-picture' | 'wiki-relocated'): Promise<string[]> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => { cleanup(); reject(new Error('Workspace operation timed out')) }, 180_000)
     const onExit = (): void => { cleanup(); reject(new Error('Workspace stopped before the operation finished')) }
@@ -589,6 +590,16 @@ ipcMain.handle('workspaces:switch', async (event, id: unknown) => {
   trustedWorkspaceRequest(event)
   if (typeof id !== 'string') throw new Error('Invalid workspace')
   await switchWorkspace(id)
+})
+// A workspace's picture is written to that workspace's own database, where its backups read it.
+ipcMain.handle('workspaces:picture', async (event, id: unknown, picture: unknown) => {
+  trustedWorkspaceRequest(event)
+  if (typeof id !== 'string' || typeof picture !== 'string') throw new Error('Invalid workspace picture request')
+  const bad = workspacePictureError(picture)
+  if (bad) throw new Error(bad)
+  const runtime = startCore(registry.get(id))
+  await runtime.ready
+  await requestWorkspace(runtime, { type: 'workspace-picture', picture }, 'workspace-picture')
 })
 ipcMain.handle('workspaces:create', async (event, name?: unknown) => {
   trustedWorkspaceRequest(event)

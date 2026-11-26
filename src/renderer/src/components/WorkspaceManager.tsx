@@ -5,6 +5,7 @@ import { updateSettings, useStore } from '../store'
 import { Modal } from './Modal'
 import { Icon } from './ui'
 import { useWorkspaceList } from './Workspaces'
+import { WorkspacePicture, WorkspacePictureButton } from './WorkspacePicture'
 
 const PARTS = (): Record<WorkspacePart, { label: string; about: string }> => ({
   general: { label: L('Configurações gerais', 'General settings'), about: L('Seu nome, o idioma, os modelos do roteador e da memória, limites, horário de silêncio e voz.', 'Your name, the language, the router and memory models, limits, quiet hours and voice.') },
@@ -27,11 +28,13 @@ export function WorkspaceManager({ onClose, create = false }: { onClose: () => v
   const workspaces = sortWorkspaces(list?.workspaces)
   const onboarding = useStore((s) => s.settings.onboarding)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [pictureId, setPictureId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const api = window.tucano.workspaces
   const available = list?.workspaces.filter((w) => w.status === 'ready') ?? []
   const allPaused = available.length > 0 && available.every((w) => w.paused)
+  const pictureFor = workspaces.find((w) => w.id === pictureId)
   useEffect(() => {
     if (api && !onboarding?.workspaceManagerSeen) updateSettings({ onboarding: { ...(onboarding ?? { done: true }), workspaceManagerSeen: true } })
   }, [api, onboarding])
@@ -115,9 +118,12 @@ export function WorkspaceManager({ onClose, create = false }: { onClose: () => v
         const pauseTitle = w.paused ? L(`Retomar as rotinas de ${w.name}`, `Resume ${w.name}'s routines`) : L(`Pausar as rotinas de ${w.name}`, `Pause ${w.name}'s routines`)
         const deleteTitle = w.isDefault ? L('O workspace padrão não pode ser excluído.', 'The default workspace cannot be deleted.') : L(`Excluir ${w.name}`, `Delete ${w.name}`)
         return <div className="workspace-manager__row" key={w.id}>
-          <div className="workspace-manager__name">
-            <span>{w.name}</span>
-            <span className="workspace-manager__id" title={w.id}>{w.id.slice(-7)}</span>
+          <div className="workspace-manager__identity">
+            <WorkspacePictureButton workspace={w} disabled={busy} onOpen={() => { setError(''); setPictureId(w.id) }} />
+            <div className="workspace-manager__name">
+              <span>{w.name}</span>
+              <span className="workspace-manager__id" title={w.id}>{w.id.slice(-7)}</span>
+            </div>
           </div>
           <div className="row">
             <button className="icon-btn workspace-manager__switch" disabled={busy || selected} aria-pressed={selected} title={switchTitle} aria-label={switchTitle} onClick={() => void perform(() => api.switch(w.id))}><Icon name="check" size={16} /></button>
@@ -129,6 +135,7 @@ export function WorkspaceManager({ onClose, create = false }: { onClose: () => v
       })}
     </div>
     {(error || loadError) && <p className="field__error modal__lead" role="alert">{error || loadError}</p>}
+    {pictureFor && <WorkspacePicture workspace={pictureFor} value={pictureFor.picture ?? ''} onClose={() => setPictureId(null)} />}
     <footer className="modal__foot">
       <button className="btn btn--ghost btn--sm" disabled={busy} onClick={onClose}>{L('Fechar', 'Close')}</button>
       <button className="btn btn--primary btn--sm" disabled={busy || !list} onClick={() => { setError(''); setDraft(newDraft()) }}><Icon name="plus" size={14} />{L('Criar workspace', 'Create Workspace')}</button>

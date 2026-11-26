@@ -18,6 +18,7 @@ declare global {
         delete: (id?: string) => Promise<void>
         duplicate: (id: string, name?: string, parts?: WorkspaceParts) => Promise<string>
         setPaused: (paused: boolean, id?: string) => Promise<void>
+        setPicture: (id: string, picture: string) => Promise<void>
         switch: (id: string) => Promise<void>
         subscribe: (cb: (list: WorkspaceList) => void) => () => void
       }

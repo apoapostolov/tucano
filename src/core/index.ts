@@ -576,7 +576,7 @@ function workspaceSummary(): void {
     // The owner's counts: the switcher is on the desktop, the owner's app.
     const owner = db.owner()
     const unread = db.conversations(owner.id).filter((c) => people.canSeeConversation(owner, c)).reduce((n, c) => n + (c.unread ?? 0), 0)
-    const summary = { type: 'workspace-summary', name: workspaceLabel(current), paused: !!current.paused, unread, approvals: db.pendingApprovals() }
+    const summary = { type: 'workspace-summary', name: workspaceLabel(current), picture: current.workspacePicture ?? '', paused: !!current.paused, unread, approvals: db.pendingApprovals() }
     const wire = JSON.stringify(summary)
     if (wire !== lastSummary) process.parentPort.postMessage(summary)
     lastSummary = wire
@@ -694,7 +694,7 @@ const shots = new Map<string, { resolve: (b: Buffer) => void; reject: (e: Error)
 // Agents' browsers too (spec §24).
 const pages = new Map<string, { resolve: (r: BrowserReply) => void; reject: (e: Error) => void }>()
 process.parentPort.on('message', (e) => {
-  const r = e.data as { type?: string; id: string; data?: unknown; error?: string; awake?: boolean; agentId?: string; shown?: boolean; conversationId?: string | null; targetDir?: string; name?: string; theme?: unknown; paused?: unknown; parts?: unknown; path?: unknown; person?: unknown; key?: unknown; code?: unknown; label?: unknown; artifact?: unknown; port?: unknown; doc?: unknown; v?: unknown } | undefined
+  const r = e.data as { type?: string; id: string; data?: unknown; error?: string; awake?: boolean; agentId?: string; shown?: boolean; conversationId?: string | null; targetDir?: string; name?: string; theme?: unknown; paused?: unknown; parts?: unknown; path?: unknown; person?: unknown; key?: unknown; code?: unknown; label?: unknown; artifact?: unknown; port?: unknown; doc?: unknown; v?: unknown; picture?: unknown } | undefined
   if (r?.type === 'flush-traces') return void flushTelemetry()
   if (r?.type === 'workspace-pause') {
     try {
@@ -709,6 +709,18 @@ process.parentPort.on('message', (e) => {
   if (r?.type === 'workspace-theme' && isTheme(r.theme)) {
     db.setSettings({ theme: r.theme })
     emit({ type: 'settings', settings: settings() })
+    return
+  }
+  // The workspace's own picture, set from Manage workspaces. It lives in this workspace's database,
+  // so a backup carries it and another workspace never reads it.
+  if (r?.type === 'workspace-picture') {
+    try {
+      if (closing || typeof r.picture !== 'string') throw new Error('Workspace picture cannot change right now')
+      api.updateSettings({ patch: { workspacePicture: r.picture } }, ownerCtx())
+      process.parentPort.postMessage({ type: 'workspace-picture' })
+    } catch (error) {
+      process.parentPort.postMessage({ type: 'workspace-picture', error: error instanceof Error ? error.message : String(error) })
+    }
     return
   }
   if (r?.type === 'duplicate-workspace') {

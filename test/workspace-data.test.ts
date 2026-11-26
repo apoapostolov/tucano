@@ -190,7 +190,8 @@ it('brings only what was picked to a new workspace, and what depends on it comes
   const dir = mkdtempSync(join(tmpdir(), 'tucano-parts-'))
   dirs.push(dir)
   const source = open(join(dir, 'source.db'))
-  source.setSettings({ ...defaults, workspaceName: 'Edu', context: 'SECRET CONTEXT', routerModel: 'sonnet', defaultLimit: 4242, wikiDir: '/vault', channelLayout: { order: [] } as unknown as Settings['channelLayout'], onboarding: { done: true } })
+  const picture = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB'
+  source.setSettings({ ...defaults, workspaceName: 'Edu', workspacePicture: picture, context: 'SECRET CONTEXT', routerModel: 'sonnet', defaultLimit: 4242, wikiDir: '/vault', channelLayout: { order: [] } as unknown as Settings['channelLayout'], onboarding: { done: true } })
   source.saveAgent({ id: 'lia', name: 'Lia', handle: 'lia', role: '', color: 'sky', instructions: 'Lia instructions', modelId: 'sonnet', effort: 'low', limit: 1000, used: 0, grants: { linear: 'read_write' }, autoApprove: ['linear:create'], memory: 'auto', computer: false, archived: false })
   source.createConversation({ id: 'dm', kind: 'dm', name: 'lia', members: ['lia'] })
   source.createConversation({ id: 'eng', kind: 'channel', name: 'eng', members: ['lia'] })
@@ -209,7 +210,8 @@ it('brings only what was picked to a new workspace, and what depends on it comes
   source.duplicateTo(join(dir, 'general.db'), 'General', { ...none, general: true })
   const general = open(join(dir, 'general.db'))
   const g = general.getSettings(defaults)
-  expect(g).toMatchObject({ workspaceName: 'Edu', workspaceLabel: 'General', routerModel: 'sonnet', defaultLimit: 4242, context: '', onboarding: { done: false, carried: true } })
+  expect(g).toMatchObject({ workspaceName: 'Edu', workspacePicture: picture, workspaceLabel: 'General', routerModel: 'sonnet', defaultLimit: 4242, context: '', onboarding: { done: false, carried: true } })
+  expect(open(join(dir, 'general.db')).getSettings(defaults).workspacePicture).toBe(picture) // a backup reads it from this workspace's own database
   expect(g.wikiDir).toBeUndefined()
   expect(g.channelLayout).toBeUndefined()
   expect([general.agents(), general.conversations(), general.connectors(), general.skills(), general.routines()].map((x) => x.length)).toEqual([0, 0, 0, 0, 0])
@@ -226,6 +228,7 @@ it('brings only what was picked to a new workspace, and what depends on it comes
   expect(agents.connectors()).toEqual([])
   for (const key of ['connector:linear:token', 'github:token', 'typesafe:key', 'classifier:luna:key']) expect(agents.getSecret(key)).toBeUndefined()
   expect(agents.getSettings(defaults)).toMatchObject({ routerModel: 'haiku', context: '', onboarding: { done: true } }) // defaults: the general settings stayed
+  expect(agents.getSettings(defaults).workspacePicture).toBeUndefined() // a copy without general starts with the placeholder
 
   // Skills and connectors without agents: a skill of agents left behind comes archived.
   source.duplicateTo(join(dir, 'skills.db'), 'Skills', { ...none, skills: true, connectors: true })
@@ -244,7 +247,7 @@ it('brings only what was picked to a new workspace, and what depends on it comes
   // Everything: the duplicate, as before (context and the wiki folder too).
   source.duplicateTo(join(dir, 'all.db'), 'All')
   const all = open(join(dir, 'all.db'))
-  expect(all.getSettings(defaults)).toMatchObject({ context: 'SECRET CONTEXT', wikiDir: '/vault', onboarding: { done: true } })
+  expect(all.getSettings(defaults)).toMatchObject({ workspacePicture: picture, context: 'SECRET CONTEXT', wikiDir: '/vault', onboarding: { done: true } })
   expect(all.routines().map((r) => r.id).sort()).toEqual(['daily', 'poll'])
   expect(source.agents()).toHaveLength(1) // the source is untouched
   expect(source.getSecret('github:token')).toBe('encrypted-github')
