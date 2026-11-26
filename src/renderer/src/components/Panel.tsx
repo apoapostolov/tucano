@@ -3,7 +3,7 @@
 import { L, locale } from '../../../shared/lang'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { timeOpts } from '../../../shared/clock'
-import { agentById, amAdmin, amOwner, canSaveArtifact, copyArtifact, getState, openLightbox, artifactUrl, saveArtifact, saveLabel, browserAction, browserInput, browserOf, reachable, windowless, computerOf, openExternal, openPanel, widenPanel, revealArtifact, stopService, useFrame, useStore, workingAgents, type Artifact } from '../store'
+import { agentById, amAdmin, amOwner, canSaveArtifact, copyArtifact, getState, openLightbox, artifactUrl, saveArtifact, saveLabel, browserAction, browserInput, browserOf, reachable, windowless, computerOf, openExternal, openPanel, closePanel, widenPanel, revealArtifact, stopService, useFrame, useStore, workingAgents, type Artifact } from '../store'
 import { galleryLayout } from '../gallery'
 import { openImageMenu } from '../image-menu'
 import { call } from '../rpc'
@@ -508,6 +508,7 @@ export function SidePanel(): ReactNode {
   const [rawMd, setRawMd] = useState(false)
   const wide = useStore((s) => s.panelWide)
   useEffect(() => setRawMd(false), [artifact?.id])
+  const under = useStore((s) => !!s.panelUnder)
   if (!panel || panel.kind === 'thread') return null // a thread is drawn by its conversation
 
   const title = artifact?.title ?? service?.name ?? (panel.kind === 'browser' ? L(`Navegador de ${browserName ?? 'agente'}`, `${browserName ?? 'Agent'}'s browser`) : '')
@@ -554,7 +555,7 @@ export function SidePanel(): ReactNode {
           </button>
         )}
         <WidenButton />
-        <button className="icon-btn" title={L('Fechar', 'Close')} onClick={() => openPanel(null)}>
+        <button className="icon-btn" title={under ? L('Voltar para a thread', 'Back to the thread') : L('Fechar', 'Close')} onClick={closePanel}>
           <Icon name="x" size={14} />
         </button>
       </header>
