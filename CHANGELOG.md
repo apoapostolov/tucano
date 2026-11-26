@@ -5,7 +5,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 > **Em português:**
-> - **Adicionado:** a imagem escolhida para um workspace agora aparece dentro da miniatura arredondada de 26 px ao lado do nome na barra lateral, com a letra inicial como reserva. Em uma janela estreita, a imagem continua no mesmo lugar.
+> - **Adicionado:** a imagem escolhida para um workspace agora aparece dentro da miniatura arredondada de 26 px ao lado do nome na barra lateral e em cada linha do menu desse nome, com a letra inicial como reserva. Se uma imagem https não carregar, a letra volta a aparecer. Em uma janela estreita, a imagem continua no mesmo lugar.
 > - **Ajuste:** uma imagem bitmap grande demais para caber no limite de armazenamento do ícone é redesenhada em tamanhos menores até caber, sem aviso de erro. A colagem e o seletor de arquivo dos conectores usam o mesmo caminho.
 > - **Adicionado:** a alteração em lote agora tem uma linha **Modelo principal** e outra **Modelo reserva**, e aplica a reserva aos agentes selecionados sem mexer no modelo principal.
 > - **Ajuste:** em Configurações › Modelos, o aviso de cada classificador e a falta da chave ficam logo abaixo do seletor daquele trabalho, sem linha entre os dois.
@@ -25,7 +25,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Added
 
-- **The workspace picture in the sidebar header.** The picture chosen in Manage workspaces now appears inside the existing 26 px rounded square beside the workspace name, with the initial as fallback. It stays in the same place in a narrow window and does not appear on server pages.
+- **The workspace picture in the sidebar header and menu.** The picture chosen in Manage workspaces appears inside the existing 26 px rounded square beside the workspace name and inside the 18 px tile on each local workspace row in the header menu, with the initial as fallback. If an https picture fails to load, the initial returns in both places. The picture stays in place in a narrow window, and server-page places keep initials.
 - **A picture on each workspace.** Manage workspaces now shows a 40 px rounded-square thumbnail on every row, with an edit glyph on hover and keyboard focus. The glyph opens a window with a dotted-line placeholder, a file picker, clipboard paste and a remote https image field; rejected images report through a toast, as in the connector picker. Each workspace keeps its own picture, and duplication carries it only when General settings are included.
 - **Bulk fallback model.** The bulk change now labels the main model row and adds a fallback model row that assigns the reserve to selected agents without changing their main model.
 - **One-click handle for a reply's toolchain.** The line beside a reply's steps is now an 18 px button: one mouse click, or Enter or Space, folds and reopens the steps, including each **Follow** round. The handle stays visible when the steps are folded, and hover lights the 2 px line without a gray rectangle.
