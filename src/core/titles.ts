@@ -66,11 +66,14 @@ export class Titles {
     const model = usable(modelInfo(chosen || settings.memoryModel)) ?? modelInfo('haiku')!
     const status = settings.engines[model.engine]
     if (!status?.installed || !status.loggedIn) return undefined
+    // A model is a trio: its harness (the engine in its id), the model itself and how hard it thinks.
+    // An unset naming model falls back to the memory model's whole trio; a chosen one keeps its level.
+    const effort = chosen ? (settings.sessionNameEffort ?? 'low') : memoryEffort(settings)
     const cwd = join(this.deps.workDir, '_titles')
     mkdirSync(cwd, { recursive: true })
     const started = Date.now()
     let text = ''
-    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort: 'low', system: sessionNameSystem(), prompt: about.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
+    for await (const ev of this.deps.engines[model.engine].run({ model: model.id, effort, system: sessionNameSystem(), prompt: about.slice(0, PROMPT_MAX), cwd, signal: AbortSignal.timeout(60_000) })) {
       if (ev.type === 'text') text += ev.delta
       else if (ev.type === 'done') {
         text = ev.text || text

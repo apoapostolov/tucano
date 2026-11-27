@@ -4656,9 +4656,9 @@ export function SettingsPage(): ReactNode {
                 <Select
                   value={settings.sessionNameModel === 'off' ? 'off' : settings.sessionNameModel ? 'model' : 'memory'}
                   onChange={(v) => {
-                    if (v === 'off') updateSettings({ sessionNameModel: 'off' })
-                    else if (v === 'memory') updateSettings({ sessionNameModel: null } as unknown as Partial<typeof settings>)
-                    else if (v === 'model') updateSettings({ sessionNameModel: settings.memoryModel })
+                    if (v === 'off') updateSettings({ sessionNameModel: 'off', sessionNameEffort: null } as unknown as Partial<typeof settings>)
+                    else if (v === 'memory') updateSettings({ sessionNameModel: null, sessionNameEffort: null } as unknown as Partial<typeof settings>)
+                    else if (v === 'model') updateSettings({ sessionNameModel: settings.memoryModel, sessionNameEffort: settings.memoryEffort ?? 'low' })
                   }}
                   options={[
                     { value: 'memory', label: L('Modelo da memória', 'Memory model') },
@@ -4669,8 +4669,13 @@ export function SettingsPage(): ReactNode {
                 />
               </Field>
               {settings.sessionNameModel && settings.sessionNameModel !== 'off' && (
-                <Field label={L('Modelo dos nomes', 'Names model')} hint={L('Um nome por resposta, no começo.', 'One name per reply, when it starts.')}>
-                  <ModelSelect value={settings.sessionNameModel} onChange={(sessionNameModel) => updateSettings({ sessionNameModel })} />
+                <Field label={L('Modelo dos nomes', 'Names model')} hint={L('Harness, modelo e nível de pensamento, como o da memória.', 'Harness, model and thinking level, just like the memory model.')}>
+                  <ModelSelect
+                    value={settings.sessionNameModel}
+                    onChange={(sessionNameModel) => updateSettings({ sessionNameModel })}
+                    effort={settings.sessionNameEffort ?? settings.memoryEffort ?? 'low'}
+                    onEffort={(sessionNameEffort) => { if (sessionNameEffort) updateSettings({ sessionNameEffort }) }}
+                  />
                 </Field>
               )}
             </Card>
