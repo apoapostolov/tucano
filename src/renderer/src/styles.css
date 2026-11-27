@@ -3613,6 +3613,17 @@ h3 {
   justify-content: flex-end;
   margin-top: 8px;
 }
+/* In the footer it leads the row; on small screens it takes a row of its own. */
+.ask__recommend--foot {
+  flex: none;
+  justify-content: flex-start;
+  margin-top: 0;
+}
+@media (max-width: 760px) {
+  .ask__recommend--foot {
+    flex: 1 1 100%;
+  }
+}
 /* The Next steps mark in a card's head: an accent pill, quiet enough to sit next to the state. */
 .ask-option__pill {
   flex: none;
@@ -3712,24 +3723,6 @@ h3 {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
-}
-.ask__foot:has(.ask__recommend--inline) {
-  justify-content: flex-start;
-}
-.ask__recommend--inline {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  margin-top: 0;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-2);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.ask__recommend--inline input {
-  flex: none;
-  margin: 0;
 }
 .ask__hint {
   margin-right: auto;

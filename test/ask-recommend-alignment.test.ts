@@ -1,23 +1,21 @@
-// The "Go with the recommendation" checkbox is the first thing on the decisions card's footer:
-// its input starts at the footer's left edge and shares the Send button's line, at both widths.
+// The review footer has one recommendation control: the moved button, first in the row.
+// The old inline checkbox with the same label and action is gone.
 import { existsSync, readFileSync } from 'node:fs'
-import { chromium, type Locator } from 'playwright'
+import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 
 const css = readFileSync(new URL('../src/renderer/src/styles.css', import.meta.url), 'utf8')
 const source = readFileSync(new URL('../src/renderer/src/components/Decisions.tsx', import.meta.url), 'utf8')
 
-// The markup is the Review footer, with the same classes, input, icon, hint and buttons.
+// The markup mirrors the Review footer: moved button, hint, Send, Cancel.
 const FOOT = `
   <div class="ask ask--answer">
     <div class="ask__body">
       <div class="ask__title">Check before sending</div>
       <div class="ask__foot">
-        <label class="ask__recommend ask__recommend--inline">
-          <input type="checkbox" aria-label="Go with the recommendation" />
-          <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m5 13 5 5L20 7"></path></svg>
-          Go with the recommendation
-        </label>
+        <div class="ask__recommend ask__recommend--foot">
+          <button class="btn btn--sm">Go with the recommendation</button>
+        </div>
         <span class="ask__hint">Click an answer to change it</span>
         <button class="btn btn--primary btn--sm">Send</button>
         <button class="btn btn--ghost btn--sm">Cancel</button>
@@ -25,42 +23,42 @@ const FOOT = `
     </div>
   </div>`
 
-type Box = { left: number; right: number; top: number; bottom: number; cy: number }
-const box = (loc: Locator) =>
-  loc.evaluate((el): Box => {
-    const r = el.getBoundingClientRect()
-    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, cy: (r.top + r.bottom) / 2 }
-  })
-
-it('keeps the one-click recommendation control as an accessible checkbox', () => {
+it('keeps one recommendation action in the review footer', () => {
   const review = source.slice(source.indexOf('function Review('), source.indexOf('function AnswersSummary('))
-  expect(review).toContain('<input type="checkbox"')
-  expect(review).toContain('onGoRecommended()')
-  expect(review).toContain('Go with the recommendation')
+  expect(review).toContain('ask__recommend--foot')
+  expect(review).toContain('{recommend}')
+  expect(source.split('Go with the recommendation').length - 1).toBe(1)
+  expect(review).not.toContain('ask__recommend--inline')
+  expect(review).not.toContain('type="checkbox"')
 })
 
 for (const width of [1440, 420]) {
-  it.skipIf(!existsSync(chromium.executablePath()))(`keeps the checkbox at the footer's left, level with Send at ${width} px`, async () => {
+  it.skipIf(!existsSync(chromium.executablePath()))(`leads the review footer at ${width} px`, async () => {
     const browser = await chromium.launch({ headless: true })
     try {
       const page = await browser.newPage({ viewport: { width, height: 900 } })
       await page.setContent(`<style>${css}</style><body style="padding:12px">${FOOT}</body>`)
       await page.addStyleTag({ content: '*, *::before, *::after { animation: none !important; transition: none !important }' })
       await page.evaluate(() => document.fonts.ready.then(() => undefined))
-      const foot = await box(page.locator('.ask__foot'))
-      const checkbox = await box(page.locator('.ask__foot input[type="checkbox"]'))
-      const send = await box(page.locator('.ask__foot .btn--primary'))
-      const overflow = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-      expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.innerWidth + 0.5)
-      expect(Math.abs(checkbox.left - foot.left)).toBeLessThanOrEqual(0.5)
-      const sameLine = checkbox.top < send.bottom && send.top < checkbox.bottom
-      if (sameLine) {
-        expect(Math.abs(checkbox.cy - send.cy)).toBeLessThanOrEqual(1)
-      } else {
-        // When the footer wraps, the checkbox stays on the left, on the line above Send.
-        expect(checkbox.bottom).toBeLessThanOrEqual(send.top + 0.5)
-        expect(Math.abs(send.left - foot.left)).toBeLessThanOrEqual(0.5)
-      }
+      const boxes = await page.evaluate(() => {
+        const foot = document.querySelector('.ask__foot')!
+        const r = (el: Element) => {
+          const b = el.getBoundingClientRect()
+          return { left: b.left, right: b.right, top: b.top, bottom: b.bottom }
+        }
+        const moved = foot.querySelector('.ask__recommend--foot')!
+        return {
+          foot: r(foot),
+          moved: r(moved),
+          children: [...foot.children].map((el) => ({ cls: el.className, ...r(el) })),
+          overflow: document.documentElement.scrollWidth - window.innerWidth
+        }
+      })
+      expect(boxes.overflow).toBeLessThanOrEqual(0.5)
+      expect(boxes.moved.right).toBeLessThanOrEqual(boxes.foot.right + 0.5)
+      const onMovedRow = boxes.children.filter((b) => Math.abs(b.top - boxes.moved.top) < 8)
+      expect(onMovedRow[0]?.cls).toContain('ask__recommend--foot')
+      if (width === 1440) expect(Math.abs(boxes.moved.left - boxes.foot.left)).toBeLessThanOrEqual(0.5)
     } finally {
       await browser.close()
     }
