@@ -22,7 +22,8 @@ export function useVoice(): VoiceStatus | null {
   const rev = useStore((s) => s.voiceRev)
   const voice = useStore((s) => s.settings.voice)
   const [status, setStatus] = useState<VoiceStatus | null>(null)
-  useEffect(() => void voiceStatus().then(setStatus), [rev, voice])
+  // While the core is still opening the call can refuse; the next status change tries again.
+  useEffect(() => void voiceStatus().then(setStatus).catch(() => {}), [rev, voice])
   return status
 }
 
