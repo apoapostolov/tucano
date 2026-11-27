@@ -15,8 +15,8 @@ import Markdown, { type ExtraProps } from 'react-markdown'
 import { safeUrl } from '../links'
 import { remarkLocalPaths } from '../../../shared/path-text'
 import { remarkMentions, splitMentions } from '../../../shared/mention-text'
-import { MAX_IMAGES_PER_MESSAGE, saidAt, type RunRound } from '../../../shared/types'
-import { CUT, canContinue } from '../../../shared/run-progress'
+import { MAX_IMAGES_PER_MESSAGE, saidAt, type Run, type RunRound } from '../../../shared/types'
+import { CUT, WORKLESS_LABELS, canContinue } from '../../../shared/run-progress'
 import { localLinkFor } from './LocalLink'
 import remarkGfm from 'remark-gfm'
 import { KeepInWiki, WikiChip, WikiLink, wikiLinks } from './Wiki'
@@ -604,6 +604,15 @@ export function CopyMarkdown({ text }: { text: string }): ReactNode {
 // `replies`: in a timeline with threads, the replies to this message (none yet: empty).
 // `ask`: on a routine's run, the message the routine posted: a chip by the name that opens it (`askReplies`: its thread).
 // Memoized because each word an agent streams redraws the list: only the row that changed should pay for it.
+// A step that came back and finished, beyond the row that closes a cut reply: evidence that the words
+// after it are an answer, not narration from a reply stopped while it was still thinking.
+const answered = (run: Run): boolean =>
+  (run.steps ?? []).some((s) => s.status === 'done' && s.kind !== 'steer' && !WORKLESS_LABELS.includes(s.label))
+
+// The glyph is for a finished reply, and for a stopped one whose words came after work came back.
+export const canCopyMarkdown = (message: Message): boolean =>
+  message.author.kind === 'agent' && !!message.text.trim() && (message.run?.status === 'done' || (message.run?.status === 'stopped' && answered(message.run)))
+
 // `quote`: the excerpt of this message selected in the page, for the reply button under it.
 // The message a thread starts from, with the line that counts its replies: the panel hands it to
 // MessageList as the lead, and it answers in the thread's own composer like every row under it.
@@ -680,6 +689,8 @@ export const MessageRow = memo(function MessageRow({ message, grouped, replies, 
   const quiet = message.author.kind === 'agent' && !!message.run?.delegations?.length && message.run.status === 'done' && questionsOf(message.run).length === 0
   // Each request once: a reply saved before follow-ups stopped being listed again may hold one twice.
   const handedTo = (message.run?.delegations ?? []).filter((d, i, all) => all.findIndex((x) => x.id === d.id) === i)
+  const stoppedAnswer = message.author.kind === 'agent' && message.run?.status === 'stopped' && !!message.text.trim() && answered(message.run)
+  const hasFooter = stoppedAnswer || !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
 
   // The same object between renders, or every link would start over.
   const agentMarkdown = useMemo(() => ({ pre: CodeBlock, a: localLinkFor(message.id), span: MentionSpan }), [message.id])
@@ -893,7 +904,8 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
   // A reply that ended carries the same pill under another name: there is nothing left to steer, so the
   // instruction it takes makes that reply go on from where it stopped (runs.ts, `followIn`).
   const steerable = working || message.run?.status === 'done'
-  const hasFooter = !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
+  const stoppedAnswer = message.author.kind === 'agent' && message.run?.status === 'stopped' && !!message.text.trim() && answered(message.run)
+  const hasFooter = stoppedAnswer || !!message.run?.receipt || (message.run?.status === 'done' && message.text.trim() && !message.run.wikiChanges?.length && !message.run.delegation)
   const resumable = !!message.run && (message.run.status === 'paused' || (CUT.includes(message.run.status) && canContinue(message.run)))
   const retryable = !!message.run && (['failed', 'stopped', 'interrupted'].includes(message.run.status) || (message.run.status === 'limit_reached' && (!agent || !overMonthlyLimit(agent.used, agent.limit))))
   const canReply = message.run?.status !== 'working' && (message.author.kind === 'agent' || message.author.kind === 'person')
@@ -916,7 +928,7 @@ export function ReplyFooter({ message, quote, replyKey = message.conversationId,
       )}
       {canReply && (
         <div className="msg__actions">
-          {message.author.kind === 'agent' && message.run?.status === 'done' && !!message.text.trim() && <CopyMarkdown text={message.text} />}
+          {canCopyMarkdown(message) && <CopyMarkdown text={message.text} />}
           <button
             className={`msg__replyto ${quote ? 'msg__replyto--excerpt' : ''}`}
             title={quote ? L('Responder ao trecho', 'Reply to selection') : L('Responder mensagem', 'Reply to message')}
@@ -2854,7 +2866,8 @@ export function useDictation(insert: (text: string) => void, setNote: (note: str
   return [state, { press, release, stop, cancel, startedAt: () => startedAt.current }]
 }
 
-export function VoiceButton({ controls, state }: { controls: DictationControls; state: DictationState }): ReactNode {
+// `clock={false}`: where the button sits inside a field, the time goes elsewhere (the decisions card's footer).
+export function VoiceButton({ controls, state, clock = true }: { controls: DictationControls; state: DictationState; clock?: boolean }): ReactNode {
   const platform = useStore((s) => s.platform)
   const hidden = useStore((s) => !!s.settings.voice?.hidden)
   const status = useVoice()
@@ -2909,13 +2922,13 @@ export function VoiceButton({ controls, state }: { controls: DictationControls; 
       >
         <Icon name="mic" size={15} />
       </button>
-      {on && <RecordingClock since={controls.startedAt()} />}
+      {on && clock && <RecordingClock since={controls.startedAt()} />}
     </span>
   )
 }
 
 // While it records: for how long, and how to end it.
-function RecordingClock({ since }: { since: number }): ReactNode {
+export function RecordingClock({ since }: { since: number }): ReactNode {
   const [, tick] = useState(0)
   useEffect(() => {
     const t = setInterval(() => tick((n) => n + 1), 500)

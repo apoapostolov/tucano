@@ -190,4 +190,16 @@ describe('Copy as Markdown', () => {
     expect(css).toMatch(/@media \(pointer: coarse\)\s*\{\s*\.msg__copy\s*\{[^}]*min-width:\s*44px[^}]*min-height:\s*44px/)
     expect(css).toMatch(/\.msg__copy\s*\{[^}]*min-width:\s*32px[^}]*min-height:\s*32px/)
   })
+
+  it('also gives the glyph to a stopped reply whose words came after a step came back', async () => {
+    const withWork = message(MD, 'stopped')
+    withWork.run = { status: 'stopped', steps: [{ id: 's1', label: 'Read the report', status: 'done' }] }
+    await draw(<ReplyFooter message={withWork} />)
+    expect(document.querySelectorAll('.msg__copy')).toHaveLength(1)
+
+    const stillThinking = message(MD, 'stopped')
+    stillThinking.run = { status: 'stopped', steps: [{ id: 's2', label: 'Thinking', status: 'done' }] }
+    await draw(<ReplyFooter message={stillThinking} />)
+    expect(document.querySelectorAll('.msg__copy')).toHaveLength(0)
+  })
 })

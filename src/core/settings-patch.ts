@@ -15,6 +15,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   routerEffort: { kind: EFFORT_IDS, max: 10, nullable: true },
   memoryModel: { kind: 'string', max: 200 },
   memoryEffort: { kind: EFFORT_IDS, max: 10, nullable: true },
+  defaultFallbackModel: { kind: 'string', max: 200, nullable: true },
   voice: { kind: 'object', max: 10_000, nullable: true },
   channelLayout: { kind: 'object', max: 500_000, nullable: true },
   orgLayout: { kind: 'object', max: 100_000, nullable: true },

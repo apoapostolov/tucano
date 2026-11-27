@@ -280,7 +280,8 @@ export function useStore<T>(select: (s: State) => T): T {
     cache.current = { state, select, value }
     return value
   }
-  return useSyncExternalStore(subscribe, getSnapshot)
+  // Notice cards are drawn on the server for the window's stack: the same snapshot serves there.
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
 export const getState = (): State => state

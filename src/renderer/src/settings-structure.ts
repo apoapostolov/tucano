@@ -46,6 +46,7 @@ export function settingsStructure({ admin, owner, team, servers, extensions = fa
     { id: 'agents-browser', page: 'agentes', label: L('Navegador', 'Browser'), icon: 'globe', color: 'var(--c-teal)', keys: ['browserJev'], scope: 'workspace', visible: admin },
     { id: 'agents-addons', page: 'agentes', label: L('Extensões do navegador', 'Browser Extensions'), icon: 'shield', color: 'var(--c-green)', keys: ['browserAddOns', 'browserAccessibility'], scope: 'workspace', visible: admin && extensions, nav: false },
     { id: 'models-agents', page: 'modelos', label: L('Modelos dos agentes', 'Agent models'), icon: 'layers', color: 'var(--c-indigo)', keys: [], scope: 'workspace', visible: admin },
+    { id: 'models-reserve', page: 'modelos', label: L('Modelo reserva', 'Reserve model'), icon: 'layers', color: 'var(--c-indigo)', keys: ['defaultFallbackModel'], scope: 'workspace', visible: admin },
     { id: 'models-runtimes', page: 'modelos', label: L('Harnesses', 'Harnesses'), icon: 'terminal', color: 'var(--c-graphite)', keys: ['harnesses', 'endpoint'], scope: 'mixed', visible: admin },
     { id: 'models-accounts', page: 'modelos', label: L('Contas', 'Accounts'), icon: 'key', color: 'var(--c-green)', keys: ['accounts'], scope: 'mixed', visible: admin },
     { id: 'models-classifiers', page: 'modelos', label: L('Classificadores', 'Classifiers'), icon: 'spark', color: 'var(--c-sky)', keys: ['classifiers', 'classifierJobs', 'classifierKeys', 'jevKey'], scope: 'workspace', visible: admin },
@@ -77,7 +78,7 @@ export type SettingsPageId = SettingsSection['page']
 const tabSections: Readonly<Record<string, readonly SettingsSectionId[]>> = {
   geral: ['workspace-context', 'app-sidebar', 'app-appearance', 'app-notifications', 'app-dictation', 'app-conversation'],
   agentes: ['agents-permissions', 'agents-replies', 'agents-limits', 'agents-routines', 'agents-tuca', 'agents-browser', 'agents-addons'],
-  modelos: ['models-agents', 'models-runtimes', 'models-accounts', 'models-classifiers', 'knowledge-memory'],
+  modelos: ['models-agents', 'models-runtimes', 'models-reserve', 'models-accounts', 'models-classifiers', 'knowledge-memory'],
   conexoes: ['connections-phone', 'connections-servers', 'connections-traces', 'harnesses-keys'],
   workspace: ['workspace-people', 'workspace-activity', 'workspace-team', 'workspace-backups', 'app-updates', 'workspace-danger']
 }
@@ -125,6 +126,7 @@ function settingsTerms(): Readonly<Record<SettingsSectionId, readonly string[]>>
     'agents-browser': [L('Navegador dos agentes', 'Agents’ browser'), 'Jev', 'TypeSafe'],
     'agents-addons': [L('Bloqueador de anúncios', 'Ad blocker'), L('Avisos de cookies', 'Cookie notices'), L('Consentimento', 'Consent'), 'uBlock Origin Lite', 'Consent-O-Matic'],
     'models-agents': [L('Modelo de cada agente', 'Each agent’s model'), L('Trocar o modelo de vários agentes', 'Change models for several agents')],
+    'models-reserve': [L('Modelo reserva', 'Reserve model'), L('Modelo reserva padrão', 'Default reserve model')],
     'models-runtimes': ['Claude Code', 'Codex', 'OpenCode', 'Antigravity', L('Endpoint', 'Endpoint')],
     'models-accounts': [L('Login', 'Sign-in'), L('Conta do trabalho e pessoal', 'Work and personal account')],
     'models-classifiers': [L('Usos dos classificadores', 'Classifier Uses'), 'Jev', 'TypeSafe', 'OpenRouter', 'OpenAI', 'Luna', 'Google', 'Gemini', L('Chave do classificador', 'Classifier key')],

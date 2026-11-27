@@ -242,7 +242,7 @@ const ROUTE = (): Record<NonNullable<EngineStatus['route']>, { label: string; to
 export function HarnessList(): ReactNode {
   const engines = useStore((s) => s.settings.engines)
   const chosen = useStore((s) => s.settings.harnesses)
-  const ready = useStore((s) => s.ready)
+  const ready = useStore((s) => s.ready !== false)
   // A saved pick with no install and a finished check has no control to turn it off: its checkbox is
   // disabled. Clear it from the saved list. While the screen has only placeholders or a check in
   // progress (`checking`), the status is not a verdict, so a valid pick stays.

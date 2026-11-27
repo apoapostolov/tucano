@@ -379,7 +379,7 @@ export interface UndoInfo {
 }
 
 // What the Tuca may propose to change in an agent that exists.
-export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit'>>
+export type AgentChanges = Partial<Pick<Agent, 'name' | 'role' | 'instructions' | 'modelId' | 'effort' | 'web' | 'grants' | 'limit' | 'fallbackModelId'>>
 
 // A change an agent proposes to what exists, or a new routine, channel or team: a card under its message
 // with Aplicar and Descartar. Nothing changes until the person applies it, except what the Tuca changes
@@ -675,6 +675,7 @@ export interface Settings {
   engines: Record<EngineId, EngineStatus>
   routerModel: string // a model id, or 'jev' for the classifier chosen in Settings › Classifiers (falls back to Haiku)
   routerEffort?: Effort // how hard the router thinks: who answers a message in a channel; unset: low
+  defaultFallbackModel?: string // the reserve model of every agent with none of its own (Settings › Models)
   jevKey?: boolean // a TypeSafe key is saved (the key itself never leaves the core); kept for installs from before Settings › Classifiers
   classifiers?: ClassifierConfig[] // Settings › Classifiers: the model pairs that answer typed questions, one key each
   classifierJobs?: Partial<Record<ClassifierJob, string>> // which classifier serves each job; a job left out is off
@@ -1000,6 +1001,7 @@ const model = (id: string, engine: EngineId, label: string, pt: string, en: stri
 export const MODELS: Model[] = [
   model('sonnet', 'claude', 'Sonnet', 'Bom pra maioria', 'Good for most things'),
   model('opus', 'claude', 'Opus', 'Tarefas longas e difíceis', 'Long, hard tasks'),
+  model('fable', 'claude', 'Fable', 'O mais capaz, pros problemas mais difíceis', 'The most capable, for the hardest problems'),
   model('haiku', 'claude', 'Haiku', 'Rápido, gasta pouco do plano', 'Fast, uses little of the plan'),
   model('gpt-5.6-luna', 'codex', 'GPT-5.6 Luna', 'Bom pra maioria', 'Good for most things'),
   model('gpt-5.6-terra', 'codex', 'GPT-5.6 Terra', 'Problemas difíceis', 'Hard problems'),
