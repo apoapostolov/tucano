@@ -65,8 +65,8 @@ export interface Api {
   archiveAgent(p: { id: string; archived: boolean }): void // out of the sidebar, its replies stopped and routines off; back with archived: false
   deleteAgent(p: { id: string }): void // an archived agent, for good: its messages stay under its name, struck out; the rest goes
   setTopic(p: { id: string; topic: string }): void
-  setChannelMembers(p: { id: string; agentIds: string[] }): void
   cleanConversation(p: { id: string }): void
+  setChannelMembers(p: { id: string; agentIds: string[]; modes?: Record<string, 'answer' | 'mention'> }): void
   deleteConversation(p: { id: string }): void // a channel or a DM, with its messages and routines
   wipeHistory(p: { agentId?: string }): number // a bot's history — what it wrote anywhere and every word of its own DMs — or the whole workspace's when there's no agentId; answers how many messages went
   openDm(p: { agentId: string }): string

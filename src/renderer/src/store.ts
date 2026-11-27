@@ -1207,8 +1207,8 @@ export const deleteAgent = (id: string): Promise<void> => call('deleteAgent', { 
 export const setTopic = (id: string, topic: string): Promise<void> => call('setTopic', { id, topic })
 // Where a conversation's answers go: each in the thread of what it answers, or in the conversation.
 export const setThreads = (conversationId: string, on: boolean): Promise<void> => call('setThreads', { conversationId, on })
-export const setChannelMembers = (id: string, agentIds: string[]): Promise<void> => call('setChannelMembers', { id, agentIds })
 export const cleanConversation = (id: string): Promise<void> => fire(L('Não consegui limpar a conversa.', "I couldn't clean the conversation."), 'cleanConversation', { id })
+export const setChannelMembers = (id: string, agentIds: string[], modes?: Record<string, 'answer' | 'mention'>): Promise<void> => call('setChannelMembers', { id, agentIds, ...(modes ? { modes } : {}) })
 export const deleteConversation = (id: string): Promise<void> => call('deleteConversation', { id })
 // Settings › History: every bot's history goes, or one bot's. Answers how many messages went.
 export const wipeHistory = (agentId?: string): Promise<number> => call('wipeHistory', agentId ? { agentId } : {})
