@@ -731,7 +731,8 @@ export interface Settings {
   // motion and for nothing to play by itself, so a click lands where the element was.
   browserAccessibility?: boolean
   memoryModel: string // summarizes conversations and extracts memories
-  sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model, 'off': none
+  sessionNameEnabled?: boolean // the Session Names switch; unset or false: no new sessions are named
+  sessionNameModel?: string // harness and model used to name a session while the switch is on; unset: the memory model
   sessionNameEffort?: Effort // thinking level for that model; unset: low, or the memory model's level on fallback
   memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
