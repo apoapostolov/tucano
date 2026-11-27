@@ -32,7 +32,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   // How long what was said is kept (src/shared/retention.ts): whole days, 0 for good.
   retentionDays: { kind: 'number', max: 30, nullable: true },
   approvalTtlHours: { kind: 'number', max: 30 },
-  teamUpDays: { kind: 'number', max: 30, nullable: true },
+  teamUpDays: { kind: 'number', max: 30, nullable: true }, // 0 never expires (default); 5, 14 or 30 quiet days
   questionDeadlineHours: { kind: 'number', max: 30, nullable: true },
   theme: { kind: ['system', 'light', 'dark'], max: 20 },
   language: { kind: ['pt', 'en'], max: 10 },

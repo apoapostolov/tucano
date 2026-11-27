@@ -169,7 +169,7 @@ export const TEAM_UP_MESSAGES = 24 // newest messages carried into a new room
 export const TEAM_UP_CHARS = 12_000 // ceiling for the carried handoff, in characters
 export const TEAM_UP_REUSE_MS = 6 * 60 * 60_000 // six hours, in milliseconds
 export const TEAM_UP_WITNESSES = 3 // witnesses per request
-export const TEAM_UP_DAYS = 7 // quiet days before a room closes; 0 keeps every room
+export const TEAM_UP_DAYS = 0 // quiet days before a room closes; 0 keeps every room (no expiry, the default)
 
 export const channelName = (s: string): string =>
   s
@@ -735,7 +735,7 @@ export interface Settings {
   defaultLimit: number
   approvalTtlHours: number
   retentionDays?: number // how long every conversation keeps what was said, in days; 0 or unset: everything, for good (an agent's own page may say otherwise)
-  teamUpDays?: number // quiet days before a team-up room closes; 0 keeps them (default 7)
+  teamUpDays?: number // quiet days before a team-up room closes; 0 keeps them (default 0, no expiry)
   questionDeadlineHours?: number // a question to someone else, unanswered this long: the requester is told (default 4)
   actionRules?: ActionRules // for every agent: which actions ask me first, which it does alone, which never (src/shared/actions.ts)
   autonomy?: Autonomy // every agent's level, unless its page sets its own (default normal)
