@@ -11,13 +11,13 @@ import { nodeOf } from '../shared/node-link'
 import type { CoreEvent } from '../shared/rpc'
 import { ErrorCode, McpError, type CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import type { GrantLevel, LeaveAsk, TucaLeave, MemberMode, Participant, TeamUp } from '../shared/types'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, MAX_FOLLOW_ROUNDS, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type ReplyTarget, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunRound, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
+import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, MAX_FOLLOW_ROUNDS, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type ReplyTarget, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunRound, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isAccessChange, onlyAccessChanges } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { WIKI_TOOL_NAMES, WIKI_TOOLS, wikiCall, type Wiki } from './wiki'
 import { BROWSER_TOOL_NAMES, browserStep, browserTools, NAVEGADOR, type Browser } from './browser'
 import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './apps'
-import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, stepFor, type Computers } from './computer'
+import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, folderToLend, stepFor, type Computers } from './computer'
 import type { Vault } from './vault'
 import { COFRE, keyNameError, loginOrigin, PEDIR_CHAVE } from '../shared/vault'
 import { extractFile } from './wiki-extract'
@@ -30,7 +30,7 @@ import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom, tucaAgent } from './tuca'
 import { appliesNow, decidedCards, keepDecided } from './tuca-apply'
 import { LER_GUIA, readGuide } from './guide'
-import { feedbackFrom, pendingAgents, PROPOR_FEEDBACK, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
+import { feedbackFrom, pendingAgents, PROPOR_FEEDBACK, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState, type Machine } from './tuca-help'
 import { covering, FAZER_EU, forRole, leaveChoice, leaveDecision, leaveFrom, leaveSection, leavesFor, leaveTask, leaveTools, newLeave, shouldSuggest, suggestNote, timesDone, withLeaves, type LeaveChoice } from './tuca-leave'
 import type { Db } from './db'
 import type { Engine, TurnImage } from './engines/types'
@@ -328,6 +328,7 @@ export interface RunnerDeps {
   emit: (e: CoreEvent) => void
   workDir: string // per-agent empty directories live here
   dataDir?: string // the app's data: images I attach are kept in its artifact store; without it, they're dropped
+  machine?: Machine // which computers an agent can ask for on a card (src/core/tuca-help.ts)
   gateway?: Gateway // without it, agents get no tools at all
   connectors?: Connectors
   memory?: Memories // without it, agents get no memory and see the last HISTORY_LIMIT messages
@@ -2852,7 +2853,7 @@ ${note}`,
           const r =
             name === PROPOR_TIME.name
               ? teamFrom(args, { usable, fallbackModel: (db.agent(agent.id) ?? agent).modelId, connectors: this.deps.connectors?.list() ?? [], channels: db.conversations().filter((c) => c.kind === 'channel').map((c) => c.name) })
-              : proposalFrom(name, args, { agents: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), conversations: db.conversations().filter((c) => (dmOwner(c, db.ownerId()) ?? requester.id) === requester.id), connectors: this.deps.connectors?.list() ?? [], usable, pending: pendingAgents(msg.run) })
+              : proposalFrom(name, args, { agents: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), conversations: db.conversations().filter((c) => (dmOwner(c, db.ownerId()) ?? requester.id) === requester.id), connectors: this.deps.connectors?.list() ?? [], usable, pending: pendingAgents(msg.run), ...(this.deps.dataDir ? { folder: (path: string) => folderToLend(path, this.deps.dataDir!) } : {}), ...(this.deps.machine ? { machine: this.deps.machine } : {}) })
           if (!r.proposal) return textResult(r.error!, true)
           // Its cards as they are now: the person may have applied or discarded one meanwhile.
           msg.run = keepDecided(msg.run!, db.message(msg.id)?.run)
@@ -2882,16 +2883,16 @@ ${note}`,
           const detail = p.kind === 'routine' ? p.routine.name : p.kind === 'channel' ? `#${p.name}` : p.kind === 'team' ? p.agents.map((a) => a.name).join(', ') : Object.keys(p.changes).join(', ')
           addSteps({ id: randomUUID(), label: what, detail, status: 'done' })
           const needs = p.needs?.length ? L(` Ela depende de ${p.needs.join(', ')}, proposto antes nesta resposta: o app cria primeiro.`, ` It depends on ${p.needs.join(', ')}, proposed earlier in this reply: the app makes that first.`) : ''
-          const access = p.kind === 'team' ? p.agents.some((a) => Object.keys(a.grants).length) : p.kind === 'agent' && (p.changes.grants !== undefined || p.changes.limit !== undefined)
+          const access = p.kind === 'team' ? p.agents.some((a) => Object.keys(a.grants).length) : p.kind === 'agent' && Object.keys(p.changes).some(isAccessChange)
           // Applied when the reply ends, as applyNow will: agents are the admins', and a change only to
           // what grants access (connectors, the month's limit) always waits on its card.
-          const onlyAccess = p.kind === 'agent' && Object.keys(p.changes).every((k) => k === 'grants' || k === 'limit')
+          const onlyAccess = p.kind === 'agent' && onlyAccessChanges(p.changes)
           const auto = helps && !!this.deps.applyNow && appliesNow(now) && !onlyAccess && (isAdmin(requester) || (p.kind !== 'agent' && p.kind !== 'team'))
           return textResult(
             auto
               ? L(
-                  `Anotado: o app aplica assim que esta resposta terminar, e o card vira um recibo com Desfazer.${needs}${access ? ' Os conectores e o limite do mês ficam num card à parte, esperando a pessoa confirmar.' : ''} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: uma chamada por mudança. No fim, uma frase curta dizendo o que você fez (e que dá pra desfazer no card), sem perguntar se pode e sem repetir o que os cards mostram.`,
-                  `Noted: the app applies it as soon as this reply ends, and the card becomes a receipt with Undo.${needs}${access ? ' Connectors and the monthly limit go on a separate card, waiting for the person to confirm.' : ''} If the request has more changes, propose the others now, in this same reply: one call per change. At the end, one short sentence saying what you did (and that it can be undone on the card), without asking whether you may and without repeating what the cards show.`
+                  `Anotado: o app aplica assim que esta resposta terminar, e o card vira um recibo com Desfazer.${needs}${access ? ' O acesso (conectores, limite do mês, computador, navegador, pastas) fica num card à parte, esperando a pessoa confirmar.' : ''} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: uma chamada por mudança. No fim, uma frase curta dizendo o que você fez (e que dá pra desfazer no card), sem perguntar se pode e sem repetir o que os cards mostram.`,
+                  `Noted: the app applies it as soon as this reply ends, and the card becomes a receipt with Undo.${needs}${access ? ' Access (connectors, the monthly limit, computer, browser, folders) goes on a separate card, waiting for the person to confirm.' : ''} If the request has more changes, propose the others now, in this same reply: one call per change. At the end, one short sentence saying what you did (and that it can be undone on the card), without asking whether you may and without repeating what the cards show.`
                 )
               : L(
                   `A proposta está no card, com Aplicar e Descartar, e ainda NÃO aconteceu: só acontece quando a pessoa aplicar.${needs} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: cada uma vira um card no mesmo grupo, com "Aplicar todos". No fim, uma frase curta dizendo que é só aplicar (ou pedir um ajuste), sem repetir o que os cards mostram.`,
@@ -3528,7 +3529,9 @@ ${note}`,
         // something from outside too (never a high-risk one).
         // A runner's call, only when every inner tool that would ask is allowed for good on its own.
         const rules = db.agent(agent.id)?.autoApprove ?? []
-        const always = cls !== 'read' && !current.highRisk && (perCall ? runnerAllowed(hit.connector.id, current.name, callArgs, rules) : !neverAllowedForGood(current.name) && rules.includes(`${hit.connector.id}:${current.name}`))
+        // A node's command is never allowed for good as a tool, as this computer's terminal isn't: "always" on a
+        // command turns its kind of action to "does it alone"; a node_bash rule saved before (0.2.36) is ignored.
+        const always = cls !== 'read' && !current.highRisk && !(isNode && current.name === NODE_BASH) && (perCall ? runnerAllowed(hit.connector.id, current.name, callArgs, rules) : !neverAllowedForGood(current.name) && rules.includes(`${hit.connector.id}:${current.name}`))
         // A runner's call counts as the actions it runs; one that can't be placed (raw requests, code) asks at every level.
         const inner = perCall ? innerActions(current.name, callArgs) : undefined
         // A risky click or key on a node (a person's computer reached from this server) is judged as one in
@@ -4176,11 +4179,14 @@ ${note}`,
     const fresh = rules.filter((r) => !owner?.autoApprove?.includes(r))
     // For a command or a PR, "sempre permitir" turns that kind of action to "does it alone" on the agent's page.
     const kinds: ActionKind[] = ap.connectorId === COMPUTADOR || ap.tool === NODE_BASH ? shellActions(String(ap.args['command'] ?? '')) : ap.tool === ABRIR_PR ? ['pr'] : []
+    // A node's command, like this computer's: only its kind of action, never node_bash itself (an `ls` allowed
+    // for good would let every command after it past its class and the outside-content guard).
+    const nodeCommand = ap.tool === NODE_BASH && db.tools(ap.connectorId).some((t) => t.name === NODE_BASH)
     if (always && decision === 'approved' && owner && !ap.highRisk && kinds.length) {
       db.saveAgent({ ...owner, actionRules: { ...owner.actionRules, ...Object.fromEntries(kinds.map((k) => [k, 'auto'])) } })
       emit({ type: 'agent', agent: db.agent(owner.id)! })
       db.addActivity({ personId: decider, kind: 'approval.always', target: owner.id, detail: { connector: ap.connectorName, tool: kinds.join(', ') } })
-    } else if (always && decision === 'approved' && owner && fresh.length && !ap.highRisk && ap.tool !== ACCESS_REQUEST && ap.connectorId !== GITHUB && ap.connectorId !== NAVEGADOR && ap.connectorId !== APPS && ap.connectorId !== COMPUTADOR) {
+    } else if (always && decision === 'approved' && owner && fresh.length && !ap.highRisk && ap.tool !== ACCESS_REQUEST && ap.connectorId !== GITHUB && ap.connectorId !== NAVEGADOR && ap.connectorId !== APPS && ap.connectorId !== COMPUTADOR && !nodeCommand) {
       db.saveAgent({ ...owner, autoApprove: [...(owner.autoApprove ?? []), ...fresh] })
       emit({ type: 'agent', agent: db.agent(owner.id)! })
       db.addActivity({ personId: decider, kind: 'approval.always', target: owner.id, detail: { connector: ap.connectorName, tool: fresh.map((r) => r.slice(r.indexOf(':') + 1)).join(', ') } })
