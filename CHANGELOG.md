@@ -5,6 +5,8 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 ## [Unreleased]
 
 > **Em português:**
+> - **Mudou:** a **imagem Docker** vem com o **OpenCode 2**. Com o 1.x, um modelo que o OpenCode não alcança (um modelo da OpenCode Go sem o login do Go, por exemplo) só mostrava "Unexpected server error"; agora o motivo aparece em Configurações › Modelos. Os logins feitos no 1.x continuam valendo.
+> - **Corrigido:** em **Configurações**, as abas (Você, Agentes, Modelos…) não respondiam ao clique depois de rolar a página no Mac, só de volta ao topo. Agora funcionam em qualquer ponto da página.
 > - **Novo:** um **documento aberto ganha espaço**: o PDF ocupa a largura toda, sem a faixa de miniaturas, e tem **Tela cheia**. A coluna de detalhes continua aberta, e fecha num botão que o app lembra.
 > - **Novo:** um botão de **copiar** no painel de um documento de texto (markdown, texto ou csv), que mostra "Copiado" quando copia.
 > - **Mudou:** uma **rotina com vários horários** aparece na semana em cada um dos seus horários, com quem roda e a hora, no lugar da faixa "o dia todo".
@@ -31,6 +33,10 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 > - **Adicionado:** o **esforço de raciocínio** aparece onde o modelo é escolhido: na página do agente, em Modelos dos agentes (cada agente e a alteração em lote) e no modelo da memória, que também nomeia cada pedido. Em todos eles, o nível vem depois do harness e do modelo. Na alteração em lote, **Manter** volta a ser uma opção e escolher só um nível muda só o nível, deixando cada agente com o modelo dele. Os modelos do Cursor já trazem o nível no nome, então ali ele não aparece.
 > - **Adicionado:** **equipes com testemunhas.** Num canal ou numa DM de agente, `pedir` agora aceita um nome de sala e até três testemunhas. Ele abre ou reusa um canal comum com quem pede e as testemunhas como participantes e um repasse recortado da conversa recente. As testemunhas leem em silêncio e quem pediu recebe uma tarefa de retorno. No diálogo de participantes, cada agente continua marcado como antes, sem seletor de modo. Num canal, citar um agente que não participa abre um cartão do Tuca para incluí-lo; se aprovar, ele entra e responde na mesma mensagem. Numa DM, citar outro agente abre na hora uma sala com nome formado pelos dois, onde os dois agentes fazem o trabalho, e a DM fica só com o agente original e uma linha apontando para a sala. Salas sem movimento podem fechar depois de 5, 14 ou 30 dias; por padrão ficam abertas. O modo escuta fica pra depois.
 
+### Changed
+
+- **The Docker image runs OpenCode 2.** npm's `opencode-ai` is still the 1.x line, so the image installed OpenCode 1.19, which answers a model it can't reach (an OpenCode Go model without the Go login, say) with "Unexpected server error. Check server logs for details." The image now takes OpenCode 2.3.2 from its GitHub release, checked against its SHA-256, and Tucano already runs 2.x its own way. The reason now reaches Settings › Models, as in "This OpenCode Go model is hosted outside Europe and the United States". Logins made with 1.x carry over: 2.x reads the old `auth.json` in the volume on its first start.
+
 ### Added
 
 - **An open document gets the room it needs.** A PDF in Documents fills the width of the page, without the viewer's thumbnail strip, and the chat's file panel opens PDFs the same way. The summary sits under the title, and **Details**, **Full screen** and **Download** are in the top bar. Details shows or hides the column with where the file came from, its versions and who sees it: open by default, and closing it is remembered. **Full screen** puts the file over the whole window, and Escape leaves it. Markdown and text keep their reading column. Thanks to Alan Jones Rios.
@@ -49,6 +55,7 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ### Fixed
 
+- **Settings tabs answer clicks wherever the page is scrolled.** Once the page scrolled, the tabs and subject jumps parked at the very top, under the strip that drags the window, and on a Mac a click there moved the window instead: the tabs only worked back at the top of the page. They now park just below that strip, which takes the page's background on Settings, and a subject jump lands under them as before.
 - **Oversized pictures are resized instead of refused.** A bitmap that fits under the raw 4 MB limit but still exceeds the icon's 32,000-character storage limit is redrawn at smaller sizes until it fits. The workspace and connector pickers both use this path, and a successful resize shows no toast. SVG and files over 4 MB keep their existing rejections.
 - **Each classifier notice sits under its own dropdown.** In Settings › Models, a job's notice and missing-key line now follow that job's dropdown instead of a block after both dropdowns, with no rule between the two lines.
 - **A routine's times read as different hours on a 12-hour clock.** A block at 09:00 showed "09:00 AM" and one at 21:00 showed "09:00 PM", with the same digits, so the two runs looked alike. The hour in a block's label now follows the clock setting: 9:00 AM and 9:00 PM in English, 09:00 and 21:00 on a 24-hour clock. The block stays at its own hour either way.
