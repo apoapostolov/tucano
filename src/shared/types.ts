@@ -299,6 +299,7 @@ export interface Run {
   autoContinued?: number // how many times in a row the work went on by itself to get to this reply (AUTO_CONTINUES caps it)
   retryAt?: number // 'failed' on something that passes (a network, a plan's window, a computer off): when it tries again by itself
   retries?: number // how many times it already tried again by itself
+  sessionName?: string // what this reply's session is called, named once by a cheap model when it starts (src/core/titles.ts)
   task?: string // what this reply was asked beyond the conversation; kept only while it can be tried again or go on
   work?: string // the piece of work it counts toward, e.g. the issue "OAB-65" (spec §20)
   agentDraft?: AgentDraft // an agent the Tuca proposed with propor_agente, shown as a card
@@ -730,6 +731,7 @@ export interface Settings {
   // motion and for nothing to play by itself, so a click lands where the element was.
   browserAccessibility?: boolean
   memoryModel: string // summarizes conversations and extracts memories
+  sessionNameModel?: string // a model id that names each session when it starts; unset: the memory model, 'off': none
   memoryEffort?: Effort // how hard that small model thinks, and the one that names a request; unset: low
   memoryLearning: 'approve' | 'auto' | 'off' // what extracted memories about me become
   repliesAtOnce?: number // replies running at once in one conversation (1 to 6); a new prompt past it waits its turn. Unset: 6, the most the app runs at once

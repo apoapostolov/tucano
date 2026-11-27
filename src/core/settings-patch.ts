@@ -14,6 +14,7 @@ const RULES: Partial<Record<keyof Settings, { kind: Kind; max: number; nullable?
   routerModel: { kind: 'string', max: 200 },
   routerEffort: { kind: EFFORT_IDS, max: 10, nullable: true },
   memoryModel: { kind: 'string', max: 200 },
+  sessionNameModel: { kind: 'string', max: 200, nullable: true },
   memoryEffort: { kind: EFFORT_IDS, max: 10, nullable: true },
   defaultFallbackModel: { kind: 'string', max: 200, nullable: true },
   voice: { kind: 'object', max: 10_000, nullable: true },
