@@ -40,6 +40,7 @@ import {
   type Settings
 } from '../store'
 import { Icon } from './ui'
+import { primaryAccountOf } from '../../../shared/primary-login'
 import { EngineProblem } from './EngineProblem'
 import { Select } from './Select'
 
@@ -205,6 +206,13 @@ const ROUTE = (): Record<NonNullable<EngineStatus['route']>, { label: string; to
 export function HarnessList(): ReactNode {
   const engines = useStore((s) => s.settings.engines)
   const chosen = useStore((s) => s.settings.harnesses)
+  // A saved pick whose check says it is not installed has no active checkbox to turn it off. Before
+  // the check finishes, installed:false means unknown, so keep every pick until the statuses settle.
+  useEffect(() => {
+    if (!chosen || ENGINE_IDS.some((e) => engines[e].checking)) return
+    const keep = chosen.filter((e) => engines[e].installed)
+    if (keep.length !== chosen.length) updateSettings({ harnesses: keep })
+  }, [chosen, engines])
   // Unpicked: the ones ready to run. Picking one off keeps the rest as they are.
   const picked = (e: EngineId): boolean => (chosen ? chosen.includes(e) : startsPicked(engines[e]))
   const toggle = (e: EngineId): void => {
@@ -333,9 +341,27 @@ function HarnessRow({ engine, st, picked, toggle }: { engine: EngineId; st: Engi
   )
 }
 
-// Shortcuts for the address: a provider's, or a local server's on its usual port.
-const ENDPOINT_PRESETS: { label: string; url: string }[] = [
+// Shortcuts for the address: a provider's, or a local server's on its usual port. A provider that
+// people meet here for the first time says where its key comes from and which model to pick.
+type EndpointPreset = { label: string; url: string; note?: () => ReactNode }
+const ENDPOINT_PRESETS: EndpointPreset[] = [
   { label: 'OpenRouter', url: 'https://openrouter.ai/api/v1' },
+  {
+    label: 'Maritaca',
+    url: 'https://chat.maritaca.ai/api',
+    note: () => (
+      <>
+        {L('Modelos brasileiros da Maritaca. A chave sai em ', 'Brazilian models by Maritaca. Get a key at ')}
+        <button type="button" className="link" onClick={() => openExternal('https://plataforma.maritaca.ai/')}>
+          plataforma.maritaca.ai
+        </button>
+        {L(
+          ' › Chaves de API. Pros agentes, use o S5; o S5-br-sp roda todo no Brasil.',
+          ' › API keys. For agents, use S5; S5-br-sp runs entirely in Brazil.'
+        )}
+      </>
+    )
+  },
   { label: 'Ollama', url: 'http://localhost:11434/v1' },
   { label: 'LM Studio', url: 'http://localhost:1234/v1' }
 ]
@@ -388,6 +414,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
   }
   const shown = (listed ?? []).filter((m) => m.toLowerCase().includes(filter.trim().toLowerCase())).slice(0, 300)
   const flip = (m: string): void => setChosen((c) => (c.includes(m) ? c.filter((x) => x !== m) : [...c, m]))
+  const note = ENDPOINT_PRESETS.find((p) => p.url === url.trim().replace(/\/+$/, ''))?.note
 
   return (
     <div className={`harness ${picked ? 'is-picked' : ''}`}>
@@ -397,7 +424,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
         </button>
         <label className="grow harness__name" htmlFor={checkId}>
           <strong>{L('Endpoint próprio', 'Your own endpoint')}</strong>
-          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, OmniRoute, Ollama… sem instalar nada', 'OpenRouter, OmniRoute, Ollama… nothing to install')}</span>
+          <span className="harness__account">{st.installed ? st.account : L('OpenRouter, Maritaca, Ollama… sem instalar nada', 'OpenRouter, Maritaca, Ollama… nothing to install')}</span>
         </label>
         {st.installed && <span className="tag tag--ok">endpoint</span>}
         {picked && st.loggedIn && !open && (
@@ -424,6 +451,7 @@ function EndpointRow({ st, picked, toggle }: { st: EngineStatus; picked: boolean
               </button>
             ))}
           </div>
+          {note && <p className="hint"><span>{note()}</span></p>}
           <label className="field">
             <span className="field__label">{L('Endereço', 'Address')}</span>
             <input value={url} spellCheck={false} placeholder="https://openrouter.ai/api/v1" onChange={(e) => setUrl(e.target.value)} />
@@ -565,7 +593,15 @@ export function HarnessMcps({ onAdded }: { onAdded: (id: string) => void }): Rea
 export function AccountsCard(): ReactNode {
   const accounts = useStore((s) => s.settings.accounts ?? [])
   const engines = useStore((s) => s.settings.engines)
+  const settings = useStore((s) => s.settings)
   const os = useStore((s) => s.platform)
+  // The primary login of a harness: its replies go there first, and the other logins follow in order when it runs out.
+  const setPrimary = (engine: AccountEngine, id: string): void => {
+    const next: Partial<Record<AccountEngine, string>> = { ...(settings.primaryAccounts ?? {}) }
+    if (id) next[engine] = id
+    else delete next[engine]
+    updateSettings({ primaryAccounts: next })
+  }
   const [engine, setEngine] = useState<AccountEngine>('claude')
   const [name, setName] = useState('')
   const [manual, setManual] = useState<Record<string, string>>({})
@@ -596,6 +632,18 @@ export function AccountsCard(): ReactNode {
           {!a.loggedIn && (
             <button className="btn btn--sm btn--primary" onClick={() => void loginAccount(a.id).then((r) => setManual((m) => ({ ...m, [a.id]: r.opened ? '' : r.command })))}>
               {L('Entrar', 'Sign in')}
+            </button>
+          )}
+          {primaryAccountOf(settings, a.engine) === a.id ? (
+            <>
+              <span className="muted small">{L('Principal', 'Primary')}</span>
+              <button className="btn btn--ghost btn--sm" onClick={() => setPrimary(a.engine, '')}>
+                {L('Tirar da principal', 'Unset as primary')}
+              </button>
+            </>
+          ) : (
+            <button className="btn btn--ghost btn--sm" disabled={!a.loggedIn} onClick={() => setPrimary(a.engine, a.id)}>
+              {L('Definir como principal', 'Set as primary')}
             </button>
           )}
           {removing === a.id ? (

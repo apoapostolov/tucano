@@ -120,12 +120,14 @@ export function SettingsJumps({ sections }: { sections: readonly SettingsSection
   )
 }
 
-// Takes the page to a subject: it parks under the groups bar, which stays at the top while the page
-// scrolls, and the subject takes the focus without a second scroll.
+// Takes the page to a subject: it parks under the sticky settings header, which stays at the top while
+// the page scrolls, and the subject takes the focus without a second scroll.
 export function glideTo(scroller: HTMLElement, id: string, animated: boolean, frame: { current: number | null }, began?: () => void, ended?: () => void): void {
   const target = scroller.querySelector<HTMLElement>(`[data-settings-section="${id}"]`)
   if (!target) return
-  const bar = scroller.querySelector<HTMLElement>('.settings-groups')?.getBoundingClientRect().height ?? 0
+  // How far down the header ends once it's parked: its height plus where it parks (below a drag strip).
+  const sticky = scroller.querySelector<HTMLElement>('.settings-sticky') ?? scroller.querySelector<HTMLElement>('.settings-groups')
+  const bar = sticky ? sticky.getBoundingClientRect().height + (parseFloat(window.getComputedStyle?.(sticky).top ?? '') || 0) : 0
   const destination = (): number => Math.max(0, Math.min(scroller.scrollHeight - scroller.clientHeight,
     scroller.scrollTop + target.getBoundingClientRect().top - scroller.getBoundingClientRect().top - bar - 16))
   target.focus({ preventScroll: true })
