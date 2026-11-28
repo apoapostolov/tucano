@@ -1537,7 +1537,14 @@ export class Db {
     this.db
       .prepare(
         `INSERT INTO messages (id, conversation_id, author_kind, author_id, text, at, run, routine, thread_id, via, stop_job, send_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT (id) DO UPDATE SET text = excluded.text, run = excluded.run, stop_job = excluded.stop_job, send_mode = excluded.send_mode`
+         ON CONFLICT (id) DO UPDATE SET text = excluded.text, stop_job = excluded.stop_job, send_mode = excluded.send_mode,
+           run = CASE
+             -- A session's name is written beside the running reply (setRunSessionName), and the runner's own
+             -- copy of the reply never had it: a later save without one keeps the name already there.
+             WHEN excluded.run IS NOT NULL AND json_extract(excluded.run, '$.sessionName') IS NULL AND json_extract(messages.run, '$.sessionName') IS NOT NULL
+               THEN json_set(excluded.run, '$.sessionName', json_extract(messages.run, '$.sessionName'))
+             ELSE excluded.run
+           END`
       )
       .run(
         m.id,

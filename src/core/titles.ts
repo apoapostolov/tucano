@@ -37,6 +37,9 @@ export interface TitlesDeps {
 export class Titles {
   private seen = new Set<string>()
   private named = new Set<string>()
+  // The names given in this run of the app, by reply. The runner keeps its own copy of a running reply
+  // and sends that copy out as it goes, without the name: withName puts it back on the way out.
+  private names = new Map<string, string>()
   constructor(private deps: TitlesDeps) {}
 
   // A reply just started: the request it works on gets its title (a person's message, or the note that
@@ -81,9 +84,18 @@ export class Titles {
     const name = cleanTitle(text)
     if (!name) return undefined
     db.setRunSessionName(m.id, name)
+    this.names.set(m.id, name)
+    if (this.names.size > 500) this.names.delete(this.names.keys().next().value!)
     const saved = db.message(m.id)
     if (saved) this.deps.emit({ type: 'message', message: saved })
     return name
+  }
+
+  // A reply on its way to the window with the name its session was given, when the copy that is sent
+  // was made before the name came. Anything else goes out as it is.
+  withName(m: Message): Message {
+    const name = m.run && !m.run.sessionName ? this.names.get(m.id) : undefined
+    return name ? { ...m, run: { ...m.run!, sessionName: name } } : m
   }
 
   async title(id: string): Promise<string | undefined> {

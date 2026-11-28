@@ -571,7 +571,9 @@ function workspaceSummary(): void {
 }
 // The requests' short titles (the board's cards), made once a reply starts on them.
 let titles: Titles | undefined
-function emit(event: CoreEvent): void {
+function emit(sent: CoreEvent): void {
+  // A running reply's own copy may predate its session's name (src/core/titles.ts): it goes out with it.
+  const event: CoreEvent = sent.type === 'message' && titles ? { ...sent, message: titles.withName(sent.message) } : sent
   const more = event.type === 'message' && db.recordActivity(event.message, viewing)
   hub.emit(event)
   if (event.type === 'message') titles?.forReply(event.message)
