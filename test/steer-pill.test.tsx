@@ -108,7 +108,9 @@ describe('the steer pill', () => {
     expect(document.querySelector('.steps__steer')).toBeNull() // no field until it is opened
     // The row sits inside the box, under the header and above the steps it opened.
     expect(pills.parentElement!.className).toContain('steps')
-    expect(pills.nextElementSibling!.className).toBe('steps__list')
+    // The list sits in its body, beside the line that folds it (test/steps-rail.test.tsx).
+    expect(pills.nextElementSibling!.className).toBe('steps__body')
+    expect(pills.nextElementSibling!.querySelector('.steps__list')).not.toBeNull()
     await act(async () => steer.click())
     expect(document.querySelector('.steps')!.nextElementSibling?.className).toBe('steps__steer')
     expect(stopped).toHaveLength(0) // steering did not stop the reply

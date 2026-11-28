@@ -8,8 +8,7 @@ export function useFold(id: string, startFolded = false): { open: boolean; toggl
   const folded = useStore((s) => s.settings.folded) ?? []
   const key = startFolded ? `+${id}` : id
   const marked = folded.includes(key)
-  const open = startFolded ? marked : !marked
-  return { open, toggle: () => setFolded(key, !open) }
+  return { open: startFolded ? marked : !marked, toggle: () => updateSettings({ folded: marked ? folded.filter((f) => f !== key) : [...folded, key] }) }
 }
 
 // Fold or unfold one id from outside a render (a double-click on a handle, a shortcut). It writes
