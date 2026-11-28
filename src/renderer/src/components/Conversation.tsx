@@ -1889,11 +1889,25 @@ export function RunSteps({ message }: { message: Message }): ReactNode {
           </div>
         )}
         {open && (
-          <ol className="steps__list">
-            {run.steps.map((st) => (
-              <StepRow key={st.id} step={st} />
-            ))}
-          </ol>
+          <div className="steps__body">
+            {/* One click passes (dragging past the line never folds a run); a double-click folds, and
+                so does Enter or Space, whose click carries no count, since a keyboard has no double-click. */}
+            <button
+              type="button"
+              className="steps__rail"
+              aria-label={L('Recolher os passos', 'Fold the steps')}
+              title={L('Clique duas vezes para recolher os passos', 'Double-click to fold the steps')}
+              onClick={(e) => {
+                if (e.detail === 0) fold()
+              }}
+              onDoubleClick={fold}
+            />
+            <ol className="steps__list">
+              {run.steps.map((st) => (
+                <StepRow key={st.id} step={st} />
+              ))}
+            </ol>
+          </div>
         )}
         <Thought message={message} working={working} />
       </div>
@@ -2005,7 +2019,6 @@ export function Thought({ message, working }: { message: Message; working: boole
         <Icon name="chevron" size={11} />
         {!open && <span className="thought__last">{last}</span>}
       </button>
-      {open && (
       {open && (
         <div ref={box} className="thought__text" onScroll={(e) => {
           const el = e.currentTarget

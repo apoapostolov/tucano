@@ -18,7 +18,6 @@ export function setFolded(id: string, folded: boolean): void {
   const now = getState().settings.folded ?? []
   if (now.includes(id) === folded) return
   updateSettings({ folded: folded ? [...now, id] : now.filter((f: string) => f !== id) })
-
 }
 
 export function FoldToggle({ open, onToggle, children }: { open: boolean; onToggle: () => void; children: ReactNode }): ReactNode {
