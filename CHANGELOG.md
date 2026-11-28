@@ -4,12 +4,61 @@ What changed in each version of Tucano. The format follows [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.2.54] - 2026-11-28
+
+> **Em português:**
+> - **Novo:** a **Maritaca** entra nos atalhos do **Endpoint próprio** (Configurações › Modelos), do lado de OpenRouter, Ollama e LM Studio. Um clique preenche o endereço e diz onde pegar a chave (plataforma.maritaca.ai › Chaves de API) e qual modelo usar: **S5** pros agentes, **S5-br-sp** pra tudo rodar no Brasil.
+
+### Added
+
+- **Maritaca among the endpoint shortcuts.** Settings › Models › Your own endpoint now offers **Maritaca**, the Brazilian provider of the Sabiá and S5 models, beside OpenRouter, Ollama and LM Studio. It fills in `https://chat.maritaca.ai/api` and says where the key comes from (plataforma.maritaca.ai › API keys) and which model to pick: S5 for agents, S5-br-sp to keep everything in Brazil. Maritaca speaks OpenAI's format with tool calls, so agents ran on it before; this saves looking up the address. In a test with 60-odd tools, S5 carried a five-step task through on its own; S5-nano lost its way among that many.
+
+## [0.2.53] - 2026-11-27
+
+> **Em português:**
+> - **Mudou:** a **imagem Docker** vem com o **OpenCode 2**. Com o 1.x, um modelo que o OpenCode não alcança (um modelo da OpenCode Go sem o login do Go, por exemplo) só mostrava "Unexpected server error"; agora o motivo aparece em Configurações › Modelos. Os logins feitos no 1.x continuam valendo.
+> - **Corrigido:** em **Configurações**, as abas (Você, Agentes, Modelos…) não respondiam ao clique depois de rolar a página no Mac, só de volta ao topo. Agora funcionam em qualquer ponto da página.
+
+### Changed
+
+- **The Docker image runs OpenCode 2.** npm's `opencode-ai` is still the 1.x line, so the image installed OpenCode 1.19, which answers a model it can't reach (an OpenCode Go model without the Go login, say) with "Unexpected server error. Check server logs for details." The image now takes OpenCode 2.3.2 from its GitHub release, checked against its SHA-256, and Tucano already runs 2.x its own way. The reason now reaches Settings › Models, as in "This OpenCode Go model is hosted outside Europe and the United States". Logins made with 1.x carry over: 2.x reads the old `auth.json` in the volume on its first start.
+
+### Fixed
+
+- **Settings tabs answer clicks wherever the page is scrolled.** Once the page scrolled, the tabs and subject jumps parked at the very top, under the strip that drags the window, and on a Mac a click there moved the window instead: the tabs only worked back at the top of the page. They now park just below that strip, which takes the page's background on Settings, and a subject jump lands under them as before.
+
+## [0.2.52] - 2026-11-27
+
 > **Em português:**
 > - **Novo:** um agente **pede o acesso que falta** (computador, navegador, uma pasta) num card na conversa, e você aprova ali, em vez de ele mandar você procurar nas configurações. Isso nunca entra sozinho, nem quando o Tuca aplica o resto na hora. Um computador direto na máquina vem com um aviso, e no Tucano Pro o agente pede o do servidor, já que lá não tem Linux isolado.
+> - **Novo:** um **documento aberto ganha espaço**: o PDF ocupa a largura toda, sem a faixa de miniaturas, e tem **Tela cheia**. A coluna de detalhes continua aberta, e fecha num botão que o app lembra.
+> - **Novo:** um botão de **copiar** no painel de um documento de texto (markdown, texto ou csv), que mostra "Copiado" quando copia.
+> - **Mudou:** uma **rotina com vários horários** aparece na semana em cada um dos seus horários, com quem roda e a hora, no lugar da faixa "o dia todo".
+> - **Mudou:** um grupo **recolhido** na barra lateral ainda mostra a conversa em que você está e as que têm uma pergunta ou aprovação esperando você.
+> - **Mudou:** "Pode seguir com a recomendação" fica no rodapé do card de decisão, na mesma linha de Pular e Cancelar.
+> - **Mudou:** cada aviso de Configurações › Modelos › Usos dos classificadores fica embaixo do próprio menu.
+> - **Mudou:** o cabeçalho do raciocínio diz primeiro o que é, e a seta que abre o bloco vem depois da palavra, não antes: em inglês é **Thinking** enquanto ele pensa e depois também.
+> - **Mudou:** as colunas do Quadro usam a mesma barra de rolagem discreta da barra lateral.
+> - **Corrigido:** num **computador emprestado**, "Aprovar e sempre permitir" num comando sem tipo de ação, como `ls`, liberava todo comando daquele agente ali para sempre. Agora isso nunca libera o terminal, uma regra antiga assim é ignorada e o botão nem aparece nesses comandos.
 
 ### Added
 
 - **An agent asks for the access it lacks on a card.** An agent missing a computer, a browser or a folder could only tell the person to go find it in its settings. `propor_ajuste` now takes `computador` (`linux`, `mac` or `nenhum`), `navegador` and `pastas` (a path, read-only unless `escrita`), and agents are told to ask for themselves this way. These count as access, with connectors and the month's limit: they always wait for a click, even with the Tuca's apply-right-away. Folders follow the same rules as **Lend folder** (inside the home folder, no hidden folders, Library or Tucano's data), are checked again when applied and set apart from `saveAgent`; **Undo** puts them back. The card says what each lets the agent do and names the computer right on the machine as the agent page does (this Mac, this computer, the server), with a warning where the agent runs as the person. Where there is no isolated Linux (a server without Docker, as on Tucano Pro), the agent is told so and asks for the server's computer, and no folders. Thanks to Juliano Nicocelli.
+- **An open document gets the room it needs.** A PDF in Documents fills the width of the page, without the viewer's thumbnail strip, and the chat's file panel opens PDFs the same way. The summary sits under the title, and **Details**, **Full screen** and **Download** are in the top bar. Details shows or hides the column with where the file came from, its versions and who sees it: open by default, and closing it is remembered. **Full screen** puts the file over the whole window, and Escape leaves it. Markdown and text keep their reading column. Thanks to Alan Jones Rios.
+- **Copy a text document from the side panel.** A Markdown, text or CSV file open in the side panel has a copy glyph in its header that puts the whole file on the clipboard. It turns into a check with **Copied** for a moment, and a file that can no longer be read says so. Thanks to Apostol Apostolov.
+
+### Changed
+
+- **A routine with several times a day sits at each of its hours.** The week view showed such a routine once a day in an "all day" strip above the hours, with a tick per run, so its times were one click away. Each run is now a block at its own hour, with the agent and the time, like a routine that runs once. Thanks to Apostol Apostolov.
+- **A folded sidebar group keeps what needs you.** Folding a channel group, a section or an agent sector hid every row in it. The row you are in stays, and so does one with a question or an approval waiting on you; rows that are only working or unread fold away. Thanks to Apostol Apostolov.
+- **The recommendation button joins the decision card's footer.** **Go with the recommendation** sat alone on a line under Skip and Cancel; it is now on their row, on the left. Thanks to Apostol Apostolov.
+- **Each classifier notice sits under its own dropdown.** In Settings › Models › Classifier Uses, the card drew both dropdowns first and stacked both notices at the bottom; what is sent, and a missing key, now come right under the job they describe. Thanks to Apostol Apostolov.
+- **The reasoning header names itself before it offers the control.** The line above the reasoning reads **Thinking**, and the chevron that opens and folds the block now comes after the word instead of before it, so the line starts with what the block is rather than with a control. In English one word covers it both while the model thinks and once it is over; the Portuguese keeps its two. Thanks to Apostol Apostolov. (#638)
+- **The Board's columns use the app's scrollbar.** A column with more tasks than fit showed the system's grey bar on a white track; it now has the same dim one as the sidebar. Thanks to Apostol Apostolov.
+
+### Fixed
+
+- **"Always allow" on a lent computer never allows its terminal for good.** On a computer lent to the server, **Approve and always allow** on a command with no kind of action (`ls`, `cat`) saved a rule that let every later command of that agent there run without asking, even with the terminal set to sensitive and after the turn read something from outside. Like on this computer, "always" now only turns a command's kind of action (push, commit, delete…) to "does it alone", a rule saved that way by 0.2.36 or later is ignored, and the card no longer offers "always" on a command with no kind.
 
 ## [0.2.51] - 2026-11-26
 
