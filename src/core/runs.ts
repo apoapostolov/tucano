@@ -8,16 +8,19 @@ import { NODE_APPROVED, NODE_BASH } from './node-server'
 import { nodeOf } from '../shared/node-link'
 import type { CoreEvent } from '../shared/rpc'
 import { ErrorCode, McpError, type CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf } from '../shared/types'
+import type { GrantLevel, LeaveAsk, TucaLeave } from '../shared/types'
+import { ACCESS_REQUEST, CACHE_READ_WEIGHT, describeSchedule, workIn, ENGINES, ERRORS_STOP, usable, modelInfo, PENDING_WAIT_MINUTES, REPEAT_STOP, REPEAT_WARN, SAME_TOOL_STOP, SAME_TOOL_WARN, SLEEPS_FREE, SLEEPS_STOP, RUN_BUDGET_PCT, AUTO_CONTINUES, RUN_STALL_MINUTES, IMAGE_MIMES, MAX_IMAGE_BYTES, MAX_IMAGES_PER_MESSAGE, MAX_FILE_BYTES, MAX_FILES_PER_MESSAGE, type FileUpload, type Account, type Agent, type Approval, type Artifact, type ImageUpload, type Connector, type ConnectorTool, type Conversation, type EngineId, type Message, type Quota, type Receipt, type Person, type Question, type Routine, type Run, type RunStatus, type Settings, type Step, wikiAccess, MAX_PROPOSALS, proposalKey, proposalsOf, isAccessChange, onlyAccessChanges } from '../shared/types'
 import { BUSCAR_THREADS, clock, HISTORY_LIMIT, LER_THREAD, liveContext, mentioned, NO_LIVE, snip, systemPrompt, transcript, transcriptBlocks, type GitHubAccess, type PromptOpts } from './context'
 import { BUSCAR_MEMORIAS, contextWindow, LEMBRAR, searchThreads, type Memories } from './memory'
 import { WIKI_TOOL_NAMES, WIKI_TOOLS, wikiCall, type Wiki } from './wiki'
 import { BROWSER_TOOL_NAMES, browserStep, browserTools, NAVEGADOR, type Browser } from './browser'
 import { APP_TOOL_NAMES, APPS, appStep, appTools, type DesktopApps } from './apps'
-import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, stepFor, type Computers } from './computer'
+import { artifactKind, COMPUTER_TOOL_NAMES, computerTools, folderToLend, stepFor, type Computers } from './computer'
 import type { Vault } from './vault'
 import { COFRE, keyNameError, loginOrigin, PEDIR_CHAVE } from '../shared/vault'
 import { extractFile } from './wiki-extract'
+import type { Docs } from './docs'
+import { DOCS_TOOL_NAMES, DOCS_TOOLS, docsCall } from './docs-tools'
 import { BUSCAR_NA_WEB, formatResults, LER_PAGINA, readPage, searchWeb, WEB_TOOLS, type WebResult } from './web-tools'
 import { AGENDAR, CANCELAR, outcome, ROUTINE_TOOL_NAMES, whenText, type Routines } from './routines'
 import { noNewsPhrase, noNewsRun } from '../shared/routine-news'
@@ -25,13 +28,14 @@ import { LER_SKILL, PROPOR_SKILL, SKILL_TOOL_NAMES, type Skills } from './skills
 import { availableModels, builderGuide, builderSection, draftFrom, helperSection, PROPOR_AGENTE, PROPOR_TIME, teamFrom } from './tuca'
 import { appliesNow, decidedCards, keepDecided } from './tuca-apply'
 import { LER_GUIA, readGuide } from './guide'
-import { feedbackFrom, pendingAgents, PROPOR_FEEDBACK, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState } from './tuca-help'
+import { feedbackFrom, pendingAgents, PROPOR_FEEDBACK, proposalFrom, PROPOSAL_TOOLS, VER_ESTADO, workspaceState, type Machine } from './tuca-help'
+import { covering, FAZER_EU, forRole, leaveChoice, leaveDecision, leaveFrom, leaveSection, leavesFor, leaveTask, leaveTools, newLeave, shouldSuggest, suggestNote, timesDone, withLeaves, type LeaveChoice } from './tuca-leave'
 import type { Db } from './db'
 import type { Engine, TurnImage } from './engines/types'
 import { accountDir } from './engines/detect'
 import { outOfQuota } from './engines/cli'
 import { loginsInOrder, nextLogin, noLoginLeft, primaryAccountOf, Spent, USUAL_LOGIN } from '../shared/primary-login'
-import { ALWAYS_LOAD, textResult, type Gateway, type Session, type ToolDef } from './gateway'
+import { ALWAYS_LOAD, missingArgs, textResult, type Gateway, type Session, type ToolDef } from './gateway'
 import { Followups, replyKey } from './followups'
 import { sessionConfig, Sessions, type SessionPlan, type Shown } from './sessions'
 import { formatAnswers, MAX_DESCRIPTION_LENGTH, MAX_LABEL_LENGTH, MAX_OPTIONS, MAX_QUESTION_LENGTH, MAX_QUESTIONS, MAX_STEPS, MIN_OPTIONS, hasOpenSteps, isNextSteps, parseNextSteps, parseQuestions, questionHeadline, questionsAsText, questionsOf, type Answer, type Decision } from '../shared/questions'
@@ -40,18 +44,19 @@ import { JEV_MODEL, routeJev } from './jev'
 import { chimeIn, ROUTER_HISTORY, route, routerTurn, screenHandoff } from './router'
 import { allowed, approvalHash, callClass, canonical, neverAllowedForGood, permits, runnerAllowed, runnerRules } from './policy'
 import { forReaders, innerActions, linksAccounts, perCallTool } from '../shared/composio'
-import { agentOwner, computerOwner, deciders, namedRequester, dmOwner, mentionedPeople, People, personNamed, presentPeople, promptPeople, requesterOf, routineBehalf, toPeopleOnly } from './people'
+import { agentOwner, computerOwner, deciders, namedRequester, dmOwner, mentionedPeople, People, personNamed, presentPeople, promptPeople, requesterOf, routineBehalf, routinePerson, toPeopleOnly } from './people'
 import { can, isAdmin } from './policy-people'
 import { agentsFor } from './access-policy'
 import { covers, restricted, sharedAccess } from '../shared/access'
-import { kindLabel, actionMode, actionVerb, COMPUTADOR, gate, policyOf, shellActions, toolActions, verdict, type ActionKind, type Policy, type Verdict } from '../shared/actions'
+import { kindLabel, actionMode, actionVerb, COMPUTADOR, gate, policyOf, shellActions, shellClass, toolActions, verdict, type ActionKind, type Policy, type Verdict } from '../shared/actions'
 import { awaitDone, idleSleepSeconds, isStatusTool, pendingOf, pollTool } from './waits'
 import { callError, contentText, errorReason } from './connectors'
 import { commandStep, execSummary, keyArg, maskSecrets, resultSummary } from './step-text'
-import { during, inReplyTool, traceReply, tracing, type ReplyTrace, type SpanRef } from './telemetry'
+import { during, inReplyTool, traceReply, tracing, type ReplyText, type ReplyTrace, type SpanRef } from './telemetry'
 import { askMessage, askTask, byCode, wantsDm, inPlace, placeOf, CANCELAR_PEDIDO, channelNamed, codeOf, DELEGATION_TOOL_NAMES, DELEGATION_TOOLS, MAX_DELEGATIONS_PER_REPLY, MAX_OPEN_DELEGATIONS, parseAsk, PEDIR, RESPONDER_PEDIDO, returnTask, teamMember, teammateNote, teamSection, type AskContext, type Returned } from './delegations'
 import { anyoneOf, askKind, channelsOf, entriesOf, headsOf, MAX_CHAIN, sectorName, sectorOf } from '../shared/org'
 import type { Delegation, DelegationRef } from '../shared/types'
+import type { Requester } from '../shared/doc-access'
 import { canContinue, WORKLESS_LABELS } from '../shared/run-progress'
 import { countAsk, jobTurn, MAX_CHIMES, newJob, resumeJob, stopNote, withoutGoal, type Job } from './jobs'
 import { passes } from '../shared/errors'
@@ -316,11 +321,13 @@ export interface RunnerDeps {
   emit: (e: CoreEvent) => void
   workDir: string // per-agent empty directories live here
   dataDir?: string // the app's data: images I attach are kept in its artifact store; without it, they're dropped
+  machine?: Machine // which computers an agent can ask for on a card (src/core/tuca-help.ts)
   gateway?: Gateway // without it, agents get no tools at all
   connectors?: Connectors
   memory?: Memories // without it, agents get no memory and see the last HISTORY_LIMIT messages
   computers?: Pick<Computers, 'call'> & Partial<Pick<Computers, 'mac' | 'unavailable'>> // without it, no agent has a computer
-  vault?: Pick<Vault, 'usable' | 'pick' | 'open' | 'mask' | 'warm' | 'loginSites'> // the Cofre's keys, for bash and start_service, and its logins (src/core/vault.ts)
+  vault?: Pick<Vault, 'usable' | 'pick' | 'open' | 'mask' | 'maskAll' | 'warm' | 'loginSites'> // the Cofre's keys, for bash and start_service, and its logins (src/core/vault.ts)
+  traceText?: (reply: Pick<Message, 'conversationId' | 'at'>) => boolean // Settings › Traces: whether this reply's text goes with its trace
   browser?: Pick<Browser, 'call' | 'approved'> & Partial<Pick<Browser, 'loginSites'>> // without it, no agent has a browser
   apps?: Pick<DesktopApps, 'call' | 'approved'> // without it, no agent uses the person's apps
   routines?: Pick<Routines, 'schedule' | 'cancel' | 'forAgent'> // without it, agents can't schedule
@@ -334,6 +341,7 @@ export interface RunnerDeps {
   models?: () => { id: string; label: string }[] // what the Tuca may propose; without it, the plans' listed models
   applyNow?: (messageId: string, personId: string) => void // a Tuca reply ended: what it proposed inside the app is applied for that person (Settings.tucaApplyNow); without it, everything stays a card
   wiki?: Pick<Wiki, 'indexText' | 'search' | 'page' | 'count' | 'kinds' | 'view' | 'heldTitles' | 'outOfReach'> // without it, agents have no wiki
+  docs?: Docs // Documentos, for the agents' document tools; without it, agents have none
   wikiCurator?: { afterReply(conversationId: string): void } // reads the conversation after a reply, to keep what lasts
   timers?: { wait(ms: number, signal?: AbortSignal): Promise<void>; now(): number } // how the app waits on a pending result; tests pass a fake clock
   feedbackOn?: () => boolean // feedback to the people who make Tucano can be sent from here (core/feedback.ts); without it, the Tuca can't write one
@@ -707,6 +715,31 @@ export class Runner {
     // Answered for the person it was asked (by an admin, whoever covers for them, the requester past
     // the deadline): the agent is told so in so many words.
     let onBehalf: { agent: string; task: string } | undefined
+    // The Tuca's card asking leave to do something himself (src/core/tuca-leave.ts): what was picked is kept
+    // as the person's before he gets the turn, so his next reply already has what it lets him use.
+    // Nothing here waits (no await): the question is marked answered right below, in the same breath, so a
+    // card sent twice is answered once. What he is told about it is put into words after that.
+    let granted: { agent: string; ask: LeaveAsk; choice: LeaveChoice; person: string; suggest?: number } | undefined
+    const leaveAsk = asked?.run?.leave
+    if (asked && asked.author.kind === 'agent' && leaveAsk && !leaveAsk.state) {
+      const choice = leaveChoice(asked.run?.answers, typed, !!leaveAsk.instead)
+      if (choice) {
+        const person = dmOwner(conv, db.ownerId()) ?? writer.id
+        // A connector only if whose leave it is may still give one (asked as an admin, answered as a member: no).
+        const [ask] = forRole([leaveAsk], isAdmin(db.person(person) ?? writer))
+        let suggest: number | undefined
+        if (choice === 'once' || choice === 'always') {
+          const made = newLeave(ask!, person, choice, conv.id)
+          const all = [...db.tucaLeaves(person), made]
+          // In a colleague's place there is no one to suggest: someone on the team already does that.
+          if (!ask!.instead && shouldSuggest(all, ask!.kind)) suggest = timesDone(all, ask!.kind)
+          db.saveTucaLeave({ ...made, ...(suggest ? { suggested: true as const } : {}) })
+          emit({ type: 'leaves' })
+        }
+        asked.run = { ...asked.run!, leave: { ...leaveAsk, state: choice } }
+        granted = { agent: asked.author.id, ask: ask!, choice, person, ...(suggest ? { suggest } : {}) }
+      }
+    }
     if (asked) {
       if (q?.state === 'open') {
         db.saveQuestion({ ...q, state: 'answered', answeredBy: writer.id, answeredAt: Date.now() })
@@ -738,6 +771,10 @@ export class Runner {
 
     // What the files say, before anyone answers (after the question is taken: nothing else waits here).
     if (reading.length) await Promise.all(reading)
+    // What the Tuca is told of the leave just answered, by the name he calls that person.
+    const allowed = granted
+      ? { agent: granted.agent, task: leaveTask(granted.ask, granted.choice, { me: granted.person === db.ownerId() ? (await this.deps.settings()).workspaceName : (db.person(granted.person)?.name ?? writer.name), connectors: this.deps.connectors?.list() ?? [], ...(granted.suggest ? { suggest: granted.suggest } : {}) }) }
+      : undefined
 
     if (members.length === 0) {
       this.post(conv.id, replyIn, L('Ninguém está neste canal ainda. Adicione agentes na página de cada um (Canais) e mande de novo.', "No one is in this channel yet. Add agents on each one's page (Channels) and send it again."))
@@ -773,8 +810,10 @@ export class Runner {
     }
     // An answer to a question asked on a job: the same job goes on (its brakes count from where they were).
     const jobOn = asked?.run?.job && this.jobOf(asked.run.job)?.state === 'running' ? asked.run.job : undefined
+    // What the reply is told beyond the transcript: whose answer it was, and what a leave lets it do.
+    const noteFor = (id: string): string | undefined => [onBehalf?.agent === id ? onBehalf.task : '', allowed?.agent === id ? allowed.task : ''].filter(Boolean).join('\n\n') || undefined
     const reply = (agent: Agent, opts: Partial<ReplyOpts> = {}): Promise<Message | undefined> =>
-      this.startReply(agent, conv, { depth: 1, threadId: replyIn, replyTo: mine.id, ...(jobOn ? { job: jobOn } : {}), ...opts, ...(onBehalf?.agent === agent.id ? { task: onBehalf.task } : {}) }, // A queued prompt answers the message it was written for, never taking over an earlier one.
+      this.startReply(agent, conv, { depth: 1, threadId: replyIn, replyTo: mine.id, ...(jobOn ? { job: jobOn } : {}), ...opts, ...(noteFor(agent.id) ? { task: noteFor(agent.id)! } : {}) }, // A queued prompt answers the message it was written for, never taking over an earlier one.
       { urgent: true, parallel: true })
     // Several called by name answer one after another, in the order written: each answers my message
     // and reads what the ones before it answered (routedHistory), like a routed message.
@@ -1235,12 +1274,23 @@ export class Runner {
 
       const model = usable(modelInfo(settings.routerModel)) ?? modelInfo('haiku')!
       const status = settings.engines[model.engine]
-      // The router's logins: the primary one first when one is set, then the others in order, each tried once.
-      const logins = loginsInOrder(settings, model.engine)
-      if (!status.installed || !logins.some((login) => login.ready)) return fail(L(`o ${ENGINES[model.engine].label} não está pronto`, `${ENGINES[model.engine].label} isn't ready`))
-
       const cwd = join(this.deps.workDir, '_router')
       mkdirSync(cwd, { recursive: true })
+      // The router's model out of quota or not ready: the channel's agents' reserve models pick
+      // instead, as their replies would move to them, so a channel doesn't go quiet while a DM still answers.
+      const onReserve = async (why: string): Promise<void> => {
+        const reserves = routerReserves(members, settings, model.engine)
+        for (const alt of reserves) {
+          const rr = await during({ operation: 'router', sessionId: trigger, conversationId: conv.id }, () => route({ ...input, engine: engines[alt.engine], model: alt.id, cwd }))
+          if (rr.usage) db.addReceipt({ ...rr.usage, model: alt.id, ms: rr.ms, messageId: note.id, agentId: 'router', engine: alt.engine, at: Date.now() })
+          if (!('error' in rr)) return this.routed(conv, note, rr.agents, trigger, `${rr.reason}${fellBack} · ${L(`o ${ENGINES[model.engine].label} não pôde, decidiu o ${alt.label}`, `${ENGINES[model.engine].label} couldn't, ${alt.label} decided`)}`, parallel)
+        }
+        fail(why)
+      }
+      // The router's logins: the primary one first when one is set, then the others in order, each tried once.
+      const logins = loginsInOrder(settings, model.engine)
+      if (!status.installed || !logins.some((login) => login.ready)) return await onReserve(L(`o ${ENGINES[model.engine].label} não está pronto`, `${ENGINES[model.engine].label} isn't ready`))
+
       const tried = new Set<string>()
       let r: Awaited<ReturnType<typeof route>> | undefined
       for (let login = nextLogin(logins, { engine: model.engine, spent: this.spent, now: Date.now(), tried }); login; login = nextLogin(logins, { engine: model.engine, spent: this.spent, now: Date.now(), tried })) {
@@ -1252,8 +1302,8 @@ export class Runner {
         this.spent.mark(model.engine, login.id, Date.now())
       }
       const label = ENGINES[model.engine].label
-      if (!r) return fail(noLoginLeft(logins, { engine: model.engine, label, spent: this.spent, now: Date.now() }))
-      if ('error' in r && tried.size > 1 && outOfQuota(r.error)) return fail(noLoginLeft(logins, { engine: model.engine, label, spent: this.spent, now: Date.now() }))
+      if (!r) return await onReserve(noLoginLeft(logins, { engine: model.engine, label, spent: this.spent, now: Date.now() }))
+      if ('error' in r && outOfQuota(r.error)) return await onReserve(tried.size > 1 ? noLoginLeft(logins, { engine: model.engine, label, spent: this.spent, now: Date.now() }) : friendly(r.error, { engine: label, doing: L('escolher quem responde', 'picking who answers') }).text)
       // In the words an agent's failure uses (the plan's limit, a login, the network), not the CLI's own.
       if ('error' in r) return fail(friendly(r.error, { engine: ENGINES[model.engine].label, doing: L('escolher quem responde', 'picking who answers') }).text)
       this.routed(conv, note, r.agents, trigger, `${r.reason}${fellBack}`, parallel)
@@ -1417,15 +1467,18 @@ export class Runner {
   // The agent's reserve model, when it has one that can run now: another model, on a harness that's ready.
   // The agent's reserve, when it can take the reply: its model, and the account it runs on (unset: its harness's
   // usual login). None when it's the very login and model that just ran out, or when its login isn't ready.
-  private reserveFor(agent: Agent, settings: Settings, from: Account | undefined): { model: NonNullable<ReturnType<typeof modelInfo>>; account?: Account } | undefined {
-    const model = agent.fallbackModelId ? modelInfo(agent.fallbackModelId) : undefined
+  private reserveFor(agent: Agent, settings: Settings, from: Account | undefined): { id: string; model: NonNullable<ReturnType<typeof modelInfo>>; account?: Account } | undefined {
+    // Its own reserve, else the workspace's (Settings › Models), which takes no account of its own.
+    const own = !!agent.fallbackModelId
+    const id = agent.fallbackModelId || settings.defaultFallbackModel
+    const model = id ? modelInfo(id) : undefined
     if (!model?.id) return undefined
     // An account of another harness (the reserve's model changed since) means the usual login, like the agent's own.
-    const account = agent.fallbackAccountId ? settings.accounts?.find((a) => a.id === agent.fallbackAccountId && a.engine === model.engine) : undefined
-    if (agent.fallbackModelId === agent.modelId && account?.id === from?.id) return undefined
+    const account = own && agent.fallbackAccountId ? settings.accounts?.find((a) => a.id === agent.fallbackAccountId && a.engine === model.engine) : undefined
+    if (id === agent.modelId && account?.id === from?.id) return undefined
     const status = settings.engines[model.engine]
     if (!status?.installed || (account ? !account.loggedIn : !status.loggedIn)) return undefined
-    return { model, account }
+    return { id: id!, model, account }
   }
 
   // Every reply counts while it runs, wherever it came from. A hand-off that reached this agent meanwhile
@@ -1442,6 +1495,24 @@ export class Runner {
     }
   }
 
+  // A reply's text for its trace, when Settings › Traces sends it: the message it answers (or the request it
+  // works on) and what it ended with. Nothing else it saw or did.
+  // Only the message it answers, from the same conversation: a task can carry what came back from
+  // another one (a hand-off's result), which whoever turned the text on may not read. Never fails the reply.
+  private textOf(msg: Message): ReplyText | undefined {
+    try {
+      if (!this.deps.traceText?.(msg)) return undefined
+      const vault = this.deps.vault
+      const mask = (t: string): string => maskSecrets(vault ? vault.maskAll(t) : t) // every Vault key, then the token shapes
+      const answered = msg.run?.replyTo ? this.deps.db.message(msg.run.replyTo) : undefined
+      const asked = answered?.conversationId === msg.conversationId ? answered.text : undefined
+      return { ...(asked ? { input: mask(asked) } : {}), output: mask(msg.text) }
+    } catch (e) {
+      console.error('[telemetry] no text for this trace:', e instanceof Error ? e.message : e)
+      return undefined
+    }
+  }
+
   private async executeReply(agent: Agent, conv: Conversation, opts: ReplyOpts & { reserved?: boolean }): Promise<Message> {
     const threadId = opts.existing ? opts.existing.threadId : opts.threadId
     const key = replyKey(agent.id, conv.id, threadId)
@@ -1453,7 +1524,7 @@ export class Runner {
     const traced: { reply?: ReplyTrace | undefined } = {}
     try {
       msg = await this.reply(agent, conv, rest, traced)
-      traced.reply?.end({ status: msg.run?.status ?? 'failed', usage: msg.run?.receipt })
+      traced.reply?.end({ status: msg.run?.status ?? 'failed', usage: msg.run?.receipt, text: traced.reply && this.textOf(msg) })
     } catch (e) {
       traced.reply?.end({ status: 'failed' })
       this.followups.end(key)
@@ -1636,6 +1707,22 @@ export class Runner {
     // Whom this reply is for: the person every "ask", "tell" and "approve" in its prompt and tools
     // means. The owner reads by the workspace's name, so one person's prompts stay as they were.
     const requester = opts.for ?? requesterOf(db, conv, windowAll, msg.threadId)
+    // What this person let the Tuca do himself (src/core/tuca-leave.ts): for this reply he works with it as
+    // if it were his own. Nothing of it is saved on him: a leave is the person's, and holds only for them.
+    // A connector holds only while its person may give one (an admin); and at each call they are read again,
+    // so a leave taken back in the middle of a reply stops there.
+    const isTuca = agent.kind === 'tuca'
+    const leavesNow = (): TucaLeave[] => (isTuca ? forRole(leavesFor(db.tucaLeaves(requester.id), conv.id), isAdmin(db.person(requester.id) ?? requester)) : [])
+    const leaves = leavesNow()
+    agent = withLeaves(agent, leaves)
+    // The agent as it is kept now, with what the leaves give: its grant for a connector, at the moment of a call.
+    const grantNow = (connectorId: string): GrantLevel | undefined => {
+      const stored = db.agent(agent.id)
+      return (stored && isTuca ? withLeaves(stored, leavesNow()) : stored)?.grants[connectorId]
+    }
+    // The requests of its own still open. The Tuca is one for everyone: each person's are theirs alone (to
+    // see, to cancel, to answer, and to count against the most he may have open).
+    const myOpen = (): Delegation[] => db.openDelegations().filter((d) => d.from === agent.id && (!isTuca || d.requestedBy === requester.id))
     const peers = agentsFor(requester, members).filter((a) => a.id !== agent.id) // a restricted person's reply lists only the peers they see
     // What the person this reply is for can see: never someone else's DM (nor what lives in one), nor
     // what a channel held before the Tucano had more people (the owner's: see People.visibleAt).
@@ -1686,6 +1773,8 @@ export class Runner {
     // Tuca helps with Tucano itself, with the guide and a look at the workspace.
     const proposes = !!this.deps.gateway
     const helps = proposes && agent.kind === 'tuca'
+    // He asks leave only where a person reads the card: not on handed work, nor on a routine's run.
+    const leaveAsks = helps && conv.kind === 'dm' && !opts.routine && !(opts.routineAsk ?? opts.existing?.run?.routineAsk) && !this.handedIn(msg)
     // Its team (src/shared/org.ts): those answering to it and those answering to the same agent as it
     // does. It hands them work (src/core/delegations.ts).
     // And when this reply is itself such work (in the thread a request opened), whose request it is:
@@ -1694,7 +1783,9 @@ export class Runner {
     const team = this.deps.gateway ? agentsFor(requester, anyoneOf(db.agents(), agent.id)) : [] // a restricted person's agent hands work only to what they see
     const handed = this.handedIn(msg)
     const boss = handed ? db.agent(handed.from) : undefined
-    const delegated: DelegationRef[] = []
+    const delegated: DelegationRef[] = [] // each request this reply made or went on with, once: what the person sees under it
+    let asks = 0 // how many times it asked in this reply, follow-ups too: what the cap counts
+    const followed = new Set<string>() // requests it went on with in this reply: one follow-up each, the rest is noise
     let handedOn = 0 // requests handed on in this reply that weren't asked before on the job: the work moving on
     let answeredUp = false // answered a question its team left on a request: nothing in that for the person
     let computers = this.deps.gateway && agent.computer ? this.deps.computers : undefined
@@ -1722,6 +1813,12 @@ export class Runner {
     }
     const wikiShown = wikiNow()
     const wiki = this.deps.gateway && wikiShown && wikiAccess(agent) !== 'none' && wikiShown.count() > 0 ? wikiShown : undefined
+    // Documentos: for an agent that reaches at least one folder, working for this person (a routine of the team's: for no one).
+    // A DM is read by its person alone. Any other conversation is read by everyone who sees it, so its documents are only the folders all of them may see.
+    const docsAsker: Person | null = opts.routine ? (routinePerson(db, routineOf) ?? null) : requester
+    const readers = conv.kind === 'dm' ? [] : db.people().filter((p) => sees.canSeeConversation(p, conv))
+    const docsRequester: Requester = conv.kind === 'dm' ? docsAsker : readers.length ? readers : null
+    const docs = this.deps.gateway && this.deps.docs && this.deps.docs.foldersFor(agent, docsRequester, 'read').length > 0 ? this.deps.docs : undefined
 
     const control: Control = { ctl: new AbortController(), msg }
     control.flush = () => flush() // a steer's row goes in after the words streamed so far
@@ -1796,7 +1893,7 @@ export class Runner {
     const services: string[] = []
     const routineIds: string[] = []
     const exposed = new Map<string, Exposed>()
-    const taken = new Set<string>([ASK_USER.name, NEXT_STEPS.name, VER_IMAGEM.name, LER_ANEXO.name, ACCESS_REQUEST, PEDIR_CHAVE, LEMBRAR.name, BUSCAR_THREADS.name, LER_THREAD.name, ...COMPUTER_TOOL_NAMES, ...BROWSER_TOOL_NAMES, ...APP_TOOL_NAMES, ...ROUTINE_TOOL_NAMES, ...SKILL_TOOL_NAMES, ...DELEGATION_TOOL_NAMES])
+    const taken = new Set<string>([ASK_USER.name, NEXT_STEPS.name, FAZER_EU.name, VER_IMAGEM.name, LER_ANEXO.name, ACCESS_REQUEST, PEDIR_CHAVE, LEMBRAR.name, BUSCAR_THREADS.name, LER_THREAD.name, ...COMPUTER_TOOL_NAMES, ...BROWSER_TOOL_NAMES, ...APP_TOOL_NAMES, ...ROUTINE_TOOL_NAMES, ...SKILL_TOOL_NAMES, ...DOCS_TOOL_NAMES, ...DELEGATION_TOOL_NAMES])
     // How far this agent goes on its own (src/shared/actions.ts): read again at each call, since it may change mid-turn.
     const kindsOf = (t: Pick<ConnectorTool, 'cls' | 'name'>): ActionKind[] => (t.cls === 'read' ? [] : toolActions(t.name))
     const policy: Policy = policyOf(agent, settings)
@@ -1823,8 +1920,9 @@ export class Runner {
     const github = githubAccess(this.deps.connectors?.list() ?? [], agent, exposed, policy)
     // pedir_acesso: the connectors this agent could get more of; I decide, like any approval.
     const lacking = (this.deps.connectors?.list() ?? []).filter((c) => agent.grants[c.id] !== 'read_write' && !notYours(c))
+    // Not the Tuca: what he uses himself he asks leave for (fazer_eu_mesmo), and it is the person's to take back.
     const accessTool: ToolDef | undefined =
-      this.deps.gateway && lacking.length
+      this.deps.gateway && lacking.length && !helps
         ? {
             name: ACCESS_REQUEST,
             description: L(
@@ -1947,7 +2045,7 @@ ${note}`,
       ...(canSeeImages ? [VER_IMAGEM] : []),
       ...(canReadFiles ? [LER_ANEXO] : []),
       ...(proposes ? [PROPOR_AGENTE, PROPOR_TIME, ...PROPOSAL_TOOLS()] : []),
-      ...(helps ? [LER_GUIA, VER_ESTADO, ...(this.deps.feedbackOn?.() ? [PROPOR_FEEDBACK] : [])] : []),
+      ...(helps ? [LER_GUIA, VER_ESTADO, ...(leaveAsks ? [FAZER_EU] : []), ...(this.deps.feedbackOn?.() ? [PROPOR_FEEDBACK] : [])] : []),
       ...(team.length ? DELEGATION_TOOLS : []),
       ...(computers ? computerTools(agent).map((t) => withKeys(t.name === 'bash' ? withRules(t) : t)) : []),
       ...(browser ? browserTools() : []),
@@ -1955,6 +2053,7 @@ ${note}`,
       ...(routines ? [AGENDAR, CANCELAR] : []),
       ...(skills ? [...(mySkills.length ? [LER_SKILL] : []), PROPOR_SKILL] : []),
       ...(wiki ? WIKI_TOOLS : []),
+      ...(docs ? DOCS_TOOLS : []),
       ...(ownWeb ? WEB_TOOLS : [])
     ]
     // The connector tools it called lately, by the steps of its replies ("Linear · list_issues").
@@ -2033,6 +2132,9 @@ ${note}`,
           const parsed = parseQuestions(args)
           if ('error' in parsed) return textResult(parsed.error, true)
           if (question || approval) return textResult(L('Você já está esperando uma resposta nesta mensagem. Encerre agora.', "You're already waiting for an answer in this message. End now."), true)
+          // "Ok", "Certo": a card the person can only stare at. A reply ends by ending, not by asking.
+          const bare = parsed.questions.find((x) => !x.options?.length && !/[?？]/.test(x.question) && x.question.trim().split(/\s+/).length < 3)
+          if (bare) return textResult(L(`"${bare.question.trim()}" não é uma pergunta. ask_user é só pra quando falta uma resposta de alguém pra você seguir. Se não falta nada, não pergunte: encerre sua resposta com uma frase curta.`, `"${bare.question.trim()}" is not a question. ask_user is only for when you need someone's answer to go on. If nothing is missing, do not ask: end your reply with one short sentence.`), true)
           const para = typeof args['para'] === 'string' ? args['para'].trim() : ''
           const target = para ? personNamed(para, others) : requester
           if (!target) return textResult(L(`Não há ninguém chamado "${para}" no Tucano. As pessoas: ${others.map((p) => p.name).join(', ')}.`, `There's no one called "${para}" in this Tucano. The people: ${others.map((p) => p.name).join(', ')}.`), true)
@@ -2083,6 +2185,7 @@ ${note}`,
           // A follow-up on a request that came back here: the same agent, in the same thread.
           const code = typeof args['continuar'] === 'string' && args['continuar'].trim() ? args['continuar'] : undefined
           const before = code ? byCode(db.delegationsFrom(agent.id, conv.id, this.originThread(msg)), code) : undefined
+          if (before && followed.has(before.id)) return textResult(L(`Você já acrescentou algo ao pedido [${codeOf(before)}] nesta resposta, e isso já chegou. Um complemento por pedido: não repita, não confirme e não corrija o complemento. Encerre agora com uma frase curta.`, `You already added something to request [${codeOf(before)}] in this reply, and it has arrived. One follow-up per request: do not repeat, confirm or correct it. End now with one short sentence.`), true)
           if (code && !before) return textResult(L(`Não achei o pedido "${code}" entre os seus daqui. Sem "continuar", é um pedido novo.`, `I couldn't find request "${code}" among yours from here. Without "continuar", it's a new request.`), true)
           // One still under way takes the follow-up in its thread, as one more thing to do in it. Not while it
           // waits on its question (the answer goes with responder_pedido, and the rest with it) or on an approval.
@@ -2096,8 +2199,8 @@ ${note}`,
           if (chain.length >= MAX_CHAIN) return textResult(L(`Este trabalho já passou por ${MAX_CHAIN} pedidos seguidos, o máximo. Faça você, ou diga na resposta o que ficou faltando.`, `This work has already gone through ${MAX_CHAIN} requests in a row, the most allowed. Do it yourself, or say in your reply what is left.`), true)
           if (this.paused) return textResult(L('Os agentes estão pausados: nenhum pedido sai agora.', 'The agents are paused: no request goes out now.'), true)
           if (job.state === 'stopped') return textResult(L('Este trabalho parou nos freios (nada andava): nenhum pedido sai até alguém clicar em Continuar. Encerre dizendo onde parou.', "This work stopped on its brakes (nothing was moving): no request goes out until someone clicks Continue. End saying where it stopped."), true)
-          if (delegated.length >= MAX_DELEGATIONS_PER_REPLY) return textResult(L(`Já são ${MAX_DELEGATIONS_PER_REPLY} pedidos nesta resposta, o máximo. Encerre e espere o que voltar.`, `That's ${MAX_DELEGATIONS_PER_REPLY} requests in this reply, the most allowed. End now and wait for what comes back.`), true)
-          if (before?.state !== 'open' && db.openDelegations().filter((d) => d.from === agent.id).length >= MAX_OPEN_DELEGATIONS) return textResult(L(`Você já tem ${MAX_OPEN_DELEGATIONS} pedidos em aberto, o máximo. Espere algum voltar, ou cancele um com cancelar_pedido.`, `You already have ${MAX_OPEN_DELEGATIONS} open requests, the most allowed. Wait for one to come back, or cancel one with cancelar_pedido.`), true)
+          if (asks >= MAX_DELEGATIONS_PER_REPLY) return textResult(L(`Já são ${MAX_DELEGATIONS_PER_REPLY} pedidos nesta resposta, o máximo. Encerre e espere o que voltar.`, `That's ${MAX_DELEGATIONS_PER_REPLY} requests in this reply, the most allowed. End now and wait for what comes back.`), true)
+          if (before?.state !== 'open' && myOpen().length >= MAX_OPEN_DELEGATIONS) return textResult(L(`Você já tem ${MAX_OPEN_DELEGATIONS} pedidos em aberto, o máximo. Espere algum voltar, ou cancele um com cancelar_pedido.`, `You already have ${MAX_OPEN_DELEGATIONS} open requests, the most allowed. Wait for one to come back, or cancel one with cancelar_pedido.`), true)
           let d: Delegation
           let channel: Conversation
           // A request never ends up more visible than where it was asked: from a DM, with other people in
@@ -2130,7 +2233,10 @@ ${note}`,
             // The parts already under way learn of this one at their next step: no one does another's part.
             for (const x of db.delegationsFrom(agent.id, d.originConversationId, d.originThreadId)) if (x.id !== d.id && x.state === 'open') this.noteFor(x.id, teammateNote('asked', to.name, ask.text))
           }
-          delegated.push(refOf(d))
+          asks++
+          if (before) followed.add(before.id)
+          // A follow-up on a request this same reply made is still that one request: one line, not two.
+          if (!delegated.some((x) => x.id === d.id)) delegated.push(refOf(d))
           msg.run = { ...msg.run!, delegations: [...delegated] }
           // The same request to the same agent coming around again is the work going in circles (src/core/jobs.ts).
           if (countAsk(job, to.id, ask.text) === 1) handedOn++
@@ -2147,8 +2253,8 @@ ${note}`,
           addSteps({ id: randomUUID(), label: before ? L(`Continuou com ${to.name}`, `Went on with ${to.name}`) : L(`Pediu a ${to.name}`, `Asked ${to.name}`), detail: `${placeOf(channel)} · ${snip(ask.text, 120)}`, status: 'done' })
           return textResult(
             L(
-              `Pedido [${codeOf(d)}] entregue a ${to.name} ${inPlace(channel)}${before ? ', na mesma thread' : ''}: ele já começou. A resposta volta pra você e você é chamado. Não espere nem confira: se não há mais nada a pedir, encerre agora, sem texto: o que você escrever depois de pedir fica recolhido. ${settings.workspaceName} vê embaixo da mensagem a quem você pediu e como está, e você fala quando o trabalho voltar.`,
-              `Request [${codeOf(d)}] delivered to ${to.name} ${inPlace(channel)}${before ? ', in the same thread' : ''}: they have started. The answer comes back to you and you are called. Do not wait or check: if there is nothing else to ask, end now, with no text: whatever you write after asking stays folded away. ${settings.workspaceName} sees under the message whom you asked and how it stands, and you speak when the work comes back.`
+              `Pedido [${codeOf(d)}] entregue a ${to.name} ${inPlace(channel)}${before ? ', na mesma thread' : ''}: ele já começou. A resposta volta pra você e você é chamado. Não espere nem confira. Se há outra parte pra outro agente, peça agora; senão, encerre sua resposta agora com uma frase curta dizendo a quem pediu, sem chamar mais nenhuma ferramenta: não confirme nem repita o pedido, e não pergunte nada só pra encerrar. ${settings.workspaceName} vê embaixo da mensagem a quem você pediu e como está (a sua frase fica recolhida), e você fala quando o trabalho voltar.`,
+              `Request [${codeOf(d)}] delivered to ${to.name} ${inPlace(channel)}${before ? ', in the same thread' : ''}: they have started. The answer comes back to you and you are called. Do not wait or check. If another part goes to another agent, ask now; otherwise end your reply now with one short sentence saying whom you asked, calling no other tool: do not confirm or repeat the request, and do not ask anything just to end. ${settings.workspaceName} sees under the message whom you asked and how it stands (your sentence stays folded away), and you speak when the work comes back.`
             )
           )
         }
@@ -2170,7 +2276,7 @@ ${note}`,
         }
 
         if ((name === RESPONDER_PEDIDO.name || name === CANCELAR_PEDIDO.name) && team.length) {
-          const mine = db.openDelegations().filter((d) => d.from === agent.id)
+          const mine = myOpen()
           const d = byCode(mine, args['id'])
           const codes = mine.map((x) => `[${codeOf(x)}]`).join(', ')
           if (!d) return textResult(mine.length ? L(`Não achei esse pedido entre os seus em aberto: ${codes}.`, `I couldn't find that request among your open ones: ${codes}.`) : L('Você não tem pedidos em aberto.', 'You have no open requests.'), true)
@@ -2216,6 +2322,58 @@ ${note}`,
             addSteps({ id: randomUUID(), label: L('Leu a página', 'Read the page'), detail: url, tool: name, status: 'error', ms: Date.now() - t0 })
             return textResult(L(`Não consegui ler a página: ${e instanceof Error ? e.message : String(e)}`, `I couldn't read the page: ${e instanceof Error ? e.message : String(e)}`), true)
           }
+        }
+
+        if (name === FAZER_EU.name && leaveAsks) {
+          const mine = (this.deps.connectors?.list() ?? []).filter((c) => !notYours(c))
+          // Whose part did not get done: the last thing he asked each one from this conversation, within a
+          // day, ended so (newest first: the first seen for each is the last asked).
+          const lastAsked = new Map<string, Delegation>()
+          for (const d of db.liveDelegations(Date.now() - 86_400_000)) if (d.from === agent.id && d.originConversationId === conv.id && !lastAsked.has(d.to)) lastAsked.set(d.to, d)
+          const unfinished = [...lastAsked.values()].filter((d) => d.state === 'failed').flatMap((d) => db.agent(d.to)?.name ?? [])
+          const r = leaveFrom(args, { connectors: mine, admin: isAdmin(requester), unfinished })
+          if (!r.ask) return textResult(r.error!, true)
+          const ask = r.ask
+          const all = db.tucaLeaves(requester.id)
+          // Already allowed, for good or in this conversation: it goes straight through, counted as one more time.
+          const had = covering(leavesNow(), ask)
+          if (had) {
+            // A leave given while this reply was already running (another conversation's card, answered meanwhile):
+            // what it lets him use isn't in this reply's tools. Nothing is counted, and he says how to go on.
+            if (!leaves.some((l) => l.id === had.id) && (ask.web || ask.grants))
+              return textResult(
+                L(
+                  `${settings.workspaceName} já deixou você fazer esse tipo de coisa (${had.kind}), mas a licença chegou depois de esta resposta começar, e o que ela libera (${leaveTools(had, mine)}) só vem numa resposta nova. Diga em uma frase que já está liberado e que é só ${settings.workspaceName} responder aqui pra você seguir, e encerre.`,
+                  `${settings.workspaceName} already let you do this kind of thing (${had.kind}), but the leave came after this reply started, and what it gives (${leaveTools(had, mine)}) only arrives with a new reply. Say in one sentence that it is allowed and that ${settings.workspaceName} just has to answer here for you to go on, and end.`
+                )
+              )
+            const suggest = shouldSuggest(all.map((l) => (l.id === had.id ? { ...l, uses: l.uses + 1 } : l)), ask.kind)
+            db.saveTucaLeave({ ...had, uses: had.uses + 1, ...(suggest ? { suggested: true as const } : {}) })
+            addSteps({ id: randomUUID(), label: L('Conferiu o que pode fazer', 'Checked what he may do'), detail: ask.kind, status: 'done' })
+            return textResult(
+              `${L(
+                `Liberado: ${settings.workspaceName} já deixou você fazer esse tipo de coisa (${had.kind}), usando ${leaveTools(had, mine)}. Faça agora e entregue o resultado, sem perguntar.`,
+                `Allowed: ${settings.workspaceName} already let you do this kind of thing (${had.kind}), using ${leaveTools(had, mine)}. Do it now and deliver the result, without asking.`
+              )}${suggest ? suggestNote(ask.kind, timesDone(all, ask.kind) + 1, settings.workspaceName) : ''}`
+            )
+          }
+          if (question || approval) return textResult(L('Você já está esperando uma resposta nesta mensagem. Encerre agora.', "You're already waiting for an answer in this message. End now."), true)
+          questions = [leaveDecision(ask, mine)]
+          question = questionsAsText(questions)
+          askedTo = requester
+          msg.run = { ...msg.run!, leave: ask }
+          addSteps({ id: randomUUID(), label: L('Pediu licença pra fazer ele mesmo', 'Asked leave to do it himself'), detail: `${ask.kind} · ${leaveTools(ask, mine)}${ask.instead ? L(` · no lugar de ${ask.instead}`, ` · in ${ask.instead}'s place`) : ''}`, status: 'done' })
+          return textResult(
+            ask.instead
+              ? L(
+                  `Pergunta enviada a ${settings.workspaceName}, num card com duas respostas: você faz desta vez, ou ${settings.workspaceName} espera ${ask.instead}. Encerre sua resposta agora com no máximo uma frase, dizendo por que ${ask.instead} não terminou e, se só ${settings.workspaceName} resolve, onde; não repita a pergunta. Se ${settings.workspaceName} deixar, você continua numa nova mensagem, já com o que pediu pra usar.`,
+                  `Question sent to ${settings.workspaceName}, as a card with two answers: you do it this once, or ${settings.workspaceName} waits for ${ask.instead}. End your reply now with one sentence at most, saying why ${ask.instead} did not finish and, if only ${settings.workspaceName} can solve it, where; do not repeat the question. If ${settings.workspaceName} allows it, you go on in a new message, already with what you asked to use.`
+                )
+              : L(
+                  `Pergunta enviada a ${settings.workspaceName}, num card com três respostas. Encerre sua resposta agora com no máximo uma frase, sem repetir a pergunta. Se ${settings.workspaceName} deixar, você continua numa nova mensagem, já com o que pediu pra usar.`,
+                  `Question sent to ${settings.workspaceName}, as a card with three answers. End your reply now with one sentence at most, without repeating the question. If ${settings.workspaceName} allows it, you go on in a new message, already with what you asked to use.`
+                )
+          )
         }
 
         if (name === LER_GUIA.name && helps) {
@@ -2266,7 +2424,7 @@ ${note}`,
           const r =
             name === PROPOR_TIME.name
               ? teamFrom(args, { usable, fallbackModel: (db.agent(agent.id) ?? agent).modelId, connectors: this.deps.connectors?.list() ?? [], channels: db.conversations().filter((c) => c.kind === 'channel').map((c) => c.name) })
-              : proposalFrom(name, args, { agents: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), conversations: db.conversations().filter((c) => (dmOwner(c, db.ownerId()) ?? requester.id) === requester.id), connectors: this.deps.connectors?.list() ?? [], usable, pending: pendingAgents(msg.run) })
+              : proposalFrom(name, args, { agents: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), conversations: db.conversations().filter((c) => (dmOwner(c, db.ownerId()) ?? requester.id) === requester.id), connectors: this.deps.connectors?.list() ?? [], usable, pending: pendingAgents(msg.run), ...(this.deps.dataDir ? { folder: (path: string) => folderToLend(path, this.deps.dataDir!) } : {}), ...(this.deps.machine ? { machine: this.deps.machine } : {}) })
           if (!r.proposal) return textResult(r.error!, true)
           // Its cards as they are now: the person may have applied or discarded one meanwhile.
           msg.run = keepDecided(msg.run!, db.message(msg.id)?.run)
@@ -2296,16 +2454,16 @@ ${note}`,
           const detail = p.kind === 'routine' ? p.routine.name : p.kind === 'channel' ? `#${p.name}` : p.kind === 'team' ? p.agents.map((a) => a.name).join(', ') : Object.keys(p.changes).join(', ')
           addSteps({ id: randomUUID(), label: what, detail, status: 'done' })
           const needs = p.needs?.length ? L(` Ela depende de ${p.needs.join(', ')}, proposto antes nesta resposta: o app cria primeiro.`, ` It depends on ${p.needs.join(', ')}, proposed earlier in this reply: the app makes that first.`) : ''
-          const access = p.kind === 'team' ? p.agents.some((a) => Object.keys(a.grants).length) : p.kind === 'agent' && (p.changes.grants !== undefined || p.changes.limit !== undefined)
+          const access = p.kind === 'team' ? p.agents.some((a) => Object.keys(a.grants).length) : p.kind === 'agent' && Object.keys(p.changes).some(isAccessChange)
           // Applied when the reply ends, as applyNow will: agents are the admins', and a change only to
           // what grants access (connectors, the month's limit) always waits on its card.
-          const onlyAccess = p.kind === 'agent' && Object.keys(p.changes).every((k) => k === 'grants' || k === 'limit')
+          const onlyAccess = p.kind === 'agent' && onlyAccessChanges(p.changes)
           const auto = helps && !!this.deps.applyNow && appliesNow(now) && !onlyAccess && (isAdmin(requester) || (p.kind !== 'agent' && p.kind !== 'team'))
           return textResult(
             auto
               ? L(
-                  `Anotado: o app aplica assim que esta resposta terminar, e o card vira um recibo com Desfazer.${needs}${access ? ' Os conectores e o limite do mês ficam num card à parte, esperando a pessoa confirmar.' : ''} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: uma chamada por mudança. No fim, uma frase curta dizendo o que você fez (e que dá pra desfazer no card), sem perguntar se pode e sem repetir o que os cards mostram.`,
-                  `Noted: the app applies it as soon as this reply ends, and the card becomes a receipt with Undo.${needs}${access ? ' Connectors and the monthly limit go on a separate card, waiting for the person to confirm.' : ''} If the request has more changes, propose the others now, in this same reply: one call per change. At the end, one short sentence saying what you did (and that it can be undone on the card), without asking whether you may and without repeating what the cards show.`
+                  `Anotado: o app aplica assim que esta resposta terminar, e o card vira um recibo com Desfazer.${needs}${access ? ' O acesso (conectores, limite do mês, computador, navegador, pastas) fica num card à parte, esperando a pessoa confirmar.' : ''} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: uma chamada por mudança. No fim, uma frase curta dizendo o que você fez (e que dá pra desfazer no card), sem perguntar se pode e sem repetir o que os cards mostram.`,
+                  `Noted: the app applies it as soon as this reply ends, and the card becomes a receipt with Undo.${needs}${access ? ' Access (connectors, the monthly limit, computer, browser, folders) goes on a separate card, waiting for the person to confirm.' : ''} If the request has more changes, propose the others now, in this same reply: one call per change. At the end, one short sentence saying what you did (and that it can be undone on the card), without asking whether you may and without repeating what the cards show.`
                 )
               : L(
                   `A proposta está no card, com Aplicar e Descartar, e ainda NÃO aconteceu: só acontece quando a pessoa aplicar.${needs} Se o pedido tem mais mudanças, proponha as outras agora, nesta mesma resposta: cada uma vira um card no mesmo grupo, com "Aplicar todos". No fim, uma frase curta dizendo que é só aplicar (ou pedir um ajuste), sem repetir o que os cards mostram.`,
@@ -2444,7 +2602,8 @@ ${note}`,
           memoryIds.push(r.memory.id)
           msg.run = { ...msg.run!, memoryIds: [...memoryIds] }
           addSteps({ id: randomUUID(), label: r.label!, detail: r.memory.text, status: 'done' })
-          return textResult(r.reply)
+          // After asking, there is no reply to go on with: said here, or "go on" reads as one more thing to ask.
+          return textResult(delegated.length ? `${r.reply} ${L('Você já pediu nesta resposta e o trabalho já começou: não há mais o que fazer agora. Encerre sem texto, sem repetir nem confirmar pedido nenhum.', 'You already asked in this reply and the work has started: there is nothing more to do now. End with no text, without repeating or confirming any request.')}` : r.reply)
         }
 
         if (wiki && WIKI_TOOL_NAMES.has(name)) {
@@ -2453,6 +2612,65 @@ ${note}`,
           if (!current) return textResult(L('Você não tem acesso à wiki agora.', 'You do not have wiki access now.'), true)
           const r = wikiCall(current, name, args)
           addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: 'done' })
+          return textResult(r.text, r.error)
+        }
+
+        if (docs && DOCS_TOOL_NAMES.has(name)) {
+          // Access is read again from the current data at every call: a long reply must not keep what changed.
+          const current = db.agent(agent.id)
+          if (!current || current.archived) return textResult(L('Você não tem acesso a Documentos agora.', 'You do not have access to Documents now.'), true)
+          const attach = (a: Artifact): void => {
+            if (!artifactIds.includes(a.id)) artifactIds.push(a.id)
+            msg.run = { ...msg.run!, artifactIds: [...artifactIds] }
+            save()
+          }
+          const r = await docsCall(
+            {
+              docs,
+              agent: current,
+              requester: docsRequester,
+              askedBy: docsAsker?.id,
+              conversationId: conv.id,
+              messageId: msg.id,
+              routineId: routineOf?.id,
+              threadId: msg.threadId,
+              dataDir: this.deps.dataDir ?? '',
+              shown: (id) => {
+                const a = db.artifact(id)
+                return a && a.conversationId === conv.id ? a : undefined
+              },
+              fromComputer:
+                computers && current.computer
+                  ? async (path, title) => {
+                      const out = await computers.call(current, 'show_file', { path, title }, { conversationId: conv.id, messageId: msg.id, signal: control.ctl.signal })
+                      if (!out.artifact) return { error: resultText(out.result) || L('Não consegui ler esse arquivo no seu computador.', "I couldn't read that file on your computer.") }
+                      attach(out.artifact)
+                      return { artifact: out.artifact }
+                    }
+                  : undefined,
+              ...(this.deps.vault ? { mask: (text: string) => this.deps.vault!.mask(agent.id, text) } : {}),
+              fromText: (fileName, data, title) => {
+                const dataDir = this.deps.dataDir
+                if (!dataDir) return undefined
+                try {
+                  const id = randomUUID()
+                  const safe = fileName.replace(/[\\/]/g, '_')
+                  mkdirSync(join(dataDir, 'artifacts', id), { recursive: true })
+                  writeFileSync(join(dataDir, 'artifacts', id, safe), data)
+                  const artifact: Artifact = { id, agentId: agent.id, conversationId: conv.id, messageId: msg.id, kind: artifactKind(safe), name: safe, title, source: 'docs_guardar', size: data.length, createdAt: Date.now() }
+                  db.saveArtifact(artifact)
+                  this.deps.emit({ type: 'artifact', artifact })
+                  attach(artifact)
+                  return artifact
+                } catch {
+                  return undefined
+                }
+              }
+            },
+            name,
+            args
+          )
+          addSteps({ id: randomUUID(), label: r.step.label, detail: r.step.detail, status: r.error ? 'error' : 'done', ...(r.error ? { error: r.text } : {}) })
           return textResult(r.text, r.error)
         }
 
@@ -2525,7 +2743,7 @@ ${note}`,
             const command = typeof args['command'] === 'string' ? args['command'] : ''
             const kinds = shellActions(command)
             // Only a command that does something that matters is judged; any other runs, as always.
-            const rules: Verdict = kinds.length ? verdict({ cls: 'write', kinds, p: await policyNow(), outside }) : { run: true, why: 'class', kinds: [] }
+            const rules: Verdict = kinds.length ? verdict({ cls: shellClass(kinds), kinds, p: await policyNow(), outside }) : { run: true, why: 'class', kinds: [] }
             const words = (rules.kinds.length ? rules.kinds : kinds).map((k) => kindLabel(k).toLowerCase()).join(', ')
             if (rules.off) {
               addSteps({ id: randomUUID(), label: L('Não rodou', "Didn't run"), detail: L(`${words}: desligado pra este agente`, `${words}: turned off for this agent`), status: 'error' })
@@ -2856,7 +3074,7 @@ ${note}`,
         if (!hit) return textResult(L(`Ferramenta desconhecida: ${name}`, `Unknown tool: ${name}`), true)
         // Defense in depth: grants or the tool may have changed since the turn started.
         const current = db.tools(hit.connector.id).find((t) => t.name === hit.tool.name)
-        const grant = db.agent(agent.id)?.grants[hit.connector.id]
+        const grant = grantNow(hit.connector.id)
         const perCall = perCallTool(hit.connector.url, hit.tool.name)
         // A reader linking an app's account on Composio: allowed, but it asks every time, whatever the rules.
         const readerLink = grant === 'read' && linksAccounts(hit.connector.url, hit.tool.name)
@@ -2882,20 +3100,27 @@ ${note}`,
         // something from outside too (never a high-risk one).
         // A runner's call, only when every inner tool that would ask is allowed for good on its own.
         const rules = db.agent(agent.id)?.autoApprove ?? []
-        const always = cls !== 'read' && !current.highRisk && (perCall ? runnerAllowed(hit.connector.id, current.name, callArgs, rules) : !neverAllowedForGood(current.name) && rules.includes(`${hit.connector.id}:${current.name}`))
+        // A node's command is never allowed for good as a tool, as this computer's terminal isn't: "always" on a
+        // command turns its kind of action to "does it alone"; a node_bash rule saved before (0.2.36) is ignored.
+        const always = cls !== 'read' && !current.highRisk && !(isNode && current.name === NODE_BASH) && (perCall ? runnerAllowed(hit.connector.id, current.name, callArgs, rules) : !neverAllowedForGood(current.name) && rules.includes(`${hit.connector.id}:${current.name}`))
         // A runner's call counts as the actions it runs; one that can't be placed (raw requests, code) asks at every level.
         const inner = perCall ? innerActions(current.name, callArgs) : undefined
         // A risky click or key on a node (a person's computer reached from this server) is judged as one in
         // this computer's browser or apps: by that rule ("never" refuses), asking when none decides, never for good.
         const risky: ActionKind | null | undefined = isNode && current.name === NODE_APPROVED ? (callArgs['kind'] === 'browser' ? 'browser' : callArgs['kind'] === 'apps' ? 'apps' : null) : undefined
         if (risky === null) return textResult(L('Recusada: o "kind" tem que ser "browser" ou "apps", exatamente como a ferramenta devolveu.', 'Refused: "kind" has to be "browser" or "apps", exactly as the tool returned it.'), true)
-        // A command on a node is judged like one on this computer.
-        const kinds: ActionKind[] = risky ? [risky] : inner ? inner.flatMap((a) => (a.kind === 'tool' ? toolActions(a.slug) : [])) : isNode && current.name === NODE_BASH ? shellActions(String(callArgs['command'] ?? '')) : kindsOf({ cls, name: current.name })
+        // A command on a node is judged like one on this computer: deleting or publishing asks at normal,
+        // and a node_bash allowed for good covers its commits, not those.
+        const nodeShell = isNode && current.name === NODE_BASH
+        const shellCls = (k: ActionKind[]): 'write' | 'sensitive' => (cls === 'sensitive' ? 'sensitive' : shellClass(k)) // the card can raise it, never lower it
+        const kinds: ActionKind[] = risky ? [risky] : inner ? inner.flatMap((a) => (a.kind === 'tool' ? toolActions(a.slug) : [])) : nodeShell ? shellActions(String(callArgs['command'] ?? '')) : kindsOf({ cls, name: current.name })
         const unplaced = perCall && cls === 'sensitive' && !runnerRules(hit.connector.id, current.name, callArgs)
         // How far it goes on its own, read now: the rules may have changed since the turn started.
         const judgedNow = risky
           ? verdict({ cls: 'write', kinds, p: await policyNow(), highRisk: current.highRisk || readerLink, outside, askByDefault: true })
-          : verdict({ cls, kinds, p: await policyNow(), highRisk: current.highRisk || unplaced || readerLink, alwaysAllowed: always, outside })
+          : nodeShell
+            ? verdict({ cls: shellCls(kinds), kinds, p: await policyNow(), highRisk: current.highRisk || readerLink, alwaysAllowed: always && shellClass(kinds) === 'write', outside })
+            : verdict({ cls, kinds, p: await policyNow(), highRisk: current.highRisk || unplaced || readerLink, alwaysAllowed: always, outside })
         if (judgedNow.off) return textResult(L(`Não rodei: ${judgedNow.kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')} está desligado pra você agora.`, `I didn't run it: ${judgedNow.kinds.map((k) => kindLabel(k).toLowerCase()).join(', ')} is turned off for you now.`), true)
         if (!judgedNow.run) {
           if (question || approval) return textResult(L('Já existe um pedido esperando decisão nesta mensagem. Encerre agora.', 'There is already a request waiting for a decision in this message. End now.'), true)
@@ -2956,7 +3181,7 @@ ${note}`,
           // of the agent sleeping and asking again. Not a status tool the agent called itself (asking whether a
           // deploy finished wants the answer now), nor a write (starting a job doesn't mean waiting for it).
           const pending = cls === 'read' && !isStatusTool(current.name) ? pendingOf(first) : undefined
-          const poller = pending && pollTool(db.tools(hit.connector.id), pending, (t) => allowed(t, db.agent(agent.id)?.grants[hit.connector.id]))
+          const poller = pending && pollTool(db.tools(hit.connector.id), pending, (t) => allowed(t, grantNow(hit.connector.id)))
           const done = (r: CallToolResult): void => (r.isError ? finish('error', errorReason(r)) : finish('done', undefined, resultSummary(resultText(r))))
           if (!pending || !poller) {
             done(first)
@@ -3035,6 +3260,15 @@ ${note}`,
             true
           )
         }
+        // Without what the tool requires: said with its parameters, counted as a failed call (the brake
+        // still stops a model that keeps guessing), and nothing runs. See missingArgs.
+        const def = toolDefs.find((t) => t.name === name)
+        const lacking = def ? missingArgs(def, args) : undefined
+        if (lacking) {
+          addSteps({ id: randomUUID(), label: L('Chamada sem parâmetro', 'Call missing a parameter'), detail: name, status: 'error', tool: name, error: resultText(lacking).split('\n')[0] })
+          if (++failing >= ERRORS_STOP) halt('errors')
+          return lacking
+        }
         inFlight++
         acted = true
         sign()
@@ -3105,12 +3339,15 @@ ${note}`,
       routines: routines?.forAgent(agent.id).filter((r) => visible(r.conversationId)),
       skills: skills && mySkills,
       wiki: wiki ? { pages: wiki.count(), kinds: wiki.kinds() } : undefined,
+      docs: docs?.foldersFor(agent, docsRequester, 'read').map((f) => ({ path: f.path, rule: f.rule })),
+      docsRoutine: !!routineOf,
       connectors: exposed.size > 0,
       github,
       people,
-      team: team.length ? teamSection({ agent, agents: agentsFor(requester, db.agents(), agent.id), conversations: db.conversations().filter((c) => sees.canSeeConversation(requester, c)), connectors: this.deps.connectors?.list() ?? [], open: db.openDelegations(), ended: db.delegationsFrom(agent.id, conv.id, this.originThread(msg)), me: settings.workspaceName }) : undefined,
+      // The Tuca is told of the team even with no one on it yet: that is when he builds the first colleague.
+      team: team.length || isTuca ? teamSection({ agent, agents: agentsFor(requester, db.agents(), agent.id), conversations: db.conversations().filter((c) => sees.canSeeConversation(requester, c)), connectors: this.deps.connectors?.list() ?? [], open: isTuca ? myOpen() : db.openDelegations(), ended: db.delegationsFrom(agent.id, conv.id, this.originThread(msg)), me: settings.workspaceName }) : undefined,
       builder: proposes
-        ? builderSection(settings, { models: this.deps.models?.() ?? availableModels(settings), connectors: this.deps.connectors?.list() ?? [], team: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), own: agent.modelId })
+        ? [builderSection(settings, { models: this.deps.models?.() ?? availableModels(settings), connectors: this.deps.connectors?.list() ?? [], team: agentsFor(requester, db.agents()).filter((a) => !a.archived && a.kind !== 'tuca'), own: agent.modelId }), leaveAsks && leaveSection(leaves, { me: settings.workspaceName, conversationId: conv.id, connectors: this.deps.connectors?.list() ?? [] })].filter(Boolean).join('\n\n')
         : undefined,
       builderGuide: proposes ? [builderGuide({ tuca: helps, me: settings.workspaceName, applyNow: helps && !!this.deps.applyNow && appliesNow(settings), admin: isAdmin(requester) }), helps && helperSection()].filter(Boolean).join('\n\n') : undefined
     }
@@ -3257,7 +3494,7 @@ ${note}`,
         plan = undefined
         input = whole
         onReserve = true
-        modelId = agent.fallbackModelId!
+        modelId = reserve.id
         modelName = reserve.model.id
         engineId = reserve.model.engine
         replyTrace?.movedTo(engineId, modelName)
@@ -3304,7 +3541,7 @@ ${note}`,
 
     // Handed work, as it stands now (cancelled meanwhile, it's no one's any more).
     const handedNow = handed ? this.handedIn(msg) : undefined
-    const base = { endedAt, ...attempt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, agentDraft: msg.run?.agentDraft, feedbackDraft: msg.run?.feedbackDraft, proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId, ...spanOn }
+    const base = { endedAt, ...attempt, depth: opts.depth, work, receipt, question, questions, ...(delegated.length ? { delegations: delegated } : {}), ...(question && (askedTo.id !== requester.id || db.people().length > 1) ? { askedTo: askedTo.id } : {}), approvalId: approval?.id, memoryIds: memoryIds.length ? memoryIds : undefined, artifactIds: artifactIds.length ? artifactIds : undefined, services: services.length ? services : undefined, routineIds: routineIds.length ? routineIds : undefined, browser: msg.run?.browser, agentDraft: msg.run?.agentDraft, feedbackDraft: msg.run?.feedbackDraft, ...(msg.run?.leave ? { leave: msg.run.leave } : {}), proposal: msg.run?.proposal, proposals: msg.run?.proposals, ...(outside ? { outside: true } : {}), ...(replyTo ? { replyTo } : {}), ...(handedId ? { handed: handedId } : {}), ...(routineAskId ? { routineAsk: routineAskId } : {}), job: jobId, ...spanOn }
     if (control.reason === 'stopped') {
       save({ run: { ...base, ...again, status: 'stopped', steps: closeThinking('error', L('Parado', 'Stopped')) } })
     } else if (control.reason === 'loop' || control.reason === 'errors' || control.reason === 'stall' || control.reason === 'sleeping') {
@@ -3493,11 +3730,14 @@ ${note}`,
     const fresh = rules.filter((r) => !owner?.autoApprove?.includes(r))
     // For a command or a PR, "sempre permitir" turns that kind of action to "does it alone" on the agent's page.
     const kinds: ActionKind[] = ap.connectorId === COMPUTADOR || ap.tool === NODE_BASH ? shellActions(String(ap.args['command'] ?? '')) : ap.tool === ABRIR_PR ? ['pr'] : []
+    // A node's command, like this computer's: only its kind of action, never node_bash itself (an `ls` allowed
+    // for good would let every command after it past its class and the outside-content guard).
+    const nodeCommand = ap.tool === NODE_BASH && db.tools(ap.connectorId).some((t) => t.name === NODE_BASH)
     if (always && decision === 'approved' && owner && !ap.highRisk && kinds.length) {
       db.saveAgent({ ...owner, actionRules: { ...owner.actionRules, ...Object.fromEntries(kinds.map((k) => [k, 'auto'])) } })
       emit({ type: 'agent', agent: db.agent(owner.id)! })
       db.addActivity({ personId: decider, kind: 'approval.always', target: owner.id, detail: { connector: ap.connectorName, tool: kinds.join(', ') } })
-    } else if (always && decision === 'approved' && owner && fresh.length && !ap.highRisk && ap.tool !== ACCESS_REQUEST && ap.connectorId !== GITHUB && ap.connectorId !== NAVEGADOR && ap.connectorId !== APPS && ap.connectorId !== COMPUTADOR) {
+    } else if (always && decision === 'approved' && owner && fresh.length && !ap.highRisk && ap.tool !== ACCESS_REQUEST && ap.connectorId !== GITHUB && ap.connectorId !== NAVEGADOR && ap.connectorId !== APPS && ap.connectorId !== COMPUTADOR && !nodeCommand) {
       db.saveAgent({ ...owner, autoApprove: [...(owner.autoApprove ?? []), ...fresh] })
       emit({ type: 'agent', agent: db.agent(owner.id)! })
       db.addActivity({ personId: decider, kind: 'approval.always', target: owner.id, detail: { connector: ap.connectorName, tool: fresh.map((r) => r.slice(r.indexOf(':') + 1)).join(', ') } })
@@ -4419,7 +4659,7 @@ ${note}`,
       const requester = behalf ?? requesterOf(db, conv, [], threadId)
       const me = requester.id === db.ownerId() ? undefined : requester.name
       this.followups.reserve(key)
-      this.enqueue(async () => this.execute(agent, conv, { depth: 1, threadId, task: returnTask(returned, open.map((d) => ({ ...place(d), parked: this.onApproval(d) })), me ?? (await this.deps.settings()).workspaceName), reserved: true, ...(behalf ? { for: behalf } : {}), ...(jobId ? { job: jobId } : {}) }), true, agent)
+      this.enqueue(async () => this.execute(agent, conv, { depth: 1, threadId, task: returnTask(returned, open.map((d) => ({ ...place(d), parked: this.onApproval(d) })), me ?? (await this.deps.settings()).workspaceName, agent.kind === 'tuca'), reserved: true, ...(behalf ? { for: behalf } : {}), ...(jobId ? { job: jobId } : {}) }), true, agent)
     }
     if (this.followups.busy(key)) this.tells.set(key, go)
     else go()
@@ -4624,4 +4864,22 @@ ${note}`,
       this.checkIdle()
     }
   }
+}
+
+// Models that may pick who answers in a channel when the router's own can't: the reserve
+// models of the channel's agents (the workspace's default reserve for one without its own), then
+// their main ones, on another harness that's signed in.
+export function routerReserves(members: Agent[], settings: Pick<Settings, 'engines' | 'defaultFallbackModel'>, out: EngineId): NonNullable<ReturnType<typeof modelInfo>>[] {
+  const ids = [...members.map((a) => a.fallbackModelId || settings.defaultFallbackModel), ...members.map((a) => a.modelId)].filter((id): id is string => !!id)
+  const seen = new Set<string>()
+  const list: NonNullable<ReturnType<typeof modelInfo>>[] = []
+  for (const id of ids) {
+    const m = usable(modelInfo(id))
+    if (!m || m.engine === out || seen.has(m.id)) continue
+    const st = settings.engines[m.engine]
+    if (!st?.installed || !st.loggedIn) continue
+    seen.add(m.id)
+    list.push(m)
+  }
+  return list.slice(0, 2)
 }
